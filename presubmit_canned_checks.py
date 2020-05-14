@@ -1513,7 +1513,7 @@ def CheckChangedLUCIConfigs(input_api, output_api):
     req.add_header('Authorization', 'Bearer %s' % acc_tkn.token)
     if body is not None:
       req.add_header('Content-Type', 'application/json')
-      req.add_data(json.dumps(body))
+      req.data = json.dumps(body).encode('utf-8')
     return json.load(input_api.urllib_request.urlopen(req))
 
   try:
