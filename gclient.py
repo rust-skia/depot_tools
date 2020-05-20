@@ -1407,14 +1407,12 @@ The local checkout in %(checkout_path)s reports:
 
 You should ensure that the URL listed in .gclient is correct and either change
 it or fix the checkout.
-''' % {
-                  'checkout_path': os.path.join(self.root_dir, dep.name),
-                  'expected_url': dep.url,
-                  'expected_scm': dep.GetScmName(),
-                  'mirror_string': mirror_string,
-                  'actual_url': actual_url,
-                  'actual_scm': dep.GetScmName()
-              })
+'''  % {'checkout_path': os.path.join(self.root_dir, dep.name),
+        'expected_url': dep.url,
+        'expected_scm': dep.GetScmName(),
+        'mirror_string': mirror_string,
+        'actual_url': actual_url,
+        'actual_scm': dep.GetScmName()})
 
   def SetConfig(self, content):
     assert not self.dependencies
@@ -2689,12 +2687,13 @@ def CMDsync(parser, args):
   parser.add_option('--no_bootstrap', '--no-bootstrap',
                     action='store_true',
                     help='Don\'t bootstrap from Google Storage.')
-  parser.add_option('--ignore_locks',
-                    action='store_true',
-                    help='No longer used.')
-  parser.add_option('--break_repo_locks',
-                    action='store_true',
-                    help='No longer used.')
+  parser.add_option('--ignore_locks', action='store_true',
+                    help='GIT ONLY - Ignore cache locks.')
+  parser.add_option('--break_repo_locks', action='store_true',
+                    help='GIT ONLY - Forcibly remove repo locks (e.g. '
+                      'index.lock). This should only be used if you know for '
+                      'certain that this invocation of gclient is the only '
+                      'thing operating on the git repos (e.g. on a bot).')
   parser.add_option('--lock_timeout', type='int', default=5000,
                     help='GIT ONLY - Deadline (in seconds) to wait for git '
                          'cache lock to become available. Default is %default.')
@@ -2714,13 +2713,6 @@ def CMDsync(parser, args):
 
   if not client:
     raise gclient_utils.Error('client not configured; see \'gclient config\'')
-
-  if options.ignore_locks:
-    print('Warning: ignore_locks is no longer used. Please remove its usage.')
-
-  if options.break_repo_locks:
-    print('Warning: break_repo_locks is no longer used. Please remove its '
-          'usage.')
 
   if options.revisions and options.head:
     # TODO(maruel): Make it a parser.error if it doesn't break any builder.
@@ -2792,14 +2784,12 @@ def CMDrevert(parser, args):
                     help='don\'t run pre-DEPS hooks', default=False)
   parser.add_option('--upstream', action='store_true',
                     help='Make repo state match upstream branch.')
-  parser.add_option('--break_repo_locks',
-                    action='store_true',
-                    help='No longer used.')
+  parser.add_option('--break_repo_locks', action='store_true',
+                    help='GIT ONLY - Forcibly remove repo locks (e.g. '
+                      'index.lock). This should only be used if you know for '
+                      'certain that this invocation of gclient is the only '
+                      'thing operating on the git repos (e.g. on a bot).')
   (options, args) = parser.parse_args(args)
-  if options.break_repo_locks:
-    print('Warning: break_repo_locks is no longer used. Please remove its ' +
-          'usage.')
-
   # --force is implied.
   options.force = True
   options.reset = False
