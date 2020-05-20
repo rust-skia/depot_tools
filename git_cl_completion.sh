@@ -19,7 +19,7 @@
 
 # Parses commands from git cl -h.
 __git_cl_commands () {
-  git cl -h 2> /dev/null | sed -n 's/^\s*\x1b\[32m\(.*\)\x1b\[39m.*$/\1/p'
+  git cl -h 2> /dev/null | sed -n 's/^\s*\x1b\[32m\(\S\+\)\s*\x1b\[39m.*$/\1/p'
 }
 
 # Caches variables in __git_cl_all_commands.
