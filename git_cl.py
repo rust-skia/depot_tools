@@ -4775,7 +4775,7 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
         str(os.path.dirname(clang_format_tool)) + os.pathsep + env['PATH'])
     stdout = RunCommand(
         cmd, stdin=diff_output, cwd=top_dir, env=env,
-        shell=bool(sys.platform.startswith('win32')))
+        shell=sys.platform.startswith('win32'))
     if opts.diff:
       sys.stdout.write(stdout)
     if opts.dry_run and len(stdout) > 0:
@@ -4959,7 +4959,7 @@ def CMDformat(parser, args):
       cmd.append('--dry-run')
     for gn_diff_file in gn_diff_files:
       gn_ret = subprocess2.call(cmd + [gn_diff_file],
-                                shell=bool(sys.platform.startswith('win')),
+                                shell=sys.platform.startswith('win'),
                                 cwd=top_dir)
       if opts.dry_run and gn_ret == 2:
         return_value = 2  # Not formatted.
@@ -4980,10 +4980,15 @@ def CMDformat(parser, args):
   if not opts.presubmit:
     for xml_dir in GetDirtyMetricsDirs(diff_files):
       tool_dir = os.path.join(top_dir, xml_dir)
-      cmd = [os.path.join(tool_dir, 'pretty_print.py'), '--non-interactive']
+      pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
+      cmd = ['vpython', pretty_print_tool, '--non-interactive']
       if opts.dry_run or opts.diff:
         cmd.append('--diff')
-      stdout = RunCommand(cmd, cwd=top_dir)
+      # TODO(isherman): Once this file runs only on Python 3.3+, drop the
+      # `shell` param and instead replace `'vpython'` with
+      # `shutil.which('frob')` above: https://stackoverflow.com/a/32799942
+      stdout = RunCommand(cmd, cwd=top_dir,
+                          shell=sys.platform.startswith('win32'))
       if opts.diff:
         sys.stdout.write(stdout)
       if opts.dry_run and stdout:
@@ -5002,7 +5007,8 @@ def GetDirtyMetricsDirs(diff_files):
     os.path.join('tools', 'metrics', 'ukm'),
   ]
   for xml_dir in metrics_xml_dirs:
-    if any(file.startswith(xml_dir) for file in xml_diff_files):
+    if any(
+        os.path.normpath(file).startswith(xml_dir) for file in xml_diff_files):
       yield xml_dir
 
 
