@@ -425,7 +425,6 @@ class Annotated(Wrapper):
     # Continue lockless.
     obj[0] += out
     while True:
-      # TODO(agable): find both of these with a single pass.
       cr_loc = obj[0].find(b'\r')
       lf_loc = obj[0].find(b'\n')
       if cr_loc == lf_loc == -1:

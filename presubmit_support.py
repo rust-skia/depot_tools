@@ -1119,12 +1119,12 @@ class Change(object):
   def TBRsFromDescription(self):
     """Returns all TBR reviewers listed in the commit description."""
     tags = [r.strip() for r in self.tags.get('TBR', '').split(',') if r.strip()]
-    # TODO(agable): Remove support for 'Tbr:' when TBRs are programmatically
-    # determined by self-CR+1s.
+    # TODO(crbug.com/839208): Remove support for 'Tbr:' when TBRs are
+    # programmatically determined by self-CR+1s.
     footers = self.GitFootersFromDescription().get('Tbr', [])
     return sorted(set(tags + footers))
 
-  # TODO(agable): Delete these once we're sure they're unused.
+  # TODO(crbug.com/753425): Delete these once we're sure they're unused.
   @property
   def BUG(self):
     return ','.join(self.BugsFromDescription())

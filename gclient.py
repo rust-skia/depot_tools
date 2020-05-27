@@ -2698,11 +2698,6 @@ def CMDsync(parser, args):
   parser.add_option('--lock_timeout', type='int', default=5000,
                     help='GIT ONLY - Deadline (in seconds) to wait for git '
                          'cache lock to become available. Default is %default.')
-  # TODO(agable): Remove these when the oldest CrOS release milestone is M56.
-  parser.add_option('-t', '--transitive', action='store_true',
-                    help='DEPRECATED: This is a no-op.')
-  parser.add_option('-m', '--manually_grab_svn_rev', action='store_true',
-                    help='DEPRECATED: This is a no-op.')
   parser.add_option('--no-rebase-patch-ref', action='store_false',
                     dest='rebase_patch_ref', default=True,
                     help='Bypass rebase of the patch ref after checkout.')

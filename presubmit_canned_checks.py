@@ -1612,7 +1612,6 @@ def CheckLucicfgGenOutput(input_api, output_api, entry_script):
         output_api.PresubmitError)
   ]
 
-# TODO(agable): Add this to PanProjectChecks.
 def CheckJsonParses(input_api, output_api):
   """Verifies that all JSON files at least parse as valid JSON."""
   import json

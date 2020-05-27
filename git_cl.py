@@ -2300,7 +2300,7 @@ class Changelist(object):
 
     if self.GetIssue() and (reviewers or cc):
       # GetIssue() is not set in case of non-squash uploads according to tests.
-      # TODO(agable): non-squash uploads in git cl should be removed.
+      # TODO(crbug.com/751901): non-squash uploads in git cl should be removed.
       gerrit_util.AddReviewers(
           self._GetGerritHost(),
           self._GerritChangeIdentifier(),
