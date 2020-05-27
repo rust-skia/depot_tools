@@ -30,5 +30,19 @@ __git_cl_compute_all_commands () {
 
 _git_cl () {
   __git_cl_compute_all_commands
-  __gitcomp_nl "${__git_cl_all_commands}"
+  local subcommands=$(echo "$__git_cl_all_commands" | xargs)
+  local subcommand=$(__git_find_on_cmdline "$subcommands")
+  if [[ -z "$subcommand" ]]; then
+      __gitcomp "$subcommands"
+      return
+  fi
+
+  case "$subcommand,$cur" in
+      upload,--*)
+          __gitcomp_builtin cl_upload
+          ;;
+      "",*)
+          __gitcomp_nl "${__git_cl_all_commands}"
+          ;;
+  esac
 }

@@ -4048,9 +4048,16 @@ def CMDupload(parser, args):
                     help='Modify description before upload. Cannot be used '
                          'with --force. It is a noop when --no-squash is set '
                          'or a new commit is created.')
+  parser.add_option('--git-completion-helper', action="store_true",
+                    help=optparse.SUPPRESS_HELP)
 
   orig_args = args
   (options, args) = parser.parse_args(args)
+
+  if options.git_completion_helper:
+      print(' '.join(opt.get_opt_string() for opt in parser.option_list
+                     if opt.help != optparse.SUPPRESS_HELP))
+      return
 
   if git_common.is_dirty_git_tree('upload'):
     return 1
