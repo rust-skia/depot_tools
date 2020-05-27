@@ -18,56 +18,56 @@ infra/goma/client/windows-amd64
 	hAGz3Hy69Zx_cGELRGOlsHTXJhmT7regpW0Dp8MrPUEC
 
 infra/tools/bb/linux-386
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	chW0tsmT3ZpGwNZtNAxuScbuCble99TBBd_eyAEYbDwC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	2Co5-8gSp7cwx9gVnK3PTmP18hao5lfqngOcRiTk_qsC
 
 infra/tools/bb/linux-amd64
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	OqSGXQ9njhIh3Kv4DP9gkH33H3eY89zEozfdmsCBF9oC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	MyZUofAy_f90hx40Y_yEtX_avyvk6kSh5sNodjPOXgIC
 
 infra/tools/bb/linux-arm64
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	F94j_qJIJ7DMEshWen0SDk9NkSPmKdfYT35DlZ2qTfoC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	pMKAmuOeG7EMX9J97marZwBalWV5FUv47mODAEi2D2YC
 
 infra/tools/bb/linux-armv6l
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	hKFoEC4iHKA17PO_C9DD3538fIxd79Ea8-k4ycT0nxgC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	6IwYZTtLwsfloRTlck8o6WyMyjTtJ9dVnsaAIlPXoqQC
 
 infra/tools/bb/linux-mips64
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	zEpWdOudpRJm0q5xQdPVrXuss-YH6IeTvKMb4kaoE0IC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	8CFUaglPIozZh3zuw4PiSFT8m_LpSlsfw3suEtmUvCcC
 
 infra/tools/bb/linux-mips64le
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	VKoZTVtixnm6Jty7evtqBIdcGr_GGaNWnqehni1GNXgC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	nkBmSdiGLPB5tMfvby3ms7S9C_IQ-T5qhaB1K0GVepUC
 
 infra/tools/bb/linux-mipsle
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	AgtKqHlEO5cZ8SWc3uIX78HxnsVQgAWGze1JOtADEBAC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	aDLbs72qwHpDCnYfr9-hIFvMP9_-gZE3NU9ZNCfWKJcC
 
 infra/tools/bb/linux-ppc64
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	aijTaDEt7VBJYrU7iOYin_3TgXKzB_blt_Zws1QITn4C
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	KsI4YViQNUBksznRUCMWSRYtYb_wR07gr8pKdHIYypsC
 
 infra/tools/bb/linux-ppc64le
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	tNBCTGmOgRDkPVvjpRby570qVQmCCi-s62UilvCDblsC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	NYCpfKVGgzM6sD0rsyGTTBff8RW6dET5vTtNceeHTNYC
 
 infra/tools/bb/linux-s390x
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	JB8M18LEOkUd_f5XsbYZj5KwFmPwx6yuBKtXBMdFDisC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	haWaEH-6xUNP3fHtH_X5vaiwkSYdsX58LvT92i-YteUC
 
 infra/tools/bb/mac-amd64
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	-vONwSrmlGyEmWAfjoTr7-ir6gANZ_sOsGpUp4ILzbIC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	pcARyFnGwmokUSCB53ehN0nNQnRmF9FgL_ozp9Y45NgC
 
 infra/tools/bb/windows-386
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	pnAK8G7hw5dceI3vuYjnKbMwvWfFy4bw4wQ2d61xDmoC
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	jGXRRPJnUlfllLXaf9v_a34Zp9S93zHwmsFsBRmxAGwC
 
 infra/tools/bb/windows-amd64
-	git_revision:36780e0d5ac28dd0d8e2eeb69c67ae51a4ad2685
-	GBMj0Vve2DPrT_zeFqd99RIgUDpPMU6nPgYKFWIeiA4C
+	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
+	3qVDYTSuF5-w1SdU0Euq3JeVA4ONpIg0jOvQSsEo36kC
 
 infra/tools/luci-auth/linux-386
 	git_revision:510e7187aa80b1b0d490f069437d119c28d1ea48
