@@ -195,12 +195,12 @@ class GitApi(recipe_api.RecipeApi):
       if use_git_cache:
         with self.m.context(env={'PATH': path}):
           self('cache', 'populate', '-c',
-               self.m.infra_paths.default_git_cache_dir, url,
+               self.m.path['cache'].join('git'), url,
                name='populate cache',
                can_fail_build=can_fail_build)
           dir_cmd = self(
               'cache', 'exists', '--quiet',
-              '--cache-dir', self.m.infra_paths.default_git_cache_dir, url,
+              '--cache-dir', self.m.path['cache'].join('git'), url,
               can_fail_build=can_fail_build,
               stdout=self.m.raw_io.output(),
               step_test_data=lambda:

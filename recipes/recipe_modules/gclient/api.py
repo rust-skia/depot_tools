@@ -114,7 +114,7 @@ class GclientApi(recipe_api.RecipeApi):
   def get_config_defaults(self):
     return {
       'USE_MIRROR': self.use_mirror,
-      'CACHE_DIR': self.m.infra_paths.default_git_cache_dir,
+      'CACHE_DIR': self.m.path['cache'].join('git'),
     }
 
   @staticmethod
