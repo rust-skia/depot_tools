@@ -44,6 +44,7 @@ TEST_CONFIGS = [
   'recipes_py',
   'recipes_py_bare',
   'slave_deps',
+  'tint',
   'wasm_llvm',
   'webports',
   'with_branch_heads',
