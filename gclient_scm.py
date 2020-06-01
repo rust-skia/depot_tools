@@ -1327,9 +1327,6 @@ class GitWrapper(SCMWrapper):
       fetch_cmd.append('--quiet')
     self._Run(fetch_cmd, options, show_header=options.verbose, retry=True)
 
-    # Return the revision that was fetched; this will be stored in 'FETCH_HEAD'
-    return self._Capture(['rev-parse', '--verify', 'FETCH_HEAD'])
-
   def _SetFetchConfig(self, options):
     """Adds, and optionally fetches, "branch-heads" and "tags" refspecs
     if requested."""
