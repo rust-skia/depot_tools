@@ -6,16 +6,16 @@ chromiumos/infra/crosjobs/linux-amd64
 	_vAeU0Q9lAxn933K8vDhwGK40zKVvV-yXGpIy43ATXAC
 
 infra/goma/client/linux-amd64
-	git_revision:ccc8255ac04a4f79a4649168c04ffdaa59af649b
-	t4xI2z6TP3MnYo_m4-gwUpihmrA6g0ijeOg2jxXKIgYC
+	git_revision:80401d72a6476494ab19ac9bed48a6cccbd6f8e0
+	ssCLQ9mpqtBp2LLWuaCXSWmaUFW6BRRkh-gT4Wln35IC
 
 infra/goma/client/mac-amd64
-	git_revision:ccc8255ac04a4f79a4649168c04ffdaa59af649b
-	QVYMbbX0xz60YPmi9bhN_mLuTAPCA5E1TJp-n1WWAvwC
+	git_revision:80401d72a6476494ab19ac9bed48a6cccbd6f8e0
+	Vxub_9WX5Y3YV7QUw_ftf7CMRvMOFR4OPW5cdkMKaWMC
 
 infra/goma/client/windows-amd64
-	git_revision:ccc8255ac04a4f79a4649168c04ffdaa59af649b
-	hAGz3Hy69Zx_cGELRGOlsHTXJhmT7regpW0Dp8MrPUEC
+	git_revision:80401d72a6476494ab19ac9bed48a6cccbd6f8e0
+	pxseN6XhR76Sf-66oGcdViUcorgN82FQR5fiRVsZeSoC
 
 infra/tools/bb/linux-386
 	git_revision:f82f4f39bab21925eb55779ca2903d7967d01faa
