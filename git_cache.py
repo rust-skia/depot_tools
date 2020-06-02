@@ -137,10 +137,6 @@ class Mirror(object):
     u = urlparse.urlparse(self.url)
     if u.netloc == 'chromium.googlesource.com':
       return 'chromium-git-cache'
-    # TODO(tandrii): delete once LUCI migration is completed.
-    # Only public hosts will be supported going forward.
-    elif u.netloc == 'chrome-internal.googlesource.com':
-      return 'chrome-git-cache'
     # Not recognized.
     return None
 
