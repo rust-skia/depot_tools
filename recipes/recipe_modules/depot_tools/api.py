@@ -68,5 +68,8 @@ class DepotToolsApi(recipe_api.RecipeApi):
     if self.m.runtime.is_luci:
       key = 'env_suffixes'
 
-    with self.m.context(**{key: {'PATH': [self.root]}}):
+    # By default Depot Tools do not auto update on the bots.
+    # (crbug/1090603)
+    with self.m.context(**{key: {'PATH': [self.root],
+                                 'DEPOT_TOOLS_UPDATE' : '0'}}):
       yield
