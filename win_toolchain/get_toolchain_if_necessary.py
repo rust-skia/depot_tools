@@ -175,7 +175,10 @@ def CalculateHash(root, expected_hash):
     if expected_hash:
       path_without_hash = path_without_hash.replace(
           os.path.join(root, expected_hash).replace('/', '\\'), root)
-    digest.update(path_without_hash.lower())
+    if sys.version_info[0] < 3:
+      digest.update(path_without_hash.lower())
+    else:
+      digest.update(bytes(path_without_hash.lower(), 'utf-8'))
     with open(path, 'rb') as f:
       digest.update(f.read())
 
