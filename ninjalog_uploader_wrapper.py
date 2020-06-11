@@ -5,8 +5,10 @@
 
 from __future__ import print_function
 
-import os
 import json
+import os
+import platform
+import subprocess
 import sys
 
 import ninjalog_uploader
@@ -110,9 +112,13 @@ def main():
 
   # Run upload script without wait.
   devnull = open(os.devnull, "w")
+  creationnflags = 0
+  if platform.system() == 'Windows':
+    creationnflags = subprocess.CREATE_NEW_PROCESS_GROUP
   subprocess2.Popen(['vpython', UPLOADER] + sys.argv[1:],
                     stdout=devnull,
-                    stderr=devnull)
+                    stderr=devnull,
+                    creationflags=creationnflags)
 
 
 if __name__ == '__main__':
