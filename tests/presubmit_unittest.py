@@ -2148,6 +2148,12 @@ the current line as well!
                     'foo.js', "// We should import something long, eh?",
                     'foo.js', presubmit.OutputApi.PresubmitPromptWarning)
 
+  def testCannedCheckTSLongImports(self):
+    check = lambda x, y, _: presubmit_canned_checks.CheckLongLines(x, y, 10)
+    self.ContentTest(check, "import {Name, otherName} from './dir/file';",
+                    'foo.ts', "// We should import something long, eh?",
+                    'foo.ts', presubmit.OutputApi.PresubmitPromptWarning)
+
   def testCannedCheckObjCExceptionLongLines(self):
     check = lambda x, y, _: presubmit_canned_checks.CheckLongLines(x, y, 80)
     self.ContentTest(check, '#import ' + 'A ' * 150, 'foo.mm',
