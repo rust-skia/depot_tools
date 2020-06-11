@@ -902,7 +902,7 @@ def _create_description_from_log(args):
     log_args = [args[0] + '..' + args[1]]
   else:
     log_args = args[:]  # Hope for the best!
-  return RunGit(['log', '--pretty=format:%s%n%n%b'] + log_args)
+  return RunGit(['log', '--pretty=format:%B'] + log_args)
 
 
 class GerritChangeNotExists(Exception):
