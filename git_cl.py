@@ -4931,7 +4931,13 @@ def CMDformat(parser, args):
       if not yapf_style:
         yapf_style = 'pep8'
 
-      cmd = [yapf_tool, '--style', yapf_style, f]
+      with open(f, 'r') as py_f:
+        if 'python3' in py_f.readline():
+          vpython_script = 'vpython3'
+        else:
+          vpython_script = 'vpython'
+
+      cmd = [vpython_script, yapf_tool, '--style', yapf_style, f]
 
       has_formattable_lines = False
       if not opts.full:
