@@ -55,7 +55,6 @@ def RunSteps(api):
   gerrit_no_reset = True if api.properties.get('gerrit_no_reset') else False
   gerrit_no_rebase_patch_ref = bool(
       api.properties.get('gerrit_no_rebase_patch_ref'))
-  manifest_name = api.properties.get('manifest_name')
   patch_refs = api.properties.get('patch_refs')
   set_output_commit = api.properties.get('set_output_commit', True)
 
@@ -74,7 +73,6 @@ def RunSteps(api):
       gerrit_no_reset=gerrit_no_reset,
       gerrit_no_rebase_patch_ref=gerrit_no_rebase_patch_ref,
       disable_syntax_validation=True,
-      manifest_name=manifest_name,
       patch_refs=patch_refs,
       set_output_commit=set_output_commit,
       step_test_data=step_test_data,
@@ -123,27 +121,6 @@ def GenTests(api):
       api.test('basic_luci') +
       ci_build() +
       api.runtime(is_experimental=False, is_luci=True)
-  )
-  yield (
-      api.test('with_manifest_name') +
-      ci_build() +
-      api.properties(
-          manifest_name='checkout',
-          set_output_commit=False,
-      ) +
-      api.step_data('bot_update (without patch)', api.json.output({
-        'source_manifest': {
-          'directories': {
-            'src': {
-              'git_checkout': {
-                'repo_url': (
-                    'https://chromium.googlesource.com/chromium/src.git'),
-                'revision': 'ea17a292ecfb3dcdaa8dd226e67d6504fc13c15a'
-              },
-            },
-          },
-        },
-      }))
   )
   yield (
       api.test('resolve_chromium_fixed_version') +

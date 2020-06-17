@@ -94,7 +94,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       gerrit_no_reset=False,
                       gerrit_no_rebase_patch_ref=False,
                       disable_syntax_validation=False,
-                      manifest_name=None,
                       patch_refs=None,
                       ignore_input_commit=False,
                       set_output_commit=False,
@@ -111,8 +110,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
       disable_syntax_validation: (legacy) Disables syntax validation for DEPS.
         Needed as migration paths for recipes dealing with older revisions,
         such as bisect.
-      manifest_name: The name of the manifest to upload to LogDog.  This must
-        be unique for the whole build.
       ignore_input_commit: if True, ignore api.buildbucket.gitiles_commit.
         Exists for historical reasons. Please do not use.
       set_output_commit: if True, mark the checked out commit as the
@@ -316,16 +313,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
         if 'step_text' in result:
           step_text = result['step_text']
           step_result.presentation.step_text = step_text
-
-        # Export the step results as a Source Manifest to LogDog.
-        source_manifest = result.get('source_manifest', {})
-        if manifest_name:
-          if not patch:
-            # The param "patched" is purely cosmetic to mean "if false, this
-            # bot_update run exists purely to unpatch an existing patch".
-            manifest_name += '_unpatched'
-          self.m.source_manifest.set_json_manifest(
-              manifest_name, source_manifest)
 
         # Set output commit of the build.
         if set_output_commit:
