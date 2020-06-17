@@ -4894,8 +4894,6 @@ def CMDformat(parser, args):
   if python_diff_files and not py_explicitly_disabled:
     depot_tools_path = os.path.dirname(os.path.abspath(__file__))
     yapf_tool = os.path.join(depot_tools_path, 'yapf')
-    if sys.platform.startswith('win'):
-      yapf_tool += '.bat'
 
     # Used for caching.
     yapf_configs = {}
@@ -4931,7 +4929,13 @@ def CMDformat(parser, args):
       if not yapf_style:
         yapf_style = 'pep8'
 
-      cmd = [yapf_tool, '--style', yapf_style, f]
+      with open(f, 'r') as py_f:
+        if 'python3' in py_f.readline():
+          vpython_script = 'vpython3'
+        else:
+          vpython_script = 'vpython'
+
+      cmd = [vpython_script, yapf_tool, '--style', yapf_style, f]
 
       has_formattable_lines = False
       if not opts.full:
