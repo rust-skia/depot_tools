@@ -9,34 +9,39 @@ from __future__ import print_function
 import os as _os
 _HERE = _os.path.dirname(_os.path.abspath(__file__))
 
+# These filters will be disabled if callers do not explicitly supply a
+# (possibly-empty) list.  Ideally over time this list could be driven to zero.
+# TODO(pkasting): If some of these look like "should never enable", move them
+# to OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS.
+#
 # Justifications for each filter:
 #
-# - build/include       : Too many; fix in the future.
-# - build/include_order : Not happening; #ifdefed includes.
-# - build/namespace     : I'm surprised by how often we violate this rule.
-# - readability/casting : Mistakes a whole bunch of function pointer.
+# - build/include       : Too many; fix in the future
+#                         TODO(pkasting): Try enabling subcategories
+# - build/include_order : Not happening; #ifdefed includes
+# - build/namespaces    : TODO(pkasting): Try re-enabling
+# - readability/casting : Mistakes a whole bunch of function pointers
 # - runtime/int         : Can be fixed long term; volume of errors too high
-# - runtime/virtual     : Broken now, but can be fixed in the future?
-# - whitespace/braces   : We have a lot of explicit scoping in chrome code.
-DEFAULT_LINT_FILTERS = [
+# - whitespace/braces   : We have a lot of explicit scoping in chrome code
+OFF_BY_DEFAULT_LINT_FILTERS = [
   '-build/include',
   '-build/include_order',
-  '-build/namespace',
+  '-build/namespaces',
   '-readability/casting',
   '-runtime/int',
-  '-runtime/virtual',
   '-whitespace/braces',
 ]
 
-# These filters will always be removed, even if the caller specifies a filter
-# set, as they are problematic or broken in some way.
+# These filters will be disabled unless callers explicitly enable them, because
+# they are undesirable in some way.
 #
 # Justifications for each filter:
-# - build/c++11         : Rvalue ref checks are unreliable (false positives),
-#                         include file and feature blacklists are
-#                         google3-specific.
-BLACKLIST_LINT_FILTERS = [
+# - build/c++11         : Include file and feature blacklists are
+#                         google3-specific
+# - runtime/references  : No longer banned by Google style guide
+OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS = [
   '-build/c++11',
+  '-runtime/references',
 ]
 
 ### Description checks
@@ -165,9 +170,11 @@ def CheckChangeLintsClean(input_api, output_api, source_file_filter=None,
   # pylint: disable=protected-access
   cpplint._cpplint_state.ResetErrorCounts()
 
-  lint_filters = lint_filters or DEFAULT_LINT_FILTERS
-  lint_filters.extend(BLACKLIST_LINT_FILTERS)
-  cpplint._SetFilters(','.join(lint_filters))
+  filters = OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS[:]
+  if lint_filters is None:
+    lint_filters = OFF_BY_DEFAULT_LINT_FILTERS
+  filters.extend(lint_filters)
+  cpplint._SetFilters(','.join(filters))
 
   # We currently are more strict with normal code than unit tests; 4 and 5 are
   # the verbosity level that would normally be passed to cpplint.py through
