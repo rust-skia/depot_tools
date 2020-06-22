@@ -4055,9 +4055,9 @@ def CMDupload(parser, args):
   (options, args) = parser.parse_args(args)
 
   if options.git_completion_helper:
-      print(' '.join(opt.get_opt_string() for opt in parser.option_list
-                     if opt.help != optparse.SUPPRESS_HELP))
-      return
+    print(' '.join(opt.get_opt_string() for opt in parser.option_list
+                   if opt.help != optparse.SUPPRESS_HELP))
+    return
 
   if git_common.is_dirty_git_tree('upload'):
     return 1
@@ -4954,14 +4954,17 @@ def CMDformat(parser, args):
       if opts.diff or opts.dry_run:
         cmd += ['--diff']
         # Will return non-zero exit code if non-empty diff.
-        stdout = RunCommand(cmd, error_ok=True, cwd=top_dir)
+        stdout = RunCommand(cmd,
+                            error_ok=True,
+                            cwd=top_dir,
+                            shell=sys.platform.startswith('win32'))
         if opts.diff:
           sys.stdout.write(stdout)
         elif len(stdout) > 0:
           return_value = 2
       else:
         cmd += ['-i']
-        RunCommand(cmd, cwd=top_dir)
+        RunCommand(cmd, cwd=top_dir, shell=sys.platform.startswith('win32'))
 
   # Format GN build files. Always run on full build files for canonical form.
   if gn_diff_files:
