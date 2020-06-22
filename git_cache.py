@@ -498,7 +498,29 @@ class Mirror(object):
     # Run Garbage Collect to compress packfile.
     gc_args = ['gc', '--prune=all']
     if gc_aggressive:
-      gc_args.append('--aggressive')
+      # The default "gc --aggressive" is often too aggressive for some machines,
+      # since it attempts to create as many threads as there are CPU cores,
+      # while not limiting per-thread memory usage, which puts too much pressure
+      # on RAM on high-core machines, causing them to thrash. Using lower-level
+      # commands gives more control over those settings.
+
+      # This might not be strictly necessary, but it's fast and is normally run
+      # by 'gc --aggressive', so it shouldn't hurt.
+      self.RunGit(['reflog', 'expire', '--all'])
+
+      # These are the default repack settings for 'gc --aggressive'.
+      gc_args = ['repack', '-d', '-l', '-f', '--depth=50', '--window=250', '-A',
+                 '--unpack-unreachable=all']
+      # A 1G memory limit seems to provide comparable pack results as the
+      # default, even for our largest repos, while preventing runaway memory (at
+      # least on current Chromium builders which have about 4G RAM per core).
+      gc_args.append('--window-memory=1g')
+      # NOTE: It might also be possible to avoid thrashing with a larger window
+      # (e.g. "--window-memory=2g") by limiting the number of threads created
+      # (e.g. "--threads=[cores/2]"). Some limited testing didn't show much
+      # difference in outcomes on our current repos, but it might be worth
+      # trying if the repos grow much larger and the packs don't seem to be
+      # getting compressed enough.
     self.RunGit(gc_args)
 
     gsutil.call('-m', 'cp', '-r', src_name, dest_prefix)
