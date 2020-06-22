@@ -986,9 +986,6 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         if self.url:
           env['GCLIENT_URL'] = str(self.url)
         env['GCLIENT_DEP_PATH'] = str(self.name)
-        parts = self.url.split('@')
-        if len(parts) > 1:
-          env['GCLIENT_DEP_REF'] = parts[-1]
         if options.prepend_dir and scm == 'git':
           print_stdout = False
           def filter_fn(line):
@@ -1023,13 +1020,9 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         elif os.path.isdir(cwd):
           try:
             gclient_utils.CheckCallAndFilter(
-                args,
-                cwd=cwd,
-                env=env,
-                print_stdout=print_stdout,
+                args, cwd=cwd, env=env, print_stdout=print_stdout,
                 filter_fn=filter_fn,
-                shell=True,
-            )
+                )
           except subprocess2.CalledProcessError:
             if not options.ignore:
               raise
@@ -2048,7 +2041,6 @@ def CMDrecurse(parser, args):
   Runs a shell command on all entries.
   Sets GCLIENT_DEP_PATH environment variable as the dep's relative location to
   root directory of the checkout.
-  Sets GCLIENT_DEP_REF environment variable as the dep's ref if available
   """
   # Stop parsing at the first non-arg so that these go through to the command
   parser.disable_interspersed_args()
