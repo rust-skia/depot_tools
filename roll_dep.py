@@ -221,7 +221,7 @@ def main():
 
   gclient_root = gclient(['root'])
   current_dir = os.getcwd()
-  dependencies = sorted(d.rstrip('/').rstrip('\\') for d in args.dep_path)
+  dependencies = sorted(d.replace('\\', '/').rstrip('/') for d in args.dep_path)
   cmdline = 'roll-dep ' + ' '.join(dependencies) + ''.join(
       ' --key ' + k for k in args.key)
   try:
