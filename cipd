@@ -9,10 +9,17 @@ set -e -o pipefail
 MYPATH=$(dirname "${BASH_SOURCE[0]}")
 CYGWIN=false
 
+# Make sure this starts empty
+ARCH=
+
 UNAME=`uname -s | tr '[:upper:]' '[:lower:]'`
 case "${UNAME}" in
+  aix)
+    OS="${UNAME}"
+    ARCH="ppc64"  # apparently 'uname -m' returns something very different
+    ;;
   linux)
-    OS=linux
+    OS="${UNAME}"
     ;;
   cygwin*)
     OS=windows
@@ -29,43 +36,39 @@ case "${UNAME}" in
     exit 1
 esac
 
-UNAME=`uname -m | tr '[:upper:]' '[:lower:]'`
-case "${UNAME}" in
-  x86_64|amd64)
-    ARCH=amd64
-    ;;
-  s390x)  # best-effort support for IBM s390x: crbug.com/764087
-    ARCH=s390x
-    ;;
-  ppc64)  # best-effort support for 64-bit PowerPC: crbug.com/773857
-    ARCH=ppc64
-    ;;
-  ppc64le)  # best-effort support for 64-bit PowerPC/LE: crbug.com/773857
-    ARCH=ppc64le
-    ;;
-  aarch64)
-    ARCH=arm64
-    ;;
-  armv7l)
-    ARCH=armv6l
-    ;;
-  arm*)
-    ARCH="${UNAME}"
-    ;;
-  *86)
-    ARCH=386
-    ;;
-  mips*)
-    # detect mips64le vs mips64.
-    ARCH="${UNAME}"
-    if lscpu | grep -q "Little Endian"; then
-      ARCH+=le
-    fi
-    ;;
-  *)
-    >&2 echo "UNKNOWN Machine architecture: ${UNAME}"
-    exit 1
-esac
+if [ -z $ARCH ]; then
+  UNAME=`uname -m | tr '[:upper:]' '[:lower:]'`
+  case "${UNAME}" in
+    x86_64|amd64)
+      ARCH=amd64
+      ;;
+    s390x|ppc64|ppc64le)  # best-effort support
+      ARCH="${UNAME}"
+      ;;
+    aarch64)
+      ARCH=arm64
+      ;;
+    armv7l)
+      ARCH=armv6l
+      ;;
+    arm*)
+      ARCH="${UNAME}"
+      ;;
+    *86)
+      ARCH=386
+      ;;
+    mips*)
+      # detect mips64le vs mips64.
+      ARCH="${UNAME}"
+      if lscpu | grep -q "Little Endian"; then
+        ARCH+=le
+      fi
+      ;;
+    *)
+      >&2 echo "UNKNOWN Machine architecture: ${UNAME}"
+      exit 1
+  esac
+fi
 
 # CIPD_BACKEND can be changed to ...-dev for manual testing.
 CIPD_BACKEND="https://chrome-infra-packages.appspot.com"
