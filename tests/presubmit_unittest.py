@@ -1376,8 +1376,10 @@ class InputApiUnittest(PresubmitTestsBase):
     input_api = presubmit.InputApi(
         self.fake_change, './PRESUBMIT.py', False, None, False)
 
-    self.assertEqual(len(input_api.DEFAULT_WHITE_LIST), 24)
-    self.assertEqual(len(input_api.DEFAULT_BLACK_LIST), 12)
+    self.assertEqual(len(input_api.DEFAULT_ALLOW_LIST), 24)
+    self.assertEqual(len(input_api.DEFAULT_BLOCK_LIST), 12)
+    self.assertEqual(input_api.DEFAULT_ALLOW_LIST, input_api.DEFAULT_WHITE_LIST)
+    self.assertEqual(input_api.DEFAULT_BLOCK_LIST, input_api.DEFAULT_BLACK_LIST)
     for item in files:
       results = list(filter(input_api.FilterSourceFile, item[0]))
       for i in range(len(results)):
@@ -1409,8 +1411,8 @@ class InputApiUnittest(PresubmitTestsBase):
     self.assertEqual(got_files[1].LocalPath(), 'eeabee')
 
   def testLambdaFilter(self):
-    white_list = presubmit.InputApi.DEFAULT_BLACK_LIST + (r".*?a.*?",)
-    black_list = [r".*?b.*?"]
+    allow_list = presubmit.InputApi.DEFAULT_BLOCK_LIST + (r".*?a.*?",)
+    block_list = [r".*?b.*?"]
     files = [('A', 'eeaee'), ('M', 'eeabee'), ('M', 'eebcee'), ('M', 'eecaee')]
     known_files = [
       os.path.join(self.fake_root_dir, item)
@@ -1423,7 +1425,7 @@ class InputApiUnittest(PresubmitTestsBase):
         change, './PRESUBMIT.py', False, None, False)
     # Sample usage of overriding the default white and black lists.
     got_files = input_api.AffectedSourceFiles(
-        lambda x: input_api.FilterSourceFile(x, white_list, black_list))
+        lambda x: input_api.FilterSourceFile(x, allow_list, block_list))
     self.assertEqual(len(got_files), 2)
     self.assertEqual(got_files[0].LocalPath(), 'eeaee')
     self.assertEqual(got_files[1].LocalPath(), 'eecaee')
