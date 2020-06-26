@@ -135,7 +135,7 @@ _GCLIENT_HOOKS_SCHEMA = [
 
 _GCLIENT_SCHEMA = schema.Schema(
     _NodeDictSchema({
-        # List of host names from which dependencies are allowed (whitelist).
+        # List of host names from which dependencies are allowed (allowlist).
         # NOTE: when not present, all hosts are allowed.
         # NOTE: scoped to current DEPS file, not recursive.
         schema.Optional('allowed_hosts'): [schema.Optional(basestring)],
@@ -187,7 +187,7 @@ _GCLIENT_SCHEMA = schema.Schema(
         # Recursion limit for nested DEPS.
         schema.Optional('recursion'): int,
 
-        # Whitelists deps for which recursion should be enabled.
+        # Allowlists deps for which recursion should be enabled.
         schema.Optional('recursedeps'): [
             schema.Optional(schema.Or(
                 basestring,
@@ -196,7 +196,7 @@ _GCLIENT_SCHEMA = schema.Schema(
             )),
         ],
 
-        # Blacklists directories for checking 'include_rules'.
+        # Blocklists directories for checking 'include_rules'.
         schema.Optional('skip_child_includes'): [schema.Optional(basestring)],
 
         # Mapping from paths to include rules specific for that path.
