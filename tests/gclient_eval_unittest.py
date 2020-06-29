@@ -47,28 +47,17 @@ class GClientEvalTest(unittest.TestCase):
   def test_invalid_call(self):
     with self.assertRaises(ValueError) as cm:
       gclient_eval._gclient_eval('Foo("bar")')
-    self.assertIn('Str and Var are the only allowed functions',
-                  str(cm.exception))
+    self.assertIn('Var is the only allowed function', str(cm.exception))
 
   def test_expands_vars(self):
     self.assertEqual(
         'foo',
         gclient_eval._gclient_eval('Var("bar")', vars_dict={'bar': 'foo'}))
-    self.assertEqual(
-        'baz',
-        gclient_eval._gclient_eval(
-            'Var("bar")',
-            vars_dict={'bar': gclient_eval.ConstantString('baz')}))
 
   def test_expands_vars_with_braces(self):
     self.assertEqual(
         'foo',
         gclient_eval._gclient_eval('"{bar}"', vars_dict={'bar': 'foo'}))
-    self.assertEqual(
-        'baz',
-        gclient_eval._gclient_eval(
-            '"{bar}"',
-            vars_dict={'bar': gclient_eval.ConstantString('baz')}))
 
   def test_invalid_var(self):
     with self.assertRaises(KeyError) as cm:
@@ -129,33 +118,28 @@ class ExecTest(unittest.TestCase):
     local_scope = gclient_eval.Exec('\n'.join([
         'vars = {',
         '  "foo": "bar",',
-        '  "baz": Str("quux")',
         '}',
         'deps = {',
-        '  "a_dep": "a" + Var("foo") + "b" + Var("baz"),',
+        '  "a_dep": "a" + Var("foo") + "b",',
         '}',
     ]))
-    Str = gclient_eval.ConstantString
     self.assertEqual({
-        'vars': {'foo': 'bar', 'baz': Str('quux')},
-        'deps': {'a_dep': 'abarbquux'},
+        'vars': collections.OrderedDict([('foo', 'bar')]),
+        'deps': collections.OrderedDict([('a_dep', 'abarb')]),
     }, local_scope)
 
   def test_braces_var(self):
     local_scope = gclient_eval.Exec('\n'.join([
         'vars = {',
         '  "foo": "bar",',
-        '  "baz": Str("quux")',
         '}',
         'deps = {',
-        '  "a_dep": "a{foo}b{baz}",',
+        '  "a_dep": "a{foo}b",',
         '}',
     ]))
-    Str = gclient_eval.ConstantString
     self.assertEqual({
-        'vars': {'foo': 'bar',
-                 'baz': Str('quux')},
-        'deps': {'a_dep': 'abarbquux'},
+        'vars': collections.OrderedDict([('foo', 'bar')]),
+        'deps': collections.OrderedDict([('a_dep', 'abarb')]),
     }, local_scope)
 
   def test_empty_deps(self):
@@ -166,17 +150,14 @@ class ExecTest(unittest.TestCase):
     local_scope = gclient_eval.Exec('\n'.join([
         'vars = {',
         '  "foo": "bar",',
-        '  "quux": Str("quuz")',
         '}',
         'deps = {',
         '  "a_dep": "a{foo}b",',
-        '  "b_dep": "c{quux}d",',
         '}',
-    ]), vars_override={'foo': 'baz', 'quux': 'corge'})
-    Str = gclient_eval.ConstantString
+    ]), vars_override={'foo': 'baz'})
     self.assertEqual({
-        'vars': {'foo': 'bar', 'quux': Str('quuz')},
-        'deps': {'a_dep': 'abazb', 'b_dep': 'ccorged'},
+        'vars': collections.OrderedDict([('foo', 'bar')]),
+        'deps': collections.OrderedDict([('a_dep', 'abazb')]),
     }, local_scope)
 
   def test_doesnt_override_undeclared_vars(self):
@@ -356,15 +337,6 @@ class EvaluateConditionTest(unittest.TestCase):
       gclient_eval.EvaluateCondition('(foo,) == "bar"', {'foo': 'bar'})
     self.assertIn('unexpected AST node', str(cm.exception))
 
-  def test_str_in_condition(self):
-    Str = gclient_eval.ConstantString
-    self.assertTrue(gclient_eval.EvaluateCondition(
-        's_var == "foo"',
-        {'s_var': Str("foo")}))
-
-    self.assertFalse(gclient_eval.EvaluateCondition(
-        's_var in ("baz", "quux")',
-        {'s_var': Str("foo")}))
 
 class VarTest(unittest.TestCase):
   def assert_adds_var(self, before, after):
@@ -410,23 +382,18 @@ class VarTest(unittest.TestCase):
     local_scope = gclient_eval.Exec('\n'.join([
         'vars = {',
         '  "foo": "bar",',
-        '  "quux": Str("quuz")',
         '}',
     ]))
 
-    self.assertEqual(gclient_eval.GetVar(local_scope, 'foo'),
-                     "bar")
-    self.assertEqual(gclient_eval.GetVar(local_scope, 'quux'),
-                     "quuz")
+    result = gclient_eval.GetVar(local_scope, 'foo')
+    self.assertEqual(result, "bar")
 
     gclient_eval.SetVar(local_scope, 'foo', 'baz')
-    gclient_eval.SetVar(local_scope, 'quux', 'corge')
     result = gclient_eval.RenderDEPSFile(local_scope)
 
     self.assertEqual(result, '\n'.join([
         'vars = {',
         '  "foo": "baz",',
-        '  "quux": Str("corge")',
         '}',
     ]))
 

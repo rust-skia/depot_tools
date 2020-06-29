@@ -24,27 +24,6 @@ else:
   basestring = str
 
 
-class ConstantString(object):
-  def __init__(self, value):
-    self.value = value
-
-  def __format__(self, format_spec):
-    del format_spec
-    return self.value
-
-  def __repr__(self):
-    return "Str('" + self.value + "')"
-
-  def __eq__(self, other):
-    if isinstance(other, ConstantString):
-      return self.value == other.value
-    else:
-      return self.value == other
-
-  def __hash__(self):
-      return self.value.__hash__()
-
-
 class _NodeDict(collections_abc.MutableMapping):
   """Dict-like type that also stores information on AST nodes and tokens."""
   def __init__(self, data=None, tokens=None):
@@ -135,7 +114,7 @@ _GCLIENT_DEPS_SCHEMA = _NodeDictSchema({
 _GCLIENT_HOOKS_SCHEMA = [
     _NodeDictSchema({
         # Hook action: list of command-line arguments to invoke.
-        'action': [schema.Or(basestring)],
+        'action': [basestring],
 
         # Name of the hook. Doesn't affect operation.
         schema.Optional('name'): basestring,
@@ -241,9 +220,7 @@ _GCLIENT_SCHEMA = schema.Schema(
 
         # Variables that can be referenced using Var() - see 'deps'.
         schema.Optional('vars'): _NodeDictSchema({
-            schema.Optional(basestring): schema.Or(ConstantString,
-                                                   basestring,
-                                                   bool),
+            schema.Optional(basestring): schema.Or(basestring, bool),
         }),
     }))
 
@@ -251,8 +228,6 @@ _GCLIENT_SCHEMA = schema.Schema(
 def _gclient_eval(node_or_string, filename='<unknown>', vars_dict=None):
   """Safely evaluates a single expression. Returns the result."""
   _allowed_names = {'None': None, 'True': True, 'False': False}
-  if isinstance(node_or_string, ConstantString):
-    return node_or_string.value
   if isinstance(node_or_string, basestring):
     node_or_string = ast.parse(node_or_string, filename=filename, mode='eval')
   if isinstance(node_or_string, ast.Expression):
@@ -294,23 +269,16 @@ def _gclient_eval(node_or_string, filename='<unknown>', vars_dict=None):
         node, ast.NameConstant):  # Since Python 3.4
       return node.value
     elif isinstance(node, ast.Call):
-      if (not isinstance(node.func, ast.Name) or
-          (node.func.id not in ('Str', 'Var'))):
+      if not isinstance(node.func, ast.Name) or node.func.id != 'Var':
         raise ValueError(
-            'Str and Var are the only allowed functions (file %r, line %s)' % (
+            'Var is the only allowed function (file %r, line %s)' % (
                 filename, getattr(node, 'lineno', '<unknown>')))
       if node.keywords or getattr(node, 'starargs', None) or getattr(
           node, 'kwargs', None) or len(node.args) != 1:
         raise ValueError(
-            '%s takes exactly one argument (file %r, line %s)' % (
-                node.func.id, filename, getattr(node, 'lineno', '<unknown>')))
-      if node.func.id == 'Str':
-        if isinstance(node.args[0], ast.Str):
-          return ConstantString(node.args[0].s)
-        raise ValueError('Passed a non-string to Str() (file %r, line%s)' % (
-            filename, getattr(node, 'lineno', '<unknown>')))
-      else:
-        arg = _convert(node.args[0])
+            'Var takes exactly one argument (file %r, line %s)' % (
+                filename, getattr(node, 'lineno', '<unknown>')))
+      arg = _convert(node.args[0])
       if not isinstance(arg, basestring):
         raise ValueError(
             'Var\'s argument must be a variable name (file %r, line %s)' % (
@@ -322,10 +290,7 @@ def _gclient_eval(node_or_string, filename='<unknown>', vars_dict=None):
             '%s was used as a variable, but was not declared in the vars dict '
             '(file %r, line %s)' % (
                 arg, filename, getattr(node, 'lineno', '<unknown>')))
-      val = vars_dict[arg]
-      if isinstance(val, ConstantString):
-        val = val.value
-      return val
+      return vars_dict[arg]
     elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
       return _convert(node.left) + _convert(node.right)
     elif isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod):
@@ -636,8 +601,6 @@ def RenderDEPSFile(gclient_dict):
 
 
 def _UpdateAstString(tokens, node, value):
-  if isinstance(node, ast.Call):
-    node = node.args[0]
   position = node.lineno, node.col_offset
   quote_char = ''
   if isinstance(node, ast.Str):
@@ -847,10 +810,7 @@ def GetVar(gclient_dict, var_name):
     raise KeyError(
         "Could not find any variable called %s." % var_name)
 
-  val = gclient_dict['vars'][var_name]
-  if isinstance(val, ConstantString):
-    return val.value
-  return val
+  return gclient_dict['vars'][var_name]
 
 
 def GetCIPD(gclient_dict, dep_name, package_name):
