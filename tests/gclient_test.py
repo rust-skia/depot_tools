@@ -667,6 +667,42 @@ class GclientTest(trial_dir.TestCase):
         ('foo/skip2', None),
     ], [(dep.name, dep.url) for dep in sol.dependencies])
 
+  def testVarOverrides(self):
+    """Verifies expected behavior of variable overrides."""
+    write(
+        '.gclient',
+        'solutions = [\n'
+        '  { "name": "foo",\n'
+        '    "url": "svn://example.com/foo",\n'
+        '    "custom_vars": {\n'
+        '      "path": "c-d",\n'
+        '    },\n'
+        '  },]\n')
+    write(
+        os.path.join('foo', 'DEPS'),
+        'vars = {\n'
+        '  "path": Str("a-b"),\n'
+        '}\n'
+        'deps = {\n'
+        '  "foo/bar": "svn://example.com/foo/" + Var("path"),\n'
+        '}')
+    parser = gclient.OptionParser()
+    options, _ = parser.parse_args(['--jobs', '1'])
+
+    obj = gclient.GClient.LoadCurrentConfig(options)
+    obj.RunOnDeps('None', [])
+
+    sol = obj.dependencies[0]
+    self.assertEqual([
+        ('foo', 'svn://example.com/foo'),
+        ('foo/bar', 'svn://example.com/foo/c-d'),
+    ], self._get_processed())
+
+    self.assertEqual(1, len(sol.dependencies))
+    self.assertEqual([
+        ('foo/bar', 'svn://example.com/foo/c-d'),
+    ], [(dep.name, dep.url) for dep in sol.dependencies])
+
   def testDepsOsOverrideDepsInDepsFile(self):
     """Verifies that a 'deps_os' path cannot override a 'deps' path. Also
     see testUpdateWithOsDeps above.
