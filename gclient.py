@@ -1043,7 +1043,9 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     variables = self.get_vars()
     for arg in self._gn_args:
       value = variables[arg]
-      if isinstance(value, basestring):
+      if isinstance(value, gclient_eval.ConstantString):
+        value = value.value
+      elif isinstance(value, basestring):
         value = gclient_eval.EvaluateCondition(value, variables)
       lines.append('%s = %s' % (arg, ToGNString(value)))
     with open(os.path.join(self.root.root_dir, self._gn_args_file), 'wb') as f:
@@ -1265,11 +1267,11 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     result = {}
     result.update(self._vars)
     if self.parent:
-      parent_vars = self.parent.get_vars()
-      result.update(parent_vars)
+      merge_vars(result, self.parent.get_vars())
     # Provide some built-in variables.
     result.update(self.get_builtin_vars())
-    result.update(self.custom_vars or {})
+    merge_vars(result, self.custom_vars)
+
     return result
 
 
@@ -1281,6 +1283,20 @@ _PLATFORM_MAPPING = {
   'win32': 'win',
   'aix6': 'aix',
 }
+
+
+def merge_vars(result, new_vars):
+  for k, v in new_vars.items():
+    if k in result:
+      if isinstance(result[k], gclient_eval.ConstantString):
+        if isinstance(v, gclient_eval.ConstantString):
+          result[k] = v
+        else:
+          result[k].value = v
+      else:
+        result[k] = v
+    else:
+      result[k] = v
 
 
 def _detect_host_os():
