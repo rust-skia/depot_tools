@@ -3605,7 +3605,7 @@ def CMDissue(parser, args):
       if issue:
         issue_branch_map.setdefault(int(issue), []).append(branch)
     if not args:
-      args = sorted(issue_branch_map.iterkeys())
+      args = sorted(issue_branch_map.keys())
     result = {}
     for issue in args:
       try:
