@@ -30,6 +30,7 @@ case "${UNAME}" in
     ;;
   darwin)
     OS=mac
+    ARCH=amd64  # use amd64 binaries even on arm64, see crbug.com/1102967
     ;;
   *)
     >&2 echo "CIPD not supported on ${UNAME}"
