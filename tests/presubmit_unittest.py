@@ -1389,26 +1389,44 @@ class InputApiUnittest(PresubmitTestsBase):
   def testDefaultOverrides(self):
     input_api = presubmit.InputApi(
         self.fake_change, './PRESUBMIT.py', False, None, False)
-    self.assertEqual(len(input_api.DEFAULT_ALLOW_LIST), 24)
-    self.assertEqual(len(input_api.DEFAULT_BLOCK_LIST), 12)
-    self.assertEqual(input_api.DEFAULT_ALLOW_LIST, input_api.DEFAULT_WHITE_LIST)
-    self.assertEqual(input_api.DEFAULT_BLOCK_LIST, input_api.DEFAULT_BLACK_LIST)
+    self.assertEqual(len(input_api.DEFAULT_FILES_TO_CHECK), 24)
+    self.assertEqual(len(input_api.DEFAULT_FILES_TO_SKIP), 12)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_CHECK, input_api.DEFAULT_WHITE_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_CHECK, input_api.DEFAULT_ALLOW_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_SKIP, input_api.DEFAULT_BLACK_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_SKIP, input_api.DEFAULT_BLOCK_LIST)
 
-    input_api.DEFAULT_ALLOW_LIST = (r'.+\.c$',)
-    input_api.DEFAULT_BLOCK_LIST = (r'.+\.patch$', r'.+\.diff')
-    self.assertEqual(len(input_api.DEFAULT_ALLOW_LIST), 1)
-    self.assertEqual(len(input_api.DEFAULT_BLOCK_LIST), 2)
-    self.assertEqual(input_api.DEFAULT_ALLOW_LIST, input_api.DEFAULT_WHITE_LIST)
-    self.assertEqual(input_api.DEFAULT_BLOCK_LIST, input_api.DEFAULT_BLACK_LIST)
+    input_api.DEFAULT_FILES_TO_CHECK = (r'.+\.c$',)
+    input_api.DEFAULT_FILES_TO_SKIP = (r'.+\.patch$', r'.+\.diff')
+    self.assertEqual(len(input_api.DEFAULT_FILES_TO_CHECK), 1)
+    self.assertEqual(len(input_api.DEFAULT_FILES_TO_SKIP), 2)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_CHECK, input_api.DEFAULT_WHITE_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_CHECK, input_api.DEFAULT_ALLOW_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_SKIP, input_api.DEFAULT_BLACK_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_SKIP, input_api.DEFAULT_BLOCK_LIST)
 
     # Test backward compatiblity of setting old property names
     # TODO(https://crbug.com/1098562): Remove once no longer used
     input_api.DEFAULT_WHITE_LIST = ()
     input_api.DEFAULT_BLACK_LIST = ()
-    self.assertEqual(len(input_api.DEFAULT_ALLOW_LIST), 0)
-    self.assertEqual(len(input_api.DEFAULT_BLOCK_LIST), 0)
-    self.assertEqual(input_api.DEFAULT_ALLOW_LIST, input_api.DEFAULT_WHITE_LIST)
-    self.assertEqual(input_api.DEFAULT_BLOCK_LIST, input_api.DEFAULT_BLACK_LIST)
+    self.assertEqual(len(input_api.DEFAULT_FILES_TO_CHECK), 0)
+    self.assertEqual(len(input_api.DEFAULT_FILES_TO_SKIP), 0)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_CHECK, input_api.DEFAULT_WHITE_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_CHECK, input_api.DEFAULT_ALLOW_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_SKIP, input_api.DEFAULT_BLACK_LIST)
+    self.assertEqual(
+        input_api.DEFAULT_FILES_TO_SKIP, input_api.DEFAULT_BLOCK_LIST)
 
   def testCustomFilter(self):
     def FilterSourceFile(affected_file):
@@ -1431,8 +1449,8 @@ class InputApiUnittest(PresubmitTestsBase):
     self.assertEqual(got_files[1].LocalPath(), 'eeabee')
 
   def testLambdaFilter(self):
-    allow_list = presubmit.InputApi.DEFAULT_BLOCK_LIST + (r".*?a.*?",)
-    block_list = [r".*?b.*?"]
+    files_to_check = presubmit.InputApi.DEFAULT_FILES_TO_SKIP + (r".*?a.*?",)
+    files_to_skip = [r".*?b.*?"]
     files = [('A', 'eeaee'), ('M', 'eeabee'), ('M', 'eebcee'), ('M', 'eecaee')]
     known_files = [
       os.path.join(self.fake_root_dir, item)
@@ -1445,7 +1463,7 @@ class InputApiUnittest(PresubmitTestsBase):
         change, './PRESUBMIT.py', False, None, False)
     # Sample usage of overriding the default white and black lists.
     got_files = input_api.AffectedSourceFiles(
-        lambda x: input_api.FilterSourceFile(x, allow_list, block_list))
+        lambda x: input_api.FilterSourceFile(x, files_to_check, files_to_skip))
     self.assertEqual(len(got_files), 2)
     self.assertEqual(got_files[0].LocalPath(), 'eeaee')
     self.assertEqual(got_files[1].LocalPath(), 'eecaee')

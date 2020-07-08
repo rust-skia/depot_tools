@@ -359,7 +359,7 @@ def CheckChangeHasNoTabs(input_api, output_api, source_file_filter=None):
   """Checks that there are no tab characters in any of the text files to be
   submitted.
   """
-  # In addition to the filter, make sure that makefiles are blocklisted.
+  # In addition to the filter, make sure that makefiles are skipped.
   if not source_file_filter:
     # It's the default filter.
     source_file_filter = input_api.FilterSourceFile
@@ -608,15 +608,17 @@ def CheckTreeIsOpen(input_api, output_api,
   return []
 
 def GetUnitTestsInDirectory(
-    input_api, output_api, directory, allowlist=None, blocklist=None, env=None,
-    run_on_python2=True, run_on_python3=True, whitelist=None, blacklist=None):
+    input_api, output_api, directory, files_to_check=None, files_to_skip=None,
+    env=None, run_on_python2=True, run_on_python3=True, whitelist=None,
+    blacklist=None, allowlist=None, blocklist=None):
   """Lists all files in a directory and runs them. Doesn't recurse.
 
   It's mainly a wrapper for RunUnitTests. Use allowlist and blocklist to filter
   tests accordingly.
   """
-  allowlist = allowlist or whitelist
-  blocklist = blocklist or blacklist
+  # TODO(https://crbug.com/1098560): Add warnings before removing bc.
+  files_to_check = files_to_check or allowlist or whitelist
+  files_to_skip = files_to_skip or blocklist or blacklist
   unit_tests = []
   test_path = input_api.os_path.abspath(
       input_api.os_path.join(input_api.PresubmitLocalPath(), directory))
@@ -630,9 +632,9 @@ def GetUnitTestsInDirectory(
     fullpath = input_api.os_path.join(test_path, filename)
     if not input_api.os_path.isfile(fullpath):
       continue
-    if allowlist and not check(filename, allowlist):
+    if files_to_check and not check(filename, files_to_check):
       continue
-    if blocklist and check(filename, blocklist):
+    if files_to_skip and check(filename, files_to_skip):
       continue
     unit_tests.append(input_api.os_path.join(directory, filename))
     to_run += 1
@@ -641,8 +643,8 @@ def GetUnitTestsInDirectory(
   if not to_run:
     return [
         output_api.PresubmitPromptWarning(
-          'Out of %d files, found none that matched w=%r, b=%r in directory %s'
-          % (found, allowlist, blocklist, directory))
+          'Out of %d files, found none that matched c=%r, s=%r in directory %s'
+          % (found, files_to_check, files_to_skip, directory))
     ]
   return GetUnitTests(
       input_api, output_api, unit_tests, env, run_on_python2, run_on_python3)
@@ -700,22 +702,23 @@ def GetUnitTests(
 
 
 def GetUnitTestsRecursively(input_api, output_api, directory,
-                            allowlist=None, blocklist=None, run_on_python2=True,
-                            run_on_python3=True, whitelist=None,
-                            blacklist=None):
+                            files_to_check=None, files_to_skip=None,
+                            run_on_python2=True, run_on_python3=True,
+                            whitelist=None, blacklist=None, allowlist=None,
+                            blocklist=None):
   """Gets all files in the directory tree (git repo) that match the whitelist.
 
   Restricts itself to only find files within the Change's source repo, not
   dependencies.
   """
-  allowlist = allowlist or whitelist
-  blocklist = blocklist or blacklist
-  assert allowlist is not None
-  assert blocklist is not None
+  files_to_check = files_to_check or allowlist or whitelist
+  files_to_skip = files_to_skip or blocklist or blacklist
+  assert files_to_check is not None
+  assert files_to_skip is not None
 
   def check(filename):
-    return (any(input_api.re.match(f, filename) for f in allowlist) and
-            not any(input_api.re.match(f, filename) for f in blocklist))
+    return (any(input_api.re.match(f, filename) for f in files_to_check) and
+            not any(input_api.re.match(f, filename) for f in files_to_skip))
 
   tests = []
 
@@ -729,8 +732,8 @@ def GetUnitTestsRecursively(input_api, output_api, directory,
   if not to_run:
     return [
         output_api.PresubmitPromptWarning(
-          'Out of %d files, found none that matched w=%r, b=%r in directory %s'
-          % (found, allowlist, blocklist, directory))
+          'Out of %d files, found none that matched c=%r, s=%r in directory %s'
+          % (found, files_to_check, files_to_skip, directory))
     ]
 
   return GetUnitTests(input_api, output_api, tests,
@@ -814,7 +817,7 @@ def RunPythonUnitTests(input_api, *args, **kwargs):
       GetPythonUnitTests(input_api, *args, **kwargs), False)
 
 
-def _FetchAllFiles(input_api, allow_list, block_list):
+def _FetchAllFiles(input_api, files_to_check, files_to_skip):
   """Hack to fetch all files."""
   # We cannot use AffectedFiles here because we want to test every python
   # file on each single python change. It's because a change in a python file
@@ -836,24 +839,27 @@ def _FetchAllFiles(input_api, allow_list, block_list):
     # Passes dirnames in block list to speed up search.
     for item in dirnames[:]:
       filepath = input_api.os_path.join(dirpath, item)[path_len + 1:]
-      if Find(filepath, block_list):
+      if Find(filepath, files_to_skip):
         dirnames.remove(item)
     for item in filenames:
       filepath = input_api.os_path.join(dirpath, item)[path_len + 1:]
-      if Find(filepath, allow_list) and not Find(filepath, block_list):
+      if Find(filepath, files_to_check) and not Find(filepath, files_to_skip):
         files.append(filepath)
   return files
 
 
-def GetPylint(input_api, output_api, allow_list=None, block_list=None,
+def GetPylint(input_api, output_api, files_to_check=None, files_to_skip=None,
               disabled_warnings=None, extra_paths_list=None, pylintrc=None,
-              white_list=None, black_list=None):
+              white_list=None, black_list=None, allow_list=None,
+              block_list=None):
   """Run pylint on python files.
 
-  The default allow_list enforces looking only at *.py files.
+  The default files_to_check enforces looking only at *.py files.
   """
-  allow_list = tuple(allow_list or white_list or (r'.*\.py$',))
-  block_list = tuple(block_list or black_list or input_api.DEFAULT_BLOCK_LIST)
+  files_to_check = tuple(files_to_check or allow_list or white_list or
+                         (r'.*\.py$',))
+  files_to_skip = tuple(files_to_skip or block_list or black_list or
+                    input_api.DEFAULT_FILES_TO_SKIP)
   extra_paths_list = extra_paths_list or []
 
   if input_api.is_committing:
@@ -877,7 +883,7 @@ def GetPylint(input_api, output_api, allow_list=None, block_list=None,
         input_api.PresubmitLocalPath(), input_api.change.RepositoryRoot()), '')
     return input_api.re.escape(prefix) + regex
   src_filter = lambda x: input_api.FilterSourceFile(
-      x, map(rel_path, allow_list), map(rel_path, block_list))
+      x, map(rel_path, files_to_check), map(rel_path, files_to_skip))
   if not input_api.AffectedSourceFiles(src_filter):
     input_api.logging.info('Skipping pylint: no matching changes.')
     return []
@@ -890,7 +896,7 @@ def GetPylint(input_api, output_api, allow_list=None, block_list=None,
   if disabled_warnings:
     extra_args.extend(['-d', ','.join(disabled_warnings)])
 
-  files = _FetchAllFiles(input_api, allow_list, block_list)
+  files = _FetchAllFiles(input_api, files_to_check, files_to_skip)
   if not files:
     return []
   files.sort()
@@ -1184,15 +1190,15 @@ def PanProjectChecks(input_api, output_api,
   }
 
   results = []
-  # This code loads the default block list (e.g. third_party, experimental, etc)
-  # and add our block list (breakpad, skia and v8 are still not following
+  # This code loads the default skip list (e.g. third_party, experimental, etc)
+  # and add our skip list (breakpad, skia and v8 are still not following
   # google style and are not really living this repository).
   # See presubmit_support.py InputApi.FilterSourceFile for the (simple) usage.
-  block_list = input_api.DEFAULT_BLOCK_LIST + excluded_paths
-  allow_list = input_api.DEFAULT_ALLOW_LIST + text_files
-  sources = lambda x: input_api.FilterSourceFile(x, block_list=block_list)
+  files_to_skip = input_api.DEFAULT_FILES_TO_SKIP + excluded_paths
+  files_to_check = input_api.DEFAULT_FILES_TO_CHECK + text_files
+  sources = lambda x: input_api.FilterSourceFile(x, files_to_skip=files_to_skip)
   text_files = lambda x: input_api.FilterSourceFile(
-      x, block_list=block_list, allow_list=allow_list)
+      x, files_to_skip=files_to_skip, files_to_check=files_to_check)
 
   snapshot_memory = []
   def snapshot(msg):
