@@ -229,6 +229,7 @@ class GitWrapper(SCMWrapper):
     if self.out_cb:
       filter_kwargs['predicate'] = self.out_cb
     self.filter = gclient_utils.GitFilter(**filter_kwargs)
+    self._running_under_rosetta = None
 
   def GetCheckoutRoot(self):
     return scm.GIT.GetCheckoutRoot(self.checkout_path)
@@ -1361,13 +1362,42 @@ class GitWrapper(SCMWrapper):
       revision = self._Capture(['rev-parse', 'FETCH_HEAD'])
     return revision
 
+  def _IsRunningUnderRosetta(self):
+    if sys.platform != 'darwin':
+      return False
+    if self._running_under_rosetta is None:
+      # If we are running under Rosetta, platform.machine() is
+      # 'x86_64'; we need to use a sysctl to see if we're being
+      # translated.
+      import ctypes
+      libSystem = ctypes.CDLL("libSystem.dylib")
+      ret = ctypes.c_int(0)
+      size = ctypes.c_size_t(4)
+      e = libSystem.sysctlbyname(ctypes.c_char_p(b'sysctl.proc_translated'),
+                                 ctypes.byref(ret), ctypes.byref(size), None, 0)
+      self._running_under_rosetta = e == 0 and ret.value == 1
+    return self._running_under_rosetta
+
   def _Run(self, args, options, **kwargs):
     # Disable 'unused options' warning | pylint: disable=unused-argument
     kwargs.setdefault('cwd', self.checkout_path)
     kwargs.setdefault('filter_fn', self.filter)
     kwargs.setdefault('show_header', True)
     env = scm.GIT.ApplyEnvVars(kwargs)
+
     cmd = ['git'] + args
+
+    if self._IsRunningUnderRosetta():
+      # We currently only ship an Intel Python binary in depot_tools.
+      # Intel binaries run under Rosetta on ARM Macs, and by default
+      # prefer to run their subprocesses as Intel under Rosetta too.
+      # Intel git running under Rosetta has a bug where it fails to
+      # clone src.git (rdar://7868319), so until we ship a native
+      # ARM python3 binary, explicitly use `arch` to let git run
+      # the native ARM slice instead of the Intel slice.
+      # TODO(thakis): Remove this again once we ship an arm64 python3
+      # binary.
+      cmd = ['arch', '-arch', 'arm64'] + cmd
     gclient_utils.CheckCallAndFilter(cmd, env=env, **kwargs)
 
 
