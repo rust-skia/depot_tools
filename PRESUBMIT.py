@@ -38,7 +38,7 @@ def DepotToolsPylint(input_api, output_api):
     r'^tests/[^/]*\.py$',
     r'^recipe_modules/.*\.py$',  # Allow recursive search in recipe modules.
   ]
-  files_to_skip = list(input_api.DEFAULT_BLOCK_LIST)
+  files_to_skip = list(input_api.DEFAULT_FILES_TO_SKIP)
   if os.path.exists('.gitignore'):
     with open('.gitignore') as fh:
       lines = [l.strip() for l in fh.readlines()]
@@ -56,8 +56,8 @@ def DepotToolsPylint(input_api, output_api):
   return input_api.canned_checks.GetPylint(
       input_api,
       output_api,
-      allow_list=files_to_check,
-      block_list=files_to_skip,
+      files_to_check=files_to_check,
+      files_to_skip=files_to_skip,
       disabled_warnings=disabled_warnings)
 
 
