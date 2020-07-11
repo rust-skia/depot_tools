@@ -1241,8 +1241,8 @@ class InputApiUnittest(PresubmitTestsBase):
     self.assertEqual(got_files[4].LocalPath(), presubmit.normpath(files[4][1]))
     self.assertEqual(got_files[5].LocalPath(), presubmit.normpath(files[5][1]))
     self.assertEqual(got_files[6].LocalPath(), presubmit.normpath(files[6][1]))
-    # Ignores weird because of whitelist, third_party because of blacklist,
-    # binary isn't a text file and beingdeleted doesn't exist. The rest is
+    # Ignores weird because of check_list, third_party because of skip_list,
+    # binary isn't a text file and being deleted doesn't exist. The rest is
     # outside foo/.
     rhs_lines = [x for x in input_api.RightHandSideLines(None)]
     self.assertEqual(len(rhs_lines), 14)
@@ -1298,7 +1298,7 @@ class InputApiUnittest(PresubmitTestsBase):
     self.assertEqual(got_files[2].LocalPath(), presubmit.normpath(files[5][1]))
     self.assertEqual(got_files[3].LocalPath(), presubmit.normpath(files[7][1]))
 
-  def testDefaultWhiteListBlackListFilters(self):
+  def testDefaultFilesToCheckFilesToSkipFilters(self):
     def f(x):
       return presubmit.AffectedFile(x, 'M', self.fake_root_dir, None)
     files = [
@@ -3186,8 +3186,8 @@ the current line as well!
         input_api,
         presubmit.OutputApi,
         'random_directory',
-        whitelist=['^a$', '^b$'],
-        blacklist=['a'])
+        files_to_check=['^a$', '^b$'],
+        files_to_skip=['a'])
     self.assertEqual(1, len(results))
     self.assertEqual(
         presubmit.OutputApi.PresubmitNotifyResult, results[0].__class__)
