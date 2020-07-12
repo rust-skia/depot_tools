@@ -204,7 +204,7 @@ class FakeReposBase(object):
 
 class FakeRepos(FakeReposBase):
   """Implements populateGit()."""
-  NB_GIT_REPOS = 16
+  NB_GIT_REPOS = 17
 
   def populateGit(self):
     # Testing:
@@ -710,6 +710,19 @@ hooks = [{
         }]"""),
       'relative.py': 'pass',
       'origin': 'git/repo_16@2\n'
+    })
+    # A repo with a gclient_gn_args_file and use_relative_paths
+    self._commit_git('repo_17', {
+      'DEPS': textwrap.dedent("""\
+        use_relative_paths=True
+        vars = {
+          'toto': 'tata',
+        }
+        gclient_gn_args_file = 'repo17_gclient.args'
+        gclient_gn_args = [
+          'toto',
+        ]"""),
+      'origin': 'git/repo_17@2\n'
     })
 
 class FakeRepoSkiaDEPS(FakeReposBase):

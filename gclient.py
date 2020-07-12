@@ -427,6 +427,8 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     # The actual revision we ended up getting, or None if that information is
     # unavailable
     self._got_revision = None
+    # Whether this dependency should use relative paths.
+    self._use_relative_paths = False
 
     # recursedeps is a mutable value that selectively overrides the default
     # 'no recursion' setting on a dep-by-dep basis.
@@ -751,9 +753,9 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     # (and therefore set self.relative on this Dependency object), then we
     # want to modify the deps and recursedeps by prepending the parent
     # directory of this dependency.
-    use_relative_paths = local_scope.get('use_relative_paths', False)
+    self._use_relative_paths = local_scope.get('use_relative_paths', False)
     rel_prefix = None
-    if use_relative_paths:
+    if self._use_relative_paths:
       rel_prefix = self.name
     elif self._relative:
       rel_prefix = os.path.dirname(self.name)
@@ -788,13 +790,13 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     deps = local_scope.get('deps', {})
     deps_to_add = self._deps_to_objects(
-        self._postprocess_deps(deps, rel_prefix), use_relative_paths)
+        self._postprocess_deps(deps, rel_prefix), self._use_relative_paths)
 
     # compute which working directory should be used for hooks
     use_relative_hooks = local_scope.get('use_relative_hooks', False)
     hooks_cwd = self.root.root_dir
     if use_relative_hooks:
-      if not use_relative_paths:
+      if not self._use_relative_paths:
         raise gclient_utils.Error(
             'ParseDepsFile(%s): use_relative_hooks must be used with '
             'use_relative_paths' % self.name)
@@ -1036,7 +1038,13 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       elif isinstance(value, basestring):
         value = gclient_eval.EvaluateCondition(value, variables)
       lines.append('%s = %s' % (arg, ToGNString(value)))
-    with open(os.path.join(self.root.root_dir, self._gn_args_file), 'wb') as f:
+
+    # When use_relative_paths is set, gn_args_file is relative to this DEPS
+    path_prefix = self.root.root_dir
+    if self._use_relative_paths:
+      path_prefix = self.name
+
+    with open(os.path.join(path_prefix, self._gn_args_file), 'wb') as f:
       f.write('\n'.join(lines).encode('utf-8', 'replace'))
 
   @gclient_utils.lockedmethod
