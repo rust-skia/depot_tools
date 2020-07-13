@@ -1042,7 +1042,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     # When use_relative_paths is set, gn_args_file is relative to this DEPS
     path_prefix = self.root.root_dir
     if self._use_relative_paths:
-      path_prefix = self.name
+      path_prefix = os.path.join(path_prefix, self.name)
 
     with open(os.path.join(path_prefix, self._gn_args_file), 'wb') as f:
       f.write('\n'.join(lines).encode('utf-8', 'replace'))
