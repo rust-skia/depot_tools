@@ -69,6 +69,58 @@ infra/tools/bb/windows-amd64
 	git_revision:165c851a5838dd48e66240a0de3da872b4b31d01
 	UN8p616-kb_iyjOwoBcKAHGIam0vWj6ZmcvFXUi_rfQC
 
+infra/tools/dirmd/linux-386
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	i8AxMINw8sYCfckN5Lgba22MGvO6yf_FXWDGA_euOSwC
+
+infra/tools/dirmd/linux-amd64
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	pvjoOmhcSq16gF13b-Bft7KDR2hLYdJfs0MBMP7F0cUC
+
+infra/tools/dirmd/linux-arm64
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	IjcO2JNOdQsKcuGuxR4DGqEj-JQ7hTi1g2tx9TgjWn4C
+
+infra/tools/dirmd/linux-armv6l
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	tvTqbHTaCR3MWU1etWr6teuTT7ef7xeTy_GpK9ByBToC
+
+infra/tools/dirmd/linux-mips64
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	ZUUCn70LVG4vXgL20cutzjDTNUo_F7DiX04iFdB7HgIC
+
+infra/tools/dirmd/linux-mips64le
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	k7Qm6X7GI6IXy0l_-Ri587qiqNgTl6NTmZZAl1_uUJkC
+
+infra/tools/dirmd/linux-mipsle
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	Jblxsc0UWRd8QjBABNHHpwTEUe1UnXsG7TBdF70BkiQC
+
+infra/tools/dirmd/linux-ppc64
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	Yvp4Zm3us6ofy6RLUrFmh_yozBB8rsl8JnrwofmWj6oC
+
+infra/tools/dirmd/linux-ppc64le
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	JNENifIdU-XeHw84T0l-naK8ykCg50mOaDQd3ay48iwC
+
+infra/tools/dirmd/linux-s390x
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	wfeMslQfJUy0P3qVm5M5DSzQ1fN2bcAbOFJxT07NyfcC
+
+infra/tools/dirmd/mac-amd64
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	T5K00admsvtWkcjUfzEnecCg3R_Q4AHimHuLEToGRaUC
+
+infra/tools/dirmd/windows-386
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	qNIdQTgBDKYsRqr6Bx9ofESmrnJtSwMtkKTP8WMk770C
+
+infra/tools/dirmd/windows-amd64
+	git_revision:eb8abb9fc00cf4f323762cb3914c4b800980e0e4
+	JjaVGSBCtT5KA2JPZIzvKngilEjB7GQ_snDJFsMRMTwC
+
 infra/tools/luci-auth/linux-386
 	git_revision:510e7187aa80b1b0d490f069437d119c28d1ea48
 	-m2PUUpfbRxMfOwF0sHs1U4ZmtJ1uBfN2A9uxGhVqhQC
