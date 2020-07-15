@@ -159,6 +159,14 @@ def CheckDoNotSubmitInFiles(input_api, output_api):
   return []
 
 
+def GetCppLintFilters(lint_filters=None):
+  filters = OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS[:]
+  if lint_filters is None:
+    lint_filters = OFF_BY_DEFAULT_LINT_FILTERS
+  filters.extend(lint_filters)
+  return filters
+
+
 def CheckChangeLintsClean(input_api, output_api, source_file_filter=None,
                           lint_filters=None, verbose_level=None):
   """Checks that all '.cc' and '.h' files pass cpplint.py."""
@@ -170,11 +178,7 @@ def CheckChangeLintsClean(input_api, output_api, source_file_filter=None,
   # pylint: disable=protected-access
   cpplint._cpplint_state.ResetErrorCounts()
 
-  filters = OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS[:]
-  if lint_filters is None:
-    lint_filters = OFF_BY_DEFAULT_LINT_FILTERS
-  filters.extend(lint_filters)
-  cpplint._SetFilters(','.join(filters))
+  cpplint._SetFilters(','.join(GetCppLintFilters(lint_filters)))
 
   # We currently are more strict with normal code than unit tests; 4 and 5 are
   # the verbosity level that would normally be passed to cpplint.py through

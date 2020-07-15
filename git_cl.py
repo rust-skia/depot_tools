@@ -44,6 +44,7 @@ import metrics
 import metrics_utils
 import owners
 import owners_finder
+import presubmit_canned_checks
 import presubmit_support
 import scm
 import setup_color
@@ -3780,10 +3781,9 @@ def CMDlint(parser, args):
       print('Cannot lint an empty CL')
       return 1
 
-    # Process cpplints arguments if any.
-    command = args + files
-    if options.filter:
-      command = ['--filter=' + ','.join(options.filter)] + command
+    # Process cpplint arguments, if any.
+    filters = presubmit_canned_checks.GetCppLintFilters(options.filter)
+    command = ['--filter=' + ','.join(filters)] + args + files
     filenames = cpplint.ParseArguments(command)
 
     include_regex = re.compile(settings.GetLintRegex())
