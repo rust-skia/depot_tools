@@ -1014,6 +1014,62 @@ def CheckBuildbotPendingBuilds(input_api, output_api, url, max_pendings,
   return []
 
 
+def CheckDirMetadataFormat(input_api, output_api):
+  file_filter = lambda f: input_api.basename(f.LocalPath()) == 'DIR_METADATA'
+  affected_files = set([
+      f.LocalPath()
+      for f in input_api.change.AffectedFiles(
+          include_deletes=False, file_filter=file_filter)
+  ])
+  if not affected_files:
+    return []
+
+  name = 'Validate DIR_METADATA files'
+  dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
+  kwargs = {}
+  if input_api.is_windows:
+    # Needed to be able to resolve 'dirmd.bat'.
+    kwargs['shell'] = True
+
+  cmd = [dirmd_bin, 'validate'] + sorted(affected_files)
+  return [input_api.Command(
+      name, cmd, kwargs, output_api.PresubmitError)]
+
+
+def CheckOwnersDirMetadataExclusive(input_api, output_api):
+  """Check that metadata in OWNERS files and DIR_METADATA files are mutually
+  exclusive.
+  """
+  _METADATA_LINE_RE = input_api.re.compile(
+      r'^#\s*(TEAM|COMPONENT|OS|WPT-NOTIFY)+\s*:\s*\S+$',
+      input_api.re.MULTILINE)
+  file_filter = (
+      lambda f: input_api.basename(f.LocalPath()) in ('OWNERS', 'DIR_METADATA'))
+  affected_dirs = set([
+      input_api.os_path.dirname(f.AbsoluteLocalPath())
+      for f in input_api.change.AffectedFiles(
+          include_deletes=False, file_filter=file_filter)
+  ])
+
+  errors = []
+  for path in affected_dirs:
+    owners_path = input_api.os_path.join(path, 'OWNERS')
+    dir_metadata_path = input_api.os_path.join(path, 'DIR_METADATA')
+    if (not input_api.os_path.isfile(dir_metadata_path)
+        or not input_api.os_path.isfile(owners_path)):
+      continue
+    if _METADATA_LINE_RE.search(input_api.ReadFile(owners_path)):
+      errors.append(owners_path)
+
+  if not errors:
+    return []
+
+  return [output_api.PresubmitError(
+      'The following OWNERS files should contain no metadata, as there is a '
+      'DIR_METADATA file present in the same directory:\n'
+      + '\n'.join(errors))]
+
+
 def CheckOwnersFormat(input_api, output_api):
   affected_files = set([
       f.LocalPath()

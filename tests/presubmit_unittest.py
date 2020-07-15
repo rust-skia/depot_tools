@@ -2515,18 +2515,75 @@ the current line as well!
     self.assertEqual(results[0].__class__,
         presubmit.OutputApi.PresubmitNotifyResult)
 
-  def GetInputApiWithOWNERS(self, owners_content):
-    affected_file = mock.MagicMock(presubmit.GitAffectedFile)
-    affected_file.LocalPath = lambda: 'OWNERS'
-    affected_file.Action = lambda: 'M'
-
+  def GetInputApiWithFiles(self, files):
     change = mock.MagicMock(presubmit.Change)
-    change.AffectedFiles = lambda **_: [affected_file]
+    change.AffectedFiles = lambda *a, **kw: (
+        presubmit.Change.AffectedFiles(change, *a, **kw))
+    change._affected_files = []
+    for path, (action, _) in files.items():
+      affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+      affected_file.AbsoluteLocalPath.return_value = path
+      affected_file.LocalPath.return_value = path
+      affected_file.Action.return_value = action
+      change._affected_files.append(affected_file)
 
     input_api = self.MockInputApi(None, False)
     input_api.change = change
+    input_api.ReadFile = lambda path: files[path][1]
+    input_api.basename = os.path.basename
+    input_api.is_windows = sys.platform.startswith('win')
 
-    os.path.exists = lambda _: True
+    os.path.exists = lambda path: path in files and files[path][0] != 'D'
+    os.path.isfile = os.path.exists
+
+    return input_api
+
+  def testCheckDirMetadataFormat(self):
+    input_api = self.GetInputApiWithFiles({
+        'DIR_METADATA': ('M', ''),
+        'a/DIR_METADATA': ('M', ''),
+        'a/b/OWNERS': ('M', ''),
+        'c/DIR_METADATA': ('D', ''),
+    })
+
+    dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
+    expected_cmd = [dirmd_bin, 'validate', 'DIR_METADATA', 'a/DIR_METADATA']
+
+    commands = presubmit_canned_checks.CheckDirMetadataFormat(
+        input_api, presubmit.OutputApi)
+    self.assertEqual(1, len(commands))
+    self.assertEqual(expected_cmd, commands[0].cmd)
+
+  def testCheckOwnersDirMetadataExclusiveWorks(self):
+    input_api = self.GetInputApiWithFiles({
+        'only-owners/OWNERS': ('M', '# COMPONENT: Monorail>Component'),
+        'only-dir-metadata/DIR_METADATA': ('M', ''),
+        'owners-has-no-metadata/DIR_METADATA': ('M', ''),
+        'owners-has-no-metadata/OWNERS': ('M', 'no-metadata'),
+        'deleted-owners/OWNERS': ('D', None),
+        'deleted-owners/DIR_METADATA': ('M', ''),
+        'deleted-dir-metadata/OWNERS': ('M', '# COMPONENT: Monorail>Component'),
+        'deleted-dir-metadata/DIR_METADATA': ('D', None),
+        'non-metadata-comment/OWNERS': ('M', '# WARNING: something.'),
+        'non-metadata-comment/DIR_METADATA': ('M', ''),
+    })
+    self.assertEqual(
+        [],
+        presubmit_canned_checks.CheckOwnersDirMetadataExclusive(
+            input_api, presubmit.OutputApi))
+
+  def testCheckOwnersDirMetadataExclusiveFails(self):
+    input_api = self.GetInputApiWithFiles({
+      'DIR_METADATA': ('M', ''),
+      'OWNERS': ('M', '# COMPONENT: Monorail>Component'),
+    })
+    results = presubmit_canned_checks.CheckOwnersDirMetadataExclusive(
+        input_api, presubmit.OutputApi)
+    self.assertEqual(1, len(results))
+    self.assertIsInstance(results[0], presubmit.OutputApi.PresubmitError)
+
+  def GetInputApiWithOWNERS(self, owners_content):
+    input_api = self.GetInputApiWithFiles({'OWNERS': ('M', owners_content)})
 
     owners_file = StringIO(owners_content)
     fopen = lambda *args: owners_file
