@@ -3786,18 +3786,20 @@ def CMDlint(parser, args):
       command = ['--filter=' + ','.join(options.filter)] + command
     filenames = cpplint.ParseArguments(command)
 
-    white_regex = re.compile(settings.GetLintRegex())
-    black_regex = re.compile(settings.GetLintIgnoreRegex())
+    include_regex = re.compile(settings.GetLintRegex())
+    ignore_regex = re.compile(settings.GetLintIgnoreRegex())
     extra_check_functions = [cpplint_chromium.CheckPointerDeclarationWhitespace]
     for filename in filenames:
-      if white_regex.match(filename):
-        if black_regex.match(filename):
-          print('Ignoring file %s' % filename)
-        else:
-          cpplint.ProcessFile(filename, cpplint._cpplint_state.verbose_level,
-                              extra_check_functions)
-      else:
+      if not include_regex.match(filename):
         print('Skipping file %s' % filename)
+        continue
+
+      if ignore_regex.match(filename):
+        print('Ignoring file %s' % filename)
+        continue
+
+      cpplint.ProcessFile(filename, cpplint._cpplint_state.verbose_level,
+                          extra_check_functions)
   finally:
     os.chdir(previous_cwd)
   print('Total errors found: %d\n' % cpplint._cpplint_state.error_count)
