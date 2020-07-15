@@ -771,8 +771,11 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
       if not path.isdir(sln_dir):
         git('clone', '--no-checkout', '--local', '--shared', mirror_dir,
             sln_dir)
-        # Detach HEAD to be consistent with the non-clone case
-        git('checkout', 'master', '--detach', cwd=sln_dir)
+        # When bot_update clones a git repository, it results in HEAD referring
+        # to master in contrast with the non-clone case, which results in a
+        # detached HEAD. This prevents fetching the default branch so detach the
+        # HEAD after cloning.
+        git('checkout', 'HEAD', '--detach', cwd=sln_dir)
         _git_disable_gc(sln_dir)
       else:
         _git_disable_gc(sln_dir)
