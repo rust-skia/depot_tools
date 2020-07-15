@@ -1043,6 +1043,14 @@ class GitWrapper(SCMWrapper):
       gclient_utils.safe_makedirs(self.checkout_path)
       gclient_utils.safe_rename(os.path.join(tmp_dir, '.git'),
                                 os.path.join(self.checkout_path, '.git'))
+      # TODO(https://github.com/git-for-windows/git/issues/2569): Remove once
+      # fixed.
+      if sys.platform.startswith('win'):
+        try:
+          self._Run(['config', '--unset', 'core.worktree'], options,
+                    cwd=self.checkout_path)
+        except subprocess2.CalledProcessError:
+          pass
     except:
       traceback.print_exc(file=self.out_fh)
       raise
