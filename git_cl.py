@@ -4288,7 +4288,7 @@ def GetTreeStatus(url=None):
   'unknown' or 'unset'."""
   url = url or settings.GetTreeStatusUrl(error_ok=True)
   if url:
-    status = urllib.request.urlopen(url).read().lower()
+    status = str(urllib.request.urlopen(url).read().lower())
     if status.find('closed') != -1 or status == '0':
       return 'closed'
     elif status.find('open') != -1 or status == '1':
@@ -4301,7 +4301,7 @@ def GetTreeStatusReason():
   """Fetches the tree status from a json url and returns the message
   with the reason for the tree to be opened or closed."""
   url = settings.GetTreeStatusUrl()
-  json_url = urlparse.urljoin(url, '/current?format=json')
+  json_url = urllib.parse.urljoin(url, '/current?format=json')
   connection = urllib.request.urlopen(json_url)
   status = json.loads(connection.read())
   connection.close()
