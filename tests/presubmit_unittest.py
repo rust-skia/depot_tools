@@ -179,6 +179,7 @@ index fe3de7b..54ae6e1 100755
     mock.patch('os.path.isfile').start()
     mock.patch('os.remove').start()
     mock.patch('presubmit_support._parse_files').start()
+    mock.patch('presubmit_support.rdb_wrapper.setup_rdb').start()
     mock.patch('presubmit_support.sigint_handler').start()
     mock.patch('presubmit_support.time_time', return_value=0).start()
     mock.patch('presubmit_support.warn').start()
@@ -523,6 +524,20 @@ class PresubmitUnittest(PresubmitTestsBase):
       'def CheckChangeOnCommit(input_api, output_api):\n'
       '  return "foo"',
       fake_presubmit)
+
+    self.assertFalse(executer.ExecPresubmitScript(
+      'def CheckChangeOnCommit(input_api, output_api):\n'
+      '  results = []\n'
+      '  results.extend(input_api.canned_checks.CheckChangeHasBugField(\n'
+      '    input_api, output_api))\n'
+      '  results.extend(input_api.canned_checks.CheckChangeHasNoUnwantedTags(\n'
+      '    input_api, output_api))\n'
+      '  results.extend(input_api.canned_checks.CheckChangeHasDescription(\n'
+      '    input_api, output_api))\n'
+      '  return results\n',
+    fake_presubmit))
+
+    presubmit.rdb_wrapper.setup_rdb.assert_called()
 
     self.assertRaises(presubmit.PresubmitFailure,
       executer.ExecPresubmitScript,

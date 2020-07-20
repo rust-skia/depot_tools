@@ -1273,9 +1273,8 @@ class Changelist(object):
 
     return args
 
-  def RunHook(
-      self, committing, may_prompt, verbose, parallel, upstream, description,
-      all_files):
+  def RunHook(self, committing, may_prompt, verbose, parallel, upstream,
+              description, all_files, resultdb=False):
     """Calls sys.exit() if the hook fails; returns a HookResults otherwise."""
     args = self._GetCommonPresubmitArgs(verbose, upstream)
     args.append('--commit' if committing else '--upload')
@@ -1294,8 +1293,14 @@ class Changelist(object):
         args.extend(['--description_file', description_file])
 
         start = time_time()
-        p = subprocess2.Popen(['vpython', PRESUBMIT_SUPPORT] + args)
+
+        cmd = ['vpython', PRESUBMIT_SUPPORT] + args
+        if resultdb:
+          cmd = ['rdb', 'stream', '-new'] + cmd
+
+        p = subprocess2.Popen(cmd)
         exit_code = p.wait()
+
         metrics.collector.add_repeated('sub_commands', {
           'command': 'presubmit',
           'execution_time': time_time() - start,
@@ -1408,7 +1413,8 @@ class Changelist(object):
           parallel=options.parallel,
           upstream=base_branch,
           description=change_desc.description,
-          all_files=False)
+          all_files=False,
+          resultdb=options.resultdb)
       self.ExtendCC(hook_results['more_cc'])
 
     print_stats(git_diff_args)
@@ -1899,7 +1905,8 @@ class Changelist(object):
           parallel=parallel,
           upstream=upstream,
           description=description,
-          all_files=False)
+          all_files=False,
+          resultdb=False)
 
     self.SubmitIssue(wait_for_merge=True)
     print('Issue %s has been submitted.' % self.GetIssueURL())
@@ -3820,6 +3827,9 @@ def CMDpresubmit(parser, args):
   parser.add_option('--parallel', action='store_true',
                     help='Run all tests specified by input_api.RunTests in all '
                          'PRESUBMIT files in parallel.')
+  parser.add_option('--resultdb', action='store_true',
+                    help='Run presubmit checks in the ResultSink environment '
+                         'and send results to the ResultDB database.')
   options, args = parser.parse_args(args)
 
   if not options.force and git_common.is_dirty_git_tree('presubmit'):
@@ -3845,7 +3855,8 @@ def CMDpresubmit(parser, args):
       parallel=options.parallel,
       upstream=base_branch,
       description=description,
-      all_files=options.all)
+      all_files=options.all,
+      resultdb=options.resultdb)
   return 0
 
 
@@ -4052,6 +4063,9 @@ def CMDupload(parser, args):
                          'or a new commit is created.')
   parser.add_option('--git-completion-helper', action="store_true",
                     help=optparse.SUPPRESS_HELP)
+  parser.add_option('--resultdb', action='store_true',
+                    help='Run presubmit checks in the ResultSink environment '
+                         'and send results to the ResultDB database.')
 
   orig_args = args
   (options, args) = parser.parse_args(args)

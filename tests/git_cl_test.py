@@ -1004,7 +1004,7 @@ class TestGitCl(unittest.TestCase):
     mock.patch('git_cl.gclient_utils.RunEditor',
               lambda *_, **__: self._mocked_call(['RunEditor'])).start()
     mock.patch('git_cl.DownloadGerritHook', lambda force: self._mocked_call(
-      'DownloadGerritHook', force)).start()
+               'DownloadGerritHook', force)).start()
     mock.patch('git_cl.gclient_utils.FileRead',
               lambda path: self._mocked_call(['FileRead', path])).start()
     mock.patch('git_cl.gclient_utils.FileWrite',
@@ -2691,7 +2691,8 @@ class ChangelistTest(unittest.TestCase):
         parallel=True,
         upstream='upstream',
         description='description',
-        all_files=True)
+        all_files=True,
+        resultdb=False)
 
     self.assertEqual(expected_results, results)
     subprocess2.Popen.assert_called_once_with([
@@ -2742,7 +2743,8 @@ class ChangelistTest(unittest.TestCase):
         parallel=False,
         upstream='upstream',
         description='description',
-        all_files=False)
+        all_files=False,
+        resultdb=False)
 
     self.assertEqual(expected_results, results)
     subprocess2.Popen.assert_called_once_with([
@@ -2761,6 +2763,44 @@ class ChangelistTest(unittest.TestCase):
       'exit_code': 0,
     })
 
+  def testRunHook_FewerOptionsResultDB(self):
+    expected_results = {
+      'more_cc': ['more@example.com', 'cc@example.com'],
+      'should_continue': True,
+    }
+    gclient_utils.FileRead.return_value = json.dumps(expected_results)
+    git_cl.time_time.side_effect = [100, 200]
+    mockProcess = mock.Mock()
+    mockProcess.wait.return_value = 0
+    subprocess2.Popen.return_value = mockProcess
+
+    git_cl.Changelist.GetAuthor.return_value = None
+    git_cl.Changelist.GetIssue.return_value = None
+    git_cl.Changelist.GetPatchset.return_value = None
+    git_cl.Changelist.GetCodereviewServer.return_value = None
+
+    cl = git_cl.Changelist()
+    results = cl.RunHook(
+        committing=False,
+        may_prompt=False,
+        verbose=0,
+        parallel=False,
+        upstream='upstream',
+        description='description',
+        all_files=False,
+        resultdb=True)
+
+    self.assertEqual(expected_results, results)
+    subprocess2.Popen.assert_called_once_with([
+        'rdb', 'stream', '-new',
+        'vpython', 'PRESUBMIT_SUPPORT',
+        '--root', 'root',
+        '--upstream', 'upstream',
+        '--upload',
+        '--json_output', '/tmp/fake-temp2',
+        '--description_file', '/tmp/fake-temp1',
+    ])
+
   @mock.patch('sys.exit', side_effect=SystemExitMock)
   def testRunHook_Failure(self, _mock):
     git_cl.time_time.side_effect = [100, 200]
@@ -2777,7 +2817,8 @@ class ChangelistTest(unittest.TestCase):
           parallel=True,
           upstream='upstream',
           description='description',
-          all_files=True)
+          all_files=True,
+          resultdb=False)
 
     sys.exit.assert_called_once_with(2)
 
@@ -2889,7 +2930,8 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         parallel=None,
         upstream='upstream',
         description='fetch description',
-        all_files=None)
+        all_files=None,
+        resultdb=None)
 
   def testNoIssue(self):
     git_cl.Changelist.GetIssue.return_value = None
@@ -2901,7 +2943,8 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         parallel=None,
         upstream='upstream',
         description='get description',
-        all_files=None)
+        all_files=None,
+        resultdb=None)
 
   def testCustomBranch(self):
     self.assertEqual(0, git_cl.main(['presubmit', 'custom_branch']))
@@ -2912,11 +2955,13 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         parallel=None,
         upstream='custom_branch',
         description='fetch description',
-        all_files=None)
+        all_files=None,
+        resultdb=None)
 
   def testOptions(self):
     self.assertEqual(
-        0, git_cl.main(['presubmit', '-v', '-v', '--all', '--parallel', '-u']))
+        0, git_cl.main(['presubmit', '-v', '-v', '--all', '--parallel', '-u',
+                          '--resultdb']))
     git_cl.Changelist.RunHook.assert_called_once_with(
         committing=False,
         may_prompt=False,
@@ -2924,8 +2969,8 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         parallel=True,
         upstream='upstream',
         description='fetch description',
-        all_files=True)
-
+        all_files=True,
+        resultdb=True)
 
 class CMDTryResultsTestCase(CMDTestCaseBase):
   _DEFAULT_REQUEST = {
