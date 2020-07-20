@@ -389,7 +389,7 @@ class GclientTest(trial_dir.TestCase):
 
   def testRecurseDepsAndHooksCwd(self):
     """Verifies that hooks run in the correct directory with our without
-    use_relative_hooks"""
+    use_relative_paths"""
     write(
         '.gclient',
         'solutions = [\n'
@@ -417,7 +417,6 @@ class GclientTest(trial_dir.TestCase):
     write(
         os.path.join('foo', 'baz', 'DEPS'),
         'use_relative_paths=True\n'
-        'use_relative_hooks=True\n'
         'hooks = [{\n'
         '  "name": "lazors",\n'
         '  "pattern": ".",\n'

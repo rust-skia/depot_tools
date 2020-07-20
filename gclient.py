@@ -793,13 +793,12 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         self._postprocess_deps(deps, rel_prefix), self._use_relative_paths)
 
     # compute which working directory should be used for hooks
-    use_relative_hooks = local_scope.get('use_relative_hooks', False)
+    if local_scope.get('use_relative_hooks', False):
+      print('use_relative_hooks is deprecated, please remove it from DEPS. ' +
+            '(it was merged in use_relative_paths)')
+
     hooks_cwd = self.root.root_dir
-    if use_relative_hooks:
-      if not self._use_relative_paths:
-        raise gclient_utils.Error(
-            'ParseDepsFile(%s): use_relative_hooks must be used with '
-            'use_relative_paths' % self.name)
+    if self._use_relative_paths:
       hooks_cwd = os.path.join(hooks_cwd, self.name)
       logging.warning('Updating hook base working directory to %s.',
                       hooks_cwd)

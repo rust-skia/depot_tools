@@ -688,7 +688,7 @@ hooks = [{
       'origin': 'git/repo_14@2\n'
     })
 
-    # A repo with a hook to be recursed in, without use_relative_hooks
+    # A repo with a hook to be recursed in, without use_relative_paths
     self._commit_git('repo_15', {
       'DEPS': textwrap.dedent("""\
         hooks = [{
@@ -698,11 +698,10 @@ hooks = [{
         }]"""),
       'origin': 'git/repo_15@2\n'
     })
-    # A repo with a hook to be recursed in, with use_relative_hooks
+    # A repo with a hook to be recursed in, with use_relative_paths
     self._commit_git('repo_16', {
       'DEPS': textwrap.dedent("""\
         use_relative_paths=True
-        use_relative_hooks=True
         hooks = [{
           "name": "relative_cwd",
           "pattern": ".",
