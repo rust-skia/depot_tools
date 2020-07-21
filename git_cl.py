@@ -175,9 +175,8 @@ def RunCommand(args, error_ok=False, error_message=None, shell=False, **kwargs):
   except subprocess2.CalledProcessError as e:
     logging.debug('Failed running %s', args)
     if not error_ok:
-      DieWithError(
-          'Command "%s" failed.\n%s' % (
-            ' '.join(args), error_message or e.stdout or ''))
+      message = error_message or e.stdout.decode('utf-8', 'replace') or ''
+      DieWithError('Command "%s" failed.\n%s' % (' '.join(args), message))
     return e.stdout.decode('utf-8', 'replace')
 
 
