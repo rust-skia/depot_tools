@@ -174,7 +174,7 @@ def GenTests(api):
   )
   yield (
       api.test('reset_root_solution_revision') +
-      api.properties(root_solution_revision='revision')
+      api.properties(root_solution_revision=api.bot_update.gen_revision('fake-revision'))
   )
   yield (
       api.test('gerrit_no_reset') +
