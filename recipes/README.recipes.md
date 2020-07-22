@@ -267,7 +267,7 @@ Returns (Path): The "depot_tools" root directory.
 
 #### **class [GclientApi](/recipes/recipe_modules/gclient/api.py#68)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&emsp; **@property**<br>&mdash; **def [DepsDiffException](/recipes/recipe_modules/gclient/api.py#426)(self):**
+&emsp; **@property**<br>&mdash; **def [DepsDiffException](/recipes/recipe_modules/gclient/api.py#422)(self):**
 
 &mdash; **def [\_\_call\_\_](/recipes/recipe_modules/gclient/api.py#78)(self, name, cmd, infra_step=True, \*\*kwargs):**
 
