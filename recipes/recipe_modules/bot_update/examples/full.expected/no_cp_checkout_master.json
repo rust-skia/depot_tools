@@ -15,8 +15,6 @@
       "--output_json",
       "/path/to/tmp/json",
       "--revision",
-      "got_revision@src",
-      "--revision",
       "src@refs/heads/master",
       "--refs",
       "refs/heads/master",

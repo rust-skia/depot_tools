@@ -96,6 +96,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       disable_syntax_validation=False,
                       patch_refs=None,
                       ignore_input_commit=False,
+                      add_blamelists=False,
                       set_output_commit=False,
                       step_test_data=None,
                       **kwargs):
@@ -112,6 +113,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
         such as bisect.
       ignore_input_commit: if True, ignore api.buildbucket.gitiles_commit.
         Exists for historical reasons. Please do not use.
+      add_blamelists: if True, add blamelist pins for all of the repos that had
+        revisions specified in the gclient config.
       set_output_commit: if True, mark the checked out commit as the
         primary output commit of this build, i.e. call
         api.buildbucket.set_output_gitiles_commit.
@@ -313,6 +316,18 @@ class BotUpdateApi(recipe_api.RecipeApi):
         if 'step_text' in result:
           step_text = result['step_text']
           step_result.presentation.step_text = step_text
+
+        if add_blamelists:
+          blamelist_pins = []
+          for name in revisions:
+            m = result['manifest'][name]
+            pin = {'id': m['revision']}
+            pin['host'], pin['project'] = (
+                self.m.gitiles.parse_repo_url(m['repository']))
+            blamelist_pins.append(pin)
+
+          result.blamelist_pins = blamelist_pins
+          self.m.milo.show_blamelist_for(blamelist_pins)
 
         # Set output commit of the build.
         if set_output_commit:

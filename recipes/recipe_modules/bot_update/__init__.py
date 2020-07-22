@@ -8,6 +8,7 @@ DEPS = [
     'recipe_engine/commit_position',
     'recipe_engine/cq',
     'recipe_engine/json',
+    'recipe_engine/milo',
     'recipe_engine/path',
     'recipe_engine/platform',
     'recipe_engine/properties',
