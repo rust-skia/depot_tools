@@ -795,7 +795,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     # compute which working directory should be used for hooks
     if local_scope.get('use_relative_hooks', False):
       print('use_relative_hooks is deprecated, please remove it from DEPS. ' +
-            '(it was merged in use_relative_paths)')
+            '(it was merged in use_relative_paths)', file=sys.stderr)
 
     hooks_cwd = self.root.root_dir
     if self._use_relative_paths:
