@@ -1373,7 +1373,7 @@ class Changelist(object):
 
     # Use the subject of the last commit as title by default.
     title = RunGit(['show', '-s', '--format=%s', 'HEAD']).strip()
-    if options.force:
+    if options.force or options.skip_title:
       return title
     user_title = gclient_utils.AskForData('Title for patchset [%s]: ' % title)
     return user_title or title
@@ -3989,6 +3989,10 @@ def CMDupload(parser, args):
                     help='file which contains message for patchset')
   parser.add_option('--title', '-t', dest='title',
                     help='title for patchset')
+  parser.add_option('-T', '--skip-title', action='store_true',
+                    dest='skip_title',
+                    help='Use the most recent commit message as the title of '
+                         'the patchset')
   parser.add_option('-r', '--reviewers',
                     action='append', default=[],
                     help='reviewer email addresses')
@@ -4095,6 +4099,9 @@ def CMDupload(parser, args):
        options.retry_failed].count(True) > 1):
     parser.error('Only one of --use-commit-queue, --cq-dry-run, or '
                  '--retry-failed is allowed.')
+
+  if options.skip_title and options.title:
+    parser.error('Only one of --title and --skip-title allowed.')
 
   if options.use_commit_queue:
     options.send_mail = True
