@@ -386,10 +386,11 @@ class GitWrapper(SCMWrapper):
 
     if not target_rev:
       raise gclient_utils.Error('A target revision for the patch must be given')
-    elif target_rev.startswith('refs/heads/'):
-      # If |target_rev| is in refs/heads/**, try first to find the corresponding
-      # remote ref for it, since |target_rev| might point to a local ref which
-      # is not up to date with the corresponding remote ref.
+    elif target_rev.startswith(('refs/heads/', 'refs/branch-heads')):
+      # If |target_rev| is in refs/heads/** or refs/branch-heads/**, try first
+      # to find the corresponding remote ref for it, since |target_rev| might
+      # point to a local ref which is not up to date with the corresponding
+      # remote ref.
       remote_ref = ''.join(scm.GIT.RefToRemoteRef(target_rev, self.remote))
       self.Print('Trying the corresponding remote ref for %r: %r\n' % (
           target_rev, remote_ref))
