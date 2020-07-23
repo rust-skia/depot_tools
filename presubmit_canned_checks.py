@@ -103,10 +103,14 @@ def CheckChangeWasUploaded(input_api, output_api):
 
 ### Content checks
 
-def CheckAuthorizedAuthor(input_api, output_api, bot_whitelist=None):
+def CheckAuthorizedAuthor(input_api, output_api, bot_allowlist=None,
+                          bot_whitelist=None):
   """For non-googler/chromites committers, verify the author's email address is
   in AUTHORS.
   """
+  # TODO(https://crbug.com/1098560): Add warnings before removing BC.
+  if bot_allowlist is None:
+    bot_allowlist = bot_whitelist
   if input_api.is_committing:
     error_type = output_api.PresubmitError
   else:
@@ -118,7 +122,7 @@ def CheckAuthorizedAuthor(input_api, output_api, bot_whitelist=None):
     return []
 
   # This is used for CLs created by trusted robot accounts.
-  if bot_whitelist and author in bot_whitelist:
+  if bot_allowlist and author in bot_allowlist:
     return []
 
   authors_path = input_api.os_path.join(
@@ -621,8 +625,11 @@ def GetUnitTestsInDirectory(
   tests accordingly.
   """
   # TODO(https://crbug.com/1098560): Add warnings before removing bc.
-  files_to_check = files_to_check or allowlist or whitelist
-  files_to_skip = files_to_skip or blocklist or blacklist
+  if files_to_check is None:
+    files_to_check = allowlist or whitelist
+  if files_to_skip is None:
+    files_to_skip = blocklist or blacklist
+
   unit_tests = []
   test_path = input_api.os_path.abspath(
       input_api.os_path.join(input_api.PresubmitLocalPath(), directory))
@@ -715,8 +722,11 @@ def GetUnitTestsRecursively(input_api, output_api, directory,
   Restricts itself to only find files within the Change's source repo, not
   dependencies.
   """
-  files_to_check = files_to_check or allowlist or whitelist
-  files_to_skip = files_to_skip or blocklist or blacklist
+  # TODO(https://crbug.com/1098560): Add warnings before removing BC.
+  if files_to_check is None:
+    files_to_check = allowlist or whitelist
+  if files_to_skip is None:
+    files_to_skip = blocklist or blacklist
   assert files_to_check is not None
   assert files_to_skip is not None
 
