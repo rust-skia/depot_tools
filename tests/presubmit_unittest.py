@@ -2559,10 +2559,12 @@ the current line as well!
         'a/DIR_METADATA': ('M', ''),
         'a/b/OWNERS': ('M', ''),
         'c/DIR_METADATA': ('D', ''),
+        'd/unrelated': ('M', ''),
     })
 
     dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
-    expected_cmd = [dirmd_bin, 'validate', 'DIR_METADATA', 'a/DIR_METADATA']
+    expected_cmd = [
+        dirmd_bin, 'validate', 'DIR_METADATA', 'a/DIR_METADATA', 'a/b/OWNERS']
 
     commands = presubmit_canned_checks.CheckDirMetadataFormat(
         input_api, presubmit.OutputApi)

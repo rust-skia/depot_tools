@@ -1029,7 +1029,10 @@ def CheckBuildbotPendingBuilds(input_api, output_api, url, max_pendings,
 
 
 def CheckDirMetadataFormat(input_api, output_api):
-  file_filter = lambda f: input_api.basename(f.LocalPath()) == 'DIR_METADATA'
+  # TODO(crbug.com/1102997): Remove OWNERS once DIR_METADATA migration is
+  # complete.
+  file_filter = lambda f: (
+      input_api.basename(f.LocalPath()) in ('DIR_METADATA', 'OWNERS'))
   affected_files = set([
       f.LocalPath()
       for f in input_api.change.AffectedFiles(
@@ -1038,7 +1041,7 @@ def CheckDirMetadataFormat(input_api, output_api):
   if not affected_files:
     return []
 
-  name = 'Validate DIR_METADATA files'
+  name = 'Validate metadata in OWNERS and DIR_METADATA files'
   dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
   kwargs = {}
   if input_api.is_windows:
