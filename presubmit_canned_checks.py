@@ -1028,7 +1028,7 @@ def CheckBuildbotPendingBuilds(input_api, output_api, url, max_pendings,
   return []
 
 
-def CheckDirMetadataFormat(input_api, output_api):
+def CheckDirMetadataFormat(input_api, output_api, dirmd_bin=None):
   # TODO(crbug.com/1102997): Remove OWNERS once DIR_METADATA migration is
   # complete.
   file_filter = lambda f: (
@@ -1042,13 +1042,12 @@ def CheckDirMetadataFormat(input_api, output_api):
     return []
 
   name = 'Validate metadata in OWNERS and DIR_METADATA files'
-  dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
   kwargs = {}
-  if input_api.is_windows:
-    # Needed to be able to resolve 'dirmd.bat'.
-    kwargs['shell'] = True
 
+  if dirmd_bin is None:
+    dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
   cmd = [dirmd_bin, 'validate'] + sorted(affected_files)
+
   return [input_api.Command(
       name, cmd, kwargs, output_api.PresubmitError)]
 
