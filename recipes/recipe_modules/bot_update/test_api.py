@@ -26,6 +26,8 @@ class BotUpdateTestApi(recipe_test_api.RecipeTestApi):
       for project_name, revision in fixed_revisions.items():
         if revision == 'HEAD':
           revision = self.gen_revision(project_name)
+        elif revision.startswith('refs/') or revision.startswith('origin/'):
+          revision = self.gen_revision('{}@{}'.format(project_name, revision))
         revisions[project_name] = revision
 
     properties = {

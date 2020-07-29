@@ -232,6 +232,10 @@ def GenTests(api):
           ],
       )
   )
+  yield (
+      api.test('origin_master') +
+      ci_build(revision='origin/master')
+  )
 
   yield (
       api.test('add_blamelists') +
