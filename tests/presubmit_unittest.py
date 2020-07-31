@@ -964,25 +964,27 @@ def CheckChangeOnCommit(input_api, output_api):
         presubmit.main(
             ['--root', self.fake_root_dir, 'random_file.txt', '--post_upload']))
 
-  @mock.patch(
-      'presubmit_support.ListRelevantPresubmitFiles',
-      return_value=['PRESUBMIT.py'])
+  @mock.patch('presubmit_support.ListRelevantPresubmitFiles')
   def testMainUnversioned(self, *_mocks):
     gclient_utils.FileRead.return_value = ''
     scm.determine_scm.return_value = None
+    presubmit.ListRelevantPresubmitFiles.return_value = [
+        os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
+    ]
 
     self.assertEqual(
         0,
         presubmit.main(['--root', self.fake_root_dir, 'random_file.txt']))
 
-  @mock.patch(
-      'presubmit_support.ListRelevantPresubmitFiles',
-      return_value=['PRESUBMIT.py'])
+  @mock.patch('presubmit_support.ListRelevantPresubmitFiles')
   def testMainUnversionedChecksFail(self, *_mocks):
     gclient_utils.FileRead.return_value = (
         'def CheckChangeOnUpload(input_api, output_api):\n'
         '  return [output_api.PresubmitError("!!")]\n')
     scm.determine_scm.return_value = None
+    presubmit.ListRelevantPresubmitFiles.return_value = [
+        os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
+    ]
 
     self.assertEqual(
         1,

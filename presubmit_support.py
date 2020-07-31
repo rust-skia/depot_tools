@@ -1529,10 +1529,10 @@ class PresubmitExecuter(object):
     Return:
       A list of result objects, empty if no problems.
     """
-
     # Change to the presubmit file's directory to support local imports.
     main_path = os.getcwd()
-    os.chdir(os.path.dirname(presubmit_path))
+    presubmit_dir = os.path.dirname(presubmit_path)
+    os.chdir(presubmit_dir)
 
     # Load the presubmit script into context.
     input_api = InputApi(self.change, presubmit_path, self.committing,
@@ -1560,8 +1560,10 @@ class PresubmitExecuter(object):
 
         # TODO (crbug.com/1106943): Dive into each of the individual checks
 
-        rel_path = os.path.relpath(os.getcwd(), main_path)
+        # Get path of presubmit directory relative to repository root.
         # Always use forward slashes, so that path is same in *nix and Windows
+        root = input_api.change.RepositoryRoot()
+        rel_path = os.path.relpath(presubmit_dir, root)
         rel_path = rel_path.replace(os.path.sep, '/')
 
         with rdb_wrapper.setup_rdb(function_name, rel_path) as my_status:
