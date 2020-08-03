@@ -58,7 +58,6 @@ for index, arg in enumerate(input_args[1:]):
     output_dir = arg[2:]
 
 use_goma = False
-use_jumbo_build = False
 
 # Attempt to auto-detect goma usage.  We support gn-based builds, where we
 # look for args.gn in the build tree, and cmake-based builds where we look for
@@ -69,11 +68,6 @@ if os.path.exists(os.path.join(output_dir, 'args.gn')):
       # This regex pattern copied from create_installer_archive.py
       if re.match(r'^\s*use_goma\s*=\s*true(\s*$|\s*#.*$)', line):
         use_goma = True
-        continue
-      match_use_jumbo_build = re.match(
-          r'^\s*use_jumbo_build\s*=\s*true(\s*$|\s*#.*$)', line)
-      if match_use_jumbo_build:
-        use_jumbo_build = True
         continue
 elif os.path.exists(os.path.join(output_dir, 'rules.ninja')):
   with open(os.path.join(output_dir, 'rules.ninja')) as file_handle:
@@ -122,13 +116,6 @@ if not j_specified and not t_specified:
     j_value = num_cores
     # Ninja defaults to |num_cores + 2|
     j_value += int(os.environ.get('NINJA_CORE_ADDITION', '2'))
-    if use_jumbo_build:
-      # Compiling a jumbo .o can easily use 1-2GB of memory. Leaving 2GB per
-      # process avoids memory swap/compression storms when also considering
-      # already in-use memory.
-      physical_ram = psutil.virtual_memory().total
-      GB = 1024 * 1024 * 1024
-      j_value = min(j_value, physical_ram / (2 * GB))
     args.append('-j')
     args.append('%d' % j_value)
 
