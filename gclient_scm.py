@@ -588,7 +588,8 @@ class GitWrapper(SCMWrapper):
         subprocess2.capture(
             ['git', 'config', 'remote.%s.gclient-auto-fix-url' % self.remote],
             cwd=self.checkout_path).strip() != 'False'):
-      self.Print('_____ switching %s to a new upstream' % self.relpath)
+      self.Print('_____ switching %s from %s to new upstream %s' % (
+          self.relpath, current_url, url))
       if not (options.force or options.reset):
         # Make sure it's clean
         self._CheckClean(revision)
