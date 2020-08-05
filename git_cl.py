@@ -2427,18 +2427,18 @@ class Changelist(object):
     return [r['email'] for r in details['reviewers'].get('REVIEWER', [])]
 
 
-def _get_bug_line_values(default_project, bugs):
-  """Given default_project and comma separated list of bugs, yields bug line
-  values.
+def _get_bug_line_values(default_project_prefix, bugs):
+  """Given default_project_prefix and comma separated list of bugs, yields bug
+  line values.
 
   Each bug can be either:
-    * a number, which is combined with default_project
+    * a number, which is combined with default_project_prefix
     * string, which is left as is.
 
   This function may produce more than one line, because bugdroid expects one
   project per line.
 
-  >>> list(_get_bug_line_values('v8', '123,chromium:789'))
+  >>> list(_get_bug_line_values('v8:', '123,chromium:789'))
       ['v8:123', 'chromium:789']
   """
   default_bugs = []
@@ -2453,8 +2453,10 @@ def _get_bug_line_values(default_project, bugs):
 
   if default_bugs:
     default_bugs = ','.join(map(str, default_bugs))
-    if default_project:
-      yield '%s:%s' % (default_project, default_bugs)
+    if default_project_prefix:
+      if not default_project_prefix.endswith(':'):
+        default_project_prefix += ':'
+      yield '%s%s' % (default_project_prefix, default_bugs)
     else:
       yield default_bugs
   for other in sorted(others):

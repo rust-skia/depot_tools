@@ -296,9 +296,15 @@ class TestGitClBasic(unittest.TestCase):
     f = lambda p, bugs: list(git_cl._get_bug_line_values(p, bugs))
     self.assertEqual(f('', ''), [])
     self.assertEqual(f('', '123,v8:456'), ['123', 'v8:456'])
+    # Prefix that ends with colon.
+    self.assertEqual(f('v8:', '456'), ['v8:456'])
+    self.assertEqual(f('v8:', 'chromium:123,456'), ['v8:456', 'chromium:123'])
+    # Prefix that ends without colon.
     self.assertEqual(f('v8', '456'), ['v8:456'])
     self.assertEqual(f('v8', 'chromium:123,456'), ['v8:456', 'chromium:123'])
     # Not nice, but not worth carying.
+    self.assertEqual(f('v8:', 'chromium:123,456,v8:123'),
+                     ['v8:456', 'chromium:123', 'v8:123'])
     self.assertEqual(f('v8', 'chromium:123,456,v8:123'),
                      ['v8:456', 'chromium:123', 'v8:123'])
 
