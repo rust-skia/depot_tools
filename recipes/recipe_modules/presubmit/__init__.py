@@ -20,7 +20,6 @@ DEPS = [
   'recipe_engine/properties',
   'recipe_engine/python',
   'recipe_engine/step',
-  'recipe_engine/resultdb',
   'tryserver',
 ]
 
