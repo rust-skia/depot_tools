@@ -555,7 +555,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     executer = presubmit.PresubmitExecuter(
         self.fake_change, False, None, False)
 
-    self.assertEqual([], executer.ExecPresubmitScript(
+    self.assertEqual((), executer.ExecPresubmitScript(
       ('def CheckChangeOnUpload(input_api, output_api):\n'
        '  if len(input_api._named_temporary_files):\n'
        '    return (output_api.PresubmitError("!!"),)\n'

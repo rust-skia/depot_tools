@@ -2152,9 +2152,7 @@ class TestGitCl(unittest.TestCase):
     self.assertEqual(0, cl.CMDLand(force=True,
                                    bypass_hooks=True,
                                    verbose=True,
-                                   parallel=False,
-                                   resultdb=False,
-                                   realm=None))
+                                   parallel=False))
     self.assertIn(
         'Issue chromium-review.googlesource.com/123 has been submitted',
         sys.stdout.getvalue())
@@ -2796,12 +2794,11 @@ class ChangelistTest(unittest.TestCase):
         upstream='upstream',
         description='description',
         all_files=False,
-        resultdb=True,
-        realm='chromium:public')
+        resultdb=True)
 
     self.assertEqual(expected_results, results)
     subprocess2.Popen.assert_called_once_with([
-        'rdb', 'stream', '-new', '-realm', 'chromium:public',
+        'rdb', 'stream', '-new',
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
@@ -2940,8 +2937,7 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         upstream='upstream',
         description='fetch description',
         all_files=None,
-        resultdb=None,
-        realm=None)
+        resultdb=None)
 
   def testNoIssue(self):
     git_cl.Changelist.GetIssue.return_value = None
@@ -2954,8 +2950,7 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         upstream='upstream',
         description='get description',
         all_files=None,
-        resultdb=None,
-        realm=None)
+        resultdb=None)
 
   def testCustomBranch(self):
     self.assertEqual(0, git_cl.main(['presubmit', 'custom_branch']))
@@ -2967,13 +2962,12 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         upstream='custom_branch',
         description='fetch description',
         all_files=None,
-        resultdb=None,
-        realm=None)
+        resultdb=None)
 
   def testOptions(self):
     self.assertEqual(
         0, git_cl.main(['presubmit', '-v', '-v', '--all', '--parallel', '-u',
-                          '--resultdb', '--realm', 'chromium:public']))
+                          '--resultdb']))
     git_cl.Changelist.RunHook.assert_called_once_with(
         committing=False,
         may_prompt=False,
@@ -2982,8 +2976,7 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
         upstream='upstream',
         description='fetch description',
         all_files=True,
-        resultdb=True,
-        realm='chromium:public')
+        resultdb=True)
 
 class CMDTryResultsTestCase(CMDTestCaseBase):
   _DEFAULT_REQUEST = {
