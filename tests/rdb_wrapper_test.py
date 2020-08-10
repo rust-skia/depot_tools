@@ -38,7 +38,7 @@ class TestSetupRDB(unittest.TestCase):
     mock.patch('time.time', side_effect=[1.0, 2.0, 3.0, 4.0, 5.0]).start()
 
   def test_setup_rdb(self):
-    with rdb_wrapper.setup_rdb("_foobar", './my/folder') as my_status_obj:
+    with rdb_wrapper.setup_rdb("_foobar", './my/folder/') as my_status_obj:
       self.assertEqual(my_status_obj.status, rdb_wrapper.STATUS_PASS)
       my_status_obj.status = rdb_wrapper.STATUS_FAIL
 
@@ -61,7 +61,7 @@ class TestSetupRDB(unittest.TestCase):
 
   def test_setup_rdb_exception(self):
     with self.assertRaises(Exception):
-      with rdb_wrapper.setup_rdb("_foobar", './my/folder'):
+      with rdb_wrapper.setup_rdb("_foobar", './my/folder/'):
         raise Exception("Generic Error")
 
     expectedTr = {

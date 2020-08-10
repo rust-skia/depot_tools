@@ -2677,6 +2677,8 @@ class ChangelistTest(unittest.TestCase):
     mock.patch('git_cl.time_time').start()
     mock.patch('metrics.collector').start()
     mock.patch('subprocess2.Popen').start()
+    mock.patch('git_cl.Changelist._GetGerritProject',
+        return_value='https://chromium-review.googlesource.com').start()
     self.addCleanup(mock.patch.stopall)
     self.temp_count = 0
 
@@ -2718,6 +2720,7 @@ class ChangelistTest(unittest.TestCase):
         '--all_files',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
+        '--gerrit_project', 'https://chromium-review.googlesource.com',
     ])
     gclient_utils.FileWrite.assert_called_once_with(
         '/tmp/fake-temp1', 'description')
@@ -2762,6 +2765,7 @@ class ChangelistTest(unittest.TestCase):
         '--upload',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
+        '--gerrit_project', 'https://chromium-review.googlesource.com',
     ])
     gclient_utils.FileWrite.assert_called_once_with(
         '/tmp/fake-temp1', 'description')
@@ -2808,6 +2812,7 @@ class ChangelistTest(unittest.TestCase):
         '--upload',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
+        '--gerrit_project', 'https://chromium-review.googlesource.com',
     ])
 
   @mock.patch('sys.exit', side_effect=SystemExitMock)

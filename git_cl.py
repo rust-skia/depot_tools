@@ -1290,6 +1290,7 @@ class Changelist(object):
         gclient_utils.FileWrite(description_file, description)
         args.extend(['--json_output', json_output])
         args.extend(['--description_file', description_file])
+        args.extend(['--gerrit_project', self._GetGerritProject()])
 
         start = time_time()
         cmd = ['vpython', PRESUBMIT_SUPPORT] + args
