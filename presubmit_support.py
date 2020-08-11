@@ -8,7 +8,7 @@
 
 from __future__ import print_function
 
-__version__ = '1.8.0'
+__version__ = '2.0.0'
 
 # TODO(joi) Add caching where appropriate/needed. The API is designed to allow
 # caching (between all different invocations of presubmit scripts for a given
@@ -1543,11 +1543,6 @@ class PresubmitExecuter(object):
     output_api = OutputApi(self.committing)
     context = {}
 
-    PRESUBMIT_VERSION = [0]
-    def REQUIRE_PRESUBMIT_VERSION(num):
-      PRESUBMIT_VERSION[0] = num
-
-    context['REQUIRE_PRESUBMIT_VERSION'] = REQUIRE_PRESUBMIT_VERSION
     try:
       exec(compile(script_text, 'PRESUBMIT.py', 'exec', dont_inherit=True),
            context)
@@ -1575,7 +1570,8 @@ class PresubmitExecuter(object):
     results = []
 
     try:
-      if PRESUBMIT_VERSION[0] > 0:
+      if 'PRESUBMIT_VERSION' in context and \
+        [int(x) for x in context['PRESUBMIT_VERSION'].split('.')] >= [2, 0, 0]:
         for function_name in context:
           if not function_name.startswith('Check'):
             continue
