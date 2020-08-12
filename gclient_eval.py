@@ -235,10 +235,6 @@ _GCLIENT_SCHEMA = schema.Schema(
         # file.
         schema.Optional('use_relative_paths'): bool,
 
-        # For recursed-upon sub-dependencies, run their hooks relative to the
-        # parent's path instead of relative to the .gclient file.
-        schema.Optional('use_relative_hooks'): bool,
-
         # Variables that can be referenced using Var() - see 'deps'.
         schema.Optional('vars'): _NodeDictSchema({
             schema.Optional(basestring): schema.Or(ConstantString,
