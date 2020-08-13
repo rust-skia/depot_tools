@@ -5031,36 +5031,16 @@ def CMDformat(parser, args):
   # whereas the top-level presubmit script merely issues a warning. Formatting
   # these files is somewhat slow, so it's important not to duplicate the work.
   if not opts.presubmit:
-    for diff_xml in GetDiffXMLs(diff_files):
-      xml_dir = GetMetricsDirs(diff_xml)
-      if not xml_dir:
-        continue
-
+    for xml_dir in GetDirtyMetricsDirs(diff_files):
       tool_dir = os.path.join(top_dir, xml_dir)
       pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
       cmd = ['vpython', pretty_print_tool, '--non-interactive']
-
-      # If the XML file is histograms.xml or enums.xml, add the xml path to the
-      # command as pretty_print.py in histograms needs a relative path argument
-      # after splitting the histograms into multiple directories.
-      # For example, in tools/metrics/ukm, pretty-print could be run using:
-      #   $ python pretty_print.py
-      # But in tools/metrics/histogrmas, pretty-print should be run with an
-      # additional relative path argument, like:
-      #   $ python pretty_print.py histograms_xml/UMA/histograms.xml
-      #   $ python pretty_print.py enums.xml
-      if (diff_xml.endswith('histograms.xml')
-          or diff_xml.endswith('enums.xml')):
-        cmd.append(diff_xml)
-
       if opts.dry_run or opts.diff:
         cmd.append('--diff')
-
       # TODO(isherman): Once this file runs only on Python 3.3+, drop the
       # `shell` param and instead replace `'vpython'` with
       # `shutil.which('frob')` above: https://stackoverflow.com/a/32799942
-      stdout = RunCommand(cmd,
-                          cwd=top_dir,
+      stdout = RunCommand(cmd, cwd=top_dir,
                           shell=sys.platform.startswith('win32'))
       if opts.diff:
         sys.stdout.write(stdout)
@@ -5070,13 +5050,8 @@ def CMDformat(parser, args):
   return return_value
 
 
-def GetDiffXMLs(diff_files):
-  return [
-      os.path.normpath(x) for x in diff_files if MatchingFileType(x, ['.xml'])
-  ]
-
-
-def GetMetricsDir(diff_xml):
+def GetDirtyMetricsDirs(diff_files):
+  xml_diff_files = [x for x in diff_files if MatchingFileType(x, ['.xml'])]
   metrics_xml_dirs = [
     os.path.join('tools', 'metrics', 'actions'),
     os.path.join('tools', 'metrics', 'histograms'),
@@ -5085,9 +5060,9 @@ def GetMetricsDir(diff_xml):
     os.path.join('tools', 'metrics', 'ukm'),
   ]
   for xml_dir in metrics_xml_dirs:
-    if diff_xml.startswith(xml_dir):
-      return xml_dir
-  return None
+    if any(
+        os.path.normpath(file).startswith(xml_dir) for file in xml_diff_files):
+      yield xml_dir
 
 
 @subcommand.usage('<codereview url or issue id>')
