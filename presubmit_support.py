@@ -730,10 +730,12 @@ class InputApi(object):
 
     Note: Copy-paste this function to suit your needs or use a lambda function.
     """
-    # TODO(https://crbug.com/1098560): Add warnings before removing bc.
-    if files_to_check is None:
+    # TODO(https://crbug.com/1098560): Remove non inclusive parameter names.
+    if files_to_check is None and (allow_list or white_list):
+      warn('Use files_to_check in FilterSourceFile')
       files_to_check = allow_list or white_list
-    if files_to_skip is None:
+    if files_to_skip is None and (block_list or black_list):
+      warn('Use files_to_skip in FilterSourceFile')
       files_to_skip = block_list or black_list
 
     if files_to_check is None:
