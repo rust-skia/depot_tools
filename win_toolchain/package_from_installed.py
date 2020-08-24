@@ -182,11 +182,12 @@ def BuildFileList(override_dir, include_arm):
       combined = os.path.normpath(os.path.join(root, f))
       # Some of the files in this directory are exceedingly long (and exceed
       # _MAX_PATH for any moderately long root), so exclude them. We don't need
-      # them anyway. Exclude others just to save space.
+      # them anyway. Exclude/filter/skip others just to save space.
       tail = combined[len(sdk_path) + 1:]
       skip_dir = False
       for dir in ['References\\', 'Windows Performance Toolkit\\', 'Testing\\',
-                  'App Certification Kit\\', 'Extension SDKs\\']:
+                  'App Certification Kit\\', 'Extension SDKs\\',
+                  'Assessment and Deployment Kit\\']:
         if tail.startswith(dir):
           skip_dir = True
       if skip_dir:
