@@ -268,86 +268,90 @@ def GenerateSetEnvCmd(target_dir):
   do it here manually since we do not do a full install."""
   vc_tools_parts = VC_TOOLS.split('/')
 
-  # All these paths are relative to the directory containing SetEnv.cmd.
+  # All these paths are relative to the grandparent of the directory containing
+  # SetEnv.cmd.
   include_dirs = [
-    ['..', '..', 'win_sdk', 'Include', WIN_VERSION, 'um'],
-    ['..', '..', 'win_sdk', 'Include', WIN_VERSION, 'shared'],
-    ['..', '..', 'win_sdk', 'Include', WIN_VERSION, 'winrt'],
+    ['win_sdk', 'Include', WIN_VERSION, 'um'],
+    ['win_sdk', 'Include', WIN_VERSION, 'shared'],
+    ['win_sdk', 'Include', WIN_VERSION, 'winrt'],
   ]
-  include_dirs.append(['..', '..', 'win_sdk', 'Include', WIN_VERSION, 'ucrt'])
+  include_dirs.append(['win_sdk', 'Include', WIN_VERSION, 'ucrt'])
   include_dirs.extend([
-    ['..', '..'] + vc_tools_parts + ['include'],
-    ['..', '..'] + vc_tools_parts + ['atlmfc', 'include'],
+    vc_tools_parts + ['include'],
+    vc_tools_parts + ['atlmfc', 'include'],
   ])
   libpath_dirs = [
-    ['..', '..'] + vc_tools_parts + ['lib', 'x86', 'store', 'references'],
-    ['..', '..', 'win_sdk', 'UnionMetadata', WIN_VERSION],
+    vc_tools_parts + ['lib', 'x86', 'store', 'references'],
+    ['win_sdk', 'UnionMetadata', WIN_VERSION],
   ]
   # Common to x86, x64, and arm64
   env = collections.OrderedDict([
     # Yuck: These have a trailing \ character. No good way to represent this in
     # an OS-independent way.
-    ('VSINSTALLDIR', [['..', '..\\']]),
-    ('VCINSTALLDIR', [['..', '..', 'VC\\']]),
+    ('VSINSTALLDIR', [['.\\']]),
+    ('VCINSTALLDIR', [['VC\\']]),
     ('INCLUDE', include_dirs),
     ('LIBPATH', libpath_dirs),
   ])
   # x86. Always use amd64_x86 cross, not x86 on x86.
-  env['VCToolsInstallDir'] = [['..', '..'] + vc_tools_parts[:]]
+  env['VCToolsInstallDir'] = [vc_tools_parts[:]]
   # Yuck: This one ends in a slash as well.
   env['VCToolsInstallDir'][0][-1] += '\\'
   env_x86 = collections.OrderedDict([
       (
           'PATH',
           [
-              ['..', '..', 'win_sdk', 'bin', WIN_VERSION, 'x64'],
-              ['..', '..'] + vc_tools_parts + ['bin', 'HostX64', 'x86'],
-              ['..', '..'] + vc_tools_parts + ['bin', 'HostX64', 'x64'
+              ['win_sdk', 'bin', WIN_VERSION, 'x64'],
+              vc_tools_parts + ['bin', 'HostX64', 'x86'],
+              vc_tools_parts + ['bin', 'HostX64', 'x64'
                                               ],  # Needed for mspdb1x0.dll.
           ]),
       ('LIB', [
-          ['..', '..'] + vc_tools_parts + ['lib', 'x86'],
-          ['..', '..', 'win_sdk', 'Lib', WIN_VERSION, 'um', 'x86'],
-          ['..', '..', 'win_sdk', 'Lib', WIN_VERSION, 'ucrt', 'x86'],
-          ['..', '..'] + vc_tools_parts + ['atlmfc', 'lib', 'x86'],
+          vc_tools_parts + ['lib', 'x86'],
+          ['win_sdk', 'Lib', WIN_VERSION, 'um', 'x86'],
+          ['win_sdk', 'Lib', WIN_VERSION, 'ucrt', 'x86'],
+          vc_tools_parts + ['atlmfc', 'lib', 'x86'],
       ]),
   ])
 
   # x64.
   env_x64 = collections.OrderedDict([
       ('PATH', [
-          ['..', '..', 'win_sdk', 'bin', WIN_VERSION, 'x64'],
-          ['..', '..'] + vc_tools_parts + ['bin', 'HostX64', 'x64'],
+          ['win_sdk', 'bin', WIN_VERSION, 'x64'],
+          vc_tools_parts + ['bin', 'HostX64', 'x64'],
       ]),
       ('LIB', [
-          ['..', '..'] + vc_tools_parts + ['lib', 'x64'],
-          ['..', '..', 'win_sdk', 'Lib', WIN_VERSION, 'um', 'x64'],
-          ['..', '..', 'win_sdk', 'Lib', WIN_VERSION, 'ucrt', 'x64'],
-          ['..', '..'] + vc_tools_parts + ['atlmfc', 'lib', 'x64'],
+          vc_tools_parts + ['lib', 'x64'],
+          ['win_sdk', 'Lib', WIN_VERSION, 'um', 'x64'],
+          ['win_sdk', 'Lib', WIN_VERSION, 'ucrt', 'x64'],
+          vc_tools_parts + ['atlmfc', 'lib', 'x64'],
       ]),
   ])
 
   # arm64.
   env_arm64 = collections.OrderedDict([
       ('PATH', [
-          ['..', '..', 'win_sdk', 'bin', WIN_VERSION, 'x64'],
-          ['..', '..'] + vc_tools_parts + ['bin', 'HostX64', 'arm64'],
-          ['..', '..'] + vc_tools_parts + ['bin', 'HostX64', 'x64'],
+          ['win_sdk', 'bin', WIN_VERSION, 'x64'],
+          vc_tools_parts + ['bin', 'HostX64', 'arm64'],
+          vc_tools_parts + ['bin', 'HostX64', 'x64'],
       ]),
       ('LIB', [
-          ['..', '..'] + vc_tools_parts + ['lib', 'arm64'],
-          ['..', '..', 'win_sdk', 'Lib', WIN_VERSION, 'um', 'arm64'],
-          ['..', '..', 'win_sdk', 'Lib', WIN_VERSION, 'ucrt', 'arm64'],
-          ['..', '..'] + vc_tools_parts + ['atlmfc', 'lib', 'arm64'],
+          vc_tools_parts + ['lib', 'arm64'],
+          ['win_sdk', 'Lib', WIN_VERSION, 'um', 'arm64'],
+          ['win_sdk', 'Lib', WIN_VERSION, 'ucrt', 'arm64'],
+          vc_tools_parts + ['atlmfc', 'lib', 'arm64'],
       ]),
   ])
 
   def BatDirs(dirs):
-    return ';'.join(['%~dp0' + os.path.join(*d) for d in dirs])
+    return ';'.join(['%cd%\\' + os.path.join(*d) for d in dirs])
   set_env_prefix = os.path.join(target_dir, r'win_sdk\bin\SetEnv')
   with open(set_env_prefix + '.cmd', 'w') as f:
+    # The prologue changes the current directory to the grandparent so that the
+    # path entries can be set up without needing ..\..\ components.
     f.write('@echo off\n'
-            ':: Generated by win_toolchain\\package_from_installed.py.\n')
+            ':: Generated by win_toolchain\\package_from_installed.py.\n'
+            'pushd %~dp0..\..\n')
     for var, dirs in env.items():
       f.write('set %s=%s\n' % (var, BatDirs(dirs)))
     f.write('if "%1"=="/x64" goto x64\n')
@@ -356,19 +360,22 @@ def GenerateSetEnvCmd(target_dir):
     for var, dirs in env_x86.items():
       f.write('set %s=%s%s\n' % (
           var, BatDirs(dirs), ';%PATH%' if var == 'PATH' else ''))
-    f.write('goto :EOF\n')
+    f.write('goto :END\n')
 
     f.write(':x64\n')
     for var, dirs in env_x64.items():
       f.write('set %s=%s%s\n' % (
           var, BatDirs(dirs), ';%PATH%' if var == 'PATH' else ''))
-    f.write('goto :EOF\n')
+    f.write('goto :END\n')
 
     f.write(':arm64\n')
     for var, dirs in env_arm64.items():
       f.write('set %s=%s%s\n' % (
           var, BatDirs(dirs), ';%PATH%' if var == 'PATH' else ''))
-    f.write('goto :EOF\n')
+    f.write('goto :END\n')
+    f.write(':END\n')
+    # Restore the original directory.
+    f.write('popd\n')
   with open(set_env_prefix + '.x86.json', 'wt', newline='') as f:
     assert not set(env.keys()) & set(env_x86.keys()), 'dupe keys'
     json.dump({'env': collections.OrderedDict(list(env.items()) + list(env_x86.items()))},
