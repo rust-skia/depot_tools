@@ -424,6 +424,10 @@ def RenameToSha1(output):
     zf.extractall(rel_dir)
   print('Hashing...')
   sha1 = get_toolchain_if_necessary.CalculateHash(rel_dir, None)
+  # Shorten from forty characters to ten. This is still enough to avoid
+  # collisions, while being less unwieldy and reducing the risk of MAX_PATH
+  # failures.
+  sha1 = sha1[:10]
   os.chdir(old_dir)
   shutil.rmtree(tempdir)
   final_name = sha1 + '.zip'

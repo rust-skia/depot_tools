@@ -183,8 +183,12 @@ def CalculateHash(root, expected_hash):
       digest.update(f.read())
 
   # Save the timestamp file if the calculated hash is the expected one.
-  if digest.hexdigest() == expected_hash:
+  # The expected hash may be shorter, to reduce path lengths, in which case just
+  # compare that many characters.
+  if expected_hash and digest.hexdigest()[:len(expected_hash)] == expected_hash:
     SaveTimestampsAndHash(root, digest.hexdigest())
+    # Return the (potentially truncated) expected_hash.
+    return expected_hash
   return digest.hexdigest()
 
 
