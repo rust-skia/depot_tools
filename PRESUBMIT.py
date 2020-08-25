@@ -91,8 +91,8 @@ def CommonChecks(input_api, output_api, tests_to_skip_list, run_on_python3):
       input_api,
       output_api,
       'tests',
-      allowlist=test_to_run_list,
-      blocklist=tests_to_skip_list,
+      files_to_check=test_to_run_list,
+      files_to_skip=tests_to_skip_list,
       run_on_python3=run_on_python3))
 
   # Validate CIPD manifests.
