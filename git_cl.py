@@ -2360,6 +2360,8 @@ class Changelist(object):
 
     if upstream_branch_name == 'master':
       return self.GetCommonAncestorWithUpstream()
+    if upstream_branch_name == 'main':
+      return self.GetCommonAncestorWithUpstream()
 
     # Check the squashed hash of the parent.
     # TODO(tandrii): consider checking parent change in Gerrit and using its
