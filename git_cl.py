@@ -5055,8 +5055,9 @@ def CMDformat(parser, args):
       filepath_required = os.path.exists(
           os.path.join(tool_dir, 'validate_prefix.py'))
 
-      if (diff_xml.endswith('histograms.xml')
-          or diff_xml.endswith('enums.xml')) and filepath_required:
+      if (diff_xml.endswith('histograms.xml') or diff_xml.endswith('enums.xml')
+          or diff_xml.endswith('histogram_suffixes_list.xml')
+          ) and filepath_required:
         cmd.append(diff_xml)
 
       if opts.dry_run or opts.diff:
