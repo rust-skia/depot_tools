@@ -1735,6 +1735,8 @@ def DoPresubmitChecks(change,
       if may_prompt:
         presubmits_failed = not prompt_should_continue(
             'Are you sure you wish to continue? (y/N): ')
+      else:
+        sys.stdout.write('\n')
 
     if json_output:
       # Write the presubmit results to json output
