@@ -508,17 +508,16 @@ def main():
       if not options.repackage_dir and disk_name.count(WIN_VERSION) > 0:
         version_match_count += 1
       if os.path.exists(disk_name):
-        if options.dryrun:
-          total_size += os.path.getsize(disk_name)
-        else:
+        total_size += os.path.getsize(disk_name)
+        if not options.dryrun:
           zf.write(disk_name, archive_name)
       else:
         missing_files = True
         sys.stdout.write('\r%s does not exist.\n\n' % disk_name)
         sys.stdout.flush()
+  sys.stdout.write('\r%1.3f GB of data in %d files, %d files for %s.%s\n' %
+      (total_size / 1e9, count, version_match_count, WIN_VERSION, ' '*50))
   if options.dryrun:
-    sys.stdout.write('\r%1.3f GB of data in %d files, %d files for %s.%s\n' %
-        (total_size / 1e9, count, version_match_count, WIN_VERSION, ' '*50))
     return 0
   if missing_files:
     raise Exception('One or more files were missing - aborting')
