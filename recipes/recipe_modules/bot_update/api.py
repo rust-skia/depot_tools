@@ -197,6 +197,9 @@ class BotUpdateApi(recipe_api.RecipeApi):
       # This is necessary because existing builders rely on this behavior,
       # e.g. they want to force refs/heads/master at the config level.
       in_commit_repo_path = self._get_commit_repo_path(in_commit, cfg)
+      # The repo_path that comes back on Windows will have backslashes, which
+      # won't match the paths that the gclient configs and bot_update script use
+      in_commit_repo_path = in_commit_repo_path.replace(self.m.path.sep, '/')
       revisions[in_commit_repo_path] = (
           revisions.get(in_commit_repo_path) or in_commit_rev)
       parsed_solution_urls = set(
