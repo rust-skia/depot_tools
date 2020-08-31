@@ -589,7 +589,7 @@ def CheckCallAndFilter(args, print_stdout=False, filter_fn=None,
     # If our stdout is a terminal, then pass in a psuedo-tty pipe to our
     # subprocess when filtering its output. This makes the subproc believe
     # it was launched from a terminal, which will preserve ANSI color codes.
-    if sys.stdout.isatty():
+    if sys.stdout.isatty() and GetMacWinOrLinux() != 'win':
       pipe_reader, pipe_writer = os.openpty()
     else:
       pipe_reader, pipe_writer = os.pipe()
