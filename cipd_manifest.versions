@@ -386,53 +386,53 @@ infra/tools/prpc/windows-amd64
 	zniiDCa2RQN-VUlZl7UPRmipTkL4oRQTaJV8TGzuKKQC
 
 infra/tools/rdb/linux-386
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	8kdujJO2bwE8vcZ1tPuwlBNLU6tGLdOaLigIT8wqzSAC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	2zoE-MW9WWWiGSNST78wAM1gVo5lm27rq8l7dK5_rv8C
 
 infra/tools/rdb/linux-amd64
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	VDMEzjcT_N3snmgWCc2T6Ou35m7dOOAoFCO-YZyPfRoC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	InmIGCFjiDqIUJOJsCQOlXvREDs70MtTc1B3NgfHLX4C
 
 infra/tools/rdb/linux-arm64
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	RV0J8h2mSkxpC4L4yVmUlvZEjDGXjhLvY6ZGBAf4byYC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	x0FpnqYWpUKxtFo8s_yLG9Yl1b3FxhesBOV4dz2Cn-EC
 
 infra/tools/rdb/linux-armv6l
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	_g1tBxNbSZPMeRzZz24RfEfb097ebK7YmsQ2WPW41-AC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	mKy2kbpPJqRpUBRkuiQgCI3Tvyt7Ze3qExJpVnpoznQC
 
 infra/tools/rdb/linux-mips64
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	Y6wggEv-B_inJ2HzTAbAUbOe76iAqxvOyfEfwzXqUzAC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	PJu_2iSkTtXev2i0RdXVK8SgavLc2AZ0ZTNUhPES8jAC
 
 infra/tools/rdb/linux-mips64le
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	HOejLR4xPSEX6FU6JOLV3-GPtRAnsazOfC6-9LIHVV4C
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	tUYYihhDW3MKXIKHtI-t0G6loRilYZAmrdGBHioahbYC
 
 infra/tools/rdb/linux-mipsle
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	PBPg5d_Ulxipz7PEtAGc1fTNu28VK6iLNpTqf6-R1GEC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	MczVvB97OQ_KbhW7E9avrGzSxmrfrSehvFt68Ico0jgC
 
 infra/tools/rdb/linux-ppc64
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	S4S-P-NQKrLZSDzBuqDBkVPq9YcsWLe5v7-GH6EY2woC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	tpKektaMtifU5_5O3ASPk9tyaxpsLhKmL1yOgvQewVoC
 
 infra/tools/rdb/linux-ppc64le
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	Cw7GLvYCIJW3FF2SmEgMxh_nCYI9GRrL-PwWuGJX1lIC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	IGCX6K-o1C46bpLBAKc_cpRukVfBAYiDTBcGAUWA5sgC
 
 infra/tools/rdb/linux-s390x
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	LX1gZ5m9Ff-qzW0Cmvfn7uQJHq5oonxphPZ9SBAUE9YC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	3QK3ANR8JlJ_xSK2cwriyZJ3-SDKTzJIoJCASKFKAdgC
 
 infra/tools/rdb/mac-amd64
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	V7X5yMMVu9dSulpOarIdwNAhz7_K07aqWK9DqNet6-EC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	VTanJ0CXqScEWCXDfGocdfPywumdWGWiIEODB87EZSgC
 
 infra/tools/rdb/windows-386
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	dZmTUwISHY4VUxya0gtl3ctJrMnm30mdbCIvrWER51gC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	ofRh8SgdZ7xrbtKxMCtnJNciXLvbZkrlHMkVzj701G4C
 
 infra/tools/rdb/windows-amd64
-	git_revision:2171da1d9e14032a8b039548c75f1509a8bf1d23
-	SQN24GN3hhTLN43x-4M9oRPGNxPW1yCCBHCfd0RzpikC
+	git_revision:4605f7be819d0a2f6ffb1dd97c14f84fbf46c9f2
+	odAPmpuF0kan5hDpWNYR6CDmBsDHwknK4h55CWMJaYEC
