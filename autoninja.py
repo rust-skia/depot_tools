@@ -5,10 +5,10 @@
 
 """
 This script (intended to be invoked by autoninja or autoninja.bat) detects
-whether a build is using goma. If so it runs with a large -j value, and
-otherwise it chooses a small one. This auto-adjustment makes using goma simpler
-and safer, and avoids errors that can cause slow goma builds or swap-storms
-on non-goma builds.
+whether a build is accelerated using a service like goma. If so, it runs with a
+large -j value, and otherwise it chooses a small one. This auto-adjustment
+makes using remote build acceleration simpler and safer, and avoids errors that
+can cause slow goma builds or swap-storms on unaccelerated builds.
 """
 
 # [VPYTHON:BEGIN]
@@ -57,23 +57,23 @@ for index, arg in enumerate(input_args[1:]):
     # Support -Cout/Default
     output_dir = arg[2:]
 
-use_goma = False
+use_remote_build = False
 
-# Attempt to auto-detect goma usage.  We support gn-based builds, where we
-# look for args.gn in the build tree, and cmake-based builds where we look for
-# rules.ninja.
+# Attempt to auto-detect remote build acceleration. We support gn-based
+# builds, where we look for args.gn in the build tree, and cmake-based builds
+# where we look for rules.ninja.
 if os.path.exists(os.path.join(output_dir, 'args.gn')):
   with open(os.path.join(output_dir, 'args.gn')) as file_handle:
     for line in file_handle:
-      # This regex pattern copied from create_installer_archive.py
-      if re.match(r'^\s*use_goma\s*=\s*true(\s*$|\s*#.*$)', line):
-        use_goma = True
+      # Either use_goma or use_rbe activate build acceleration.
+      if re.match(r'^\s*(use_goma|use_rbe)\s*=\s*true(\s*$|\s*#.*$)', line):
+        use_remote_build = True
         continue
 elif os.path.exists(os.path.join(output_dir, 'rules.ninja')):
   with open(os.path.join(output_dir, 'rules.ninja')) as file_handle:
     for line in file_handle:
       if re.match(r'^\s*command\s*=\s*\S+gomacc', line):
-        use_goma = True
+        use_remote_build = True
         break
 
 # If GOMA_DISABLED is set to "true", "t", "yes", "y", or "1" (case-insensitive)
@@ -85,7 +85,7 @@ elif os.path.exists(os.path.join(output_dir, 'rules.ninja')):
 # autoninja uses an appropriate -j value in this situation.
 goma_disabled_env = os.environ.get('GOMA_DISABLED', '0').lower()
 if goma_disabled_env in ['true', 't', 'yes', 'y', '1']:
-  use_goma = False
+  use_remote_build = False
 
 # Specify ninja.exe on Windows so that ninja.bat can call autoninja and not
 # be called back.
@@ -98,7 +98,7 @@ args = [ninja_exe_path] + input_args[1:]
 
 num_cores = psutil.cpu_count()
 if not j_specified and not t_specified:
-  if use_goma:
+  if use_remote_build:
     args.append('-j')
     core_multiplier = int(os.environ.get('NINJA_CORE_MULTIPLIER', '40'))
     j_value = num_cores * core_multiplier
