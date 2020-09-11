@@ -1407,7 +1407,7 @@ class GitWrapper(SCMWrapper):
       # the native ARM slice instead of the Intel slice.
       # TODO(thakis): Remove this again once we ship an arm64 python3
       # binary.
-      cmd = ['arch', '-arch', 'arm64'] + cmd
+      cmd = ['arch', '-arch', 'arm64e', '-arch', 'arm64'] + cmd
     gclient_utils.CheckCallAndFilter(cmd, env=env, **kwargs)
 
 
