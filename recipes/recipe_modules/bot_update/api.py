@@ -320,7 +320,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
           step_text = result['step_text']
           step_result.presentation.step_text = step_text
 
-        if add_blamelists:
+        if add_blamelists and 'manifest' in result:
           blamelist_pins = []
           for name in revisions:
             m = result['manifest'][name]
@@ -333,7 +333,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
           self.m.milo.show_blamelist_for(blamelist_pins)
 
         # Set output commit of the build.
-        if set_output_commit:
+        if (set_output_commit and
+            'got_revision' in self._last_returned_properties):
           # As of April 2019, got_revision describes the output commit,
           # the same commit that Build.output.gitiles_commit describes.
           # In particular, users tend to set got_revision to make Milo display

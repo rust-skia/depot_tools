@@ -120,6 +120,12 @@ def GenTests(api):
       ci_build(git_repo='https://unrecognized/repo')
   )
   yield (
+      api.test('bot_update_failure') +
+      ci_build() +
+      api.properties(bot_update_output={'did_run': True})
+  )
+
+  yield (
       api.test('basic_luci') +
       ci_build() +
       api.runtime(is_experimental=False, is_luci=True)
@@ -242,6 +248,16 @@ def GenTests(api):
       ci_build() +
       api.properties(
           add_blamelists=True,
+          revisions={'src/v8': 'HEAD'},
+      )
+  )
+
+  yield (
+      api.test('add_blamelists_bot_update_failure') +
+      ci_build() +
+      api.properties(
+          add_blamelists=True,
+          bot_update_output={'did_run': True},
           revisions={'src/v8': 'HEAD'},
       )
   )
