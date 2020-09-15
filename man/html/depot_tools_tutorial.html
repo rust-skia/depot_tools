@@ -1105,8 +1105,22 @@ you started on.</p></div>
 <td class="icon">
 <div class="title">Note</div>
 </td>
-<td class="content">Running <code>git rebase-update</code> will update all your branches, but it will not
-automatically run <code>gclient sync</code> to update your dependencies.</td>
+<td class="content">
+<div class="ulist"><ul>
+<li>
+<p>
+Running <code>git rebase-update</code> will update all your branches, but it will not
+automatically run <code>gclient sync</code> to update your dependencies.
+</p>
+</li>
+<li>
+<p>
+Use caution when running <code>git reset</code> as it may result in unexpected behavior of 
+<code>git rebase-update</code> and <code>depot_tools</code> in general - see 
+<a href="https://bugs.chromium.org/p/chromium/issues/detail?id=997395">crbug.com/997395</a>.
+</p>
+</li>
+</ul></div>
 </tr></table>
 </div>
 </div>
