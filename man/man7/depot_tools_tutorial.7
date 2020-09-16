@@ -420,7 +420,7 @@ Once you\(cqre done resolving all of the merge conflict, just run git rebase\-up
 .ps -1
 .br
 .sp
-Running git rebase\-update will update all your branches, but it will not automatically run gclient sync to update your dependencies\&. Use caution when running git reset as it may result in unexpected behavior of git rebase\-update and \fIdepot_tools\fR in general.
+Running git rebase\-update will update all your branches, but it will not automatically run gclient sync to update your dependencies\&. Use caution when running git reset on branches managed by \fIdepot_tools\fR. These tools track the set of "commits contained in the branch" from a branch\(cqs "merge point" to the current branch value. See git help mark-merge-base for more discussion of the merge base.
 .sp .5v
 .RE
 .SH "MANAGING MULTIPLE CLS"

@@ -1115,9 +1115,9 @@ automatically run <code>gclient sync</code> to update your dependencies.
 </li>
 <li>
 <p>
-Use caution when running <code>git reset</code> as it may result in unexpected behavior of 
-<code>git rebase-update</code> and <code>depot_tools</code> in general - see 
-<a href="https://bugs.chromium.org/p/chromium/issues/detail?id=997395">crbug.com/997395</a>.
+Use caution when running <code>git reset</code> on branches managed by <code>depot_tools</code>.
+These tools track the set of "commits contained in the branch" from a branch&#8217;s "merge point"
+to the current branch value. See <code>git help mark-merge-base</code> for more discussion of the merge base.
 </p>
 </li>
 </ul></div>
