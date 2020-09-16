@@ -60,16 +60,12 @@ class DepotToolsApi(recipe_api.RecipeApi):
       with api.depot_tools.on_path():
         # run some steps
     """
-    # On buildbot we have to put this on the FRONT of path, to combat the
-    # 'automatic' depot_tools. However, on LUCI, there is no automatic
-    # depot_tools, so it's safer to put it at the END of path, where it won't
-    # accidentally override e.g. python, vpython, etc.
-    key = 'env_prefixes'
-    if self.m.runtime.is_luci:
-      key = 'env_suffixes'
 
     # By default Depot Tools do not auto update on the bots.
     # (crbug/1090603)
-    with self.m.context(**{key: {'PATH': [self.root],
-                                 'DEPOT_TOOLS_UPDATE' : '0'}}):
+    with self.m.context(
+        **{'env_suffixes': {
+            'PATH': [self.root],
+            'DEPOT_TOOLS_UPDATE': '0'
+        }}):
       yield

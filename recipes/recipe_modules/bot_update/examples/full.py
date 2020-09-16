@@ -126,11 +126,6 @@ def GenTests(api):
   )
 
   yield (
-      api.test('basic_luci') +
-      ci_build() +
-      api.runtime(is_experimental=False, is_luci=True)
-  )
-  yield (
       api.test('resolve_chromium_fixed_version') +
       ci_build() +
       api.properties(resolve_chromium_fixed_version=True)
