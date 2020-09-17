@@ -33,7 +33,7 @@ $VerifiedPlatform linux-mips64 linux-mips64le linux-mipsle
 infra/tools/luci/vpython/${platform} git_revision:65447aeba0bc6228a4149e56fe718eac71a9895b
 
 # LUCI editor
-infra/tools/luci/led/${platform} git_revision:8a2a1c24b738f099734cfc4dbd2a242dcad2b3ad
+infra/tools/luci/led/${platform} git_revision:daace04c9db69ce1b39f06dd8d08be46bc0b8a33
 
 # LUCI config generator
 infra/tools/luci/lucicfg/${platform} git_revision:97cc28c4258b12af0921f4b0b97ba3f4f74ab7d0
