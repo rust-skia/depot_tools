@@ -1036,18 +1036,21 @@ def get_branches_info(include_tracking_status):
   info_map = {}
   data = run('for-each-ref', format_string, 'refs/heads')
   BranchesInfo = collections.namedtuple(
-      'BranchesInfo', 'hash upstream ahead behind')
+      'BranchesInfo', 'hash upstream commits behind')
   for line in data.splitlines():
     (branch, branch_hash, upstream_branch, tracking_status) = line.split(':')
 
-    ahead_match = re.search(r'ahead (\d+)', tracking_status)
-    ahead = int(ahead_match.group(1)) if ahead_match else None
+    commits = None
+    base = get_or_create_merge_base(branch)
+    if base:
+      commits = int(run('rev-list', '--count', branch, '^%s' % base)) or None
 
     behind_match = re.search(r'behind (\d+)', tracking_status)
     behind = int(behind_match.group(1)) if behind_match else None
 
     info_map[branch] = BranchesInfo(
-        hash=branch_hash, upstream=upstream_branch, ahead=ahead, behind=behind)
+        hash=branch_hash, upstream=upstream_branch, commits=commits, 
+        behind=behind)
 
   # Set None for upstreams which are not branches (e.g empty upstream, remotes
   # and deleted upstream branches).
