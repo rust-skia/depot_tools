@@ -1051,7 +1051,7 @@ def CheckDirMetadataFormat(input_api, output_api, dirmd_bin=None):
   file_filter = lambda f: (
       input_api.basename(f.LocalPath()) in ('DIR_METADATA', 'OWNERS'))
   affected_files = set([
-      f.LocalPath()
+      f.AbsoluteLocalPath()
       for f in input_api.change.AffectedFiles(
           include_deletes=False, file_filter=file_filter)
   ])
