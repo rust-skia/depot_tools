@@ -65,13 +65,7 @@ def split_footers(message):
       There could be fewer parsed_footers than footer lines if some lines in
       last paragraph are malformed.
   """
-  message_lines = list(message.splitlines())
-
-  # First, remove trailing empty lines from the change to get to the footer
-  while len(message_lines) > 0 and (message_lines[-1] == ''
-                                    or message_lines[-1].isspace()):
-    message_lines.pop()
-
+  message_lines = list(message.rstrip().splitlines())
   footer_lines = []
   maybe_footer_lines = []
   for line in reversed(message_lines):
