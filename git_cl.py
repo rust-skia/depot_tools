@@ -108,6 +108,9 @@ REFS_THAT_ALIAS_TO_OTHER_REFS = {
     'refs/remotes/origin/lkcr': 'refs/remotes/origin/master',
 }
 
+DEFAULT_OLD_BRANCH = 'refs/remotes/origin/master'
+DEFAULT_NEW_BRANCH = 'refs/remotes/origin/main'
+
 # Valid extensions for files we want to lint.
 DEFAULT_LINT_REGEX = r"(.*\.cpp|.*\.cc|.*\.h)"
 DEFAULT_LINT_IGNORE_REGEX = r"$^"
@@ -641,7 +644,7 @@ def _GetYapfIgnorePatterns(top_dir):
   yapf is supposed to handle the ignoring of files listed in .yapfignore itself,
   but this functionality appears to break when explicitly passing files to
   yapf for formatting. According to
-  https://github.com/google/yapf/blob/master/README.rst#excluding-files-from-formatting-yapfignore,
+  https://github.com/google/yapf/blob/HEAD/README.rst#excluding-files-from-formatting-yapfignore,
   the .yapfignore file should be in the directory that yapf is invoked from,
   which we assume to be the top level directory in this case.
 
@@ -987,7 +990,7 @@ class Changelist(object):
     self.more_cc.extend(more_cc)
 
   def GetBranch(self):
-    """Returns the short branch name, e.g. 'master'."""
+    """Returns the short branch name, e.g. 'main'."""
     if not self.branch:
       branchref = scm.GIT.GetBranchRef(settings.GetRoot())
       if not branchref:
@@ -997,7 +1000,7 @@ class Changelist(object):
     return self.branch
 
   def GetBranchRef(self):
-    """Returns the full branch name, e.g. 'refs/heads/master'."""
+    """Returns the full branch name, e.g. 'refs/heads/main'."""
     self.GetBranch()  # Poke the lazy loader.
     return self.branchref
 
@@ -1016,7 +1019,7 @@ class Changelist(object):
   @staticmethod
   def FetchUpstreamTuple(branch):
     """Returns a tuple containing remote and remote ref,
-       e.g. 'origin', 'refs/heads/master'
+       e.g. 'origin', 'refs/heads/main'
     """
     remote, upstream_branch = scm.GIT.FetchUpstreamTuple(
         settings.GetRoot(), branch)
@@ -1024,7 +1027,7 @@ class Changelist(object):
       DieWithError(
          'Unable to determine default branch to diff against.\n'
          'Either pass complete "git diff"-style arguments, like\n'
-         '  git cl upload origin/master\n'
+         '  git cl upload origin/main\n'
          'or verify this branch is set up to track another \n'
          '(via the --track argument to "git checkout -b ...").')
 
@@ -1226,8 +1229,8 @@ class Changelist(object):
           ('\nFailed to diff against upstream branch %s\n\n'
            'This branch probably doesn\'t exist anymore. To reset the\n'
            'tracking branch, please run\n'
-           '    git branch --set-upstream-to origin/master %s\n'
-           'or replace origin/master with the relevant branch') %
+           '    git branch --set-upstream-to origin/main %s\n'
+           'or replace origin/main with the relevant branch') %
           (upstream, self.GetBranch()))
 
   def UpdateDescription(self, description, force=False):
@@ -3939,10 +3942,20 @@ def GetTargetRef(remote, remote_branch, target_branch):
     # Handle the refs that need to land in different refs.
     remote_branch = REFS_THAT_ALIAS_TO_OTHER_REFS[remote_branch]
 
+  # Migration to new default branch, only if available on remote.
+  allow_push_on_master = bool(os.environ.get("ALLOW_PUSH_TO_MASTER", None))
+  if remote_branch == DEFAULT_OLD_BRANCH and not allow_push_on_master:
+    if RunGit(['show-branch', DEFAULT_NEW_BRANCH], error_ok=True,
+              stderr=subprocess2.PIPE):
+      # TODO(crbug.com/ID): Print location to local git migration script.
+      print("WARNING: Using new branch name %s instead of %s" % (
+          DEFAULT_NEW_BRANCH, DEFAULT_OLD_BRANCH))
+      remote_branch = DEFAULT_NEW_BRANCH
+
   # Create the true path to the remote branch.
   # Does the following translation:
   # * refs/remotes/origin/refs/diff/test -> refs/diff/test
-  # * refs/remotes/origin/master -> refs/heads/master
+  # * refs/remotes/origin/main -> refs/heads/main
   # * refs/remotes/branch-heads/test -> refs/branch-heads/test
   if remote_branch.startswith('refs/remotes/%s/refs/' % remote):
     remote_branch = remote_branch.replace('refs/remotes/%s/' % remote, '')
@@ -4026,7 +4039,7 @@ def CMDupload(parser, args):
                     '--target-branch',
                     metavar='TARGET',
                     help='Apply CL to remote ref TARGET.  ' +
-                         'Default: remote branch head, or master')
+                         'Default: remote branch head, or main')
   parser.add_option('--squash', action='store_true',
                     help='Squash multiple commits into one')
   parser.add_option('--no-squash', action='store_false', dest='squash',
@@ -4382,7 +4395,7 @@ def CMDtry(parser, args):
       '-r', '--revision',
       help='Revision to use for the tryjob; default: the revision will '
            'be determined by the try recipe that builder runs, which usually '
-           'defaults to HEAD of origin/master')
+           'defaults to HEAD of origin/master or origin/main')
   group.add_option(
       '-c', '--clobber', action='store_true', default=False,
       help='Force a clobber before building; that is don\'t do an '

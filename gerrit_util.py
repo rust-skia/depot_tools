@@ -706,6 +706,15 @@ def AbandonChange(host, change, msg=''):
   return ReadHttpJsonResponse(conn)
 
 
+def MoveChange(host, change, destination_branch):
+  """Move a Gerrit change to different destination branch."""
+  path = 'changes/%s/move' % change
+  body = {'destination_branch': destination_branch}
+  conn = CreateHttpConn(host, path, reqtype='POST', body=body)
+  return ReadHttpJsonResponse(conn)
+
+
+
 def RestoreChange(host, change, msg=''):
   """Restores a previously abandoned change."""
   path = 'changes/%s/restore' % change

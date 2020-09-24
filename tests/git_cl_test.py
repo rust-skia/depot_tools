@@ -647,7 +647,7 @@ class TestGitCl(unittest.TestCase):
   def _gerrit_base_calls(cls, issue=None, fetched_description=None,
                          fetched_status=None, other_cl_owner=None,
                          custom_cl_base=None, short_hostname='chromium',
-                         change_id=None):
+                         change_id=None, new_default=False):
     calls = []
     if custom_cl_base:
       ancestor_revision = custom_cl_base
@@ -655,8 +655,8 @@ class TestGitCl(unittest.TestCase):
       # Determine ancestor_revision to be merge base.
       ancestor_revision = 'fake_ancestor_sha'
       calls += [
-        (('get_or_create_merge_base', 'master', 'refs/remotes/origin/master'),
-         ancestor_revision),
+        (('get_or_create_merge_base', 'master',
+          'refs/remotes/origin/master'), ancestor_revision),
       ]
 
     if issue:
@@ -682,6 +682,10 @@ class TestGitCl(unittest.TestCase):
           [ancestor_revision, 'HEAD']),),
        '+dat'),
     ]
+    calls += [
+      ((['git', 'show-branch', 'refs/remotes/origin/main'], ),
+         '1' if new_default else callError(1)),
+    ]
 
     return calls
 
@@ -693,7 +697,9 @@ class TestGitCl(unittest.TestCase):
                            short_hostname='chromium',
                            labels=None, change_id=None,
                            final_description=None, gitcookies_exists=True,
-                           force=False, edit_description=None):
+                           force=False, edit_description=None,
+                           new_default=False):
+    default_branch = 'main' if new_default else 'master';
     if post_amend_description is None:
       post_amend_description = description
     cc = cc or []
@@ -722,14 +728,14 @@ class TestGitCl(unittest.TestCase):
 
       if custom_cl_base is None:
         calls += [
-          (('get_or_create_merge_base', 'master', 'refs/remotes/origin/master'),
-           'origin/master'),
+          (('get_or_create_merge_base', 'master',
+            'refs/remotes/origin/master'), 'origin/' + default_branch),
         ]
-        parent = 'origin/master'
+        parent = 'origin/' + default_branch
       else:
         calls += [
           ((['git', 'merge-base', '--is-ancestor', custom_cl_base,
-             'refs/remotes/origin/master'],),
+             'refs/remotes/origin/' + default_branch],),
            callError(1)),   # Means not ancenstor.
           (('ask_for_data',
             'Do you take responsibility for cleaning up potential mess '
@@ -748,7 +754,7 @@ class TestGitCl(unittest.TestCase):
       ]
     else:
       ref_to_push = 'HEAD'
-      parent = 'origin/refs/heads/master'
+      parent = 'origin/refs/heads/' + default_branch
 
     calls += [
       (('SaveDescriptionBackup',), None),
@@ -834,7 +840,7 @@ class TestGitCl(unittest.TestCase):
       (('time.time',), 1000,),
       ((['git', 'push',
          'https://%s.googlesource.com/my/repo' % short_hostname,
-         ref_to_push + ':refs/for/refs/heads/master' + ref_suffix],),
+         ref_to_push + ':refs/for/refs/heads/' + default_branch + ref_suffix],),
        (('remote:\n'
          'remote: Processing changes: (\)\n'
          'remote: Processing changes: (|)\n'
@@ -848,8 +854,8 @@ class TestGitCl(unittest.TestCase):
              ' XXX\n'
          'remote:\n'
          'To https://%s.googlesource.com/my/repo\n'
-         ' * [new branch]      hhhh -> refs/for/refs/heads/master\n'
-         ) % (short_hostname, short_hostname)),),
+         ' * [new branch]      hhhh -> refs/for/refs/heads/%s\n'
+         ) % (short_hostname, short_hostname, default_branch)),),
       (('time.time',), 2000,),
       (('add_repeated',
         'sub_commands',
@@ -990,7 +996,8 @@ class TestGitCl(unittest.TestCase):
       force=False,
       log_description=None,
       edit_description=None,
-      fetched_description=None):
+      fetched_description=None,
+      new_default=False):
     """Generic gerrit upload test framework."""
     if squash_mode is None:
       if '--no-squash' in upload_args:
@@ -1060,7 +1067,8 @@ class TestGitCl(unittest.TestCase):
         other_cl_owner=other_cl_owner,
         custom_cl_base=custom_cl_base,
         short_hostname=short_hostname,
-        change_id=change_id)
+        change_id=change_id,
+        new_default=new_default)
     if fetched_status != 'ABANDONED':
       mock.patch(
           'gclient_utils.temporary_file', TemporaryFileMock()).start()
@@ -1078,7 +1086,8 @@ class TestGitCl(unittest.TestCase):
           final_description=final_description,
           gitcookies_exists=gitcookies_exists,
           force=force,
-          edit_description=edit_description)
+          edit_description=edit_description,
+          new_default=new_default)
     # Uncomment when debugging.
     # print('\n'.join(map(lambda x: '%2i: %s' % x, enumerate(self.calls))))
     git_cl.main(['upload'] + upload_args)
@@ -1444,6 +1453,10 @@ class TestGitCl(unittest.TestCase):
     self.assertEqual(expected, actual)
 
   def test_get_hash_tags(self):
+    self.calls = [
+        ((['git', 'show-branch', 'refs/remotes/origin/main'], ),
+            callError(1)),
+    ] * 9
     cases = [
       ('', []),
       ('a', []),
@@ -2658,6 +2671,16 @@ class TestGitCl(unittest.TestCase):
     ]
     cl = git_cl.Changelist(issue=123456)
     self.assertEqual(cl._GerritChangeIdentifier(), '123456')
+
+  def test_gerrit_new_default(self):
+    self._run_gerrit_upload_test(
+        [],
+        'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n',
+        [],
+        squash=False,
+        squash_mode='override_nosquash',
+        change_id='I123456789',
+        new_default=True)
 
 
 class ChangelistTest(unittest.TestCase):
