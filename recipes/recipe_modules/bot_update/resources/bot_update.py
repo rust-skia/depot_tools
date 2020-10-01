@@ -678,13 +678,13 @@ def _maybe_break_locks(checkout_path, tries=3):
 
 
 def git_checkouts(solutions, revisions, refs, no_fetch_tags, git_cache_dir,
-                  cleanup_dir, enforce_fetch):
+                  cleanup_dir):
   build_dir = os.getcwd()
   first_solution = True
   for sln in solutions:
     sln_dir = path.join(build_dir, sln['name'])
     _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
-                  cleanup_dir, enforce_fetch)
+                  cleanup_dir)
     if first_solution:
       git_ref = git('log', '--format=%H', '--max-count=1',
                     cwd=path.join(build_dir, sln['name'])
@@ -694,7 +694,7 @@ def git_checkouts(solutions, revisions, refs, no_fetch_tags, git_cache_dir,
 
 
 def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
-                  cleanup_dir, enforce_fetch):
+                  cleanup_dir):
   name = sln['name']
   url = sln['url']
   populate_cmd = (['cache', 'populate', '--ignore_locks', '-v',
@@ -714,9 +714,6 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
 
   branch, revision = get_target_branch_and_revision(name, url, revisions)
   pin = revision if COMMIT_HASH_RE.match(revision) else None
-
-  if enforce_fetch:
-    git(*populate_cmd, env=env)
 
   # Step 1: populate/refresh cache, if necessary.
   if not pin:
@@ -867,14 +864,14 @@ def emit_json(out_file, did_run, gclient_output=None, **kwargs):
 def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
                     target_cpu, patch_root, patch_refs, gerrit_rebase_patch_ref,
                     no_fetch_tags, refs, git_cache_dir, cleanup_dir,
-                    gerrit_reset, disable_syntax_validation, enforce_fetch):
+                    gerrit_reset, disable_syntax_validation):
   # Get a checkout of each solution, without DEPS or hooks.
   # Calling git directly because there is no way to run Gclient without
   # invoking DEPS.
   print('Fetching Git checkout')
 
   git_checkouts(solutions, revisions, refs, no_fetch_tags, git_cache_dir,
-                cleanup_dir, enforce_fetch)
+                cleanup_dir)
 
   # Ensure our build/ directory is set up with the correct .gclient file.
   gclient_configure(solutions, target_os, target_os_only, target_cpu,
