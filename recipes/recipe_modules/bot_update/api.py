@@ -99,7 +99,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       add_blamelists=False,
                       set_output_commit=False,
                       step_test_data=None,
-                      enforce_fetch=False,
                       **kwargs):
     """
     Args:
@@ -125,8 +124,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
         Requires falsy ignore_input_commit.
       step_test_data: a null function that returns test bot_update.py output.
         Use test_api.output_json to generate test data.
-      enforce_fetch: Enforce a new fetch to refresh the git cache, even if the
-        solution revision passed in already exists in the current git cache.
     """
     assert use_site_config_creds is None, "use_site_config_creds is deprecated"
     assert rietveld is None, "rietveld is deprecated"
