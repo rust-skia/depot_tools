@@ -276,6 +276,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
       cmd.append('--with_tags')
     if gerrit_no_reset:
       cmd.append('--gerrit_no_reset')
+    if enforce_fetch:
+      cmd.append('--enforce_fetch')
     if no_fetch_tags:
       cmd.append('--no_fetch_tags')
     if gerrit_no_rebase_patch_ref:

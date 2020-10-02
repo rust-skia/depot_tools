@@ -992,6 +992,7 @@ def parse_args():
             'there are many tags.'))
   parse.add_option(
       '--enforce_fetch',
+      action='store_true',
       help=('Enforce a new fetch to refresh the git cache, even if the '
             'solution revision passed in already exists in the current '
             'git cache.'))
