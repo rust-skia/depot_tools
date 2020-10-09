@@ -453,10 +453,12 @@ def ReadHttpResponse(conn, accept_statuses=frozenset([200])):
     http_version = 'HTTP/%s' % ('1.1' if response.version == 11 else '1.0')
     LOGGER.warn('A transient error occurred while querying %s:\n'
                 '%s %s %s\n'
-                '%s %d %s',
+                '%s %d %s\n'
+                '%s',
                 conn.req_host, conn.req_params['method'],
                 conn.req_params['uri'],
-                http_version, http_version, response.status, response.reason)
+                http_version, http_version, response.status, response.reason,
+                contents)
 
     if idx < TRY_LIMIT - 1:
       LOGGER.info('Will retry in %d seconds (%d more times)...',
