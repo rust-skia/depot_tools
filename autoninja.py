@@ -66,7 +66,15 @@ if os.path.exists(os.path.join(output_dir, 'args.gn')):
   with open(os.path.join(output_dir, 'args.gn')) as file_handle:
     for line in file_handle:
       # Either use_goma or use_rbe activate build acceleration.
-      if re.match(r'^\s*(use_goma|use_rbe)\s*=\s*true(\s*$|\s*#.*$)', line):
+      #
+      # This test can match multi-argument lines. Examples of this are:
+      # is_debug=false use_goma=true is_official_build=false
+      # use_goma=false# use_goma=true This comment is ignored
+      #
+      # Anything after a comment is not consider a valid argument.
+      line_without_comment = line.split('#')[0]
+      if re.search(r'(^|\s)(use_goma|use_rbe)\s*=\s*true($|\s)',
+                   line_without_comment):
         use_remote_build = True
         continue
 elif os.path.exists(os.path.join(output_dir, 'rules.ninja')):
@@ -92,9 +100,19 @@ if goma_disabled_env in ['true', 't', 'yes', 'y', '1']:
 ninja_exe = 'ninja.exe' if sys.platform.startswith('win') else 'ninja'
 ninja_exe_path = os.path.join(SCRIPT_DIR, ninja_exe)
 
+# A large build (with or without goma) tends to hog all system resources.
+# Launching the ninja process with 'nice' priorities improves this situation.
+prefix_args = []
+if (sys.platform.startswith('linux')
+    and os.environ.get('NINJA_BUILD_IN_BACKGROUND', '0') == '1'):
+  # nice -10 is process priority 10 lower than default 0
+  # ionice -c 3 is IO priority IDLE
+  prefix_args = ['nice'] + ['-10']
+
+
 # Use absolute path for ninja path,
 # or fail to execute ninja if depot_tools is not in PATH.
-args = [ninja_exe_path] + input_args[1:]
+args = prefix_args + [ninja_exe_path] + input_args[1:]
 
 num_cores = psutil.cpu_count()
 if not j_specified and not t_specified:
