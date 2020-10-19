@@ -547,7 +547,8 @@ def _print_tryjobs(options, builds):
   print_builds('Failures:', builds_by_status.pop('FAILURE', []), color=Fore.RED)
   print_builds('Canceled:', builds_by_status.pop('CANCELED', []), fmt='{name}',
       color=Fore.MAGENTA)
-  print_builds('Started:', builds_by_status.pop('STARTED', []))
+  print_builds('Started:', builds_by_status.pop('STARTED', []),
+      color=Fore.YELLOW)
   print_builds(
       'Scheduled:', builds_by_status.pop('SCHEDULED', []), fmt='{name} id={id}')
   # The last section is just in case buildbucket API changes OR there is a bug.
