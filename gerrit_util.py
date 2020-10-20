@@ -926,6 +926,12 @@ def GetGerritBranch(host, project, branch):
   raise GerritError(200, 'Unable to get gerrit branch')
 
 
+def GetProjectHead(host, project):
+  conn = CreateHttpConn(host,
+                        '/projects/%s/HEAD' % urllib.parse.quote(project, ''))
+  return ReadHttpJsonResponse(conn, accept_statuses=[200])
+
+
 def GetAccountDetails(host, account_id='self'):
   """Returns details of the account.
 

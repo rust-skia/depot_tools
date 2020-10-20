@@ -226,6 +226,70 @@ class TestGitClBasic(unittest.TestCase):
     actual = set(git_cl.get_cl_statuses(changes, True))
     self.assertEqual(set(zip(changes, statuses)), actual)
 
+  def test_upload_to_non_default_branch_no_retry(self):
+    m = mock.patch('git_cl.Changelist._CMDUploadChange',
+                   side_effect=[git_cl.GitPushError(), None]).start()
+    mock.patch('git_cl.Changelist.GetRemoteBranch',
+               return_value=('foo', 'bar')).start()
+    mock.patch('git_cl.Changelist._GetGerritProject',
+               return_value='foo').start()
+    mock.patch('git_cl.gerrit_util.GetProjectHead',
+               return_value='refs/heads/main').start()
+
+    cl = git_cl.Changelist()
+    options = optparse.Values()
+    with self.assertRaises(SystemExitMock):
+      cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
+
+    # ensure upload is called once
+    self.assertEqual(len(m.mock_calls), 1)
+    sys.exit.assert_called_once_with(1)
+    # option not set as retry didn't happen
+    self.assertFalse(hasattr(options, 'force'))
+    self.assertFalse(hasattr(options, 'edit_description'))
+
+  def test_upload_to_old_default_still_active(self):
+    m = mock.patch('git_cl.Changelist._CMDUploadChange',
+                   side_effect=[git_cl.GitPushError(), None]).start()
+    mock.patch('git_cl.Changelist.GetRemoteBranch',
+               return_value=('foo', git_cl.DEFAULT_OLD_BRANCH)).start()
+    mock.patch('git_cl.Changelist._GetGerritProject',
+               return_value='foo').start()
+    mock.patch('git_cl.gerrit_util.GetProjectHead',
+               return_value='refs/heads/old_default').start()
+
+    cl = git_cl.Changelist()
+    options = optparse.Values()
+    with self.assertRaises(SystemExitMock):
+      cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
+
+    # ensure upload is called once
+    self.assertEqual(len(m.mock_calls), 1)
+    sys.exit.assert_called_once_with(1)
+    # option not set as retry didn't happen
+    self.assertFalse(hasattr(options, 'force'))
+    self.assertFalse(hasattr(options, 'edit_description'))
+
+  def test_upload_to_old_default_retry_on_failure(self):
+    m = mock.patch('git_cl.Changelist._CMDUploadChange',
+                   side_effect=[git_cl.GitPushError(), None]).start()
+    mock.patch('git_cl.Changelist.GetRemoteBranch',
+               return_value=('foo', git_cl.DEFAULT_OLD_BRANCH)).start()
+    mock.patch('git_cl.Changelist._GetGerritProject',
+               return_value='foo').start()
+    mock.patch('git_cl.gerrit_util.GetProjectHead',
+               return_value='refs/heads/main').start()
+    mock.patch('git_cl.RunGit').start()
+
+    cl = git_cl.Changelist()
+    options = optparse.Values()
+    cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
+    # ensure upload is called twice
+    self.assertEqual(len(m.mock_calls), 2)
+    # option overrides on retry
+    self.assertEqual(options.force, True)
+    self.assertEqual(options.edit_description, False)
+
   def test_get_cl_statuses_no_changes(self):
     self.assertEqual([], list(git_cl.get_cl_statuses([], True)))
 
