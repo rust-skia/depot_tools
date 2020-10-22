@@ -111,9 +111,13 @@ try {
   $wc = (New-Object System.Net.WebClient)
   $wc.Headers.Add("User-Agent", $UserAgent)
   try {
+    # Download failures were reported on Windows 8.1 without this line.
+    [System.Net.ServicePointManager]::SecurityProtocol = `
+            [System.Net.SecurityProtocolType]::Tls12
     $wc.DownloadFile($URL, $TmpPath)
   } catch {
-    throw "Failed to download the file, check your network connection"
+    $err = $_.Exception.Message
+    throw "Failed to download the file, check your network connection, $err"
   }
 
   $ActualSHA256 = Get-Actual-SHA256 $TmpPath
