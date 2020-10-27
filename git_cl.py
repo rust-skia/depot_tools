@@ -2659,6 +2659,7 @@ class ChangeDescription(object):
     if not any((has_issue(line) for line in self._description_lines)):
       self.append_footer('Bug: %s' % prefix)
 
+    print('Waiting for editor...')
     content = gclient_utils.RunEditor(self.description, True,
                                       git_editor=settings.GetGitEditor())
     if not content:
