@@ -495,6 +495,9 @@ class Mirror(object):
       print('Cache %s already exists.' % dest_prefix)
       return
 
+    # Reduce the number of individual files to download & write on disk.
+    self.RunGit(['pack-refs', '--all'])
+
     # Run Garbage Collect to compress packfile.
     gc_args = ['gc', '--prune=all']
     if gc_aggressive:
