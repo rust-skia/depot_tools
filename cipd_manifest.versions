@@ -330,8 +330,8 @@ infra/tools/luci/vpython/windows-amd64
 	DyssrWyN2OgGDE-dcFAo9mS1AfyiGnue-1IVqHoBgo4C
 
 infra/tools/mac_toolchain/mac-amd64
-	git_revision:9a1adc55bf4a1173784da3ba2f8cb06421606748
-	RiLbLddPgcxbnzu6nBOHc6RWmP6zO6vWQtWr9zoW2qQC
+	git_revision:6e584bf785867bc3b340f82bb2f7a6cd42ba22a8
+	wHJfq70TBoff204UUKBQmxSKrGa5hEpHFjd5IX5Q0EEC
 
 infra/tools/prpc/linux-386
 	git_revision:dace3c38ddbc95ee87f77f6fac1d30b8333283e4
