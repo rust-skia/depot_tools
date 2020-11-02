@@ -30,6 +30,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 # The -t tools are incompatible with -j
 t_specified = False
 j_specified = False
+offline = False
 output_dir = '.'
 input_args = sys.argv
 # On Windows the autoninja.bat script passes along the arguments enclosed in
@@ -56,6 +57,15 @@ for index, arg in enumerate(input_args[1:]):
   elif arg.startswith('-C'):
     # Support -Cout/Default
     output_dir = arg[2:]
+  elif arg == '-o' or arg == '--offline':
+    offline = True
+  elif arg == '-h':
+    print('autoninja: Use -o/--offline to temporary disable goma.',
+          file=sys.stderr)
+    print(file=sys.stderr)
+
+# Strip -o/--offline so ninja doesn't see them.
+input_args = [ arg for arg in input_args if arg != '-o' and arg != '--offline']
 
 use_remote_build = False
 
@@ -92,7 +102,7 @@ elif os.path.exists(os.path.join(output_dir, 'rules.ninja')):
 # for each compile step. Checking this environment variable ensures that
 # autoninja uses an appropriate -j value in this situation.
 goma_disabled_env = os.environ.get('GOMA_DISABLED', '0').lower()
-if goma_disabled_env in ['true', 't', 'yes', 'y', '1']:
+if offline or goma_disabled_env in ['true', 't', 'yes', 'y', '1']:
   use_remote_build = False
 
 # Specify ninja.exe on Windows so that ninja.bat can call autoninja and not
@@ -150,4 +160,10 @@ for i in range(len(args)):
 if os.environ.get('NINJA_SUMMARIZE_BUILD', '0') == '1':
   args += ['-d', 'stats']
 
-print(' '.join(args))
+if offline and not sys.platform.startswith('win'):
+  # Tell goma to do local compiles. On Windows this environment variable is set
+  # by the wrapper batch file.
+  print('GOMA_DISABLED=1 ' + ' '.join(args))
+else:
+  print(' '.join(args))
+
