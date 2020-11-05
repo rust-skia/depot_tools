@@ -29,6 +29,7 @@ per-file cipd_manifest*=file://GOMA_OWNERS
 
 # LUCI related tooling
 per-file bb*=file://LUCI_OWNERS
+per-file .cipd_impl.ps1=file://LUCI_OWNERS
 per-file cipd*=file://LUCI_OWNERS
 per-file cit*=file://LUCI_OWNERS
 per-file led*=file://LUCI_OWNERS
