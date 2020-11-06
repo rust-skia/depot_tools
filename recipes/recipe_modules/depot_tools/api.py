@@ -57,10 +57,11 @@ class DepotToolsApi(recipe_api.RecipeApi):
 
     Example:
 
-      with api.depot_tools.on_path():
-        # run some steps
+    ```python
+    with api.depot_tools.on_path():
+      # run some steps
+    ```
     """
-
     # By default Depot Tools do not auto update on the bots.
     # (crbug/1090603)
     with self.m.context(

@@ -291,7 +291,7 @@
       "Traceback (most recent call last):",
       "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/examples/full.py\", line 76, in RunSteps",
       "    pkg.add_version_file(pth)",
-      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/api.py\", line 141, in add_version_file",
+      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/api.py\", line 144, in add_version_file",
       "    raise ValueError('add_version_file() may only be used once.')",
       "ValueError: add_version_file() may only be used once."
     ]

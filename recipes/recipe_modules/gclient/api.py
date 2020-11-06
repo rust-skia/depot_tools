@@ -16,12 +16,14 @@ class RevisionResolver(object):
 
 
 class RevisionFallbackChain(RevisionResolver):
-  """Specify that a given project's sync revision follows the fallback chain."""
+  """Specify that a given project's sync revision follows the fallback
+  chain."""
+
   def __init__(self, default=None):
     self._default = default
 
   def resolve(self, properties):
-    """Resolve the revision via the revision fallback chain.
+    """Resolves the revision via the revision fallback chain.
 
     If the given revision was set using the revision_fallback_chain() function,
     this function will follow the chain, looking at relevant build properties
@@ -36,7 +38,7 @@ class RevisionFallbackChain(RevisionResolver):
 
 
 def jsonish_to_python(spec, is_top=False):
-  """Turn a json spec into a python parsable object.
+  """Turns a json spec into a python parsable object.
 
   This exists because Gclient specs, while resembling json, is actually
   ingested using a python "eval()".  Therefore a bit of plumming is required

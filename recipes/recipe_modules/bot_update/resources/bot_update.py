@@ -34,7 +34,7 @@ import os.path as path
 BUF_SIZE = 256
 
 # How many seconds of no stdout activity before process is considered stale. Can
-# be overridden via environmnet variable `STALE_PROCESS_DURATION`. If set to 0,
+# be overridden via environment variable `STALE_PROCESS_DURATION`. If set to 0,
 # process won't be terminated.
 STALE_PROCESS_DURATION = 1200
 

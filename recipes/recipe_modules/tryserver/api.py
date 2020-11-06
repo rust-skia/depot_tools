@@ -149,8 +149,8 @@ class TryserverApi(recipe_api.RecipeApi):
   def get_files_affected_by_patch(self, patch_root, **kwargs):
     """Returns list of paths to files affected by the patch.
 
-    Argument:
-      patch_root: path relative to api.path['root'], usually obtained from
+    Args:
+      * patch_root: path relative to api.path['root'], usually obtained from
         api.gclient.get_gerrit_patch_root().
 
     Returned paths will be relative to to patch_root.

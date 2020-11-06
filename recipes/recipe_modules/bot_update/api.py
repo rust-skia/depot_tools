@@ -103,29 +103,29 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       **kwargs):
     """
     Args:
-      gclient_config: The gclient configuration to use when running bot_update.
+      * gclient_config: The gclient configuration to use when running bot_update.
         If omitted, the current gclient configuration is used.
-      no_fetch_tags: When true, the root git repo being checked out will not
+      * no_fetch_tags: When true, the root git repo being checked out will not
         fetch any tags referenced from the references being fetched. When a repo
         has many references, it can become a performance bottleneck, so avoid
         tags if the checkout will not need them present.
-      disable_syntax_validation: (legacy) Disables syntax validation for DEPS.
+      * disable_syntax_validation: (legacy) Disables syntax validation for DEPS.
         Needed as migration paths for recipes dealing with older revisions,
         such as bisect.
-      ignore_input_commit: if True, ignore api.buildbucket.gitiles_commit.
+      * ignore_input_commit: if True, ignore api.buildbucket.gitiles_commit.
         Exists for historical reasons. Please do not use.
-      add_blamelists: if True, add blamelist pins for all of the repos that had
+      * add_blamelists: if True, add blamelist pins for all of the repos that had
         revisions specified in the gclient config.
-      set_output_commit: if True, mark the checked out commit as the
+      * set_output_commit: if True, mark the checked out commit as the
         primary output commit of this build, i.e. call
         api.buildbucket.set_output_gitiles_commit.
         In case of multiple repos, the repo is the one specified in
         api.buildbucket.gitiles_commit or the first configured solution.
         When sorting builds by commit position, this commit will be used.
         Requires falsy ignore_input_commit.
-      step_test_data: a null function that returns test bot_update.py output.
+      * step_test_data: a null function that returns test bot_update.py output.
         Use test_api.output_json to generate test data.
-      enforce_fetch: Enforce a new fetch to refresh the git cache, even if the
+      * enforce_fetch: Enforce a new fetch to refresh the git cache, even if the
         solution revision passed in already exists in the current git cache.
     """
     assert use_site_config_creds is None, "use_site_config_creds is deprecated"
@@ -427,10 +427,11 @@ class BotUpdateApi(recipe_api.RecipeApi):
     might differ from refs/heads/master.
 
     Args:
-      cfg: The used gclient config.
-      path: The DEPS path of the project this prefix is for. E.g. 'src' or
+      * cfg: The used gclient config.
+      * path: The DEPS path of the project this prefix is for. E.g. 'src' or
           'src/v8'. The query will only be made for the project that matches
           the CL's project.
+
     Returns:
         A destination ref as understood by bot_update.py if available
         and if different from refs/heads/master, returns 'HEAD' otherwise.
@@ -449,17 +450,16 @@ class BotUpdateApi(recipe_api.RecipeApi):
     return target_ref
 
   def resolve_fixed_revision(self, bot_update_json, name):
-    """Set a fixed revision for a single dependency using project revision
+    """Sets a fixed revision for a single dependency using project revision
     properties.
     """
-
     rev_properties = self.get_project_revision_properties(name)
     self.m.gclient.c.revisions = {
       name: bot_update_json['properties'][rev_properties[0]]
     }
 
   def _resolve_fixed_revisions(self, bot_update_json):
-    """Set all fixed revisions from the first sync to their respective
+    """Sets all fixed revisions from the first sync to their respective
     got_X_revision values.
 
     If on the first sync, a revision was requested to be HEAD, this avoids
@@ -503,9 +503,9 @@ class BotUpdateApi(recipe_api.RecipeApi):
     a given project.
 
     Args:
-      project_name (str): The name of a checked-out project as deps path, e.g.
+      * project_name (str): The name of a checked-out project as deps path, e.g.
           src or src/v8.
-      gclient_config: The gclient configuration to use. If omitted, the current
+      * gclient_config: The gclient configuration to use. If omitted, the current
           gclient configuration is used.
 
     Returns (list of str): All properties that'll hold the checked-out revision
