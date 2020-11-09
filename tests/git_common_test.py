@@ -692,6 +692,36 @@ class GitMutableStructuredTest(git_test_utils.GitRepoReadWriteTestBase,
     self.assertIsNone(
       self.repo.run(self.gc.get_or_create_merge_base, 'branch_DOG'))
 
+  def testMergeBaseWithForkPoint(self):
+    self.repo.git('commit', '--allow-empty', '-am', 'foooooo')
+    self.repo.git('checkout','-tb', 'foobarA', 'master')
+    foobarA = self.repo.run(self.gc.hash_one, 'foobarA', short=True)
+
+    self.repo.git('checkout','-tb', 'foobarB', 'foobarA')
+    with self.repo.open('cl1', 'w') as f:
+        f.write('cl1')
+    self.repo.git('add', 'cl1')
+    self.repo.git_commit('cl1')
+    foobarB_old = self.repo.run(self.gc.hash_one, 'foobarB', short=True)
+
+    self.repo.git('checkout','-tb', 'foobarC', 'foobarB')
+    with self.repo.open('cl2', 'w') as f:
+        f.write('cl2')
+    self.repo.git('add', 'cl2')
+    self.repo.git_commit('cl2')
+    foobarC = self.repo.run(self.gc.hash_one, 'foobarC', short=True)
+
+    self.repo.git('checkout', 'foobarB')
+    with self.repo.open('cl1', 'w') as f:
+      f.write('amend cl1')
+    self.repo.git('add', 'cl1')
+    self.repo.git('commit', '--amend', '-m', 'amend cl1')
+
+    self.assertIn(foobarA,
+      self.repo.run(self.gc.get_or_create_merge_base, 'foobarB', foobarB_old))
+    self.assertIn(foobarB_old,
+      self.repo.run(self.gc.get_or_create_merge_base, foobarC, 'foobarB'))
+
   def testGetBranchTree(self):
     skipped, tree = self.repo.run(self.gc.get_branch_tree)
     # This check fails with git 2.4 (see crbug.com/487172)
