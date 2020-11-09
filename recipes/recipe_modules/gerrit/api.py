@@ -173,3 +173,27 @@ class GerritApi(recipe_api.RecipeApi):
         args,
         step_test_data=step_test_data,
     ).json.output
+
+  def move_changes(self,
+                   host,
+                   project,
+                   from_branch,
+                   to_branch,
+                   step_test_data=None):
+    args = [
+        'movechanges', '--host', host, '-p',
+        'project=%s' % project, '-p',
+        'branch=%s' % from_branch, '-p', 'status=open', '--destination_branch',
+        to_branch, '--json_file',
+        self.m.json.output()
+    ]
+
+    if not step_test_data:
+      step_test_data = lambda: self.test_api.get_one_change_response_data(
+          branch=to_branch)
+
+    return self(
+        'move changes',
+        args,
+        step_test_data=step_test_data,
+    ).json.output
