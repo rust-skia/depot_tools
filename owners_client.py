@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import owners
+
 
 class OwnersClient(object):
   """Interact with OWNERS files in a repository.
@@ -24,10 +26,21 @@ class OwnersClient(object):
     """List all owners for a file."""
     raise Exception('Not implemented')
 
-  def IsChangeApproved(self, change_number):
+  def IsChangeApproved(self, change_id):
     """Check if the latest patch set for a change has been approved."""
     raise Exception('Not implemented')
 
-  def IsOwnerConfigurationValid(self, change_number, patch):
+  def IsOwnerConfigurationValid(self, change_id, patch):
     """Check if the owners configuration in a change is valid."""
     raise Exception('Not implemented')
+
+
+class DepotToolsClient(OwnersClient):
+  """Implement OwnersClient using owners.py Database."""
+  def __init__(self, host, root):
+    super(DepotToolsClient, self).__init__(host)
+    self._root = root
+    self._db = owners.Database(root, open, os.path)
+
+  def ListOwnersForFile(self, _project, _branch, path):
+    return sorted(self._db.all_possible_owners([arg], None))
