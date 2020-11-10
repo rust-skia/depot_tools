@@ -444,7 +444,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
       return 'HEAD'
 
     target_ref = self.m.tryserver.gerrit_change_target_ref
-    if target_ref == 'refs/heads/master':
+    if target_ref in ['refs/heads/master', 'refs/heads/master']:
       return 'HEAD'
 
     return target_ref
