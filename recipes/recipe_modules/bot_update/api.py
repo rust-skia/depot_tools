@@ -424,7 +424,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
 
     If there's no Gerrit CL associated with the run, returns 'HEAD'.
     Otherwise this queries Gerrit for the correct destination ref, which
-    might differ from refs/heads/master.
+    might differ from refs/heads/master or refs/heads/main.
 
     Args:
       * cfg: The used gclient config.
@@ -434,7 +434,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
 
     Returns:
         A destination ref as understood by bot_update.py if available
-        and if different from refs/heads/master, returns 'HEAD' otherwise.
+        and if different from refs/heads/master or refs/heads/main, returns
+        'HEAD' otherwise.
     """
     # Ignore project paths other than the one belonging to the current CL.
     patch_path = self.m.gclient.get_gerrit_patch_root(gclient_config=cfg)
@@ -444,7 +445,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
       return 'HEAD'
 
     target_ref = self.m.tryserver.gerrit_change_target_ref
-    if target_ref in ['refs/heads/master', 'refs/heads/master']:
+    if target_ref in ['refs/heads/main', 'refs/heads/master']:
       return 'HEAD'
 
     return target_ref
