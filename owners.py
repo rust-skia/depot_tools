@@ -574,6 +574,7 @@ class Database(object):
     subsequent math easier).
     """
 
+    self.load_data_needed_for(dirs_and_files)
     all_possible_owners_for_dir_or_file_cache = {}
     all_possible_owners = {}
     for current_dir in dirs_and_files:
