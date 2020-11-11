@@ -155,9 +155,9 @@ function clean_bootstrap() {
     mktemp "${MYPATH}/.cipd_client.XXXXXXX")
 
   if hash curl 2> /dev/null ; then
-    curl "${URL}" -s --show-error -f -A "${USER_AGENT}" -L -o "${CIPD_CLIENT_TMP}"
+    curl "${URL}" -s --show-error -f --retry 3 --retry-delay 5 -A "${USER_AGENT}" -L -o "${CIPD_CLIENT_TMP}"
   elif hash wget 2> /dev/null ; then
-    wget "${URL}" -q -U "${USER_AGENT}" -O "${CIPD_CLIENT_TMP}"
+    wget "${URL}" -q -t 3 -w 5 --retry-connrefused -U "${USER_AGENT}" -O "${CIPD_CLIENT_TMP}"
   else
     >&2 echo -n "[31;1m"
     >&2 echo -n "Your platform is missing a supported fetch command. "
