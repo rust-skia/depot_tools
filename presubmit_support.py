@@ -433,20 +433,26 @@ class GerritAccessor(object):
       ref = 'refs/heads/%s' % ref
     return ref
 
+  def _GetApproversForLabel(self, issue, label):
+    change_info = self.GetChangeInfo(issue)
+    label_info = change_info.get('labels', {}).get(label, {})
+    values = label_info.get('values', {}).keys()
+    if not values:
+      return []
+    max_value = max(int(v) for v in values)
+    return [v for v in label_info.get('all', [])
+            if v.get('value', 0) == max_value]
+
+  def IsBotCommitApproved(self, issue):
+    return bool(self._GetApproversForLabel(issue, 'Bot-Commit'))
+
   def GetChangeOwner(self, issue):
     return self.GetChangeInfo(issue)['owner']['email']
 
   def GetChangeReviewers(self, issue, approving_only=True):
     changeinfo = self.GetChangeInfo(issue)
     if approving_only:
-      labelinfo = changeinfo.get('labels', {}).get('Code-Review', {})
-      values = labelinfo.get('values', {}).keys()
-      try:
-        max_value = max(int(v) for v in values)
-        reviewers = [r for r in labelinfo.get('all', [])
-                     if r.get('value', 0) == max_value]
-      except ValueError:  # values is the empty list
-        reviewers = []
+      reviewers = self._GetApproversForLabel(issue, 'Code-Review')
     else:
       reviewers = changeinfo.get('reviewers', {}).get('REVIEWER', [])
     return [r.get('email') for r in reviewers]

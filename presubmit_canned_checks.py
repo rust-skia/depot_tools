@@ -1122,6 +1122,11 @@ def CheckOwnersFormat(input_api, output_api):
 
 
 def CheckOwners(input_api, output_api, source_file_filter=None):
+  # Skip OWNERS check when Bot-Commit label is approved.
+  if (input_api.change.issue
+      and input_api.gerrit.IsBotCommitApproved(input_api.change.issue)):
+    return []
+
   affected_files = set([f.LocalPath() for f in
       input_api.change.AffectedFiles(file_filter=source_file_filter)])
   owners_db = input_api.owners_db
