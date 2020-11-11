@@ -446,6 +446,9 @@ class GerritAccessor(object):
   def IsBotCommitApproved(self, issue):
     return bool(self._GetApproversForLabel(issue, 'Bot-Commit'))
 
+  def IsOwnersOverrideApproved(self, issue):
+    return bool(self._GetApproversForLabel(issue, 'Owners-Override'))
+
   def GetChangeOwner(self, issue):
     return self.GetChangeInfo(issue)['owner']['email']
 
