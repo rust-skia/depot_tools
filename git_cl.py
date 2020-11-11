@@ -939,7 +939,11 @@ class Changelist(object):
       with great care.
   """
 
-  def __init__(self, branchref=None, issue=None, codereview_host=None):
+  def __init__(self,
+               branchref=None,
+               issue=None,
+               codereview_host=None,
+               commit_date=None):
     """Create a new ChangeList instance.
 
     **kwargs will be passed directly to Gerrit implementation.
@@ -956,6 +960,7 @@ class Changelist(object):
       self.branch = scm.GIT.ShortBranchName(self.branchref)
     else:
       self.branch = None
+    self.commit_date = commit_date
     self.upstream_branch = None
     self.lookedup_issue = False
     self.issue = issue or None
@@ -993,6 +998,10 @@ class Changelist(object):
   def ExtendCC(self, more_cc):
     """Extends the list of users to cc on this CL based on the changed files."""
     self.more_cc.extend(more_cc)
+
+  def GetCommitDate(self):
+    """Returns the commit date as provided in the constructor"""
+    return self.commit_date
 
   def GetBranch(self):
     """Returns the short branch name, e.g. 'main'."""
@@ -2655,7 +2664,10 @@ class ChangeDescription(object):
     bug_regexp = re.compile(self.BUG_LINE)
     fixed_regexp = re.compile(self.FIXED_LINE)
     prefix = settings.GetBugPrefix()
-    has_issue = lambda l: bug_regexp.match(l) or fixed_regexp.match(l)
+
+    def has_issue(l):
+      return bug_regexp.match(l) or fixed_regexp.match(l)
+
     if not any((has_issue(line) for line in self._description_lines)):
       self.append_footer('Bug: %s' % prefix)
 
@@ -3497,6 +3509,10 @@ def CMDstatus(parser, args):
       '-i', '--issue', type=int,
       help='Operate on this issue instead of the current branch\'s implicit '
       'issue. Requires --field to be set.')
+  parser.add_option('-d',
+                    '--dateorder',
+                    action='store_true',
+                    help='Order branches by committer date.')
   options, args = parser.parse_args(args)
   if args:
     parser.error('Unsupported args: %s' % args)
@@ -3525,14 +3541,17 @@ def CMDstatus(parser, args):
         print(url)
     return 0
 
-  branches = RunGit(['for-each-ref', '--format=%(refname)', 'refs/heads'])
+  branches = RunGit([
+      'for-each-ref', '--format=%(refname) %(committerdate:unix)', 'refs/heads'
+  ])
   if not branches:
     print('No local branch found.')
     return 0
 
   changes = [
-      Changelist(branchref=b)
-      for b in branches.splitlines()]
+      Changelist(branchref=b, commit_date=ct)
+      for b, ct in map(lambda line: line.split(' '), branches.splitlines())
+  ]
   print('Branches associated with reviews:')
   output = get_cl_statuses(changes,
                            fine_grained=not options.fast,
@@ -3558,7 +3577,13 @@ def CMDstatus(parser, args):
   branch_statuses = {}
 
   alignment = max(5, max(len(FormatBranchName(c.GetBranch())) for c in changes))
-  for cl in sorted(changes, key=lambda c: c.GetBranch()):
+  if options.committerdate:
+    sorted_changes = sorted(changes,
+                            key=lambda c: c.GetCommitDate(),
+                            reverse=True)
+  else:
+    sorted_changes = sorted(changes, key=lambda c: c.GetBranch())
+  for cl in sorted_changes:
     branch = cl.GetBranch()
     while branch not in branch_statuses:
       c, status = next(output)
@@ -5199,6 +5224,7 @@ def CMDlol(parser, args):
 
 class OptionParser(optparse.OptionParser):
   """Creates the option parse and add --verbose support."""
+
   def __init__(self, *args, **kwargs):
     optparse.OptionParser.__init__(
         self, *args, prog='git cl', version=__version__, **kwargs)
