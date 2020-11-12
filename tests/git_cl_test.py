@@ -490,7 +490,6 @@ class GitCookiesCheckerTest(unittest.TestCase):
     self.assertEqual(set(), self.c.get_conflicting_hosts())
     self.assertEqual(set(), self.c.get_duplicated_hosts())
     self.assertEqual(set(), self.c.get_partially_configured_hosts())
-    self.assertEqual(set(), self.c.get_hosts_with_wrong_identities())
 
   def test_analysis(self):
     self.mock_hosts_creds([
@@ -516,9 +515,6 @@ class GitCookiesCheckerTest(unittest.TestCase):
     self.assertEqual(set(['partial.googlesource.com',
                           'gpartial-review.googlesource.com']),
                      self.c.get_partially_configured_hosts())
-    self.assertEqual(set(['chromium.googlesource.com',
-                          'chrome-internal.googlesource.com']),
-                     self.c.get_hosts_with_wrong_identities())
 
   def test_report_no_problems(self):
     self.test_analysis_nothing()

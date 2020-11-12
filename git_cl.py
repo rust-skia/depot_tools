@@ -3038,24 +3038,6 @@ class _GitCookiesChecker(object):
     counters = collections.Counter(h for h, _, _ in self.get_hosts_with_creds())
     return set(host for host, count in counters.items() if count > 1)
 
-  _EXPECTED_HOST_IDENTITY_DOMAINS = {
-    'chromium.googlesource.com': 'chromium.org',
-    'chrome-internal.googlesource.com': 'google.com',
-  }
-
-  def get_hosts_with_wrong_identities(self):
-    """Finds hosts which **likely** reference wrong identities.
-
-    Note: skips hosts which have conflicting identities for Git and Gerrit.
-    """
-    hosts = set()
-    for host, expected in self._EXPECTED_HOST_IDENTITY_DOMAINS.items():
-      pair = self._get_git_gerrit_identity_pairs().get(host)
-      if pair and pair[0] == pair[1]:
-        _, domain = self._parse_identity(pair[0])
-        if domain != expected:
-          hosts.add(host)
-    return hosts
 
   @staticmethod
   def _format_hosts(hosts, extra_column_func=None):
@@ -3099,14 +3081,6 @@ class _GitCookiesChecker(object):
              self._format_hosts(conflicting, lambda host: '%s vs %s' %
                  tuple(self._get_git_gerrit_identity_pairs()[host])),
              conflicting)
-
-    wrong = self.get_hosts_with_wrong_identities()
-    if wrong:
-      yield ('These hosts likely use wrong identity',
-             self._format_hosts(wrong, lambda host: '%s but %s recommended' %
-                (self._get_git_gerrit_identity_pairs()[host][0],
-                 self._EXPECTED_HOST_IDENTITY_DOMAINS[host])),
-             wrong)
 
   def find_and_report_problems(self):
     """Returns True if there was at least one problem, else False."""
