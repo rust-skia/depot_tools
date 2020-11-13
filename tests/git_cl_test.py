@@ -2950,9 +2950,13 @@ class CMDTestCaseBase(unittest.TestCase):
       'owner': {'email': 'owner@e.mail'},
       'current_revision': 'beeeeeef',
       'revisions': {
-          'deadbeaf': {'_number': 6},
+          'deadbeaf': {
+            '_number': 6, 
+            'kind': 'REWORK',
+          },
           'beeeeeef': {
               '_number': 7,
+              'kind': 'NO_CODE_CHANGE',
               'fetch': {'http': {
                   'url': 'https://chromium.googlesource.com/depot_tools',
                   'ref': 'refs/changes/56/123456/7'
@@ -2988,6 +2992,9 @@ class CMDTestCaseBase(unittest.TestCase):
     mock.patch(
         'git_cl.Changelist.GetMostRecentPatchset',
         return_value=7).start()
+    mock.patch(
+        'git_cl.Changelist.GetMostRecentDryRunPatchset',
+        return_value=6).start()
     mock.patch(
         'git_cl.Changelist.GetRemoteUrl',
         return_value='https://chromium.googlesource.com/depot_tools').start()
@@ -3079,6 +3086,19 @@ class CMDTryResultsTestCase(CMDTestCaseBase):
           "gerritChanges": [{
               "project": "depot_tools",
               "host": "chromium-review.googlesource.com",
+              "patchset": 6,
+              "change": 123456,
+          }],
+      },
+      'fields': ('builds.*.id,builds.*.builder,builds.*.status' +
+                 ',builds.*.createTime,builds.*.tags'),
+  }
+
+  _TRIVIAL_REQUEST = {
+      'predicate': {
+          "gerritChanges": [{
+              "project": "depot_tools",
+              "host": "chromium-review.googlesource.com",
               "patchset": 7,
               "change": 123456,
           }],
@@ -3095,6 +3115,36 @@ class CMDTryResultsTestCase(CMDTestCaseBase):
     git_cl._call_buildbucket.assert_called_once_with(
         mock.ANY, 'cr-buildbucket.appspot.com', 'SearchBuilds',
         self._DEFAULT_REQUEST)
+
+  def testTrivialCommits(self):
+    self.assertEqual(0, git_cl.main(['try-results']))
+    git_cl._call_buildbucket.assert_called_with(
+        mock.ANY, 'cr-buildbucket.appspot.com', 'SearchBuilds',
+        self._DEFAULT_REQUEST)
+
+    git_cl._call_buildbucket.return_value = {}
+    self.assertEqual(0, git_cl.main(['try-results', '--patchset', '7']))
+    git_cl._call_buildbucket.assert_called_with(
+        mock.ANY, 'cr-buildbucket.appspot.com', 'SearchBuilds',
+        self._TRIVIAL_REQUEST)
+    self.assertEqual([
+        'Successes:',
+        '  bot_success            https://ci.chromium.org/b/103',
+        'Infra Failures:',
+        '  bot_infra_failure      https://ci.chromium.org/b/105',
+        'Failures:',
+        '  bot_failure            https://ci.chromium.org/b/104',
+        'Canceled:',
+        '  bot_canceled          ',
+        'Started:',
+        '  bot_started            https://ci.chromium.org/b/102',
+        'Scheduled:',
+        '  bot_scheduled          id=101',
+        'Other:',
+        '  bot_status_unspecified id=100',
+        'Total: 7 tryjobs',
+        'No tryjobs scheduled.',
+    ], sys.stdout.getvalue().splitlines())
 
   def testPrintToStdout(self):
     self.assertEqual(0, git_cl.main(['try-results']))
