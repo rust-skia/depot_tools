@@ -22,13 +22,7 @@ class TryserverApi(recipe_api.RecipeApi):
   def initialize(self):
     changes = self.m.buildbucket.build.input.gerrit_changes
     if len(changes) == 1:
-      cl = changes[0]
-      self._gerrit_change = cl
-      git_host = cl.host
-      gs_suffix = '-review.googlesource.com'
-      if git_host.endswith(gs_suffix):
-        git_host = '%s.googlesource.com' % git_host[:-len(gs_suffix)]
-      self._gerrit_change_repo_url = 'https://%s/%s' % (git_host, cl.project)
+      self.set_change(changes[0])
 
   @property
   def gerrit_change(self):
@@ -262,3 +256,17 @@ class TryserverApi(recipe_api.RecipeApi):
 
   def normalize_footer_name(self, footer):
     return '-'.join([ word.title() for word in footer.strip().split('-') ])
+
+  def set_change(self, change):
+    """Set the gerrit change for this module.
+
+    Args:
+      * cl: a GerritChange object.
+    """
+    self._gerrit_info_initialized = False
+    self._gerrit_change = change
+    git_host = change.host
+    gs_suffix = '-review.googlesource.com'
+    if git_host.endswith(gs_suffix):
+      git_host = '%s.googlesource.com' % git_host[:-len(gs_suffix)]
+    self._gerrit_change_repo_url = 'https://%s/%s' % (git_host, change.project)
