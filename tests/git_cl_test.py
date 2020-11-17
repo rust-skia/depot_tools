@@ -2951,7 +2951,7 @@ class CMDTestCaseBase(unittest.TestCase):
       'current_revision': 'beeeeeef',
       'revisions': {
           'deadbeaf': {
-            '_number': 6, 
+            '_number': 6,
             'kind': 'REWORK',
           },
           'beeeeeef': {
@@ -3808,6 +3808,79 @@ class CMDFormatTestCase(unittest.TestCase):
       'test.py',
     ]
     self._check_yapf_filtering(files, expected)
+
+
+class CMDStatusTestCase(CMDTestCaseBase):
+  # Return branch names a,..,f with comitterdates in increasing order, i.e.
+  # 'f' is the most-recently changed branch.
+  def _mock_run_git(commands):
+    if commands == [
+        'for-each-ref', '--format=%(refname) %(committerdate:unix)',
+        'refs/heads'
+    ]:
+      branches_and_committerdates = [
+          'refs/heads/a 1',
+          'refs/heads/b 2',
+          'refs/heads/c 3',
+          'refs/heads/d 4',
+          'refs/heads/e 5',
+          'refs/heads/f 6',
+      ]
+      return '\n'.join(branches_and_committerdates)
+
+  # Mock the status in such a way that the issue number gives us an
+  # indication of the commit date (simplifies manual debugging).
+  def _mock_get_cl_statuses(branches, fine_grained, max_processes):
+    for c in branches:
+      c.issue = (100 + int(c.GetCommitDate()))
+      yield (c, 'open')
+
+  @mock.patch('git_cl.Changelist.EnsureAuthenticated')
+  @mock.patch('git_cl.Changelist.FetchDescription', lambda cl, pretty: 'x')
+  @mock.patch('git_cl.Changelist.GetIssue', lambda cl: cl.issue)
+  @mock.patch('git_cl.RunGit', _mock_run_git)
+  @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
+  @mock.patch('git_cl.Settings.GetRoot', return_value='')
+  @mock.patch('scm.GIT.GetBranch', return_value='a')
+  def testStatus(self, *_mocks):
+    self.assertEqual(0, git_cl.main(['status', '--no-branch-color']))
+    self.maxDiff = None
+    self.assertEqual(
+        sys.stdout.getvalue(), 'Branches associated with reviews:\n'
+        '    * a : https://crrev.com/c/101 (open)\n'
+        '      b : https://crrev.com/c/102 (open)\n'
+        '      c : https://crrev.com/c/103 (open)\n'
+        '      d : https://crrev.com/c/104 (open)\n'
+        '      e : https://crrev.com/c/105 (open)\n'
+        '      f : https://crrev.com/c/106 (open)\n\n'
+        'Current branch: a\n'
+        'Issue number: 101 (https://chromium-review.googlesource.com/101)\n'
+        'Issue description:\n'
+        'x\n')
+
+  @mock.patch('git_cl.Changelist.EnsureAuthenticated')
+  @mock.patch('git_cl.Changelist.FetchDescription', lambda cl, pretty: 'x')
+  @mock.patch('git_cl.Changelist.GetIssue', lambda cl: cl.issue)
+  @mock.patch('git_cl.RunGit', _mock_run_git)
+  @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
+  @mock.patch('git_cl.Settings.GetRoot', return_value='')
+  @mock.patch('scm.GIT.GetBranch', return_value='a')
+  def testStatusByDate(self, *_mocks):
+    self.assertEqual(
+        0, git_cl.main(['status', '--no-branch-color', '--date-order']))
+    self.maxDiff = None
+    self.assertEqual(
+        sys.stdout.getvalue(), 'Branches associated with reviews:\n'
+        '      f : https://crrev.com/c/106 (open)\n'
+        '      e : https://crrev.com/c/105 (open)\n'
+        '      d : https://crrev.com/c/104 (open)\n'
+        '      c : https://crrev.com/c/103 (open)\n'
+        '      b : https://crrev.com/c/102 (open)\n'
+        '    * a : https://crrev.com/c/101 (open)\n\n'
+        'Current branch: a\n'
+        'Issue number: 101 (https://chromium-review.googlesource.com/101)\n'
+        'Issue description:\n'
+        'x\n')
 
 
 if __name__ == '__main__':
