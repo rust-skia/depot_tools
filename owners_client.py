@@ -4,6 +4,7 @@
 
 import os
 
+import gerrit_util
 import owners
 import scm
 
@@ -52,16 +53,19 @@ class OwnersClient(object):
 
 class DepotToolsClient(OwnersClient):
   """Implement OwnersClient using owners.py Database."""
-  def __init__(self, host, root, branch):
+  def __init__(self, host, root, fopen, os_path, branch):
     super(DepotToolsClient, self).__init__(host)
     self._root = root
     self._branch = branch
-    self._db = owners.Database(root, open, os.path)
-    self._db.override_files({
+    self._db = owners.Database(root, fopen, os_path)
+    self._db.override_files = self._GetOriginalOwnersFiles()
+
+  def _GetOriginalOwnersFiles(self):
+    return {
       f: scm.GIT.GetOldContents(self._root, f, self._branch)
       for _, f in scm.GIT.CaptureStatus(self._root, self._branch)
       if os.path.basename(f) == 'OWNERS'
-    })
+    }
 
   def ListOwnersForFile(self, _project, _branch, path):
     return sorted(self._db.all_possible_owners([path], None))
@@ -75,7 +79,7 @@ class DepotToolsClient(OwnersClient):
     reviewers = [r['email'] for r in data['reviewers']['REVIEWER']]
 
     # Get reviewers that have approved this change
-    label = change['labels']['Code-Review']
+    label = data['labels']['Code-Review']
     max_value = max(int(v) for v in label['values'])
     approvers = [v['email'] for v in label['all'] if v['value'] == max_value]
 

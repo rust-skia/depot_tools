@@ -201,7 +201,7 @@ class Database(object):
     self._check_reviewers(reviewers)
     self.load_data_needed_for(files)
 
-    return set(f for f in files if not self._is_obj_covered_by(f, reviewers))
+    return set(f for f in files if not self.is_covered_by(f, reviewers))
 
   def _check_paths(self, files):
     def _is_under(f, pfx):
@@ -214,7 +214,7 @@ class Database(object):
     _assert_is_collection(reviewers)
     assert all(self.email_regexp.match(r) for r in reviewers), reviewers
 
-  def _is_obj_covered_by(self, objname, reviewers):
+  def is_covered_by(self, objname, reviewers):
     reviewers = list(reviewers) + [EVERYONE]
     while True:
       for reviewer in reviewers:
