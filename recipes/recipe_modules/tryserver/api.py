@@ -261,12 +261,12 @@ class TryserverApi(recipe_api.RecipeApi):
     """Set the gerrit change for this module.
 
     Args:
-      * cl: a GerritChange object.
+      * change: a self.m.buildbucket.common_pb2.GerritChange.
     """
-    self._gerrit_info_initialized = False
-    self._gerrit_change = change
-    git_host = change.host
     gs_suffix = '-review.googlesource.com'
-    if git_host.endswith(gs_suffix):
-      git_host = '%s.googlesource.com' % git_host[:-len(gs_suffix)]
-    self._gerrit_change_repo_url = 'https://%s/%s' % (git_host, change.project)
+    if change.host.endswith(gs_suffix):
+      self._gerrit_info_initialized = False
+      self._gerrit_change = change
+      git_host = '%s.googlesource.com' % change.host[:-len(gs_suffix)]
+      self._gerrit_change_repo_url = 'https://%s/%s' % (git_host,
+                                                        change.project)

@@ -88,7 +88,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       patchset=None,
                       gerrit_no_reset=False,
                       gerrit_no_rebase_patch_ref=False,
-                      accept_buildbucket_input=True,
+                      accept_input_gerrit_changes=True,
                       disable_syntax_validation=False,
                       patch_refs=None,
                       ignore_input_commit=False,
@@ -123,11 +123,11 @@ class BotUpdateApi(recipe_api.RecipeApi):
         Use test_api.output_json to generate test data.
       * enforce_fetch: Enforce a new fetch to refresh the git cache, even if the
         solution revision passed in already exists in the current git cache.
-      * accept_buildbucket_input: should get the patchset from
-        buildbucket.build.input.gerrit_changes. If True, the input size is
-        asserted to be one, because bot_update module ONLY supports one CL.
-        Users may specify a CL via tryserver.set_change() and explicitly set
-        this flag False.
+      * accept_input_gerrit_changes: if True, get the patchset from
+        self.m.buildbucket.build.input.gerrit_changes, with an assertion that
+        the size of self.m.buildbucket.build.input.gerrit_changes is one,
+        because bot_update module ONLY supports one change. Users may specify a
+        change via tryserver.set_change() and explicitly set this flag False.
     """
     assert use_site_config_creds is None, "use_site_config_creds is deprecated"
     assert rietveld is None, "rietveld is deprecated"
@@ -136,7 +136,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
     assert patch_oauth2 is None, "patch_oauth2 is deprecated"
     assert oauth2_json is None, "oauth2_json is deprecated"
     assert not (ignore_input_commit and set_output_commit)
-    if accept_buildbucket_input:
+    if accept_input_gerrit_changes:
       assert len(self.m.buildbucket.build.input.gerrit_changes) <= 1, (
           'bot_update does not support more than one '
           'buildbucket.build.input.gerrit_changes')
