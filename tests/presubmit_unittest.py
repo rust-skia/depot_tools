@@ -46,6 +46,7 @@ import json
 import owners
 import owners_finder
 import presubmit_support as presubmit
+import rdb_wrapper
 import scm
 import subprocess2 as subprocess
 
@@ -168,6 +169,7 @@ index fe3de7b..54ae6e1 100755
     presubmit._ASKED_FOR_FEEDBACK = False
     self.fake_root_dir = self.RootDir()
     self.fake_change = FakeChange(self)
+    self.rdb_client = mock.MagicMock()
 
     mock.patch('gclient_utils.FileRead').start()
     mock.patch('gclient_utils.FileWrite').start()
@@ -180,7 +182,8 @@ index fe3de7b..54ae6e1 100755
     mock.patch('os.path.isfile').start()
     mock.patch('os.remove').start()
     mock.patch('presubmit_support._parse_files').start()
-    mock.patch('presubmit_support.rdb_wrapper.setup_rdb').start()
+    mock.patch('presubmit_support.rdb_wrapper.client',
+               return_value=self.rdb_client).start()
     mock.patch('presubmit_support.sigint_handler').start()
     mock.patch('presubmit_support.time_time', return_value=0).start()
     mock.patch('presubmit_support.warn').start()
@@ -538,13 +541,44 @@ class PresubmitUnittest(PresubmitTestsBase):
       '  return results\n',
     fake_presubmit))
 
-    presubmit.rdb_wrapper.setup_rdb.assert_called()
-
     self.assertRaises(presubmit.PresubmitFailure,
       executer.ExecPresubmitScript,
       'def CheckChangeOnCommit(input_api, output_api):\n'
       '  return ["foo"]',
       fake_presubmit)
+
+  def testExecPresubmitScriptWithResultDB(self):
+    description_lines = ('Hello there', 'this is a change', 'BUG=123')
+    files = [['A', 'foo\\blat.cc']]
+    fake_presubmit = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
+    change = presubmit.Change('mychange', '\n'.join(description_lines),
+                              self.fake_root_dir, files, 0, 0, None)
+    executer = presubmit.PresubmitExecuter(change, True, None, False)
+    sink = self.rdb_client.__enter__.return_value = mock.MagicMock()
+
+    # STATUS_PASS on success
+    executer.ExecPresubmitScript(
+        'def CheckChangeOnCommit(input_api, output_api):\n'
+        '  return [output_api.PresubmitResult("test")]\n', fake_presubmit)
+    sink.report.assert_called_with('CheckChangeOnCommit',
+                                   rdb_wrapper.STATUS_PASS, 0)
+
+    # STATUS_FAIL on exception
+    sink.reset_mock()
+    self.assertRaises(
+        Exception, executer.ExecPresubmitScript,
+        'def CheckChangeOnCommit(input_api, output_api):\n'
+        '  raise Exception("boom")', fake_presubmit)
+    sink.report.assert_called_with('CheckChangeOnCommit',
+                                   rdb_wrapper.STATUS_FAIL, 0)
+
+    # STATUS_FAIL on fatal error
+    sink.reset_mock()
+    executer.ExecPresubmitScript(
+        'def CheckChangeOnCommit(input_api, output_api):\n'
+        '  return [output_api.PresubmitError("error")]\n', fake_presubmit)
+    sink.report.assert_called_with('CheckChangeOnCommit',
+                                   rdb_wrapper.STATUS_FAIL, 0)
 
   def testExecPresubmitScriptTemporaryFilesRemoval(self):
     tempfile.NamedTemporaryFile.side_effect = [
