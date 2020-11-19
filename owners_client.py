@@ -54,6 +54,28 @@ class OwnersClient(object):
     """Check if the owners configuration in a change is valid."""
     raise Exception('Not implemented')
 
+  def GetFilesApprovalStatus(
+      self, project, branch, paths, approvers, reviewers):
+    """Check the approval status for the given paths.
+
+    Utility method to check for approval status when a change has not yet been
+    created, given reviewers and approvers.
+
+    See GetChangeApprovalStatus for description of the returned value.
+    """
+    approvers = set(approvers)
+    reviewers = set(reviewers)
+    status = {}
+    for path in paths:
+      path_owners = set(self.ListOwnersForFile(project, branch, path))
+      if path_owners.intersection(approvers):
+        status[path] = APPROVED
+      elif path_owners.intersection(reviewers):
+        status[path] = PENDING
+      else:
+        status[path] = INSUFFICIENT_REVIEWERS
+    return status
+
 
 class DepotToolsClient(OwnersClient):
   """Implement OwnersClient using owners.py Database."""
@@ -90,18 +112,7 @@ class DepotToolsClient(OwnersClient):
     approvers = [v['email'] for v in label['all'] if v['value'] == max_value]
 
     files = data['revisions'][data['current_revision']]['files']
-
-    self._db.load_data_needed_for(files)
-
-    status = {}
-    for f in files:
-      if self._db.is_covered_by(f, approvers):
-        status[f] = APPROVED
-      elif self._db.is_covered_by(f, reviewers):
-        status[f] = PENDING
-      else:
-        status[f] = INSUFFICIENT_REVIEWERS
-    return status
+    return self.GetFilesApprovalStatus(None, None, files, approvers, reviewers)
 
   def ValidateOwnersConfig(self, change_id):
     data = gerrit_util.GetChange(
