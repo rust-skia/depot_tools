@@ -14,6 +14,10 @@ PENDING = 'PENDING'
 INSUFFICIENT_REVIEWERS = 'INSUFFICIENT_REVIEWERS'
 
 
+class InvalidOwnersConfig(Exception):
+  pass
+
+
 class OwnersClient(object):
   """Interact with OWNERS files in a repository.
 
@@ -36,7 +40,7 @@ class OwnersClient(object):
     raise Exception('Not implemented')
 
   def GetChangeApprovalStatus(self, change_id):
-    """Check the approval status for the latest patch in a change.
+    """Check the approval status for the latest revision_id in a change.
 
     Returns a map of path to approval status, where the status can be one of:
     - APPROVED: An owner of the file has reviewed the change.
@@ -46,7 +50,7 @@ class OwnersClient(object):
     """
     raise Exception('Not implemented')
 
-  def IsOwnerConfigurationValid(self, change_id, patch):
+  def ValidateOwnersConfig(self, change_id):
     """Check if the owners configuration in a change is valid."""
     raise Exception('Not implemented')
 
@@ -56,6 +60,8 @@ class DepotToolsClient(OwnersClient):
   def __init__(self, host, root, fopen, os_path, branch):
     super(DepotToolsClient, self).__init__(host)
     self._root = root
+    self._fopen = fopen
+    self._os_path = os_path
     self._branch = branch
     self._db = owners.Database(root, fopen, os_path)
     self._db.override_files = self._GetOriginalOwnersFiles()
@@ -96,3 +102,18 @@ class DepotToolsClient(OwnersClient):
       else:
         status[f] = INSUFFICIENT_REVIEWERS
     return status
+
+  def ValidateOwnersConfig(self, change_id):
+    data = gerrit_util.GetChange(
+        self._host, change_id,
+        ['DETAILED_ACCOUNTS', 'DETAILED_LABELS', 'CURRENT_FILES',
+         'CURRENT_REVISION'])
+
+    files = data['revisions'][data['current_revision']]['files']
+
+    db = owners.Database(self._root, self._fopen, self._os_path)
+    try:
+      db.load_data_needed_for(
+          [f for f in files if os.path.basename(f) == 'OWNERS'])
+    except Exception as e:
+      raise InvalidOwnersConfig('Error parsing OWNERS files:\n%s' % e)
