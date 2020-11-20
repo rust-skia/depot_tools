@@ -58,12 +58,12 @@ Recipe module to ensure a checkout is consistent on a bot.
 
 Wrapper for easy calling of bot_update.
 
-&mdash; **def [deapply\_patch](/recipes/recipe_modules/bot_update/api.py#529)(self, bot_update_step):**
+&mdash; **def [deapply\_patch](/recipes/recipe_modules/bot_update/api.py#528)(self, bot_update_step):**
 
 Deapplies a patch, taking care of DEPS and solution revisions properly.
     
 
-&mdash; **def [ensure\_checkout](/recipes/recipe_modules/bot_update/api.py#71)(self, gclient_config=None, suffix=None, patch=True, update_presentation=True, patch_root=None, with_branch_heads=False, with_tags=False, no_fetch_tags=False, refs=None, patch_oauth2=None, oauth2_json=None, use_site_config_creds=None, clobber=False, root_solution_revision=None, rietveld=None, issue=None, patchset=None, gerrit_no_reset=False, gerrit_no_rebase_patch_ref=False, accept_buildbucket_input=True, disable_syntax_validation=False, patch_refs=None, ignore_input_commit=False, add_blamelists=False, set_output_commit=False, step_test_data=None, enforce_fetch=False, \*\*kwargs):**
+&mdash; **def [ensure\_checkout](/recipes/recipe_modules/bot_update/api.py#71)(self, gclient_config=None, suffix=None, patch=True, update_presentation=True, patch_root=None, with_branch_heads=False, with_tags=False, no_fetch_tags=False, refs=None, patch_oauth2=None, oauth2_json=None, use_site_config_creds=None, clobber=False, root_solution_revision=None, rietveld=None, issue=None, patchset=None, gerrit_no_reset=False, gerrit_no_rebase_patch_ref=False, assert_one_gerrit_change=True, disable_syntax_validation=False, patch_refs=None, ignore_input_commit=False, add_blamelists=False, set_output_commit=False, step_test_data=None, enforce_fetch=False, \*\*kwargs):**
 
 Args:
   * gclient_config: The gclient configuration to use when running bot_update.
@@ -90,13 +90,12 @@ Args:
     Use test_api.output_json to generate test data.
   * enforce_fetch: Enforce a new fetch to refresh the git cache, even if the
     solution revision passed in already exists in the current git cache.
-  * accept_buildbucket_input: should get the patchset from
-    buildbucket.build.input.gerrit_changes. If True, the input size is
-    asserted to be one, because bot_update module ONLY supports one CL.
-    Users may specify a CL via tryserver.set_change() and explicitly set
-    this flag False.
+  * assert_one_gerrit_change: if True, assert that there is at most one
+    change in self.m.buildbucket.build.input.gerrit_changes, because
+    bot_update module ONLY supports one change. Users may specify a change
+    via tryserver.set_change() and explicitly set this flag False.
 
-&mdash; **def [get\_project\_revision\_properties](/recipes/recipe_modules/bot_update/api.py#506)(self, project_name, gclient_config=None):**
+&mdash; **def [get\_project\_revision\_properties](/recipes/recipe_modules/bot_update/api.py#505)(self, project_name, gclient_config=None):**
 
 Returns all property names used for storing the checked-out revision of
 a given project.
@@ -112,7 +111,7 @@ Returns (list of str): All properties that'll hold the checked-out revision
 
 &emsp; **@property**<br>&mdash; **def [last\_returned\_properties](/recipes/recipe_modules/bot_update/api.py#39)(self):**
 
-&mdash; **def [resolve\_fixed\_revision](/recipes/recipe_modules/bot_update/api.py#457)(self, bot_update_json, name):**
+&mdash; **def [resolve\_fixed\_revision](/recipes/recipe_modules/bot_update/api.py#456)(self, bot_update_json, name):**
 
 Sets a fixed revision for a single dependency using project revision
 properties.
@@ -869,7 +868,7 @@ Returns true iff we have a change to check out.
 Set the gerrit change for this module.
 
 Args:
-  * cl: a GerritChange object.
+  * change: a self.m.buildbucket.common_pb2.GerritChange.
 
 &mdash; **def [set\_compile\_failure\_tryjob\_result](/recipes/recipe_modules/tryserver/api.py#196)(self):**
 
