@@ -231,7 +231,7 @@ class TestGitClBasic(unittest.TestCase):
                    side_effect=[git_cl.GitPushError(), None]).start()
     mock.patch('git_cl.Changelist.GetRemoteBranch',
                return_value=('foo', 'bar')).start()
-    mock.patch('git_cl.Changelist._GetGerritProject',
+    mock.patch('git_cl.Changelist.GetGerritProject',
                return_value='foo').start()
     mock.patch('git_cl.gerrit_util.GetProjectHead',
                return_value='refs/heads/main').start()
@@ -253,7 +253,7 @@ class TestGitClBasic(unittest.TestCase):
                    side_effect=[git_cl.GitPushError(), None]).start()
     mock.patch('git_cl.Changelist.GetRemoteBranch',
                return_value=('foo', git_cl.DEFAULT_OLD_BRANCH)).start()
-    mock.patch('git_cl.Changelist._GetGerritProject',
+    mock.patch('git_cl.Changelist.GetGerritProject',
                return_value='foo').start()
     mock.patch('git_cl.gerrit_util.GetProjectHead',
                return_value='refs/heads/old_default').start()
@@ -275,7 +275,7 @@ class TestGitClBasic(unittest.TestCase):
                    side_effect=[git_cl.GitPushError(), None]).start()
     mock.patch('git_cl.Changelist.GetRemoteBranch',
                return_value=('foo', git_cl.DEFAULT_OLD_BRANCH)).start()
-    mock.patch('git_cl.Changelist._GetGerritProject',
+    mock.patch('git_cl.Changelist.GetGerritProject',
                return_value='foo').start()
     mock.patch('git_cl.gerrit_util.GetProjectHead',
                return_value='refs/heads/main').start()
@@ -2236,7 +2236,7 @@ class TestGitCl(unittest.TestCase):
         sys.stdout.getvalue())
 
   def _mock_gerrit_changes_for_detail_cache(self):
-    mock.patch('git_cl.Changelist._GetGerritHost', lambda _: 'host').start()
+    mock.patch('git_cl.Changelist.GetGerritHost', lambda _: 'host').start()
 
   def test_gerrit_change_detail_cache_simple(self):
     self._mock_gerrit_changes_for_detail_cache()
@@ -2760,7 +2760,7 @@ class ChangelistTest(unittest.TestCase):
     mock.patch('git_cl.time_time').start()
     mock.patch('metrics.collector').start()
     mock.patch('subprocess2.Popen').start()
-    mock.patch('git_cl.Changelist._GetGerritProject',
+    mock.patch('git_cl.Changelist.GetGerritProject',
         return_value='https://chromium-review.googlesource.com').start()
     self.addCleanup(mock.patch.stopall)
     self.temp_count = 0
@@ -2987,7 +2987,7 @@ class CMDTestCaseBase(unittest.TestCase):
         'git_cl.Changelist.GetCodereviewServer',
         return_value='https://chromium-review.googlesource.com').start()
     mock.patch(
-        'git_cl.Changelist._GetGerritHost',
+        'git_cl.Changelist.GetGerritHost',
         return_value='chromium-review.googlesource.com').start()
     mock.patch(
         'git_cl.Changelist.GetMostRecentPatchset',

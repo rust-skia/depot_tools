@@ -79,7 +79,7 @@ class OwnersClient(object):
 
 class DepotToolsClient(OwnersClient):
   """Implement OwnersClient using owners.py Database."""
-  def __init__(self, host, root, fopen, os_path, branch):
+  def __init__(self, host, root, branch, fopen=open, os_path=os.path):
     super(DepotToolsClient, self).__init__(host)
     self._root = root
     self._fopen = fopen

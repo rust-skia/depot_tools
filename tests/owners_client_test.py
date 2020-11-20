@@ -78,7 +78,7 @@ class DepotToolsClientTest(unittest.TestCase):
         return_value={}).start()
     self.addCleanup(mock.patch.stopall)
     self.client = owners_client.DepotToolsClient(
-        'host', '/', self.fopen, self.repo, 'branch')
+        'host', '/', 'branch', self.fopen, self.repo)
 
   def testListOwners(self):
     self.assertEquals(
