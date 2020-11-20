@@ -174,7 +174,7 @@ class BotUpdateUnittests(unittest.TestCase):
     setattr(bot_update, 'git', fake_git)
 
     self.old_os_cwd = os.getcwd
-    setattr(os, 'getcwd', lambda: '/b/build/slave/foo/build')
+    setattr(os, 'getcwd', lambda: '/b/build/foo/build')
 
     setattr(bot_update, 'open', self.filesystem.open)
     self.old_codecs_open = codecs.open
@@ -272,7 +272,7 @@ class BotUpdateUnittests(unittest.TestCase):
 
   def testGitCheckoutBreaksLocks(self):
     self.overrideSetupForWindows()
-    path = '/b/build/slave/foo/build/.git'
+    path = '/b/build/foo/build/.git'
     lockfile = 'index.lock'
     removed = []
     old_os_walk = os.walk

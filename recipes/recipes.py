@@ -19,7 +19,7 @@
 ** DO NOT MODIFY **
 *******************
 
-This is a copy of https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipes.py.
+This is a copy of https://chromium.googlesource.com/infra/luci/recipes-py/+/HEAD/recipes.py.
 To fix bugs, fix in the googlesource repo then run the autoroller.
 """
 
@@ -40,7 +40,7 @@ from collections import namedtuple
 # url (str) - the url to the engine repo we want to use.
 # revision (str) - the git revision for the engine to get.
 # branch (str) - the branch to fetch for the engine as an absolute ref (e.g.
-#   refs/heads/master)
+#   refs/heads/main)
 EngineDep = namedtuple('EngineDep', 'url revision branch')
 
 

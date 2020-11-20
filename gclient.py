@@ -404,7 +404,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     self._file_list = []
     # List of host names from which dependencies are allowed.
     # Default is an empty set, meaning unspecified in DEPS file, and hence all
-    # hosts will be allowed. Non-empty set means whitelist of hosts.
+    # hosts will be allowed. Non-empty set means allowlist of hosts.
     # allowed_hosts var is scoped to its DEPS file, and so it isn't recursive.
     self._allowed_hosts = frozenset()
     self._gn_args_from = None

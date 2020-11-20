@@ -526,11 +526,11 @@ def main():
         RequestGsAuthentication()
     if not should_use_file and not should_use_gs and not should_use_http:
       if sys.platform not in ('win32', 'cygwin'):
-        doc = 'https://chromium.googlesource.com/chromium/src/+/master/docs/' \
+        doc = 'https://chromium.googlesource.com/chromium/src/+/HEAD/docs/' \
               'win_cross.md'
         print('\n\n\nPlease follow the instructions at %s\n\n' % doc)
       else:
-        doc = 'https://chromium.googlesource.com/chromium/src/+/master/docs/' \
+        doc = 'https://chromium.googlesource.com/chromium/src/+/HEAD/docs/' \
               'windows_build_instructions.md'
         print('\n\n\nNo downloadable toolchain found. In order to use your '
               'locally installed version of Visual Studio to build Chrome '

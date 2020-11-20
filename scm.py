@@ -187,7 +187,7 @@ class GIT(object):
 
   @staticmethod
   def GetBranchRef(cwd):
-    """Returns the full branch reference, e.g. 'refs/heads/master'."""
+    """Returns the full branch reference, e.g. 'refs/heads/main'."""
     try:
       return GIT.Capture(['symbolic-ref', 'HEAD'], cwd=cwd)
     except subprocess2.CalledProcessError:
@@ -195,7 +195,7 @@ class GIT(object):
 
   @staticmethod
   def GetBranch(cwd):
-    """Returns the short branch name, e.g. 'master'."""
+    """Returns the short branch name, e.g. 'main'."""
     branchref = GIT.GetBranchRef(cwd)
     if branchref:
       return GIT.ShortBranchName(branchref)
@@ -208,7 +208,7 @@ class GIT(object):
   @staticmethod
   def FetchUpstreamTuple(cwd, branch=None):
     """Returns a tuple containing remote and remote ref,
-       e.g. 'origin', 'refs/heads/master'
+       e.g. 'origin', 'refs/heads/main'
     """
     try:
       branch = branch or GIT.GetBranch(cwd)
