@@ -140,12 +140,16 @@ class TryserverApi(recipe_api.RecipeApi):
             self.m.properties.get('patch_repo_url') and
             self.m.properties.get('patch_ref'))
 
-  def get_files_affected_by_patch(self, patch_root, **kwargs):
+  def get_files_affected_by_patch(self, patch_root,
+                                  report_files_via_property=None,
+                                  **kwargs):
     """Returns list of paths to files affected by the patch.
 
     Args:
       * patch_root: path relative to api.path['root'], usually obtained from
         api.gclient.get_gerrit_patch_root().
+      * report_files_via_property: name of the output property to report the
+        list of the files. If None (default), do not report.
 
     Returned paths will be relative to to patch_root.
     """
@@ -160,11 +164,19 @@ class TryserverApi(recipe_api.RecipeApi):
           **kwargs)
     paths = [self.m.path.join(patch_root, p) for p in
              step_result.stdout.split()]
+    paths.sort()
     if self.m.platform.is_win:
       # Looks like "analyze" wants POSIX slashes even on Windows (since git
       # uses that format even on Windows).
       paths = [path.replace('\\', '/') for path in paths]
     step_result.presentation.logs['files'] = paths
+    if report_files_via_property:
+      step_result.presentation.properties[report_files_via_property] = {
+        'total_count': len(paths),
+        # Do not report too many because it might violate build size limits,
+        # and isn't very useful anyway.
+        'first_100': paths[:100],
+      }
     return paths
 
   def set_subproject_tag(self, subproject_tag):

@@ -12,7 +12,8 @@
     "name": "git diff to analyze patch",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@files@foo.cc@@@",
-      "@@@STEP_LOG_END@files@@@"
+      "@@@STEP_LOG_END@files@@@",
+      "@@@SET_BUILD_PROPERTY@affected_files@{\"first_100\": [\"foo.cc\"], \"total_count\": 1}@@@"
     ]
   },
   {
