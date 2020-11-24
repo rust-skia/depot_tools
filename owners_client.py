@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import itertools
 import os
 import random
 
@@ -13,6 +14,29 @@ import scm
 APPROVED = 'APPROVED'
 PENDING = 'PENDING'
 INSUFFICIENT_REVIEWERS = 'INSUFFICIENT_REVIEWERS'
+
+
+def _owner_combinations(owners, num_owners):
+  """Iterate owners combinations by decrasing score.
+
+  The score of an owner is its position on the owners list.
+  The score of a set of owners is the maximum score of all owners on the set.
+
+  Returns all combinations of up to `num_owners` sorted by decreasing score:
+    _owner_combinations(['0', '1', '2', '3'], 2) == [
+        # score 1
+        ('1', '0'),
+        # score 2
+        ('2', '0'),
+        ('2', '1'),
+        # score 3
+        ('3', '0'),
+        ('3', '1'),
+        ('3', '2'),
+    ]
+  """
+  return reversed(list(itertools.combinations(reversed(owners), num_owners)))
+
 
 
 class InvalidOwnersConfig(Exception):
@@ -79,6 +103,36 @@ class OwnersClient(object):
       else:
         status[path] = INSUFFICIENT_REVIEWERS
     return status
+
+  def SuggestOwners(self, project, branch, paths):
+    """Suggest a set of owners for the given paths."""
+    paths_by_owner = {}
+    score_by_owner = {}
+    for path in paths:
+      owners = self.ListOwnersForFile(project, branch, path)
+      for i, owner in enumerate(owners):
+        paths_by_owner.setdefault(owner, set()).add(path)
+        # Gerrit API lists owners of a path sorted by an internal score, so
+        # owners that appear first should be prefered.
+        # We define the score of an owner to be their minimum position in all
+        # paths.
+        score_by_owner[owner] = min(i, score_by_owner.get(owner, i))
+
+    # Sort owners by their score.
+    owners = sorted(score_by_owner, key=lambda o: score_by_owner[o])
+
+    # Select the minimum number of owners that can approve all paths.
+    # We start at 2 to avoid sending all changes that require multiple reviewers
+    # to top-level owners.
+    num_owners = 2
+    while True:
+      # Iterate all combinations of `num_owners` by decreasing score, and select
+      # the first one that covers all paths.
+      for selected in _owner_combinations(owners, num_owners):
+        covered = set.union(*(paths_by_owner[o] for o in selected))
+        if len(covered) == len(paths):
+          return selected
+      num_owners += 1
 
 
 class DepotToolsClient(OwnersClient):

@@ -14,10 +14,16 @@ else:
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import gerrit_util
-import owners
 import owners_client
 
 from testing_support import filesystem_mock
+
+
+alice = 'alice@example.com'
+bob = 'bob@example.com'
+chris = 'chris@example.com'
+dave = 'dave@example.com'
+emily = 'emily@example.com'
 
 
 def _get_change():
@@ -143,6 +149,74 @@ class OwnersClientTest(unittest.TestCase):
             'pending': owners_client.PENDING,
             'insufficient': owners_client.INSUFFICIENT_REVIEWERS,
         })
+
+  def test_owner_combinations(self):
+    owners = [alice, bob, chris, dave, emily]
+    self.assertEqual(
+        list(owners_client._owner_combinations(owners, 2)),
+        [(bob, alice),
+         (chris, alice),
+         (chris, bob),
+         (dave, alice),
+         (dave, bob),
+         (dave, chris),
+         (emily, alice),
+         (emily, bob),
+         (emily, chris),
+         (emily, dave)])
+
+  def testSuggestOwners(self):
+    self.client.owners_by_path = {'abcd': [alice, bob, chris, dave]}
+    self.assertEqual(
+        self.client.SuggestOwners('project', 'branch', ['abcd']),
+        (bob, alice))
+
+    self.client.owners_by_path = {
+        'ae': [alice, emily],
+        'be': [bob, emily],
+        'ce': [chris, emily],
+        'de': [dave, emily],
+    }
+    self.assertEqual(
+        self.client.SuggestOwners(
+            'project', 'branch', ['ae', 'be', 'ce', 'de']),
+        (emily, bob))
+
+    self.client.owners_by_path = {
+        'ad': [alice, dave],
+        'cad': [chris, alice, dave],
+        'ead': [emily, alice, dave],
+        'bd': [bob, dave],
+    }
+    self.assertEqual(
+        self.client.SuggestOwners(
+            'project', 'branch', ['ad', 'cad', 'ead', 'bd']),
+        (bob, alice))
+
+    self.client.owners_by_path = {
+        'a': [alice],
+        'b': [bob],
+        'c': [chris],
+        'ad': [alice, dave],
+    }
+    self.assertEqual(
+        self.client.SuggestOwners(
+            'project', 'branch', ['a', 'b', 'c', 'ad']),
+        (alice, chris, bob))
+
+    self.client.owners_by_path = {
+        'abc': [alice, bob, chris],
+        'acb': [alice, chris, bob],
+        'bac': [bob, alice, chris],
+        'bca': [bob, chris, alice],
+        'cab': [chris, alice, bob],
+        'cba': [chris, bob, alice]
+    }
+    self.assertEqual(
+        self.client.SuggestOwners(
+            'project', 'branch',
+            ['abc', 'acb', 'bac', 'bca', 'cab', 'cba']),
+        (chris, bob))
 
 
 if __name__ == '__main__':
