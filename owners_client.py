@@ -3,9 +3,10 @@
 # found in the LICENSE file.
 
 import os
+import random
 
 import gerrit_util
-import owners
+import owners as owners_db
 import scm
 
 
@@ -36,7 +37,10 @@ class OwnersClient(object):
     self._host = host
 
   def ListOwnersForFile(self, project, branch, path):
-    """List all owners for a file."""
+    """List all owners for a file.
+
+    The returned list is sorted so that better owners appear first.
+    """
     raise Exception('Not implemented')
 
   def GetChangeApprovalStatus(self, change_id):
@@ -85,7 +89,7 @@ class DepotToolsClient(OwnersClient):
     self._fopen = fopen
     self._os_path = os_path
     self._branch = branch
-    self._db = owners.Database(root, fopen, os_path)
+    self._db = owners_db.Database(root, fopen, os_path)
     self._db.override_files = self._GetOriginalOwnersFiles()
 
   def _GetOriginalOwnersFiles(self):
@@ -96,7 +100,15 @@ class DepotToolsClient(OwnersClient):
     }
 
   def ListOwnersForFile(self, _project, _branch, path):
-    return sorted(self._db.all_possible_owners([path], None))
+    # all_possible_owners returns a dict {owner: [(path, distance)]}. We want to
+    # return a list of owners sorted by increasing distance.
+    distance_by_owner = self._db.all_possible_owners([path], None)
+    # We add a small random number to the distance, so that owners at the same
+    # distance are returned in random order to avoid overloading those who would
+    # appear first.
+    return sorted(
+        distance_by_owner,
+        key=lambda o: distance_by_owner[o][0][1] + random.random())
 
   def GetChangeApprovalStatus(self, change_id):
     data = gerrit_util.GetChange(
@@ -122,7 +134,7 @@ class DepotToolsClient(OwnersClient):
 
     files = data['revisions'][data['current_revision']]['files']
 
-    db = owners.Database(self._root, self._fopen, self._os_path)
+    db = owners_db.Database(self._root, self._fopen, self._os_path)
     try:
       db.load_data_needed_for(
           [f for f in files if os.path.basename(f) == 'OWNERS'])
