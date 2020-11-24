@@ -112,5 +112,38 @@ class DepotToolsClientTest(unittest.TestCase):
       self.client.ValidateOwnersConfig('changeid')
 
 
+class TestClient(owners_client.OwnersClient):
+  def __init__(self, host, owners_by_path):
+    super(TestClient, self).__init__(host)
+    self.owners_by_path = owners_by_path
+
+  def ListOwnersForFile(self, _project, _branch, path):
+    return self.owners_by_path[path]
+
+
+class OwnersClientTest(unittest.TestCase):
+  def setUp(self):
+    self.owners = {}
+    self.client = TestClient('host', self.owners)
+
+  def testGetFilesApprovalStatus(self):
+    self.client.owners_by_path = {
+      'approved': ['approver@example.com'],
+      'pending': ['reviewer@example.com'],
+      'insufficient': ['insufficient@example.com'],
+    }
+    status = self.client.GetFilesApprovalStatus(
+        'project', 'branch',
+        ['approved', 'pending', 'insufficient'],
+        ['approver@example.com'], ['reviewer@example.com'])
+    self.assertEqual(
+        status,
+        {
+            'approved': owners_client.APPROVED,
+            'pending': owners_client.PENDING,
+            'insufficient': owners_client.INSUFFICIENT_REVIEWERS,
+        })
+
+
 if __name__ == '__main__':
   unittest.main()
