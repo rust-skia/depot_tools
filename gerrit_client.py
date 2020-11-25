@@ -46,6 +46,8 @@ def CMDmovechanges(parser, args):
 
   (opt, args) = parser.parse_args(args)
   assert opt.destination_branch, "--destination_branch not defined"
+  for p in opt.params:
+    assert '=' in p, '--param is key=value, not "%s"' % p
   host = urlparse.urlparse(opt.host).netloc
 
   limit = 100
@@ -108,6 +110,8 @@ def CMDchanges(parser, args):
                          '(starting with the most recent)')
 
   (opt, args) = parser.parse_args(args)
+  for p in opt.params:
+    assert '=' in p, '--param is key=value, not "%s"' % p
 
   result = gerrit_util.QueryChanges(
       urlparse.urlparse(opt.host).netloc,
