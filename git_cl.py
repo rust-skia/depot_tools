@@ -1785,6 +1785,15 @@ class Changelist(object):
     # {author+date: {path: {patchset: {line: url+message}}}}
     comments = collections.defaultdict(
         lambda: collections.defaultdict(lambda: collections.defaultdict(dict)))
+
+    server = self.GetCodereviewServer()
+    if server in _KNOWN_GERRIT_TO_SHORT_URLS:
+      # /c/ is automatically added by short URL server.
+      url_prefix = '%s/%s' % (_KNOWN_GERRIT_TO_SHORT_URLS[server],
+                              self.GetIssue())
+    else:
+      url_prefix = '%s/c/%s' % (server, self.GetIssue())
+
     for path, line_comments in file_comments.items():
       for comment in line_comments:
         tag = comment.get('tag', '')
@@ -1796,10 +1805,10 @@ class Changelist(object):
         else:
           patchset = 'PS%d' % comment['patch_set']
         line = comment.get('line', 0)
-        url = ('https://%s/c/%s/%s/%s#%s%s' %
-            (self.GetGerritHost(), self.GetIssue(), comment['patch_set'], path,
-             'b' if comment.get('side') == 'PARENT' else '',
-             str(line) if line else ''))
+        url = ('%s/%s/%s#%s%s' %
+               (url_prefix, comment['patch_set'], path,
+                'b' if comment.get('side') == 'PARENT' else '',
+                str(line) if line else ''))
         comments[key][path][patchset][line] = (url, comment['message'])
 
     summaries = []
