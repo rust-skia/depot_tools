@@ -152,6 +152,10 @@ def GetFilesSplitByOwners(owners_database, files):
   files_split_by_owners = collections.defaultdict(list)
   for action, path in files:
     enclosing_dir = owners_database.enclosing_dir_with_owners(path)
+    # Anything matching a per-file rule will return its own path.
+    # Aggregate up to the parent directory so as not to over-split.
+    if enclosing_dir == path:
+      enclosing_dir = os.path.dirname(path)
     files_split_by_owners[enclosing_dir].append((action, path))
   return files_split_by_owners
 
