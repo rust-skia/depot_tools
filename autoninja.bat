@@ -18,9 +18,15 @@ set scriptdir=%~dp0
 
 :loop
 IF NOT "%1"=="" (
-    @rem Tell goma to not do network compiles.
-    IF "%1"=="--offline" SET GOMA_DISABLED=1
-    IF "%1"=="-o" SET GOMA_DISABLED=1
+    @rem Tell goma or reclient to not do network compiles.
+    IF "%1"=="--offline" (
+        SET GOMA_DISABLED=1
+        SET RBE_remote_disabled=1
+    )
+    IF "%1"=="-o" (
+        SET GOMA_DISABLED=1
+        SET RBE_remote_disabled=1
+    )
     SHIFT
     GOTO :loop
 )

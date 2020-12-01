@@ -161,9 +161,9 @@ if os.environ.get('NINJA_SUMMARIZE_BUILD', '0') == '1':
   args += ['-d', 'stats']
 
 if offline and not sys.platform.startswith('win'):
-  # Tell goma to do local compiles. On Windows this environment variable is set
-  # by the wrapper batch file.
-  print('GOMA_DISABLED=1 ' + ' '.join(args))
+  # Tell goma or reclient to do local compiles. On Windows these environment
+  # variables are set by the wrapper batch file.
+  print('RBE_remote_disabled=1 GOMA_DISABLED=1 ' + ' '.join(args))
 else:
   print(' '.join(args))
 
