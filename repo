@@ -35,7 +35,11 @@ def _UpdateDepotTools():
       return
     path = path.parent
 
-  subprocess.run([UPDATE_DEPOT_TOOLS], check=True)
+  if UPDATE_DEPOT_TOOLS.exists():
+    subprocess.run([UPDATE_DEPOT_TOOLS], check=True)
+  else:
+    print(f'warning: {UPDATE_DEPOT_TOOLS} does not exist; export '
+          'DEPOT_TOOLS_UPDATE=0 to disable.', file=sys.stderr)
 
 
 def main(argv):
