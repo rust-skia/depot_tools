@@ -4803,8 +4803,13 @@ def CMDowners(parser, args):
   affected_files = cl.GetAffectedFiles(base_branch)
 
   if options.batch:
-    db = owners.Database(root, open, os.path)
-    print('\n'.join(db.reviewers_for(affected_files, author)))
+    project = cl.GetGerritProject()
+    branch = cl.GetCommonAncestorWithUpstream()
+    client = owners_client.DepotToolsClient(
+        host=cl.GetGerritHost(),
+        root=settings.GetRoot(),
+        branch=branch)
+    print('\n'.join(client.SuggestOwners(project, branch, affected_files)))
     return 0
 
   owner_files = [f for f in affected_files if 'OWNERS' in os.path.basename(f)]

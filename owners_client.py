@@ -148,7 +148,7 @@ class DepotToolsClient(OwnersClient):
 
   def _GetOriginalOwnersFiles(self):
     return {
-      f: scm.GIT.GetOldContents(self._root, f, self._branch)
+      f: scm.GIT.GetOldContents(self._root, f, self._branch).splitlines()
       for _, f in scm.GIT.CaptureStatus(self._root, self._branch)
       if os.path.basename(f) == 'OWNERS'
     }
