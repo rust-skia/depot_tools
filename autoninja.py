@@ -87,12 +87,18 @@ if os.path.exists(os.path.join(output_dir, 'args.gn')):
                    line_without_comment):
         use_remote_build = True
         continue
-elif os.path.exists(os.path.join(output_dir, 'rules.ninja')):
-  with open(os.path.join(output_dir, 'rules.ninja')) as file_handle:
-    for line in file_handle:
-      if re.match(r'^\s*command\s*=\s*\S+gomacc', line):
-        use_remote_build = True
-        break
+else:
+  for relative_path in [
+      '',  # GN keeps them in the root of output_dir
+      'CMakeFiles'
+  ]:
+    path = os.path.join(output_dir, relative_path, 'rules.ninja')
+    if os.path.exists(path):
+      with open(path) as file_handle:
+        for line in file_handle:
+          if re.match(r'^\s*command\s*=\s*\S+gomacc', line):
+            use_remote_build = True
+            break
 
 # If GOMA_DISABLED is set to "true", "t", "yes", "y", or "1" (case-insensitive)
 # then gomacc will use the local compiler instead of doing a goma compile. This
