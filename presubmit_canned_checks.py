@@ -1121,7 +1121,8 @@ def CheckOwnersFormat(input_api, output_api):
         'Error parsing OWNERS files:\n%s' % e)]
 
 
-def CheckOwners(input_api, output_api, source_file_filter=None):
+def CheckOwners(
+    input_api, output_api, source_file_filter=None, allow_tbr=True):
   if input_api.change.issue:
     # Skip OWNERS check when Bot-Commit label is approved. This label is
     # intended for commits made by trusted bots that don't require review nor
@@ -1133,6 +1134,9 @@ def CheckOwners(input_api, output_api, source_file_filter=None):
     # required for these changes.
     if input_api.gerrit.IsOwnersOverrideApproved(input_api.change.issue):
       return []
+
+  # Ignore tbr if not allowed for this repo.
+  tbr = input_api.tbr and allow_tbr
 
   affected_files = set([f.LocalPath() for f in
       input_api.change.AffectedFiles(file_filter=source_file_filter)])
@@ -1159,7 +1163,7 @@ def CheckOwners(input_api, output_api, source_file_filter=None):
   affects_owners = any('OWNERS' in name for name in missing_files)
 
   if input_api.is_committing:
-    if input_api.tbr and not affects_owners:
+    if tbr and not affects_owners:
       return [output_api.PresubmitNotifyResult(
           '--tbr was specified, skipping OWNERS check')]
     needed = 'LGTM from an OWNER'
@@ -1181,7 +1185,7 @@ def CheckOwners(input_api, output_api, source_file_filter=None):
     output_list = [
         output_fn('Missing %s for these files:\n    %s' %
                   (needed, '\n    '.join(sorted(missing_files))))]
-    if input_api.tbr and affects_owners:
+    if tbr and affects_owners:
       output_list.append(output_fn('TBR for OWNERS files are ignored.'))
     if not input_api.is_committing:
       suggested_owners = owners_db.reviewers_for(missing_files, owner_email)

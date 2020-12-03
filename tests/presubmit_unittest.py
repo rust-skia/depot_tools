@@ -2672,7 +2672,7 @@ the current line as well!
       reviewers=None, is_committing=True,
       response=None, uncovered_files=None, expected_output='',
       manually_specified_reviewers=None, dry_run=None,
-      modified_file='foo/xyz.cc'):
+      modified_file='foo/xyz.cc', allow_tbr=True):
     if approvers is None:
       # The set of people who lgtm'ed a change.
       approvers = set()
@@ -2745,7 +2745,7 @@ the current line as well!
         fake_db.reviewers_for.return_value = change.author_email
 
     results = presubmit_canned_checks.CheckOwners(
-        input_api, presubmit.OutputApi)
+        input_api, presubmit.OutputApi, allow_tbr=allow_tbr)
     for result in results:
       result.handle()
     if expected_output:
@@ -3048,6 +3048,18 @@ the current line as well!
     self.AssertOwnersWorks(tbr=True,
         expected_output='--tbr was specified, skipping OWNERS check\n')
     self.AssertOwnersWorks(tbr=True, is_committing=False, expected_output='')
+
+  def testCannedCheckOwners_TBRIgnored(self):
+    self.AssertOwnersWorks(
+        tbr=True,
+        allow_tbr=False,
+        expected_output='Missing LGTM from someone other than '
+                        'john@example.com\n')
+    self.AssertOwnersWorks(
+        tbr=True,
+        allow_tbr=False,
+        is_committing=False,
+        expected_output='')
 
   def testCannedCheckOwners_TBROWNERSFile(self):
     self.AssertOwnersWorks(
