@@ -38,7 +38,6 @@ def _owner_combinations(owners, num_owners):
   return reversed(list(itertools.combinations(reversed(owners), num_owners)))
 
 
-
 class InvalidOwnersConfig(Exception):
   pass
 
@@ -124,15 +123,16 @@ class OwnersClient(object):
     # Select the minimum number of owners that can approve all paths.
     # We start at 2 to avoid sending all changes that require multiple reviewers
     # to top-level owners.
-    num_owners = 2
-    while True:
+    if len(owners) < 2:
+      return owners
+
+    for num_owners in range(2, len(owners)):
       # Iterate all combinations of `num_owners` by decreasing score, and select
       # the first one that covers all paths.
       for selected in _owner_combinations(owners, num_owners):
         covered = set.union(*(paths_by_owner[o] for o in selected))
         if len(covered) == len(paths):
           return selected
-      num_owners += 1
 
 
 class DepotToolsClient(OwnersClient):

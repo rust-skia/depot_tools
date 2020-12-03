@@ -166,6 +166,11 @@ class OwnersClientTest(unittest.TestCase):
          (emily, dave)])
 
   def testSuggestOwners(self):
+    self.client.owners_by_path = {'a': [alice]}
+    self.assertEqual(
+        self.client.SuggestOwners('project', 'branch', ['a']),
+        [alice])
+
     self.client.owners_by_path = {'abcd': [alice, bob, chris, dave]}
     self.assertEqual(
         self.client.SuggestOwners('project', 'branch', ['abcd']),
