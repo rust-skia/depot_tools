@@ -193,7 +193,7 @@ def main():
 
   ninjalog = args.ninjalog or GetNinjalog(args.cmdline)
   if not os.path.isfile(ninjalog):
-    logging.warn("ninjalog is not found in %s", ninjalog)
+    logging.warning("ninjalog is not found in %s", ninjalog)
     return 1
 
   # We assume that each ninja invocation interval takes at least 2 seconds.
@@ -221,7 +221,8 @@ def main():
                                     headers={'Content-Encoding': 'gzip'})
 
   if resp_headers.status != 200:
-    logging.warn("unexpected status code for response: %s", resp_headers.status)
+    logging.warning("unexpected status code for response: %s",
+                    resp_headers.status)
     return 1
 
   logging.info('response header: %s', resp_headers)

@@ -1083,11 +1083,12 @@ class Changelist(object):
           remote, = remotes
         elif 'origin' in remotes:
           remote = 'origin'
-          logging.warn('Could not determine which remote this change is '
-                       'associated with, so defaulting to "%s".' % self._remote)
+          logging.warning('Could not determine which remote this change is '
+                          'associated with, so defaulting to "%s".' %
+                          self._remote)
         else:
-          logging.warn('Could not determine which remote this change is '
-                       'associated with.')
+          logging.warning('Could not determine which remote this change is '
+                          'associated with.')
         branch = 'HEAD'
       if branch.startswith('refs/remotes'):
         self._remote = (remote, branch)

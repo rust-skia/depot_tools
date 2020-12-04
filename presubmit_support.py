@@ -1901,7 +1901,7 @@ def canned_check_filter(method_names):
   try:
     for method_name in method_names:
       if not hasattr(presubmit_canned_checks, method_name):
-        logging.warn('Skipping unknown "canned" check %s' % method_name)
+        logging.warning('Skipping unknown "canned" check %s' % method_name)
         continue
       filtered[method_name] = getattr(presubmit_canned_checks, method_name)
       setattr(presubmit_canned_checks, method_name, lambda *_a, **_kw: [])
