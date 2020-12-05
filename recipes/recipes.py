@@ -203,8 +203,8 @@ def checkout_engine(engine_path, repo_root, recipes_cfg_path):
         os.remove(index_lock)
       except OSError as exc:
         if exc.errno != errno.ENOENT:
-          logging.warning('failed to remove %r, reset will fail: %s',
-                          index_lock, exc)
+          logging.warn('failed to remove %r, reset will fail: %s', index_lock,
+                       exc)
       _git_check_call(['reset', '-q', '--hard', revision], cwd=engine_path)
 
     # If the engine has refactored/moved modules we need to clean all .pyc files
