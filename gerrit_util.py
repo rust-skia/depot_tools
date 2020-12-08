@@ -75,6 +75,9 @@ class GerritError(Exception):
     self.http_status = http_status
     self.message = '(%d) %s' % (self.http_status, message)
 
+  def __str__(self):
+    return self.message
+
 
 def _QueryString(params, first_param=None):
   """Encodes query parameters in the key:val[+key:val...] format specified here:
@@ -907,6 +910,39 @@ def CreateGerritBranch(host, project, branch, commit):
   if response:
     return response
   raise GerritError(200, 'Unable to create gerrit branch')
+
+
+def GetHead(host, project):
+  """Retrieves current HEAD of Gerrit project
+
+  https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#get-head
+
+  Returns:
+    A JSON object with 'ref' key.
+  """
+  path = 'projects/%s/HEAD' % (project)
+  conn = CreateHttpConn(host, path, reqtype='GET')
+  response = ReadHttpJsonResponse(conn, accept_statuses=[200])
+  if response:
+    return response
+  raise GerritError(200, 'Unable to update gerrit HEAD')
+
+
+def UpdateHead(host, project, branch):
+  """Updates Gerrit HEAD to point to branch
+
+  https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#set-head
+
+  Returns:
+    A JSON object with 'ref' key.
+  """
+  path = 'projects/%s/HEAD' % (project)
+  body = {'ref': branch}
+  conn = CreateHttpConn(host, path, reqtype='PUT', body=body)
+  response = ReadHttpJsonResponse(conn, accept_statuses=[200])
+  if response:
+    return response
+  raise GerritError(200, 'Unable to update gerrit HEAD')
 
 
 def GetGerritBranch(host, project, branch):

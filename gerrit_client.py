@@ -98,6 +98,35 @@ def CMDbranch(parser, args):
 
 
 @subcommand.usage('[args ...]')
+def CMDhead(parser, args):
+  parser.add_option('--branch', dest='branch', help='branch name')
+
+  (opt, args) = parser.parse_args(args)
+  assert opt.project, "--project not defined"
+  assert opt.branch, "--branch not defined"
+
+  project = quote_plus(opt.project)
+  host = urlparse.urlparse(opt.host).netloc
+  branch = quote_plus(opt.branch)
+  result = gerrit_util.UpdateHead(host, project, branch)
+  logging.info(result)
+  write_result(result, opt)
+
+
+@subcommand.usage('[args ...]')
+def CMDheadinfo(parser, args):
+
+  (opt, args) = parser.parse_args(args)
+  assert opt.project, "--project not defined"
+
+  project = quote_plus(opt.project)
+  host = urlparse.urlparse(opt.host).netloc
+  result = gerrit_util.GetHead(host, project)
+  logging.info(result)
+  write_result(result, opt)
+
+
+@subcommand.usage('[args ...]')
 def CMDchanges(parser, args):
   parser.add_option('-p', '--param', dest='params', action='append',
                     help='repeatable query parameter, format: -p key=value')
