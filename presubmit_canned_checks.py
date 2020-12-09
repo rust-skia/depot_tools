@@ -1069,6 +1069,33 @@ def CheckDirMetadataFormat(input_api, output_api, dirmd_bin=None):
       name, cmd, kwargs, output_api.PresubmitError)]
 
 
+def CheckNoNewMetadataInOwners(input_api, output_api):
+  """Check that no metadata is added to OWNERS files."""
+  _METADATA_LINE_RE = input_api.re.compile(
+      r'^#\s*(TEAM|COMPONENT|OS|WPT-NOTIFY)+\s*:\s*\S+$',
+      input_api.re.MULTILINE | input_api.re.IGNORECASE)
+  affected_files = input_api.change.AffectedFiles(
+      include_deletes=False,
+      file_filter=lambda f: input_api.basename(f.LocalPath()) == 'OWNERS')
+
+  errors = []
+  for f in affected_files:
+    for _, line in f.ChangedContents():
+      if _METADATA_LINE_RE.search(line):
+        errors.append(f.AbsoluteLocalPath())
+        break
+
+  if not errors:
+    return []
+
+  return [output_api.PresubmitError(
+      'New metadata was added to the following OWNERS files, but should '
+      'have been added to DIR_METADATA files instead:\n' +
+      '\n'.join(errors) + '\n' +
+      'See https://source.chromium.org/chromium/infra/infra/+/HEAD:'
+      'go/src/infra/tools/dirmd/proto/dir_metadata.proto for details.')]
+
+
 def CheckOwnersDirMetadataExclusive(input_api, output_api):
   """Check that metadata in OWNERS files and DIR_METADATA files are mutually
   exclusive.

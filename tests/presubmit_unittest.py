@@ -2572,11 +2572,14 @@ the current line as well!
     change.AffectedFiles = lambda *a, **kw: (
         presubmit.Change.AffectedFiles(change, *a, **kw))
     change._affected_files = []
-    for path, (action, _) in files.items():
+    for path, (action, contents) in files.items():
       affected_file = mock.MagicMock(presubmit.GitAffectedFile)
       affected_file.AbsoluteLocalPath.return_value = path
       affected_file.LocalPath.return_value = path
       affected_file.Action.return_value = action
+      affected_file.ChangedContents.return_value = [
+         (1, contents or ''),
+      ]
       change._affected_files.append(affected_file)
 
     input_api = self.MockInputApi(None, False)
@@ -2607,6 +2610,26 @@ the current line as well!
         input_api, presubmit.OutputApi)
     self.assertEqual(1, len(commands))
     self.assertEqual(expected_cmd, commands[0].cmd)
+
+  def testCheckNoNewMetadataInOwners(self):
+    input_api = self.GetInputApiWithFiles({
+        'no-new-metadata/OWNERS': ('M', '# WARNING: Blah'),
+        'added-no-new-metadata/OWNERS': ('A', '# WARNING: Bleh'),
+        'deleted/OWNERS': ('D', None),
+    })
+    self.assertEqual(
+        [],
+        presubmit_canned_checks.CheckNoNewMetadataInOwners(
+            input_api, presubmit.OutputApi))
+
+  def testCheckNoNewMetadataInOwnersFails(self):
+    input_api = self.GetInputApiWithFiles({
+        'new-metadata/OWNERS': ('M', '# CoMpOnEnT: Monorail>Component'),
+    })
+    results = presubmit_canned_checks.CheckNoNewMetadataInOwners(
+        input_api, presubmit.OutputApi)
+    self.assertEqual(1, len(results))
+    self.assertIsInstance(results[0], presubmit.OutputApi.PresubmitError)
 
   def testCheckOwnersDirMetadataExclusiveWorks(self):
     input_api = self.GetInputApiWithFiles({
