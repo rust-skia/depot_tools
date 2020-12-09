@@ -534,7 +534,7 @@ upload.
 Args:
   * branch (str): new branch name, which must not yet exist.
   * name (str): step name.
-  * upstream (str): to origin/master.
+  * upstream (str): to origin/main.
   * kwargs: Forwarded to '__call__'.
 
 &mdash; **def [rebase](/recipes/recipe_modules/git/api.py#328)(self, name_prefix, branch, dir_path, remote_name=None, \*\*kwargs):**

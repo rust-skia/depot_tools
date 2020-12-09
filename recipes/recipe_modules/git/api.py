@@ -211,16 +211,16 @@ class GitApi(recipe_api.RecipeApi):
 
       # There are five kinds of refs we can be handed:
       # 0) None. In this case, we default to api.buildbucket.gitiles_commit.ref.
-      # 1) A fully qualified branch name, e.g. 'refs/heads/master'.
+      # 1) A fully qualified branch name, e.g. 'refs/heads/main'.
       #    Chop off 'refs/heads/' and now it matches case (4).
       # 2) A 40-character SHA1 hash.
       # 3) A fully-qualifed arbitrary ref, e.g. 'refs/foo/bar/baz'.
-      # 4) A branch name, e.g. 'master'.
+      # 4) A branch name, e.g. 'main'.
       # Note that 'FETCH_HEAD' can be many things (and therefore not a valid
       # checkout target) if many refs are fetched, but we only explicitly fetch
       # one ref here, so this is safe.
       if not ref:                                  # Case 0.
-        ref = self.m.buildbucket.gitiles_commit.ref or 'master'
+        ref = self.m.buildbucket.gitiles_commit.ref or 'HEAD'
 
       # If it's a fully-qualified branch name, trim the 'refs/heads/' prefix.
       if ref.startswith('refs/heads/'):            # Case 1.
@@ -396,7 +396,7 @@ class GitApi(recipe_api.RecipeApi):
     Args:
       * branch (str): new branch name, which must not yet exist.
       * name (str): step name.
-      * upstream (str): to origin/master.
+      * upstream (str): to origin/main.
       * kwargs: Forwarded to '__call__'.
     """
     env = self.m.context.env

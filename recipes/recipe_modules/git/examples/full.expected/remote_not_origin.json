@@ -18,7 +18,7 @@
       "git",
       "fetch",
       "not_origin",
-      "master",
+      "HEAD",
       "--recurse-submodules",
       "--progress"
     ],
