@@ -50,19 +50,19 @@ class AlreadyRolledError(Error):
 
 
 def check_output(*args, **kwargs):
-  """subprocess.check_output() passing shell=True on Windows for git."""
+  """subprocess2.check_output() passing shell=True on Windows for git."""
   kwargs.setdefault('shell', NEED_SHELL)
   return subprocess2.check_output(*args, **kwargs).decode('utf-8')
 
 
 def check_call(*args, **kwargs):
-  """subprocess.check_call() passing shell=True on Windows for git."""
+  """subprocess2.check_call() passing shell=True on Windows for git."""
   kwargs.setdefault('shell', NEED_SHELL)
   subprocess2.check_call(*args, **kwargs)
 
 
 def return_code(*args, **kwargs):
-  """subprocess.call() passing shell=True on Windows for git and
+  """subprocess2.call() passing shell=True on Windows for git and
   subprocess2.VOID for stdout and stderr."""
   kwargs.setdefault('shell', NEED_SHELL)
   kwargs.setdefault('stdout', subprocess2.VOID)
@@ -286,7 +286,7 @@ def main():
   except Error as e:
     sys.stderr.write('error: %s\n' % e)
     return 2 if isinstance(e, AlreadyRolledError) else 1
-  except subprocess.CalledProcessError:
+  except subprocess2.CalledProcessError:
     return 1
 
   print('')
