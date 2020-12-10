@@ -770,6 +770,23 @@ def SetCommitMessage(host, change, description, notify='ALL'):
         'in change %s' % change)
 
 
+def GetOwnersForFile(host, project, branch, path, limit=100,
+                     o_params=('DETAILS',)):
+  """Gets information about owners attached to a file."""
+  path = 'projects/%s/branches/%s/code_owners/%s' % (
+      urllib.parse.quote(project, ''),
+      urllib.parse.quote(branch, ''),
+      urllib.parse.quote(path, ''))
+  q = []
+  if limit:
+    q.append('n=%d' % limit)
+  if o_params:
+    q.extend(['o=%s' % p for p in o_params])
+  if q:
+    path = '%s?%s' % (path, '&'.join(q))
+  return ReadHttpJsonResponse(CreateHttpConn(host, path))
+
+
 def GetReviewers(host, change):
   """Gets information about all reviewers attached to a change."""
   path = 'changes/%s/reviewers' % change
