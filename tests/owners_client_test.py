@@ -256,6 +256,23 @@ class OwnersClientTest(unittest.TestCase):
             ['abc', 'acb', 'bac', 'bca', 'cab', 'cba']),
         (chris, bob))
 
+  def testBatchListOwners(self):
+    self.client.owners_by_path = {
+        'bar/everyone/foo.txt': [alice, bob],
+        'bar/everyone/bar.txt': [bob],
+        'bar/foo/': [bob, chris]
+    }
+
+    self.assertEquals(
+        {
+            'bar/everyone/foo.txt': [alice, bob],
+            'bar/everyone/bar.txt': [bob],
+            'bar/foo/': [bob, chris]
+        },
+        self.client.BatchListOwners(
+            'project', 'branch',
+            ['bar/everyone/foo.txt', 'bar/everyone/bar.txt', 'bar/foo/']))
+
 
 if __name__ == '__main__':
   unittest.main()

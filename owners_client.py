@@ -7,6 +7,7 @@ import os
 import random
 
 import gerrit_util
+import git_common
 import owners as owners_db
 import scm
 
@@ -65,6 +66,12 @@ class OwnersClient(object):
     The returned list is sorted so that better owners appear first.
     """
     raise Exception('Not implemented')
+
+  def BatchListOwners(self, project, branch, paths):
+    """Returns a dictionary {path: [owners]}."""
+    with git_common.ScopedPool(kind='threads') as pool:
+      return dict(pool.imap_unordered(
+          lambda p: (p, self.ListOwnersForFile(project, branch, p)), paths))
 
   def GetChangeApprovalStatus(self, change_id):
     """Check the approval status for the latest revision_id in a change.
