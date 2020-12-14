@@ -743,7 +743,7 @@ def run_stream(*cmd, **kwargs):
   stderr is dropped to avoid races if the process outputs to both stdout and
   stderr.
   """
-  kwargs.setdefault('stderr', subprocess2.VOID)
+  kwargs.setdefault('stderr', subprocess2.DEVNULL)
   kwargs.setdefault('stdout', subprocess2.PIPE)
   kwargs.setdefault('shell', False)
   cmd = (GIT_EXE, '-c', 'color.ui=never') + cmd
@@ -760,7 +760,7 @@ def run_stream_with_retcode(*cmd, **kwargs):
 
   Raises subprocess2.CalledProcessError on nonzero return code.
   """
-  kwargs.setdefault('stderr', subprocess2.VOID)
+  kwargs.setdefault('stderr', subprocess2.DEVNULL)
   kwargs.setdefault('stdout', subprocess2.PIPE)
   kwargs.setdefault('shell', False)
   cmd = (GIT_EXE, '-c', 'color.ui=never') + cmd

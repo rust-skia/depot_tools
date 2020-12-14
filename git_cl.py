@@ -195,7 +195,7 @@ def RunGit(args, **kwargs):
 def RunGitWithCode(args, suppress_stderr=False):
   """Returns return code and stdout."""
   if suppress_stderr:
-    stderr = subprocess2.VOID
+    stderr = subprocess2.DEVNULL
   else:
     stderr = sys.stderr
   try:

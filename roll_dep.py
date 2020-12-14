@@ -63,10 +63,10 @@ def check_call(*args, **kwargs):
 
 def return_code(*args, **kwargs):
   """subprocess2.call() passing shell=True on Windows for git and
-  subprocess2.VOID for stdout and stderr."""
+  subprocess2.DEVNULL for stdout and stderr."""
   kwargs.setdefault('shell', NEED_SHELL)
-  kwargs.setdefault('stdout', subprocess2.VOID)
-  kwargs.setdefault('stderr', subprocess2.VOID)
+  kwargs.setdefault('stdout', subprocess2.DEVNULL)
+  kwargs.setdefault('stderr', subprocess2.DEVNULL)
   return subprocess2.call(*args, **kwargs)
 
 
