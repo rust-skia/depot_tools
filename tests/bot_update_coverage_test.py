@@ -196,6 +196,12 @@ class BotUpdateUnittests(unittest.TestCase):
     bot_update.ensure_checkout(**self.params)
     return self.call.records
 
+  def testBasicCachepackOffloading(self):
+    os.environ['PACKFILE_OFFLOADING'] = '1'
+    bot_update.ensure_checkout(**self.params)
+    os.environ.pop('PACKFILE_OFFLOADING')
+    return self.call.records
+
   def testBasicRevision(self):
     self.params['revisions'] = {
         'src': 'HEAD', 'src/v8': 'deadbeef', 'somename': 'DNE'}
