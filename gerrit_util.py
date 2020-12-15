@@ -714,7 +714,8 @@ def AbandonChange(host, change, msg=''):
 def MoveChange(host, change, destination_branch):
   """Move a Gerrit change to different destination branch."""
   path = 'changes/%s/move' % change
-  body = {'destination_branch': destination_branch}
+  body = {'destination_branch': destination_branch,
+          'keep_all_votes': True}
   conn = CreateHttpConn(host, path, reqtype='POST', body=body)
   return ReadHttpJsonResponse(conn)
 
