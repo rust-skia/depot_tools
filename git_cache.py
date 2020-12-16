@@ -308,6 +308,8 @@ class Mirror(object):
                            tempdir)
       if code:
         return False
+      # A quick validation that all references are valid.
+      self.RunGit(['for-each-ref'], cwd=tempdir)
     except Exception as e:
       self.print('Encountered error: %s' % str(e), file=sys.stderr)
       gclient_utils.rmtree(tempdir)
