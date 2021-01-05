@@ -16,7 +16,7 @@
       "git",
       "fetch",
       "origin",
-      "HEAD",
+      "master",
       "--recurse-submodules",
       "--progress",
       "--tags"
