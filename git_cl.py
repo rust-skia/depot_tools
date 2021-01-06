@@ -1384,7 +1384,7 @@ class Changelist(object):
             f for f in files
             if status[f] == owners_client.INSUFFICIENT_REVIEWERS
         ]
-        add_owners = client.SuggestOwners(project, branch, missing_files)
+        add_owners = client.SuggestOwners(missing_files)
       change_description.update_reviewers(
           options.reviewers, options.tbrs, options.add_owners_to, add_owners)
 
