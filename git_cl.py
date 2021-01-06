@@ -1040,10 +1040,10 @@ class Changelist(object):
     if not remote or not upstream_branch:
       DieWithError(
          'Unable to determine default branch to diff against.\n'
-         'Either pass complete "git diff"-style arguments, like\n'
-         '  git cl upload origin/main\n'
-         'or verify this branch is set up to track another \n'
-         '(via the --track argument to "git checkout -b ...").')
+         'Verify this branch is set up to track another \n'
+         '(via the --track argument to "git checkout -b ..."). \n'
+         'or pass complete "git diff"-style arguments if supported, like\n'
+         '  git cl upload origin/main\n')
 
     return remote, upstream_branch
 
