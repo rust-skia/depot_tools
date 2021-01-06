@@ -1176,17 +1176,7 @@ def CheckOwners(
 
   owner_email = owner_email or input_api.change.author_email
 
-  finder = input_api.owners_finder(
-      affected_files,
-      input_api.change.RepositoryRoot(),
-      owner_email,
-      reviewers,
-      fopen=open,
-      os_path=input_api.os_path,
-      email_postfix='',
-      disable_color=True,
-      override_files=input_api.change.OriginalOwnersFiles())
-  missing_files = finder.unreviewed_files
+  missing_files = owners_db.files_not_covered_by(affected_files, reviewers)
   affects_owners = any('OWNERS' in name for name in missing_files)
 
   if input_api.is_committing:
@@ -1216,15 +1206,9 @@ def CheckOwners(
       output_list.append(output_fn('TBR for OWNERS files are ignored.'))
     if not input_api.is_committing:
       suggested_owners = owners_db.reviewers_for(missing_files, owner_email)
-      owners_with_comments = []
-      def RecordComments(text):
-        owners_with_comments.append(finder.print_indent() + text)
-      finder.writeln = RecordComments
-      for owner in suggested_owners:
-        finder.print_comments(owner)
       output_list.append(output_fn('Suggested OWNERS: ' +
           '(Use "git-cl owners" to interactively select owners.)\n    %s' %
-          ('\n    '.join(owners_with_comments))))
+          ('\n    '.join(suggested_owners))))
     return output_list
 
   if input_api.is_committing and not reviewers:
