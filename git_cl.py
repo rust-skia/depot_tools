@@ -2204,32 +2204,38 @@ class Changelist(object):
                       change_desc):
     """Upload the current branch to Gerrit, retry if new remote HEAD is
     found. options and change_desc may be mutated."""
+    remote, remote_branch = self.GetRemoteBranch()
+    branch = GetTargetRef(remote, remote_branch, options.target_branch)
+
     try:
       return self._CMDUploadChange(options, git_diff_args, custom_cl_base,
-                                   change_desc)
+                                   change_desc, branch)
     except GitPushError as e:
-      remote, remote_branch = self.GetRemoteBranch()
-      should_retry = remote_branch == DEFAULT_OLD_BRANCH and \
-          gerrit_util.GetProjectHead(
-              self._gerrit_host, self.GetGerritProject()) == 'refs/heads/main'
-      if not should_retry:
+      # Repository might be in the middle of transition to main branch as
+      # default, and uploads to old default might be blocked.
+      if remote_branch not in [DEFAULT_OLD_BRANCH, DEFAULT_NEW_BRANCH]:
         DieWithError(str(e), change_desc)
 
-    print("WARNING: Detected HEAD change in upstream, fetching remote state")
-    RunGit(['fetch', remote])
+      project_head = gerrit_util.GetProjectHead(self._gerrit_host,
+                                                self.GetGerritProject())
+      if project_head == branch:
+        DieWithError(str(e), change_desc)
+      branch = project_head
+
+    print("WARNING: Fetching remote state and retrying upload to default "
+          "branch...")
+    RunGit(['fetch', '--prune', remote])
     options.edit_description = False
     options.force = True
     try:
-      self._CMDUploadChange(options, git_diff_args, custom_cl_base, change_desc)
+      self._CMDUploadChange(options, git_diff_args, custom_cl_base,
+                            change_desc, branch)
     except GitPushError as e:
       DieWithError(str(e), change_desc)
 
   def _CMDUploadChange(self, options, git_diff_args, custom_cl_base,
-                       change_desc):
+                       change_desc, branch):
     """Upload the current branch to Gerrit."""
-    remote, remote_branch = self.GetRemoteBranch()
-    branch = GetTargetRef(remote, remote_branch, options.target_branch)
-
     if options.squash:
       self._GerritCommitMsgHookCheck(offer_removal=not options.force)
       if self.GetIssue():

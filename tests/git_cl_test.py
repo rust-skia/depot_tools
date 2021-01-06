@@ -238,6 +238,7 @@ class TestGitClBasic(unittest.TestCase):
 
     cl = git_cl.Changelist()
     options = optparse.Values()
+    options.target_branch = 'refs/heads/bar'
     with self.assertRaises(SystemExitMock):
       cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
 
@@ -256,10 +257,11 @@ class TestGitClBasic(unittest.TestCase):
     mock.patch('git_cl.Changelist.GetGerritProject',
                return_value='foo').start()
     mock.patch('git_cl.gerrit_util.GetProjectHead',
-               return_value='refs/heads/old_default').start()
+               return_value='refs/heads/master').start()
 
     cl = git_cl.Changelist()
     options = optparse.Values()
+    options.target_branch = 'refs/heads/master'
     with self.assertRaises(SystemExitMock):
       cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
 
@@ -283,6 +285,33 @@ class TestGitClBasic(unittest.TestCase):
 
     cl = git_cl.Changelist()
     options = optparse.Values()
+    options.target_branch = 'refs/heads/master'
+    cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
+    # ensure upload is called twice
+    self.assertEqual(len(m.mock_calls), 2)
+    # option overrides on retry
+    self.assertEqual(options.force, True)
+    self.assertEqual(options.edit_description, False)
+
+  def test_upload_to_old_default_retry_on_rollback(self):
+    """Test when default branch migration had to be rolled back to old name"""
+    m = mock.patch('git_cl.Changelist._CMDUploadChange',
+                   side_effect=[git_cl.GitPushError(), None]).start()
+    mock.patch('git_cl.Changelist.GetRemoteBranch',
+               return_value=('foo', git_cl.DEFAULT_NEW_BRANCH)).start()
+    mock.patch('git_cl.Changelist.GetGerritProject',
+               return_value='foo').start()
+    mock.patch('git_cl.gerrit_util.GetProjectHead',
+               return_value='refs/heads/master').start()
+    # GetTargetRef returns new default branch since it has stale remote
+    # information.
+    mock.patch('git_cl.GetTargetRef',
+               return_value='refs/heads/main').start()
+    mock.patch('git_cl.RunGit').start()
+
+    cl = git_cl.Changelist()
+    options = optparse.Values()
+    options.target_branch = 'refs/heads/master'
     cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
     # ensure upload is called twice
     self.assertEqual(len(m.mock_calls), 2)
