@@ -60,4 +60,4 @@ chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d3
 infra/goma/client/${os}-amd64 git_revision:9c15a8cecf525a4fbc7d4a11685e7dbd61cdc830
 
 # dirmd, a tool to work with DIR_METADATA files
-infra/tools/dirmd/${platform} git_revision:446a23756c05b274601c4a2e6a7da8caa86a778e
+infra/tools/dirmd/${platform} git_revision:3d5330702211e01321af4fb53fec2f2f361137a7
