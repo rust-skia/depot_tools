@@ -591,6 +591,9 @@ class TestGitCl(unittest.TestCase):
         'git_cl.gclient_utils.CheckCallAndFilter',
         self._mocked_call).start()
     mock.patch('git_common.is_dirty_git_tree', lambda x: False).start()
+    mock.patch(
+        'git_common.get_or_create_merge_base',
+        lambda *a: self._mocked_call('get_or_create_merge_base', *a)).start()
     mock.patch('git_cl.FindCodereviewSettingsFile', return_value='').start()
     mock.patch(
         'git_cl.SaveDescriptionBackup',
@@ -733,13 +736,17 @@ class TestGitCl(unittest.TestCase):
   def _gerrit_base_calls(cls, issue=None, fetched_description=None,
                          fetched_status=None, other_cl_owner=None,
                          custom_cl_base=None, short_hostname='chromium',
-                         change_id=None, default_branch='master'):
+                         change_id=None, new_default=False):
     calls = []
     if custom_cl_base:
       ancestor_revision = custom_cl_base
     else:
       # Determine ancestor_revision to be merge base.
-      ancestor_revision = 'origin/' + default_branch
+      ancestor_revision = 'fake_ancestor_sha'
+      calls += [
+        (('get_or_create_merge_base', 'master',
+          'refs/remotes/origin/master'), ancestor_revision),
+      ]
 
     if issue:
       gerrit_util.GetChangeDetail.return_value = {
@@ -766,7 +773,7 @@ class TestGitCl(unittest.TestCase):
     ]
     calls += [
       ((['git', 'show-branch', 'refs/remotes/origin/main'], ),
-         '1' if default_branch == 'main' else callError(1)),
+         '1' if new_default else callError(1)),
     ]
 
     return calls
@@ -780,7 +787,8 @@ class TestGitCl(unittest.TestCase):
                            labels=None, change_id=None,
                            final_description=None, gitcookies_exists=True,
                            force=False, edit_description=None,
-                           default_branch='master'):
+                           new_default=False):
+    default_branch = 'main' if new_default else 'master';
     if post_amend_description is None:
       post_amend_description = description
     cc = cc or []
@@ -808,8 +816,11 @@ class TestGitCl(unittest.TestCase):
       ref_to_push = 'abcdef0123456789'
 
       if custom_cl_base is None:
+        calls += [
+          (('get_or_create_merge_base', 'master',
+            'refs/remotes/origin/master'), 'origin/' + default_branch),
+        ]
         parent = 'origin/' + default_branch
-        git_common.get_or_create_merge_base.return_value = parent
       else:
         calls += [
           ((['git', 'merge-base', '--is-ancestor', custom_cl_base,
@@ -1075,7 +1086,7 @@ class TestGitCl(unittest.TestCase):
       log_description=None,
       edit_description=None,
       fetched_description=None,
-      default_branch='master'):
+      new_default=False):
     """Generic gerrit upload test framework."""
     if squash_mode is None:
       if '--no-squash' in upload_args:
@@ -1128,9 +1139,6 @@ class TestGitCl(unittest.TestCase):
     mock.patch(
         'git_cl.GenerateGerritChangeId', return_value=change_id).start()
     mock.patch(
-        'git_common.get_or_create_merge_base',
-        return_value='origin/' + default_branch).start()
-    mock.patch(
         'gclient_utils.AskForData',
         lambda prompt: self._mocked_call('ask_for_data', prompt)).start()
 
@@ -1149,7 +1157,7 @@ class TestGitCl(unittest.TestCase):
         custom_cl_base=custom_cl_base,
         short_hostname=short_hostname,
         change_id=change_id,
-        default_branch=default_branch)
+        new_default=new_default)
     if fetched_status != 'ABANDONED':
       mock.patch(
           'gclient_utils.temporary_file', TemporaryFileMock()).start()
@@ -1168,7 +1176,7 @@ class TestGitCl(unittest.TestCase):
           gitcookies_exists=gitcookies_exists,
           force=force,
           edit_description=edit_description,
-          default_branch=default_branch)
+          new_default=new_default)
     # Uncomment when debugging.
     # print('\n'.join(map(lambda x: '%2i: %s' % x, enumerate(self.calls))))
     git_cl.main(['upload'] + upload_args)
@@ -1489,53 +1497,47 @@ class TestGitCl(unittest.TestCase):
 
   def test_update_reviewers(self):
     data = [
-      ('foo', [], [], None, None,
+      ('foo', [], [],
        'foo'),
-      ('foo\nR=xx', [], [], None, None,
+      ('foo\nR=xx', [], [],
        'foo\nR=xx'),
-      ('foo\nTBR=xx', [], [], None, None,
+      ('foo\nTBR=xx', [], [],
        'foo\nTBR=xx'),
-      ('foo', ['a@c'], [], None, None,
+      ('foo', ['a@c'], [],
        'foo\n\nR=a@c'),
-      ('foo\nR=xx', ['a@c'], [], None, None,
+      ('foo\nR=xx', ['a@c'], [],
        'foo\n\nR=a@c, xx'),
-      ('foo\nTBR=xx', ['a@c'], [], None, None,
+      ('foo\nTBR=xx', ['a@c'], [],
        'foo\n\nR=a@c\nTBR=xx'),
-      ('foo\nTBR=xx\nR=yy', ['a@c'], [], None, None,
+      ('foo\nTBR=xx\nR=yy', ['a@c'], [],
        'foo\n\nR=a@c, yy\nTBR=xx'),
-      ('foo\nBUG=', ['a@c'], [], None, None,
+      ('foo\nBUG=', ['a@c'], [],
        'foo\nBUG=\nR=a@c'),
-      ('foo\nR=xx\nTBR=yy\nR=bar', ['a@c'], [], None, None,
+      ('foo\nR=xx\nTBR=yy\nR=bar', ['a@c'], [],
        'foo\n\nR=a@c, bar, xx\nTBR=yy'),
-      ('foo', ['a@c', 'b@c'], [], None, None,
+      ('foo', ['a@c', 'b@c'], [],
        'foo\n\nR=a@c, b@c'),
-      ('foo\nBar\n\nR=\nBUG=', ['c@c'], [], None, None,
+      ('foo\nBar\n\nR=\nBUG=', ['c@c'], [],
        'foo\nBar\n\nR=c@c\nBUG='),
-      ('foo\nBar\n\nR=\nBUG=\nR=', ['c@c'], [], None, None,
+      ('foo\nBar\n\nR=\nBUG=\nR=', ['c@c'], [],
        'foo\nBar\n\nR=c@c\nBUG='),
       # Same as the line before, but full of whitespaces.
       (
-        'foo\nBar\n\n R = \n BUG = \n R = ', ['c@c'], [], None, None,
+        'foo\nBar\n\n R = \n BUG = \n R = ', ['c@c'], [],
         'foo\nBar\n\nR=c@c\n BUG =',
       ),
       # Whitespaces aren't interpreted as new lines.
-      ('foo BUG=allo R=joe ', ['c@c'], [], None, None,
+      ('foo BUG=allo R=joe ', ['c@c'], [],
        'foo BUG=allo R=joe\n\nR=c@c'),
       # Redundant TBRs get promoted to Rs
-      ('foo\n\nR=a@c\nTBR=t@c', ['b@c', 'a@c'], ['a@c', 't@c'], None, None,
+      ('foo\n\nR=a@c\nTBR=t@c', ['b@c', 'a@c'], ['a@c', 't@c'],
        'foo\n\nR=a@c, b@c\nTBR=t@c'),
-      # Add to R
-      ('foo', [], [], 'R', ['a@c'],
-       'foo\n\nR=a@c'),
-      # Add to TBR
-      ('foo', [], [], 'TBR', ['a@c'],
-       'foo\n\nTBR=a@c'),
     ]
     expected = [i[-1] for i in data]
     actual = []
-    for orig, reviewers, tbrs, add_to, add, _expected in data:
+    for orig, reviewers, tbrs, _expected in data:
       obj = git_cl.ChangeDescription(orig)
-      obj.update_reviewers(reviewers, tbrs, add_to, add)
+      obj.update_reviewers(reviewers, tbrs, None, None, None)
       actual.append(obj.description)
     self.assertEqual(expected, actual)
 
@@ -2773,7 +2775,7 @@ class TestGitCl(unittest.TestCase):
         squash=False,
         squash_mode='override_nosquash',
         change_id='I123456789',
-        default_branch='main')
+        new_default=True)
 
 
 class ChangelistTest(unittest.TestCase):
