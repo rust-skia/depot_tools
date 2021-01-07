@@ -2721,9 +2721,14 @@ the current line as well!
 
     fake_db = mock.MagicMock(owners.Database)
     fake_db.email_regexp = input_api.re.compile(owners.BASIC_EMAIL_REGEXP)
-    fake_db.files_not_covered_by.return_value = uncovered_files
-
     input_api.owners_db = fake_db
+
+    fake_finder = mock.MagicMock(owners_finder.OwnersFinder)
+    fake_finder.unreviewed_files = uncovered_files
+    fake_finder.print_indent = lambda: ''
+    # pylint: disable=unnecessary-lambda
+    fake_finder.print_comments = lambda owner: fake_finder.writeln(owner)
+    input_api.owners_finder = lambda *args, **kwargs: fake_finder
     input_api.is_committing = is_committing
     input_api.tbr = tbr
     input_api.dry_run = dry_run
