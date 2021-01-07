@@ -363,7 +363,9 @@ class BotUpdateApi(recipe_api.RecipeApi):
 
           # Determine the output ref.
           got_revision_cp = self._last_returned_properties.get('got_revision_cp')
-          in_rev = revisions.get(out_solution)
+          in_rev = self.m.gclient.resolve_revision(revisions.get(out_solution))
+          if not in_rev:
+            in_rev = 'HEAD'
           if got_revision_cp:
             # If commit position string is available, read the ref from there.
             out_commit.ref, out_commit.position = (
@@ -380,7 +382,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
             out_commit.ref = in_commit.ref
           else: # pragma: no cover
             assert False, (
-                'Unsupposed case. '
+                'Unsupported case. '
                 'Call buildbucket.set_output_gitiles_commit directly.'
             )
           self.m.buildbucket.set_output_gitiles_commit(out_commit)
