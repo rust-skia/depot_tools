@@ -42,6 +42,7 @@ import git_footers
 import git_new_branch
 import metrics
 import metrics_utils
+import owners
 import owners_client
 import owners_finder
 import presubmit_canned_checks
@@ -1375,16 +1376,19 @@ class Changelist(object):
       add_owners = []
       if options.add_owners_to:
         # Fill gaps in OWNERS coverage to tbrs/reviewers if requested.
+        project = self.GetGerritProject()
+        branch = self.GetCommonAncestorWithUpstream()
         client = owners_client.DepotToolsClient(
+            host=self.GetGerritHost(),
             root=settings.GetRoot(),
-            branch=self.GetCommonAncestorWithUpstream())
+            branch=branch)
         status = client.GetFilesApprovalStatus(
-            files, [], options.tbrs + options.reviewers)
+            project, branch, files, [], options.tbrs + options.reviewers)
         missing_files = [
             f for f in files
             if status[f] == owners_client.INSUFFICIENT_REVIEWERS
         ]
-        add_owners = client.SuggestOwners(missing_files)
+        add_owners = client.SuggestOwners(project, branch, missing_files)
       change_description.update_reviewers(
           options.reviewers, options.tbrs, options.add_owners_to, add_owners)
 
@@ -4791,13 +4795,16 @@ def CMDowners(parser, args):
     if len(args) == 0:
       print('No files specified for --show-all. Nothing to do.')
       return 0
+    project = cl.GetGerritProject()
+    branch = cl.GetCommonAncestorWithUpstream()
     client = owners_client.DepotToolsClient(
+        host=cl.GetGerritHost(),
         root=settings.GetRoot(),
-        branch=cl.GetCommonAncestorWithUpstream())
-    owners_by_file = client.BatchListOwners(args)
-    for f, owners in owners_by_file.items():
-      print('Owners for %s:' % f)
-      print('\n'.join(' - %s' % owner for owner in owners))
+        branch=branch)
+    for arg in args:
+      print('Owners for %s:' % arg)
+      for owner in client.ListOwnersForFile(project, branch, arg):
+        print(' - %s' % owner)
     return 0
 
   if args:
@@ -4812,10 +4819,13 @@ def CMDowners(parser, args):
   affected_files = cl.GetAffectedFiles(base_branch)
 
   if options.batch:
+    project = cl.GetGerritProject()
+    branch = cl.GetCommonAncestorWithUpstream()
     client = owners_client.DepotToolsClient(
+        host=cl.GetGerritHost(),
         root=settings.GetRoot(),
-        branch=cl.GetCommonAncestorWithUpstream())
-    print('\n'.join(client.SuggestOwners(affected_files)))
+        branch=branch)
+    print('\n'.join(client.SuggestOwners(project, branch, affected_files)))
     return 0
 
   owner_files = [f for f in affected_files if 'OWNERS' in os.path.basename(f)]
