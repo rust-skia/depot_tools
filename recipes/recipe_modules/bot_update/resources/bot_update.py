@@ -681,13 +681,9 @@ def _set_git_config(fn):
   @functools.wraps(fn)
   def wrapper(*args, **kwargs):
     with git_config_if_not_set('user.name', 'chrome-bot'), \
-         git_config_if_not_set('user.email', 'chrome-bot@chromium.org'):
-      if os.getenv('PACKFILE_OFFLOADING') == '1':
-        with git_config_if_not_set('fetch.uriprotocols', 'https'):
-          return fn(*args, **kwargs)
-
-      return fn(*args, **kwargs)
-
+         git_config_if_not_set('user.email', 'chrome-bot@chromium.org'), \
+         git_config_if_not_set('fetch.uriprotocols', 'https'):
+        return fn(*args, **kwargs)
   return wrapper
 
 
