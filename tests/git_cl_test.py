@@ -42,6 +42,7 @@ import git_cl
 import git_common
 import git_footers
 import git_new_branch
+import owners_client
 import scm
 import subprocess2
 
@@ -3916,6 +3917,47 @@ class CMDStatusTestCase(CMDTestCaseBase):
         'Issue number: 101 (https://chromium-review.googlesource.com/101)\n'
         'Issue description:\n'
         'x\n')
+
+
+class CMDOwnersTestCase(CMDTestCaseBase):
+  def setUp(self):
+    super(CMDOwnersTestCase, self).setUp()
+    mock.patch('git_cl.Settings.GetRoot', return_value='root').start()
+    mock.patch('git_cl.Changelist.GetAuthor', return_value='author').start()
+    mock.patch(
+        'git_cl.Changelist.GetCommonAncestorWithUpstream',
+        return_value='upstream').start()
+    mock.patch('owners_client.DepotToolsClient').start()
+    self.addCleanup(mock.patch.stopall)
+
+  def testShowAllNoArgs(self):
+    self.assertEqual(0, git_cl.main(['owners', '--show-all']))
+    self.assertEqual(
+        'No files specified for --show-all. Nothing to do.\n',
+        git_cl.sys.stdout.getvalue())
+
+  def testShowAll(self):
+    batch_mock = owners_client.DepotToolsClient.return_value.BatchListOwners
+    batch_mock.return_value = {
+      'foo': ['a@example.com'],
+      'bar': ['b@example.com', 'c@example.com'],
+    }
+    self.assertEqual(
+        0,
+        git_cl.main(['owners', '--show-all', 'foo', 'bar', 'baz']))
+    batch_mock.assert_called_once_with(['foo', 'bar', 'baz'])
+    self.assertEqual(
+        '\n'.join([
+          'Owners for foo:',
+          ' - a@example.com',
+          'Owners for bar:',
+          ' - b@example.com',
+          ' - c@example.com',
+          'Owners for baz:',
+          ' - No owners found',
+          '',
+        ]),
+        sys.stdout.getvalue())
 
 
 if __name__ == '__main__':
