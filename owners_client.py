@@ -135,10 +135,14 @@ class DepotToolsClient(OwnersClient):
     self._branch = branch
     self._fopen = fopen
     self._os_path = os_path
-
-    self._db = owners_db.Database(root, fopen, os_path)
-    self._db.override_files = self._GetOriginalOwnersFiles()
+    self._db = None
     self._db_lock = threading.Lock()
+
+  def _ensure_db(self):
+    if self._db is not None:
+      return
+    self._db = owners_db.Database(self._root, self._fopen, self._os_path)
+    self._db.override_files = self._GetOriginalOwnersFiles()
 
   def _GetOriginalOwnersFiles(self):
     return {
@@ -150,6 +154,7 @@ class DepotToolsClient(OwnersClient):
   def ListOwners(self, path):
     # all_possible_owners is not thread safe.
     with self._db_lock:
+      self._ensure_db()
       # all_possible_owners returns a dict {owner: [(path, distance)]}. We want
       # to return a list of owners sorted by increasing distance.
       distance_by_owner = self._db.all_possible_owners([path], None)

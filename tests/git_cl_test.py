@@ -3922,12 +3922,21 @@ class CMDStatusTestCase(CMDTestCaseBase):
 class CMDOwnersTestCase(CMDTestCaseBase):
   def setUp(self):
     super(CMDOwnersTestCase, self).setUp()
+    self.owners_by_path = {
+      'foo': ['a@example.com'],
+      'bar': ['b@example.com', 'c@example.com'],
+    }
     mock.patch('git_cl.Settings.GetRoot', return_value='root').start()
     mock.patch('git_cl.Changelist.GetAuthor', return_value='author').start()
     mock.patch(
+        'git_cl.Changelist.GetAffectedFiles',
+        return_value=list(self.owners_by_path)).start()
+    mock.patch(
         'git_cl.Changelist.GetCommonAncestorWithUpstream',
         return_value='upstream').start()
-    mock.patch('owners_client.DepotToolsClient').start()
+    mock.patch(
+        'owners_client.DepotToolsClient.BatchListOwners',
+        return_value=self.owners_by_path).start()
     self.addCleanup(mock.patch.stopall)
 
   def testShowAllNoArgs(self):
@@ -3937,15 +3946,11 @@ class CMDOwnersTestCase(CMDTestCaseBase):
         git_cl.sys.stdout.getvalue())
 
   def testShowAll(self):
-    batch_mock = owners_client.DepotToolsClient.return_value.BatchListOwners
-    batch_mock.return_value = {
-      'foo': ['a@example.com'],
-      'bar': ['b@example.com', 'c@example.com'],
-    }
     self.assertEqual(
         0,
         git_cl.main(['owners', '--show-all', 'foo', 'bar', 'baz']))
-    batch_mock.assert_called_once_with(['foo', 'bar', 'baz'])
+    owners_client.DepotToolsClient.BatchListOwners.assert_called_once_with(
+        ['foo', 'bar', 'baz'])
     self.assertEqual(
         '\n'.join([
           'Owners for foo:',
@@ -3958,6 +3963,11 @@ class CMDOwnersTestCase(CMDTestCaseBase):
           '',
         ]),
         sys.stdout.getvalue())
+
+  def testBatch(self):
+    self.assertEqual(0, git_cl.main(['owners', '--batch']))
+    self.assertIn('a@example.com', sys.stdout.getvalue())
+    self.assertIn('b@example.com', sys.stdout.getvalue())
 
 
 if __name__ == '__main__':
