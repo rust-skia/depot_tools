@@ -43,7 +43,8 @@ import gclient_paths  # Exposed through the API
 import gclient_utils
 import git_footers
 import gerrit_util
-import owners
+import owners as owners_db
+import owners_client
 import owners_finder
 import presubmit_canned_checks
 import rdb_wrapper
@@ -651,8 +652,10 @@ class InputApi(object):
 
     # TODO(dpranke): figure out a list of all approved owners for a repo
     # in order to be able to handle wildcard OWNERS files?
-    self.owners_db = owners.Database(change.RepositoryRoot(),
-                                     fopen=open, os_path=self.os_path)
+    self.owners_client = owners_client.DepotToolsClient(
+        change.RepositoryRoot(), change.UpstreamBranch(), os_path=self.os_path)
+    self.owners_db = owners_db.Database(
+        change.RepositoryRoot(), fopen=open, os_path=self.os_path)
     self.owners_finder = owners_finder.OwnersFinder
     self.verbose = verbose
     self.Command = CommandData
@@ -1095,6 +1098,10 @@ class Change(object):
         self._AFFECTED_FILES(path, action.strip(), self._local_root, diff_cache)
         for action, path in files
     ]
+
+  def UpstreamBranch(self):
+    """Returns the upstream branch for the change."""
+    return self._upstream
 
   def Name(self):
     """Returns the change name."""

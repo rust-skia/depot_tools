@@ -165,6 +165,8 @@ index fe3de7b..54ae6e1 100755
         self.issue = 0
       def RepositoryRoot(self):
         return self._root
+      def UpstreamBranch(self):
+        return 'upstream'
 
     presubmit._ASKED_FOR_FEEDBACK = False
     self.fake_root_dir = self.RootDir()
