@@ -113,9 +113,9 @@ class OwnersClientTest(unittest.TestCase):
     self.assertEqual(
         status,
         {
-            'approved': owners_client.APPROVED,
-            'pending': owners_client.PENDING,
-            'insufficient': owners_client.INSUFFICIENT_REVIEWERS,
+            'approved': owners_client.OwnersClient.APPROVED,
+            'pending': owners_client.OwnersClient.PENDING,
+            'insufficient': owners_client.OwnersClient.INSUFFICIENT_REVIEWERS,
         })
 
   def test_owner_combinations(self):

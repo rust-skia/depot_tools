@@ -13,11 +13,6 @@ import owners as owners_db
 import scm
 
 
-APPROVED = 'APPROVED'
-PENDING = 'PENDING'
-INSUFFICIENT_REVIEWERS = 'INSUFFICIENT_REVIEWERS'
-
-
 def _owner_combinations(owners, num_owners):
   """Iterate owners combinations by decrasing score.
 
@@ -54,6 +49,10 @@ class OwnersClient(object):
   All code should use this class to interact with OWNERS files instead of the
   owners database in owners.py
   """
+  APPROVED = 'APPROVED'
+  PENDING = 'PENDING'
+  INSUFFICIENT_REVIEWERS = 'INSUFFICIENT_REVIEWERS'
+
   def ListOwners(self, path):
     """List all owners for a file.
 
@@ -85,11 +84,11 @@ class OwnersClient(object):
     for path, owners in owners_by_path.items():
       owners = set(owners)
       if owners.intersection(approvers):
-        status[path] = APPROVED
+        status[path] = self.APPROVED
       elif owners.intersection(reviewers):
-        status[path] = PENDING
+        status[path] = self.PENDING
       else:
-        status[path] = INSUFFICIENT_REVIEWERS
+        status[path] = self.INSUFFICIENT_REVIEWERS
     return status
 
   def SuggestOwners(self, paths):
