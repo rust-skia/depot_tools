@@ -513,7 +513,12 @@ class Database(object):
     return owners
 
   def _covering_set_of_owners_for(self, files, author):
-    dirs_remaining = set(self.enclosing_dir_with_owners(f) for f in files)
+    dirs_remaining = set()
+    for f in files:
+      dir_path = self.enclosing_dir_with_owners(f)
+      # Always use slashes as separators.
+      dirs_remaining.add(dir_path.replace(os.sep, '/'))
+
     all_possible_owners = self.all_possible_owners(dirs_remaining, author)
     suggested_owners = set()
     while dirs_remaining and all_possible_owners:
