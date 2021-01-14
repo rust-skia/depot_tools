@@ -26,7 +26,7 @@ import subprocess
 import sys
 import time
 
-import httplib2
+from third_party import httplib2
 
 # These build configs affect build performance a lot.
 # TODO(https://crbug.com/900161): Add 'blink_symbol_level' and
