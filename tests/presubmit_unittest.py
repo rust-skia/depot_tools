@@ -44,7 +44,6 @@ import git_cl
 import git_common as git
 import json
 import owners
-import owners_client
 import owners_finder
 import presubmit_support as presubmit
 import rdb_wrapper
@@ -2694,67 +2693,90 @@ the current line as well!
     self.assertEqual(1, len(results))
     self.assertIsInstance(results[0], presubmit.OutputApi.PresubmitError)
 
-  def AssertOwnersWorks(
-      self, tbr=False, issue='1', approvers=None, modified_files=None,
-      owners_by_path=None, is_committing=True, response=None,
-      expected_output='', manually_specified_reviewers=None, dry_run=None,
-      allow_tbr=True):
-    # The set of people who lgtm'ed a change.
-    approvers = approvers or set()
-    manually_specified_reviewers = manually_specified_reviewers or []
-    modified_files = modified_files or ['foo/xyz.cc']
-    owners_by_path = owners_by_path or {'foo/xyz.cc': ['john@example.com']}
-    response = response or {
-      "owner": {"email": 'john@example.com'},
-      "labels": {"Code-Review": {
-        u'all': [
-          {
-            u'email': a,
-            u'value': +1
-          } for a in approvers
-        ],
-        u'default_value': 0,
-        u'values': {u' 0': u'No score',
-                    u'+1': u'Looks good to me',
-                    u'-1': u"I would prefer that you didn't submit this"}
-      }},
-      "reviewers": {"REVIEWER": [{u'email': a}] for a in approvers},
-    }
+  def AssertOwnersWorks(self, tbr=False, issue='1', approvers=None,
+      reviewers=None, is_committing=True,
+      response=None, uncovered_files=None, expected_output='',
+      manually_specified_reviewers=None, dry_run=None,
+      modified_file='foo/xyz.cc', allow_tbr=True):
+    if approvers is None:
+      # The set of people who lgtm'ed a change.
+      approvers = set()
+    if reviewers is None:
+      # The set of people needed to lgtm a change. We default to
+      # the same list as the people who approved it. We use 'reviewers'
+      # to avoid a name collision w/ owners.py.
+      reviewers = approvers
+    if uncovered_files is None:
+      uncovered_files = set()
+    if manually_specified_reviewers is None:
+      manually_specified_reviewers = []
 
     change = mock.MagicMock(presubmit.Change)
-    change.OriginalOwnersFiles.return_value = {}
-    change.RepositoryRoot.return_value = None
-    change.ReviewersFromDescription.return_value = manually_specified_reviewers
-    change.TBRsFromDescription.return_value = []
-    change.author_email = 'john@example.com'
     change.issue = issue
-
-    affected_files = []
-    for f in modified_files:
-      affected_file = mock.MagicMock(presubmit.GitAffectedFile)
-      affected_file.LocalPath.return_value = f
-      affected_files.append(affected_file)
-    change.AffectedFiles.return_value = affected_files
-
+    change.author_email = 'john@example.com'
+    change.ReviewersFromDescription = lambda: manually_specified_reviewers
+    change.TBRsFromDescription = lambda: []
+    change.RepositoryRoot = lambda: None
+    affected_file = mock.MagicMock(presubmit.GitAffectedFile)
     input_api = self.MockInputApi(change, False)
     input_api.gerrit = presubmit.GerritAccessor('host')
+
+    fake_db = mock.MagicMock(owners.Database)
+    fake_db.email_regexp = input_api.re.compile(owners.BASIC_EMAIL_REGEXP)
+    fake_db.files_not_covered_by.return_value = uncovered_files
+
+    input_api.owners_db = fake_db
     input_api.is_committing = is_committing
     input_api.tbr = tbr
     input_api.dry_run = dry_run
-    input_api.gerrit._FetchChangeDetail = lambda _: response
 
-    input_api.owners_client = owners_client.DepotToolsClient('root', 'branch')
+    affected_file.LocalPath.return_value = modified_file
+    change.AffectedFiles.return_value = [affected_file]
+    if not is_committing or issue or ('OWNERS' in modified_file):
+      change.OriginalOwnersFiles.return_value = {}
+      if issue and not response:
+        response = {
+          "owner": {"email": change.author_email},
+          "labels": {"Code-Review": {
+            u'all': [
+              {
+                u'email': a,
+                u'value': +1
+              } for a in approvers
+            ],
+            u'default_value': 0,
+            u'values': {u' 0': u'No score',
+                        u'+1': u'Looks good to me',
+                        u'-1': u"I would prefer that you didn't submit this"}
+          }},
+          "reviewers": {"REVIEWER": [{u'email': a}] for a in approvers},
+        }
 
-    with mock.patch('owners_client.DepotToolsClient.ListOwners',
-                    side_effect=lambda f: owners_by_path.get(f, [])):
-      results = presubmit_canned_checks.CheckOwners(
-          input_api, presubmit.OutputApi, allow_tbr=allow_tbr)
+      if is_committing:
+        people = approvers
+      else:
+        people = reviewers
+
+      if issue:
+        input_api.gerrit._FetchChangeDetail = lambda _: response
+
+      people.add(change.author_email)
+      if not is_committing and uncovered_files:
+        fake_db.reviewers_for.return_value = change.author_email
+
+    results = presubmit_canned_checks.CheckOwners(
+        input_api, presubmit.OutputApi, allow_tbr=allow_tbr)
     for result in results:
       result.handle()
     if expected_output:
       self.assertRegexpMatches(sys.stdout.getvalue(), expected_output)
     else:
       self.assertEqual(sys.stdout.getvalue(), expected_output)
+
+    files_not_covered_by_calls = fake_db.files_not_covered_by.mock_calls
+    if len(files_not_covered_by_calls):
+      actual_reviewers = fake_db.files_not_covered_by.mock_calls[0][1][1]
+      self.assertIn(change.author_email, actual_reviewers)
     sys.stdout.truncate(0)
 
   def testCannedCheckOwners_DryRun(self):
@@ -2775,16 +2797,15 @@ the current line as well!
       }},
       "reviewers": {"REVIEWER": [{u'email': u'ben@example.com'}]},
     }
-    self.AssertOwnersWorks(
-        approvers=set(),
+    self.AssertOwnersWorks(approvers=set(),
         dry_run=True,
         response=response,
+        reviewers=set(["ben@example.com"]),
         expected_output='This is a dry run, but these failures would be ' +
                         'reported on commit:\nMissing LGTM from someone ' +
                         'other than john@example.com\n')
 
-    self.AssertOwnersWorks(
-        approvers=set(['ben@example.com']),
+    self.AssertOwnersWorks(approvers=set(['ben@example.com']),
         is_committing=False,
         response=response,
         expected_output='')
@@ -2806,16 +2827,12 @@ the current line as well!
       }},
       "reviewers": {"REVIEWER": [{u'email': u'bot@example.com'}]},
     }
-    self.AssertOwnersWorks(
-        approvers=set(),
-        modified_files={'foo/xyz.cc': ['john@example.com']},
+    self.AssertOwnersWorks(approvers=set(),
         response=response,
         is_committing=True,
         expected_output='')
 
-    self.AssertOwnersWorks(
-        approvers=set(),
-        modified_files={'foo/xyz.cc': ['john@example.com']},
+    self.AssertOwnersWorks(approvers=set(),
         is_committing=False,
         response=response,
         expected_output='')
@@ -2837,14 +2854,12 @@ the current line as well!
       }},
       "reviewers": {"REVIEWER": [{u'email': u'sheriff@example.com'}]},
     }
-    self.AssertOwnersWorks(
-        approvers=set(),
+    self.AssertOwnersWorks(approvers=set(),
         response=response,
         is_committing=True,
         expected_output='')
 
-    self.AssertOwnersWorks(
-        approvers=set(),
+    self.AssertOwnersWorks(approvers=set(),
         is_committing=False,
         response=response,
         expected_output='')
@@ -2873,14 +2888,12 @@ the current line as well!
       }},
       "reviewers": {"REVIEWER": [{u'email': u'ben@example.com'}]},
     }
-    self.AssertOwnersWorks(
-        approvers=set(['ben@example.com']),
+    self.AssertOwnersWorks(approvers=set(['ben@example.com']),
         response=response,
         is_committing=True,
         expected_output='')
 
-    self.AssertOwnersWorks(
-        approvers=set(['ben@example.com']),
+    self.AssertOwnersWorks(approvers=set(['ben@example.com']),
         is_committing=False,
         response=response,
         expected_output='')
@@ -2903,8 +2916,7 @@ the current line as well!
       }},
       "reviewers": {"REVIEWER": [{u'email': u'ben@example.com'}]},
     }
-    self.AssertOwnersWorks(
-        approvers=set(['ben@example.com']),
+    self.AssertOwnersWorks(approvers=set(['ben@example.com']),
         response=response,
         is_committing=True,
         expected_output='')
@@ -2935,6 +2947,7 @@ the current line as well!
     }
     self.AssertOwnersWorks(
         approvers=set(),
+        reviewers=set(["ben@example.com"]),
         response=response,
         is_committing=True,
         expected_output=
@@ -2942,6 +2955,7 @@ the current line as well!
 
     self.AssertOwnersWorks(
         approvers=set(),
+        reviewers=set(["ben@example.com"]),
         is_committing=False,
         response=response,
         expected_output='')
@@ -2966,6 +2980,7 @@ the current line as well!
     }
     self.AssertOwnersWorks(
         approvers=set(),
+        reviewers=set(["ben@example.com"]),
         response=response,
         is_committing=True,
         expected_output=
@@ -2984,12 +2999,14 @@ the current line as well!
     }
     self.AssertOwnersWorks(
         approvers=set(),
+        reviewers=set(),
         response=response,
         expected_output=
             'Missing LGTM from someone other than john@example.com\n')
 
     self.AssertOwnersWorks(
         approvers=set(),
+        reviewers=set(),
         is_committing=False,
         response=response,
         expected_output='')
@@ -3003,37 +3020,36 @@ the current line as well!
 
   def testCannedCheckOwners_NoIssue(self):
     self.AssertOwnersWorks(issue=None,
-        modified_files=['foo'],
+        uncovered_files=set(['foo']),
         expected_output="OWNERS check failed: this CL has no Gerrit "
                         "change number, so we can't check it for approvals.\n")
     self.AssertOwnersWorks(issue=None,
         is_committing=False,
-        modified_files=['foo'],
+        uncovered_files=set(['foo']),
         expected_output=re.compile(
             'Missing OWNER reviewers for these files:\n'
             '    foo\n', re.MULTILINE))
 
   def testCannedCheckOwners_NoIssueLocalReviewers(self):
-    self.AssertOwnersWorks(
-        issue=None,
+    self.AssertOwnersWorks(issue=None,
+        reviewers=set(['jane@example.com']),
         manually_specified_reviewers=['jane@example.com'],
         expected_output="OWNERS check failed: this CL has no Gerrit "
                         "change number, so we can't check it for approvals.\n")
-    self.AssertOwnersWorks(
-        issue=None,
+    self.AssertOwnersWorks(issue=None,
+        reviewers=set(['jane@example.com']),
         manually_specified_reviewers=['jane@example.com'],
         is_committing=False,
         expected_output='')
 
   def testCannedCheckOwners_NoIssueLocalReviewersDontInferEmailDomain(self):
-    self.AssertOwnersWorks(
-        issue=None,
+    self.AssertOwnersWorks(issue=None,
+        reviewers=set(['jane']),
         manually_specified_reviewers=['jane@example.com'],
         expected_output="OWNERS check failed: this CL has no Gerrit "
                         "change number, so we can't check it for approvals.\n")
-    self.AssertOwnersWorks(
-        issue=None,
-        modified_files=['foo'],
+    self.AssertOwnersWorks(issue=None,
+        uncovered_files=set(['foo']),
         manually_specified_reviewers=['jane'],
         is_committing=False,
         expected_output=re.compile(
@@ -3073,7 +3089,8 @@ the current line as well!
   def testCannedCheckOwners_TBROWNERSFile(self):
     self.AssertOwnersWorks(
         tbr=True,
-        modified_files=['foo/OWNERS'],
+        uncovered_files=set(['foo/OWNERS']),
+        modified_file='foo/OWNERS',
         expected_output='Missing LGTM from an OWNER for these files:\n'
         '    foo/OWNERS\n'
         'TBR for OWNERS files are ignored.\n')
@@ -3081,27 +3098,26 @@ the current line as well!
   def testCannedCheckOwners_TBRNonOWNERSFile(self):
     self.AssertOwnersWorks(
         tbr=True,
-        modified_files=['foo/OWNERS', 'foo/xyz.cc'],
-        owners_by_path={'foo/OWNERS': ['john@example.com'],
-                        'foo/xyz.cc': []},
+        uncovered_files=set(['foo/xyz.cc']),
+        modified_file='foo/OWNERS',
         expected_output='--tbr was specified, skipping OWNERS check\n')
 
   def testCannedCheckOwners_WithoutOwnerLGTM(self):
-    self.AssertOwnersWorks(
-        modified_files=['foo'],
+    self.AssertOwnersWorks(uncovered_files=set(['foo']),
         expected_output='Missing LGTM from an OWNER for these files:\n'
                         '    foo\n')
-    self.AssertOwnersWorks(
-        modified_files=['foo'],
+    self.AssertOwnersWorks(uncovered_files=set(['foo']),
         is_committing=False,
         expected_output=re.compile(
             'Missing OWNER reviewers for these files:\n'
             '    foo\n', re.MULTILINE))
 
   def testCannedCheckOwners_WithLGTMs(self):
-    self.AssertOwnersWorks(approvers=set(['ben@example.com']))
     self.AssertOwnersWorks(approvers=set(['ben@example.com']),
-                           is_committing=False)
+                           uncovered_files=set())
+    self.AssertOwnersWorks(approvers=set(['ben@example.com']),
+                           is_committing=False,
+                           uncovered_files=set())
 
   @mock.patch(BUILTIN_OPEN, mock.mock_open())
   def testCannedRunUnitTests(self):
