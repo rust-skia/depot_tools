@@ -473,8 +473,6 @@ class GitWrapper(SCMWrapper):
 
     self._CheckMinVersion("1.6.6")
 
-    # If a dependency is not pinned, track the default remote branch.
-    default_rev = 'refs/remotes/%s/master' % self.remote
     url, deps_revision = gclient_utils.SplitUrlRevision(self.url)
     revision = deps_revision
     managed = True
@@ -487,7 +485,9 @@ class GitWrapper(SCMWrapper):
       revision = deps_revision
       managed = False
     if not revision:
-      revision = default_rev
+      # If a dependency is not pinned, track the default remote branch.
+      revision = scm.GIT.GetRemoteHeadRef(self.checkout_path, self.url,
+                                          self.remote)
 
     if managed:
       self._DisableHooks()
