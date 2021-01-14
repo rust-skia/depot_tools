@@ -112,7 +112,9 @@ if offline or goma_disabled_env in ['true', 't', 'yes', 'y', '1']:
 if use_remote_build and remote_build_is_goma:
   # Check to make sure that goma is running. If not, don't start the build.
   gomacc_path = os.path.join(sys.path[0], '.cipd_bin', 'gomacc')
-  status = subprocess.run([gomacc_path, 'port'], capture_output=True).returncode
+  status = subprocess.run([gomacc_path, 'port'],
+                          stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL).returncode
   if status == 1:
     print('echo Goma is not running. Use "goma_ctl start" to start it.')
     sys.exit(0)
@@ -178,4 +180,3 @@ if offline and not sys.platform.startswith('win'):
   print('RBE_remote_disabled=1 GOMA_DISABLED=1 ' + ' '.join(args))
 else:
   print(' '.join(args))
-
