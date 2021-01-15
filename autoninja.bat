@@ -33,12 +33,11 @@ IF NOT "%1"=="" (
 
 REM Execute whatever is printed by autoninja.py.
 REM Also print it to reassure that the right settings are being used.
-REM Don't use vpython - it is too slow to start.
-FOR /f "usebackq tokens=*" %%a in (`python3.bat %scriptdir%autoninja.py "%*"`) do echo %%a & %%a
+FOR /f "usebackq tokens=*" %%a in (`vpython %scriptdir%autoninja.py "%*"`) do echo %%a & %%a
 @if errorlevel 1 goto buildfailure
 
-REM Use call to invoke python script here, because we use python via python.bat.
-@if "%NINJA_SUMMARIZE_BUILD%" == "1" call python.bat %scriptdir%post_build_ninja_summary.py %*
+REM Use call to invoke vpython script here, because we use vpython via vpython.bat.
+@if "%NINJA_SUMMARIZE_BUILD%" == "1" call vpython.bat %scriptdir%post_build_ninja_summary.py %*
 @call python.bat %scriptdir%ninjalog_uploader_wrapper.py --cmdline %*
 
 exit /b
