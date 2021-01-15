@@ -106,17 +106,28 @@ class OwnersClientTest(unittest.TestCase):
       'approved': ['approver@example.com'],
       'pending': ['reviewer@example.com'],
       'insufficient': ['insufficient@example.com'],
+      'everyone': [owners_client.OwnersClient.EVERYONE],
     }
-    status = self.client.GetFilesApprovalStatus(
-        ['approved', 'pending', 'insufficient'],
-        ['approver@example.com'], ['reviewer@example.com'])
     self.assertEqual(
-        status,
+        self.client.GetFilesApprovalStatus(
+            ['approved', 'pending', 'insufficient'],
+            ['approver@example.com'], ['reviewer@example.com']),
         {
-            'approved': owners_client.OwnersClient.APPROVED,
-            'pending': owners_client.OwnersClient.PENDING,
-            'insufficient': owners_client.OwnersClient.INSUFFICIENT_REVIEWERS,
+          'approved': owners_client.OwnersClient.APPROVED,
+          'pending': owners_client.OwnersClient.PENDING,
+          'insufficient': owners_client.OwnersClient.INSUFFICIENT_REVIEWERS,
         })
+    self.assertEqual(
+        self.client.GetFilesApprovalStatus(
+            ['everyone'], ['anyone@example.com'], []),
+        {'everyone': owners_client.OwnersClient.APPROVED})
+    self.assertEqual(
+        self.client.GetFilesApprovalStatus(
+            ['everyone'], [], ['anyone@example.com']),
+        {'everyone': owners_client.OwnersClient.PENDING})
+    self.assertEqual(
+        self.client.GetFilesApprovalStatus(['everyone'], [], []),
+        {'everyone': owners_client.OwnersClient.INSUFFICIENT_REVIEWERS})
 
   def test_owner_combinations(self):
     owners = [alice, bob, chris, dave, emily]

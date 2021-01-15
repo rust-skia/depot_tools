@@ -49,6 +49,15 @@ class OwnersClient(object):
   All code should use this class to interact with OWNERS files instead of the
   owners database in owners.py
   """
+  # '*' means that everyone can approve.
+  EVERYONE = '*'
+
+  # Possible status of a file.
+  # - INSUFFICIENT_REVIEWERS: The path needs owners approval, but none of its
+  #   owners is currently a reviewer of the change.
+  # - PENDING: An owner of this path has been added as reviewer, but approval
+  #   has not been given yet.
+  # - APPROVED: The path has been approved by an owner.
   APPROVED = 'APPROVED'
   PENDING = 'PENDING'
   INSUFFICIENT_REVIEWERS = 'INSUFFICIENT_REVIEWERS'
@@ -78,7 +87,11 @@ class OwnersClient(object):
     See GetChangeApprovalStatus for description of the returned value.
     """
     approvers = set(approvers)
+    if approvers:
+      approvers.add(self.EVERYONE)
     reviewers = set(reviewers)
+    if reviewers:
+      reviewers.add(self.EVERYONE)
     status = {}
     owners_by_path = self.BatchListOwners(paths)
     for path, owners in owners_by_path.items():
@@ -176,7 +189,7 @@ class GerritClient(OwnersClient):
 
   def ListOwners(self, path):
     # GetOwnersForFile returns a list of account details sorted by order of
-    # best reviewer for path. If code owners have the same score, the order is
+    # best reviewer for path. If owners have the same score, the order is
     # random.
     data = gerrit_util.GetOwnersForFile(
         self._host, self._project, self._branch, path)
