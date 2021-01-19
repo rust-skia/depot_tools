@@ -5,7 +5,7 @@
 # found in the LICENSE file.
 
 # Set unique build ID.
-AUTONINJA_BUILD_ID="$(vpython -c "import uuid; print(uuid.uuid4())")"
+AUTONINJA_BUILD_ID="$(python3 -c "import uuid; print(uuid.uuid4())")"
 export AUTONINJA_BUILD_ID
 
 if [ "$NINJA_SUMMARIZE_BUILD" == "1" ]; then
@@ -20,7 +20,7 @@ if [ "$NINJA_SUMMARIZE_BUILD" == "1" ]; then
 fi
 if eval "$command"; then
   if [ "$NINJA_SUMMARIZE_BUILD" == "1" ]; then
-    vpython "$(dirname -- "$0")/post_build_ninja_summary.py" "$@"
+    python3 "$(dirname -- "$0")/post_build_ninja_summary.py" "$@"
   fi
 
   # Collect ninjalog from googler.
