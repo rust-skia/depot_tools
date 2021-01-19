@@ -272,23 +272,6 @@ class OwnersFinderTests(_BaseTestCase):
                      ['chrome/renderer/gpu/gpu_channel_host.h',
                        [ben, brett, ken, peter, tom]])
 
-  def test_print_comments(self):
-    finder = self.defaultFinder()
-    finder.print_comments(darin)
-    self.assertEqual(finder.output,
-                     [darin + ' is commented as:', ['foo (at content)']])
-
-  def test_print_global_comments(self):
-    finder = self.ownersFinder(['content/common/common.cc'])
-    finder.print_comments(jochen)
-    self.assertEqual(finder.output,
-                     [jochen + ' is commented as:', ['bar (global status)']])
-
-    finder = self.ownersFinder(['content/foo/foo.cc'])
-    finder.print_comments(jochen)
-    self.assertEqual(finder.output,
-                     [jochen + ' is commented as:', ['bar (global status)',
-                                                     'foo (at content/foo)']])
 
 if __name__ == '__main__':
   unittest.main()

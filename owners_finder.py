@@ -82,7 +82,6 @@ class OwnersFinder(object):
         self.all_possible_owners, files)
 
     self.original_files_to_owners = copy.deepcopy(self.files_to_owners)
-    self.comments = self.db.comments
 
     # This is the queue that will be shown in the interactive questions.
     # It is initially sorted by the score in descending order. In the
@@ -220,30 +219,6 @@ class OwnersFinder(object):
         continues = True
         break
 
-  def print_comments(self, owner):
-    if owner not in self.comments:
-      self.writeln(self.bold_name(owner))
-    else:
-      self.writeln(self.bold_name(owner) + ' is commented as:')
-      self.indent()
-      if owners_module.GLOBAL_STATUS in self.comments[owner]:
-        self.writeln(
-            self.greyed(self.comments[owner][owners_module.GLOBAL_STATUS]) +
-            ' (global status)')
-        if len(self.comments[owner]) == 1:
-          self.unindent()
-          return
-      for path in self.comments[owner]:
-        if path == owners_module.GLOBAL_STATUS:
-          continue
-        elif len(self.comments[owner][path]) > 0:
-          self.writeln(self.greyed(self.comments[owner][path]) +
-                       ' (at ' + self.bold(path or '<root>') + ')')
-        else:
-          self.writeln(self.greyed('[No comment] ') + ' (at ' +
-                       self.bold(path or '<root>') + ')')
-      self.unindent()
-
   def print_file_info(self, file_name, except_owner=''):
     if file_name not in self.unreviewed_files:
       self.writeln(self.greyed(file_name +
@@ -277,7 +252,7 @@ class OwnersFinder(object):
 
   def print_owned_files_for(self, owner):
     # Print owned files
-    self.print_comments(owner)
+    self.writeln(self.bold_name(owner))
     self.writeln(self.bold_name(owner) + ' owns ' +
                  str(len(self.owners_to_files[owner])) + ' file(s):')
     self.indent()
@@ -291,7 +266,7 @@ class OwnersFinder(object):
             len(self.selected_owners)) > 3:
       for ow in owners_queue:
         if ow not in self.deselected_owners and ow not in self.selected_owners:
-          self.print_comments(ow)
+          self.writeln(self.bold_name(ow))
     else:
       for ow in owners_queue:
         if ow not in self.deselected_owners and ow not in self.selected_owners:
