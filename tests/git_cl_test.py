@@ -592,9 +592,6 @@ class TestGitCl(unittest.TestCase):
         'git_cl.gclient_utils.CheckCallAndFilter',
         self._mocked_call).start()
     mock.patch('git_common.is_dirty_git_tree', lambda x: False).start()
-    mock.patch(
-        'git_common.get_or_create_merge_base',
-        lambda *a: self._mocked_call('get_or_create_merge_base', *a)).start()
     mock.patch('git_cl.FindCodereviewSettingsFile', return_value='').start()
     mock.patch(
         'git_cl.SaveDescriptionBackup',
@@ -737,17 +734,13 @@ class TestGitCl(unittest.TestCase):
   def _gerrit_base_calls(cls, issue=None, fetched_description=None,
                          fetched_status=None, other_cl_owner=None,
                          custom_cl_base=None, short_hostname='chromium',
-                         change_id=None, new_default=False):
+                         change_id=None, default_branch='master'):
     calls = []
     if custom_cl_base:
       ancestor_revision = custom_cl_base
     else:
       # Determine ancestor_revision to be merge base.
-      ancestor_revision = 'fake_ancestor_sha'
-      calls += [
-        (('get_or_create_merge_base', 'master',
-          'refs/remotes/origin/master'), ancestor_revision),
-      ]
+      ancestor_revision = 'origin/' + default_branch
 
     if issue:
       gerrit_util.GetChangeDetail.return_value = {
@@ -774,7 +767,7 @@ class TestGitCl(unittest.TestCase):
     ]
     calls += [
       ((['git', 'show-branch', 'refs/remotes/origin/main'], ),
-         '1' if new_default else callError(1)),
+         '1' if default_branch == 'main' else callError(1)),
     ]
 
     return calls
@@ -788,8 +781,7 @@ class TestGitCl(unittest.TestCase):
                            labels=None, change_id=None,
                            final_description=None, gitcookies_exists=True,
                            force=False, edit_description=None,
-                           new_default=False):
-    default_branch = 'main' if new_default else 'master';
+                           default_branch='master'):
     if post_amend_description is None:
       post_amend_description = description
     cc = cc or []
@@ -817,11 +809,8 @@ class TestGitCl(unittest.TestCase):
       ref_to_push = 'abcdef0123456789'
 
       if custom_cl_base is None:
-        calls += [
-          (('get_or_create_merge_base', 'master',
-            'refs/remotes/origin/master'), 'origin/' + default_branch),
-        ]
         parent = 'origin/' + default_branch
+        git_common.get_or_create_merge_base.return_value = parent
       else:
         calls += [
           ((['git', 'merge-base', '--is-ancestor', custom_cl_base,
@@ -1087,7 +1076,7 @@ class TestGitCl(unittest.TestCase):
       log_description=None,
       edit_description=None,
       fetched_description=None,
-      new_default=False):
+      default_branch='master'):
     """Generic gerrit upload test framework."""
     if squash_mode is None:
       if '--no-squash' in upload_args:
@@ -1140,6 +1129,9 @@ class TestGitCl(unittest.TestCase):
     mock.patch(
         'git_cl.GenerateGerritChangeId', return_value=change_id).start()
     mock.patch(
+        'git_common.get_or_create_merge_base',
+        return_value='origin/' + default_branch).start()
+    mock.patch(
         'gclient_utils.AskForData',
         lambda prompt: self._mocked_call('ask_for_data', prompt)).start()
 
@@ -1158,7 +1150,7 @@ class TestGitCl(unittest.TestCase):
         custom_cl_base=custom_cl_base,
         short_hostname=short_hostname,
         change_id=change_id,
-        new_default=new_default)
+        default_branch=default_branch)
     if fetched_status != 'ABANDONED':
       mock.patch(
           'gclient_utils.temporary_file', TemporaryFileMock()).start()
@@ -1177,7 +1169,7 @@ class TestGitCl(unittest.TestCase):
           gitcookies_exists=gitcookies_exists,
           force=force,
           edit_description=edit_description,
-          new_default=new_default)
+          default_branch=default_branch)
     # Uncomment when debugging.
     # print('\n'.join(map(lambda x: '%2i: %s' % x, enumerate(self.calls))))
     git_cl.main(['upload'] + upload_args)
@@ -1477,6 +1469,142 @@ class TestGitCl(unittest.TestCase):
     change_id = git_cl.GenerateGerritChangeId('line1\nline2\n')
     self.assertEqual(change_id, 'Ihashchange')
 
+  @mock.patch('git_cl.Settings.GetBugPrefix')
+  @mock.patch('git_cl.Settings.GetRoot')
+  @mock.patch('git_cl.Changelist.FetchDescription')
+  @mock.patch('git_cl.Changelist.GetBranch')
+  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
+  @mock.patch('owners_client.OwnersClient.BatchListOwners')
+  def getDescriptionForUploadTest(
+      self, mockBatchListOwners=None, mockGetCommonAncestorWithUpstream=None,
+      mockGetBranch=None, mockFetchDescription=None, mockGetRoot=None,
+      mockGetBugPrefix=None,
+      initial_description='desc', bug=None, fixed=None, branch='branch',
+      reviewers=None, tbrs=None, add_owners_to=None,
+      expected_description='desc'):
+    reviewers = reviewers or []
+    tbrs = tbrs or []
+    owners_by_path = {
+      'a': ['a@example.com'],
+      'b': ['b@example.com'],
+      'c': ['c@example.com'],
+    }
+    mockGetRoot.return_value = 'root'
+    mockGetBranch.return_value = branch
+    mockGetBugPrefix.return_value = 'prefix'
+    mockGetCommonAncestorWithUpstream.return_value = 'upstream'
+    mockFetchDescription.return_value = 'desc'
+    mockBatchListOwners.side_effect = lambda ps: {
+        p: owners_by_path.get(p)
+        for p in ps
+    }
+
+    cl = git_cl.Changelist(issue=1234)
+    actual = cl._GetDescriptionForUpload(
+        options=mock.Mock(
+            bug=bug,
+            fixed=fixed,
+            reviewers=reviewers,
+            tbrs=tbrs,
+            add_owners_to=add_owners_to),
+        git_diff_args=None,
+        files=list(owners_by_path))
+    self.assertEqual(expected_description, actual.description)
+
+  def testGetDescriptionForUpload(self):
+    self.getDescriptionForUploadTest()
+
+  def testGetDescriptionForUpload_Bug(self):
+    self.getDescriptionForUploadTest(
+        bug='1234',
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'Bug: prefix:1234',
+        ]))
+
+  def testGetDescriptionForUpload_Fixed(self):
+    self.getDescriptionForUploadTest(
+        fixed='1234',
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'Fixed: prefix:1234',
+        ]))
+
+
+  def testGetDescriptionForUpload_BugFromBranch(self):
+    self.getDescriptionForUploadTest(
+        branch='bug-1234',
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'Bug: prefix:1234',
+        ]))
+
+  def testGetDescriptionForUpload_FixedFromBranch(self):
+    self.getDescriptionForUploadTest(
+        branch='fix-1234',
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'Fixed: prefix:1234',
+        ]))
+
+  def testGetDescriptionForUpload_AddOwnersToR(self):
+    self.getDescriptionForUploadTest(
+        reviewers=['a@example.com'],
+        tbrs=['b@example.com'],
+        add_owners_to='R',
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'R=a@example.com, c@example.com',
+          'TBR=b@example.com',
+        ]))
+
+  def testGetDescriptionForUpload_AddOwnersToTBR(self):
+    self.getDescriptionForUploadTest(
+        reviewers=['a@example.com'],
+        tbrs=['b@example.com'],
+        add_owners_to='TBR',
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'R=a@example.com',
+          'TBR=b@example.com, c@example.com',
+        ]))
+
+  def testGetDescriptionForUpload_AddOwnersToNoOwnersNeeded(self):
+    self.getDescriptionForUploadTest(
+        reviewers=['a@example.com', 'c@example.com'],
+        tbrs=['b@example.com'],
+        add_owners_to='TBR',
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'R=a@example.com, c@example.com',
+          'TBR=b@example.com',
+        ]))
+
+  def testGetDescriptionForUpload_Reviewers(self):
+    self.getDescriptionForUploadTest(
+        reviewers=['a@example.com', 'b@example.com'],
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'R=a@example.com, b@example.com',
+        ]))
+
+  def testGetDescriptionForUpload_TBRs(self):
+    self.getDescriptionForUploadTest(
+        tbrs=['a@example.com', 'b@example.com'],
+        expected_description='\n'.join([
+          'desc',
+          '',
+          'TBR=a@example.com, b@example.com',
+        ]))
+
   def test_desecription_append_footer(self):
     for init_desc, footer_line, expected_desc in [
       # Use unique desc first lines for easy test failure identification.
@@ -1538,7 +1666,7 @@ class TestGitCl(unittest.TestCase):
     actual = []
     for orig, reviewers, tbrs, _expected in data:
       obj = git_cl.ChangeDescription(orig)
-      obj.update_reviewers(reviewers, tbrs, None, None, None)
+      obj.update_reviewers(reviewers, tbrs)
       actual.append(obj.description)
     self.assertEqual(expected, actual)
 
@@ -2776,7 +2904,7 @@ class TestGitCl(unittest.TestCase):
         squash=False,
         squash_mode='override_nosquash',
         change_id='I123456789',
-        new_default=True)
+        default_branch='main')
 
 
 class ChangelistTest(unittest.TestCase):

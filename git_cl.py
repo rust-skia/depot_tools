@@ -42,7 +42,6 @@ import git_footers
 import git_new_branch
 import metrics
 import metrics_utils
-import owners
 import owners_client
 import owners_finder
 import presubmit_canned_checks
@@ -1371,11 +1370,29 @@ class Changelist(object):
 
     change_description = ChangeDescription(description, bug, fixed)
 
+    # Fill gaps in OWNERS coverage to tbrs/reviewers if requested.
+    if options.add_owners_to:
+      assert options.add_owners_to in ('TBR', 'R'), options.add_owners_to
+      client = owners_client.DepotToolsClient(
+          root=settings.GetRoot(),
+          branch=self.GetCommonAncestorWithUpstream())
+      status = client.GetFilesApprovalStatus(
+          files, [], options.tbrs + options.reviewers)
+      missing_files = [
+        f for f in files
+        if status[f] == owners_client.OwnersClient.INSUFFICIENT_REVIEWERS
+      ]
+      owners = client.SuggestOwners(missing_files)
+      if options.add_owners_to == 'TBR':
+        assert isinstance(options.tbrs, list), options.tbrs
+        options.tbrs.extend(owners)
+      else:
+        assert isinstance(options.reviewers, list), options.reviewers
+        options.reviewers.extend(owners)
+
     # Set the reviewer list now so that presubmit checks can access it.
-    if options.reviewers or options.tbrs or options.add_owners_to:
-      change_description.update_reviewers(
-          options.reviewers, options.tbrs, options.add_owners_to, files,
-          self.GetAuthor())
+    if options.reviewers or options.tbrs:
+      change_description.update_reviewers(options.reviewers, options.tbrs)
 
     return change_description
 
@@ -2614,25 +2631,14 @@ class ChangeDescription(object):
       description = git_footers.add_footer_change_id(description, change_id)
       self.set_description(description)
 
-  def update_reviewers(
-      self, reviewers, tbrs, add_owners_to, affected_files, author_email):
+  def update_reviewers(self, reviewers, tbrs):
     """Rewrites the R=/TBR= line(s) as a single line each.
 
     Args:
       reviewers (list(str)) - list of additional emails to use for reviewers.
       tbrs (list(str)) - list of additional emails to use for TBRs.
-      add_owners_to (None|'R'|'TBR') - Pass to do an OWNERS lookup for files in
-        the change that are missing OWNER coverage. If this is not None, you
-        must also pass a value for `change`.
-      change (Change) - The Change that should be used for OWNERS lookups.
     """
-    assert isinstance(reviewers, list), reviewers
-    assert isinstance(tbrs, list), tbrs
-
-    assert add_owners_to in (None, 'TBR', 'R'), add_owners_to
-    assert not add_owners_to or affected_files, add_owners_to
-
-    if not reviewers and not tbrs and not add_owners_to:
+    if not reviewers and not tbrs:
       return
 
     reviewers = set(reviewers)
@@ -2656,15 +2662,6 @@ class ChangeDescription(object):
       if not match:
         continue
       LOOKUP[match.group(1)].update(cleanup_list([match.group(2).strip()]))
-
-    # Next, maybe fill in OWNERS coverage gaps to either tbrs/reviewers.
-    if add_owners_to:
-      owners_db = owners.Database(settings.GetRoot(),
-                                  fopen=open, os_path=os.path)
-      missing_files = owners_db.files_not_covered_by(affected_files,
-                                                     (tbrs | reviewers))
-      LOOKUP[add_owners_to].update(
-        owners_db.reviewers_for(missing_files, author_email))
 
     # If any folks ended up in both groups, remove them from tbrs.
     tbrs -= reviewers
