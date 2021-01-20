@@ -1167,17 +1167,17 @@ def CheckOwners(
 
   affected_files = set([f.LocalPath() for f in
       input_api.change.AffectedFiles(file_filter=source_file_filter)])
+  owners_db = input_api.owners_db
+  owners_db.override_files = input_api.change.OriginalOwnersFiles()
   owner_email, reviewers = GetCodereviewOwnerAndReviewers(
       input_api,
+      owners_db.email_regexp,
       approval_needed=input_api.is_committing)
 
   owner_email = owner_email or input_api.change.author_email
 
-  approval_status = input_api.owners_client.GetFilesApprovalStatus(
-      affected_files, reviewers.union([owner_email]), [])
-  missing_files = [
-      f for f in affected_files
-      if approval_status[f] != input_api.owners_client.APPROVED]
+  missing_files = owners_db.files_not_covered_by(
+      affected_files, reviewers.union([owner_email]))
   affects_owners = any('OWNERS' in name for name in missing_files)
 
   if input_api.is_committing:
@@ -1206,7 +1206,7 @@ def CheckOwners(
     if tbr and affects_owners:
       output_list.append(output_fn('TBR for OWNERS files are ignored.'))
     if not input_api.is_committing:
-      suggested_owners = input_api.owners_client.SuggestOwners(missing_files)
+      suggested_owners = owners_db.reviewers_for(missing_files, owner_email)
       output_list.append(output_fn('Suggested OWNERS: ' +
           '(Use "git-cl owners" to interactively select owners.)\n    %s' %
           ('\n    '.join(suggested_owners))))
@@ -1217,14 +1217,12 @@ def CheckOwners(
   return []
 
 
-def GetCodereviewOwnerAndReviewers(input_api, approval_needed):
+def GetCodereviewOwnerAndReviewers(input_api, email_regexp, approval_needed):
   """Return the owner and reviewers of a change, if any.
 
   If approval_needed is True, only reviewers who have approved the change
   will be returned.
   """
-  # Recognizes 'X@Y' email addresses. Very simplistic.
-  EMAIL_REGEXP = input_api.re.compile(r'^[\w\-\+\%\.]+\@[\w\-\+\%\.]+$')
   issue = input_api.change.issue
   if not issue:
     return None, (set() if approval_needed else
@@ -1233,7 +1231,7 @@ def GetCodereviewOwnerAndReviewers(input_api, approval_needed):
   owner_email = input_api.gerrit.GetChangeOwner(issue)
   reviewers = set(
       r for r in input_api.gerrit.GetChangeReviewers(issue, approval_needed)
-      if _match_reviewer_email(r, owner_email, EMAIL_REGEXP))
+      if _match_reviewer_email(r, owner_email, email_regexp))
   input_api.logging.debug('owner: %s; approvals given by: %s',
                           owner_email, ', '.join(sorted(reviewers)))
   return owner_email, reviewers
