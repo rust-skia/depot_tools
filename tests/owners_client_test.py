@@ -144,6 +144,36 @@ class OwnersClientTest(unittest.TestCase):
          (emily, chris),
          (emily, dave)])
 
+  def testScoreOwners(self):
+    self.client.owners_by_path = {
+        'a': [alice, bob, chris]
+    }
+    self.assertEqual(
+      self.client.ScoreOwners(self.client.owners_by_path.keys()),
+      [alice, bob, chris]
+    )
+
+    self.client.owners_by_path = {
+        'a': [alice, bob],
+        'b': [bob],
+        'c': [bob, chris]
+    }
+    self.assertEqual(
+      self.client.ScoreOwners(self.client.owners_by_path.keys()),
+      [bob, alice, chris]
+    )
+
+    self.client.owners_by_path = {
+        'a': [alice, bob, chris, dave],
+        'b': [chris, bob, dave],
+        'c': [chris, dave],
+        'd': [alice, chris, dave]
+    }
+    self.assertEqual(
+      self.client.ScoreOwners(self.client.owners_by_path.keys()),
+      [chris, dave, alice, bob]
+    )
+
   def testSuggestOwners(self):
     self.client.owners_by_path = {'a': [alice]}
     self.assertEqual(
@@ -174,7 +204,7 @@ class OwnersClientTest(unittest.TestCase):
     }
     self.assertEqual(
         sorted(self.client.SuggestOwners(['ad', 'cad', 'ead', 'bd'])),
-        [alice, bob])
+        [alice, dave])
 
     self.client.owners_by_path = {
         'a': [alice],

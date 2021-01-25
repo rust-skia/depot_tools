@@ -9,13 +9,17 @@ import os
 import sys
 import unittest
 
+if sys.version_info.major == 2:
+  import mock
+else:
+  from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from testing_support import filesystem_mock
 
 import owners_finder
-import owners
+import owners_client
 
 
 ben = 'ben@example.com'
@@ -27,6 +31,14 @@ ken = 'ken@example.com'
 peter = 'peter@example.com'
 tom = 'tom@example.com'
 nonowner = 'nonowner@example.com'
+
+
+def _get_score_owners_darin_variant():
+  return [brett, darin, john, peter, ken, ben, tom]
+
+
+def _get_score_owners_john_variant():
+  return [brett, john, darin, peter, ken, ben, tom]
 
 
 def owners_file(*email_addresses, **kwargs):
@@ -64,7 +76,8 @@ def test_repo():
     '/content/common/common.cc': '',
     '/content/foo/OWNERS': owners_file(jochen, comment='foo'),
     '/content/foo/foo.cc': '',
-    '/content/views/OWNERS': owners_file(ben, john, owners.EVERYONE,
+    '/content/views/OWNERS': owners_file(ben, john,
+                                         owners_client.OwnersClient.EVERYONE,
                                          noparent=True),
     '/content/views/pie.h': '',
   })
@@ -114,6 +127,9 @@ class _BaseTestCase(unittest.TestCase):
     self.repo = test_repo()
     self.root = '/'
     self.fopen = self.repo.open_for_reading
+    mock.patch('owners_client.DepotToolsClient._GetOriginalOwnersFiles',
+      return_value={}).start()
+    self.addCleanup(mock.patch.stopall)
 
   def ownersFinder(self, files, author=nonowner, reviewers=None):
     reviewers = reviewers or []
@@ -162,13 +178,16 @@ class OwnersFinderTests(_BaseTestCase):
     self.assertEqual(finder.unreviewed_files, {'content/bar/foo.cc'})
 
   def test_reset(self):
+    mock.patch('owners_client.DepotToolsClient.ScoreOwners',
+      side_effect=[
+        _get_score_owners_darin_variant(),
+        _get_score_owners_darin_variant(),
+        _get_score_owners_darin_variant()
+      ]).start()
+
     finder = self.defaultFinder()
     for _ in range(2):
       expected = [brett, darin, john, peter, ken, ben, tom]
-      # darin and john have equal cost, the others have distinct costs.
-      # If the owners_queue has those two swapped then swap them in expected.
-      if finder.owners_queue[1] != expected[1]:
-        expected[1], expected[2] = expected[2], expected[1]
       self.assertEqual(finder.owners_queue, expected)
       self.assertEqual(finder.unreviewed_files, {
           'base/vlog.h',
@@ -191,6 +210,13 @@ class OwnersFinderTests(_BaseTestCase):
       finder.resetText()
 
   def test_select(self):
+    mock.patch('owners_client.DepotToolsClient.ScoreOwners',
+      side_effect=[
+        _get_score_owners_darin_variant(),
+        _get_score_owners_john_variant(),
+        _get_score_owners_darin_variant()
+      ]).start()
+
     finder = self.defaultFinder()
     finder.select_owner(john)
     self.assertEqual(finder.owners_queue, [brett, peter, ken, ben, tom])
@@ -218,11 +244,6 @@ class OwnersFinderTests(_BaseTestCase):
     finder = self.defaultFinder()
     finder.select_owner(brett)
     expected = [darin, john, peter, ken, tom]
-    # darin and john have equal cost, the others have distinct costs.
-    # If the owners_queue has those two swapped then swap them in expected.
-    if finder.owners_queue[0] == john:
-      expected[0], expected[1] = expected[1], expected[0]
-
     self.assertEqual(finder.owners_queue, expected)
     self.assertEqual(finder.selected_owners, {brett})
     self.assertEqual(finder.deselected_owners, {ben})
@@ -237,6 +258,9 @@ class OwnersFinderTests(_BaseTestCase):
                      ['Selected: ' + brett, 'Deselected: ' + ben])
 
   def test_deselect(self):
+    mock.patch('owners_client.DepotToolsClient.ScoreOwners',
+      return_value=_get_score_owners_darin_variant()).start()
+
     finder = self.defaultFinder()
     finder.deselect_owner(john)
     self.assertEqual(finder.owners_queue, [brett, peter, ken, ben, tom])

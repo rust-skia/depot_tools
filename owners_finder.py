@@ -8,10 +8,10 @@ from __future__ import print_function
 
 import os
 import copy
-import owners as owners_module
-import random
+import owners_client
 
 
+import git_common
 import gclient_utils
 
 
@@ -42,10 +42,6 @@ class OwnersFinder(object):
       self.COLOR_GREY = ''
       self.COLOR_RESET = ''
 
-    self.db = owners_module.Database(local_root, fopen, os_path)
-    self.db.override_files = override_files or {}
-    self.db.load_data_needed_for(files)
-
     self.os_path = os_path
 
     self.author = author
@@ -57,29 +53,26 @@ class OwnersFinder(object):
       reviewers.append(author)
 
     # Eliminate files that existing reviewers can review.
-    filtered_files = list(self.db.files_not_covered_by(
-        filtered_files, reviewers))
+    self.client = owners_client.DepotToolsClient(
+      root=local_root,
+      branch=git_common.current_branch(),
+      fopen=fopen,
+      os_path=os_path)
+
+    approval_status = self.client.GetFilesApprovalStatus(
+      filtered_files, reviewers, [])
+    filtered_files = [
+      f for f in filtered_files
+      if approval_status[f] != owners_client.OwnersClient.APPROVED]
 
     # If some files are eliminated.
     if len(filtered_files) != len(files):
       files = filtered_files
-      # Reload the database.
-      self.db = owners_module.Database(local_root, fopen, os_path)
-      self.db.override_files = override_files or {}
-      self.db.load_data_needed_for(files)
 
-    self.all_possible_owners = self.db.all_possible_owners(files, None)
-    if author and author in self.all_possible_owners:
-      del self.all_possible_owners[author]
+    self.files_to_owners = self.client.BatchListOwners(files)
 
     self.owners_to_files = {}
-    self._map_owners_to_files(files)
-
-    self.files_to_owners = {}
-    self._map_files_to_owners()
-
-    self.owners_score = self.db.total_costs_by_owner(
-        self.all_possible_owners, files)
+    self._map_owners_to_files()
 
     self.original_files_to_owners = copy.deepcopy(self.files_to_owners)
 
@@ -143,19 +136,11 @@ class OwnersFinder(object):
     self.print_result()
     return 0
 
-  def _map_owners_to_files(self, files):
-    for owner in self.all_possible_owners:
-      for dir_name, _ in self.all_possible_owners[owner]:
-        for file_name in files:
-          if file_name.startswith(dir_name):
-            self.owners_to_files.setdefault(owner, set())
-            self.owners_to_files[owner].add(file_name)
-
-  def _map_files_to_owners(self):
-    for owner in self.owners_to_files:
-      for file_name in self.owners_to_files[owner]:
-        self.files_to_owners.setdefault(file_name, set())
-        self.files_to_owners[file_name].add(owner)
+  def _map_owners_to_files(self):
+    for file_name in self.files_to_owners:
+      for owner in self.files_to_owners[file_name]:
+        self.owners_to_files.setdefault(owner, set())
+        self.owners_to_files[owner].add(file_name)
 
   def reset(self):
     self.files_to_owners = copy.deepcopy(self.original_files_to_owners)
@@ -166,10 +151,10 @@ class OwnersFinder(object):
 
     # Randomize owners' names so that if many reviewers have identical scores
     # they will be randomly ordered to avoid bias.
-    owners = list(self.owners_to_files.keys())
-    random.shuffle(owners)
-    self.owners_queue = sorted(owners,
-                               key=lambda owner: self.owners_score[owner])
+    owners = self.client.ScoreOwners(self.files_to_owners.keys())
+    if self.author and self.author in owners:
+      owners.remove(self.author)
+    self.owners_queue = owners
     self.find_mandatory_owners()
 
   def select_owner(self, owner, findMandatoryOwners=True):

@@ -104,34 +104,44 @@ class OwnersClient(object):
         status[path] = self.INSUFFICIENT_REVIEWERS
     return status
 
+  def ScoreOwners(self, paths):
+    """Get sorted list of owners for the given paths."""
+    positions_by_owner = {}
+    owners_by_path = self.BatchListOwners(paths)
+    for owners in owners_by_path.values():
+      for i, owner in enumerate(owners):
+        # Gerrit API lists owners of a path sorted by an internal score, so
+        # owners that appear first should be prefered.
+        # We define the score of an owner based on the pair
+        # (# of files owned, minimum position on all owned files)
+        positions_by_owner.setdefault(owner, []).append(i)
+
+    # Sort owners by their score. Rank owners higher for more files owned and
+    # lower for a larger minimum position across all owned files. Randomize
+    # order for owners with same score to avoid bias.
+    return sorted(
+        positions_by_owner,
+        key=lambda o: (-len(positions_by_owner[o]),
+                       min(positions_by_owner[o]) + random.random()))
+
   def SuggestOwners(self, paths):
     """Suggest a set of owners for the given paths."""
     paths_by_owner = {}
-    score_by_owner = {}
     owners_by_path = self.BatchListOwners(paths)
     for path, owners in owners_by_path.items():
-      for i, owner in enumerate(owners):
+      for owner in owners:
         paths_by_owner.setdefault(owner, set()).add(path)
-        # Gerrit API lists owners of a path sorted by an internal score, so
-        # owners that appear first should be prefered.
-        # We define the score of an owner to be their minimum position in all
-        # paths.
-        score_by_owner[owner] = min(i, score_by_owner.get(owner, i))
-
-    # Sort owners by their score. Randomize order of owners with same score.
-    owners = sorted(
-        score_by_owner,
-        key=lambda o: (score_by_owner[o], random.random()))
 
     # Select the minimum number of owners that can approve all paths.
-    # We start at 2 to avoid sending all changes that require multiple reviewers
-    # to top-level owners.
+    # We start at 2 to avoid sending all changes that require multiple
+    # reviewers to top-level owners.
+    owners = self.ScoreOwners(paths)
     if len(owners) < 2:
       return owners
 
     for num_owners in range(2, len(owners)):
-      # Iterate all combinations of `num_owners` by decreasing score, and select
-      # the first one that covers all paths.
+      # Iterate all combinations of `num_owners` by decreasing score, and
+      # select the first one that covers all paths.
       for selected in _owner_combinations(owners, num_owners):
         covered = set.union(*(paths_by_owner[o] for o in selected))
         if len(covered) == len(paths):
@@ -170,9 +180,9 @@ class DepotToolsClient(OwnersClient):
       # all_possible_owners returns a dict {owner: [(path, distance)]}. We want
       # to return a list of owners sorted by increasing distance.
       distance_by_owner = self._db.all_possible_owners([path], None)
-      # We add a small random number to the distance, so that owners at the same
-      # distance are returned in random order to avoid overloading those who
-      # would appear first.
+      # We add a small random number to the distance, so that owners at the
+      # same distance are returned in random order to avoid overloading those
+      # who would appear first.
       return sorted(
           distance_by_owner,
           key=lambda o: distance_by_owner[o][0][1] + random.random())
