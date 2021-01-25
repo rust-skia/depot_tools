@@ -2251,7 +2251,7 @@ class Changelist(object):
         change_id = self._GetChangeDetail()['change_id']
         change_desc.ensure_change_id(change_id)
       else:  # if not self.GetIssue()
-        if not options.force:
+        if not options.force and not options.message_file:
           change_desc.prompt()
         change_ids = git_footers.get_footer_change_id(change_desc.description)
         if len(change_ids) == 1:
@@ -4186,7 +4186,6 @@ def CMDupload(parser, args):
     if options.message:
       parser.error('Only one of --message and --message-file allowed.')
     options.message = gclient_utils.FileRead(options.message_file)
-    options.message_file = None
 
   if ([options.cq_dry_run,
        options.use_commit_queue,

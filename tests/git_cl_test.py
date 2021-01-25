@@ -294,6 +294,39 @@ class TestGitClBasic(unittest.TestCase):
     self.assertEqual(options.force, True)
     self.assertEqual(options.edit_description, False)
 
+  def test_upload_with_message_file_no_editor(self):
+    m = mock.patch('git_cl.ChangeDescription.prompt',
+               return_value=None).start()
+    mock.patch('git_cl.Changelist.GetRemoteBranch',
+               return_value=('foo', git_cl.DEFAULT_NEW_BRANCH)).start()
+    mock.patch('git_cl.GetTargetRef',
+               return_value='refs/heads/main').start()
+    mock.patch('git_cl.Changelist._GerritCommitMsgHookCheck',
+               lambda _, offer_removal: None).start()
+    mock.patch('git_cl.Changelist.GetIssue', return_value=None).start()
+    mock.patch('git_cl.Changelist.GetBranch',
+               side_effect=SystemExitMock).start()
+    mock.patch('git_cl.GenerateGerritChangeId', return_value=None).start()
+    mock.patch('git_cl.RunGit').start()
+
+    cl = git_cl.Changelist()
+    options = optparse.Values()
+    options.target_branch = 'refs/heads/master'
+    options.squash = True
+    options.edit_description = False
+    options.force = False
+    options.preserve_tryjobs = False
+    options.message_file = "message.txt"
+
+    with self.assertRaises(SystemExitMock):
+      cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
+    self.assertEqual(len(m.mock_calls), 0)
+
+    options.message_file = None
+    with self.assertRaises(SystemExitMock):
+      cl.CMDUploadChange(options, [], 'foo', git_cl.ChangeDescription('bar'))
+    self.assertEqual(len(m.mock_calls), 1)
+
   def test_upload_to_old_default_retry_on_rollback(self):
     """Test when default branch migration had to be rolled back to old name"""
     m = mock.patch('git_cl.Changelist._CMDUploadChange',
