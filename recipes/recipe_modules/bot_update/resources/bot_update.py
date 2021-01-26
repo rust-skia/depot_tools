@@ -720,6 +720,9 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
     env = {
         'GIT_TRACE': 'true',
         'GIT_TRACE_PERFORMANCE': 'true',
+        'GIT_TRACE_CURL': 'true',
+        'GIT_TRACE_CURL_NO_DATA': 'true',
+        'GIT_REDACT_COOKIES': 'o,SSO,GSSO_UberProxy,__Secure-GSSO_UberProxy',
     }
 
   branch, revision = get_target_branch_and_revision(name, url, revisions)
@@ -745,7 +748,9 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
       # TODO(tandrii): propagate the pin to git server per recommendation of
       # maintainers of *.googlesource.com (workaround git server replication
       # lag).
-      git(*populate_cmd, env=env)
+      with git_config_if_not_set(
+          'http.extraheader', 'X-Return-Encrypted-Headers: all'):
+        git(*populate_cmd, env=env)
       if _has_in_git_cache(pin, refs, git_cache_dir, url):
         break
       overrun = time.time() - soft_deadline
