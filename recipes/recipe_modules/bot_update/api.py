@@ -240,8 +240,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
       fixed_revision = self.m.gclient.resolve_revision(revision)
       if fixed_revision:
         fixed_revisions[name] = fixed_revision
-        if fixed_revision.upper() == 'HEAD':
-          # Sync to correct destination ref if HEAD was specified.
+        if fixed_revision.upper() == 'HEAD' and patch:
+          # Sync to correct destination ref
           fixed_revision = self._destination_ref(cfg, name)
         # If we're syncing to a ref, we want to make sure it exists before
         # trying to check it out.
