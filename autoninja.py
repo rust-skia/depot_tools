@@ -74,9 +74,10 @@ use_rbe = False
 # they exist and using rbe, then automatically call bootstrap to start
 # reproxy.  This works under the current assumption that the output
 # directory is two levels up from chromium/src.
-reclient_bin_dir = os.path.join(output_dir, "../../buildtools/reclient")
+reclient_bin_dir = os.path.join(
+  output_dir, '..', '..', 'buildtools', 'reclient')
 reclient_cfg = os.path.join(
-  output_dir, "../../buildtools/reclient_cfgs/reproxy.cfg")
+  output_dir, '..', '..', 'buildtools', 'reclient_cfgs', 'reproxy.cfg')
 
 # Attempt to auto-detect remote build acceleration. We support gn-based
 # builds, where we look for args.gn in the build tree, and cmake-based builds
@@ -181,16 +182,18 @@ if os.environ.get('NINJA_SUMMARIZE_BUILD', '0') == '1':
 
 # If using rbe and the necessary environment variables are set, also start
 # reproxy (via bootstrap) before running ninja.
-if (not offline and use_rbe and os.path.exists(reclient_bin_dir) 
+if (not offline and use_rbe and os.path.exists(reclient_bin_dir)
     and os.path.exists(reclient_cfg)):
+  bootstrap = os.path.join(reclient_bin_dir, 'bootstrap')
   setup_args = [
-    'RBE_cfg=' + reclient_cfg,
-    reclient_bin_dir + '/bootstrap',
-    '--re_proxy=' + reclient_bin_dir + '/reproxy']
+    bootstrap,
+    '--cfg=' + reclient_cfg,
+    '--re_proxy=' + os.path.join(reclient_bin_dir, 'reproxy')]
 
-  teardown_args = [reclient_bin_dir + '/bootstrap', '--shutdown']
+  teardown_args = [bootstrap, '--cfg=' + reclient_cfg, '--shutdown']
 
-  args = setup_args + ['&&'] + args + ['&&'] + teardown_args
+  cmd_sep = '\n' if sys.platform.startswith('win') else '&&'
+  args = setup_args + [cmd_sep] + args + [cmd_sep] + teardown_args
 
 if offline and not sys.platform.startswith('win'):
   # Tell goma or reclient to do local compiles. On Windows these environment
