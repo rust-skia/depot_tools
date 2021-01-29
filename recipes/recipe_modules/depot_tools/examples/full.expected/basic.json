@@ -64,6 +64,13 @@
   },
   {
     "cmd": [
+      "ls",
+      "RECIPE_REPO[depot_tools]/dirmd"
+    ],
+    "name": "dirmd_path"
+  },
+  {
+    "cmd": [
       "echo",
       "$PATH"
     ],
