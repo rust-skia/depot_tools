@@ -16,14 +16,6 @@ removed and replaced by one without a service pack applied); 2) it would
 require maintaining scripts that can build older not-up-to-date revisions of
 the toolchain. This is likely to be a poorly tested code path that probably
 won't be properly maintained. See http://crbug.com/323300.
-
-This does not extend to major versions of the toolchain however, on the
-assumption that there are more likely to be source incompatibilities between
-major revisions. This script calls a subscript (currently, toolchain2013.py)
-to do the main work. It is expected that toolchain2013.py will always be able
-to acquire/build the most current revision of a VS2013-based toolchain. In the
-future when a hypothetical VS2015 is released, the 2013 script will be
-maintained, and a new 2015 script would be added.
 """
 
 from __future__ import print_function
@@ -488,10 +480,7 @@ def main():
 
   # Move to depot_tools\win_toolchain where we'll store our files, and where
   # the downloader script is.
-  if os.environ.get('GYP_MSVS_VERSION') == '2013':
-    target_dir = 'vs2013_files'
-  else:
-    target_dir = 'vs_files'
+  target_dir = 'vs_files'
   if not os.path.isdir(target_dir):
     os.mkdir(target_dir)
   toolchain_target_dir = os.path.join(target_dir, desired_hash)
