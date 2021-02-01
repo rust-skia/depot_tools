@@ -725,9 +725,12 @@ class InputApi(object):
     """An alias to AffectedTestableFiles for backwards compatibility."""
     return self.AffectedTestableFiles(include_deletes=include_deletes)
 
-  def FilterSourceFile(self, affected_file, files_to_check=None,
-                       files_to_skip=None, allow_list=None, block_list=None,
-                       white_list=None, black_list=None):
+  def FilterSourceFile(self,
+                       affected_file,
+                       files_to_check=None,
+                       files_to_skip=None,
+                       allow_list=None,
+                       block_list=None):
     """Filters out files that aren't considered 'source file'.
 
     If files_to_check or files_to_skip is None, InputApi.DEFAULT_FILES_TO_CHECK
@@ -736,20 +739,8 @@ class InputApi(object):
     The lists will be compiled as regular expression and
     AffectedFile.LocalPath() needs to pass both list.
 
-    Note: if files_to_check or files_to_skip is not set, and
-    white_list/allow_list or black_list/block_list is, then those values are
-    used. This is used for backward compatibility reasons.
-
     Note: Copy-paste this function to suit your needs or use a lambda function.
     """
-    # TODO(https://crbug.com/1098560): Remove non inclusive parameter names.
-    if files_to_check is None and (allow_list or white_list):
-      warn('Use files_to_check in FilterSourceFile')
-      files_to_check = allow_list or white_list
-    if files_to_skip is None and (block_list or black_list):
-      warn('Use files_to_skip in FilterSourceFile')
-      files_to_skip = block_list or black_list
-
     if files_to_check is None:
       files_to_check = self.DEFAULT_FILES_TO_CHECK
     if files_to_skip is None:

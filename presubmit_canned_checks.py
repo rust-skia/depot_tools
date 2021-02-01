@@ -104,17 +104,11 @@ def CheckChangeWasUploaded(input_api, output_api):
 
 ### Content checks
 
-def CheckAuthorizedAuthor(input_api, output_api, bot_allowlist=None,
-                          bot_whitelist=None):
+
+def CheckAuthorizedAuthor(input_api, output_api, bot_allowlist=None):
   """For non-googler/chromites committers, verify the author's email address is
   in AUTHORS.
   """
-  # TODO(https://crbug.com/1098560): Remove non inclusive parameter names.
-  if bot_whitelist is not None:
-    warn('Use bot_allowlist in CheckAuthorizedAuthor')
-  if bot_allowlist is None:
-    bot_allowlist = bot_whitelist
-
   if input_api.is_committing:
     error_type = output_api.PresubmitError
   else:
@@ -619,25 +613,21 @@ def CheckTreeIsOpen(input_api, output_api,
                                       long_text=str(e))]
   return []
 
-def GetUnitTestsInDirectory(
-    input_api, output_api, directory, files_to_check=None, files_to_skip=None,
-    env=None, run_on_python2=True, run_on_python3=True, whitelist=None,
-    blacklist=None, allowlist=None, blocklist=None):
+def GetUnitTestsInDirectory(input_api,
+                            output_api,
+                            directory,
+                            files_to_check=None,
+                            files_to_skip=None,
+                            env=None,
+                            run_on_python2=True,
+                            run_on_python3=True,
+                            allowlist=None,
+                            blocklist=None):
   """Lists all files in a directory and runs them. Doesn't recurse.
 
   It's mainly a wrapper for RunUnitTests. Use allowlist and blocklist to filter
   tests accordingly.
   """
-  # TODO(https://crbug.com/1098560): Remove non inclusive parameter names.
-  if allowlist is not None or whitelist is not None:
-    warn('Use files_to_check in GetUnitTestsInDirectory')
-  if blocklist is not None or blacklist is not None:
-    warn('Use files_to_skip in GetUnitTestsInDirectory')
-  if files_to_check is None:
-    files_to_check = allowlist or whitelist
-  if files_to_skip is None:
-    files_to_skip = blocklist or blacklist
-
   unit_tests = []
   test_path = input_api.os_path.abspath(
       input_api.os_path.join(input_api.PresubmitLocalPath(), directory))
@@ -720,26 +710,18 @@ def GetUnitTests(
   return results
 
 
-def GetUnitTestsRecursively(input_api, output_api, directory,
-                            files_to_check=None, files_to_skip=None,
-                            run_on_python2=True, run_on_python3=True,
-                            whitelist=None, blacklist=None, allowlist=None,
-                            blocklist=None):
-  """Gets all files in the directory tree (git repo) that match the whitelist.
+def GetUnitTestsRecursively(input_api,
+                            output_api,
+                            directory,
+                            files_to_check,
+                            files_to_skip,
+                            run_on_python2=True,
+                            run_on_python3=True):
+  """Gets all files in the directory tree (git repo) that match files_to_check.
 
   Restricts itself to only find files within the Change's source repo, not
   dependencies.
   """
-  # TODO(https://crbug.com/1098560): Remove non inclusive parameter names.
-  if files_to_check is None:
-    warn('Use files_to_check in GetUnitTestsRecursively')
-    files_to_check = allowlist or whitelist
-  if files_to_skip is None:
-    warn('Use files_to_skip in GetUnitTestsRecursively')
-    files_to_skip = blocklist or blacklist
-  assert files_to_check is not None
-  assert files_to_skip is not None
-
   def check(filename):
     return (any(input_api.re.match(f, filename) for f in files_to_check) and
             not any(input_api.re.match(f, filename) for f in files_to_skip))
@@ -872,25 +854,20 @@ def _FetchAllFiles(input_api, files_to_check, files_to_skip):
   return files
 
 
-def GetPylint(input_api, output_api, files_to_check=None, files_to_skip=None,
-              disabled_warnings=None, extra_paths_list=None, pylintrc=None,
-              white_list=None, black_list=None, allow_list=None,
-              block_list=None):
+def GetPylint(input_api,
+              output_api,
+              files_to_check=None,
+              files_to_skip=None,
+              disabled_warnings=None,
+              extra_paths_list=None,
+              pylintrc=None):
   """Run pylint on python files.
 
   The default files_to_check enforces looking only at *.py files.
   """
 
-  # TODO(https://crbug.com/1098560): Remove non inclusive parameter names.
-  if allow_list or white_list:
-    warn('Use files_to_check in GetPylint')
-  if block_list or black_list:
-    warn('Use files_to_skip in GetPylint')
-
-  files_to_check = tuple(files_to_check or allow_list or white_list or
-                         (r'.*\.py$',))
-  files_to_skip = tuple(files_to_skip or block_list or black_list or
-                    input_api.DEFAULT_FILES_TO_SKIP)
+  files_to_check = tuple(files_to_check or (r'.*\.py$', ))
+  files_to_skip = tuple(files_to_skip or input_api.DEFAULT_FILES_TO_SKIP)
   extra_paths_list = extra_paths_list or []
 
   if input_api.is_committing:
