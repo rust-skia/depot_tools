@@ -203,4 +203,4 @@ class GerritClient(OwnersClient):
     # random.
     data = gerrit_util.GetOwnersForFile(
         self._host, self._project, self._branch, path)
-    return [d['account']['email'] for d in data]
+    return [d['account']['email'] for d in data['code_owners']]

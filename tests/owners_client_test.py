@@ -27,23 +27,25 @@ emily = 'emily@example.com'
 
 
 def _get_owners():
-  return [
-    {
-      "account": {
-        "email": 'approver@example.com'
+  return {
+    "code_owners": [
+      {
+        "account": {
+          "email": 'approver@example.com'
+        }
+      },
+      {
+        "account": {
+          "email": 'reviewer@example.com'
+        },
+      },
+      {
+        "account": {
+          "email": 'missing@example.com'
+        },
       }
-    },
-    {
-      "account": {
-        "email": 'reviewer@example.com'
-      },
-    },
-    {
-      "account": {
-        "email": 'missing@example.com'
-      },
-    }
-  ]
+    ]
+  }
 
 
 
