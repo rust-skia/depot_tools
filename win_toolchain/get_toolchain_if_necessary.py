@@ -65,7 +65,7 @@ except ImportError:
   pass
 
 
-def GetFileList(root):
+def GetFileList(root, win_sdk_in_windows_kits):
   """Gets a normalized list of files under |root|."""
   assert not os.path.isabs(root)
   assert os.path.normpath(root) == root
@@ -79,11 +79,12 @@ def GetFileList(root):
   # Note: These files are only created on a Windows host, so the
   # ignored_directories list isn't relevant on non-Windows hosts.
 
+  win_sdk = 'Windows Kits\\10' if win_sdk_in_windows_kits else 'win_sdk'
   ignored_directories = ['wer\\reportqueue',
-                         'win_sdk\\debuggers\\x86\\sym\\',
-                         'win_sdk\\debuggers\\x64\\sym\\',
-                         'win_sdk\\debuggers\\x86\\src\\',
-                         'win_sdk\\debuggers\\x64\\src\\']
+                         win_sdk + '\\debuggers\\x86\\sym\\',
+                         win_sdk + '\\debuggers\\x64\\sym\\',
+                         win_sdk + '\\debuggers\\x86\\src\\',
+                         win_sdk + '\\debuggers\\x64\\src\\']
   for base, _, files in os.walk(root):
     paths = [os.path.join(base, f) for f in files]
     for p in paths:
@@ -97,7 +98,7 @@ def MakeTimestampsFileName(root, sha1):
   return os.path.join(root, os.pardir, '%s.timestamps' % sha1)
 
 
-def CalculateHash(root, expected_hash):
+def CalculateHash(root, expected_hash, win_sdk_in_windows_kits):
   """Calculates the sha1 of the paths to all files in the given |root| and the
   contents of those files, and returns as a hex string.
 
@@ -108,7 +109,7 @@ def CalculateHash(root, expected_hash):
     full_root_path = os.path.join(root, expected_hash)
   else:
     full_root_path = root
-  file_list = GetFileList(full_root_path)
+  file_list = GetFileList(full_root_path, win_sdk_in_windows_kits)
   # Check whether we previously saved timestamps in $root/../{sha1}.timestamps.
   # If we didn't, or they don't match, then do the full calculation, otherwise
   # return the saved value.
@@ -184,14 +185,15 @@ def CalculateHash(root, expected_hash):
   return digest.hexdigest()
 
 
-def CalculateToolchainHashes(root, remove_corrupt_toolchains):
+def CalculateToolchainHashes(
+        root, remove_corrupt_toolchains, win_sdk_in_windows_kits):
   """Calculate the hash of the different toolchains installed in the |root|
   directory."""
   hashes = []
   dir_list = [
       d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))]
   for d in dir_list:
-    toolchain_hash = CalculateHash(root, d)
+    toolchain_hash = CalculateHash(root, d, win_sdk_in_windows_kits)
     if toolchain_hash != d:
       print('The hash of a version of the toolchain has an unexpected value ('
              '%s instead of %s)%s.' % (toolchain_hash, d,
@@ -203,10 +205,10 @@ def CalculateToolchainHashes(root, remove_corrupt_toolchains):
   return hashes
 
 
-def SaveTimestampsAndHash(root, sha1):
+def SaveTimestampsAndHash(root, sha1, win_sdk_in_windows_kits):
   """Saves timestamps and the final hash to be able to early-out more quickly
   next time."""
-  file_list = GetFileList(os.path.join(root, sha1))
+  file_list = GetFileList(os.path.join(root, sha1), win_sdk_in_windows_kits)
   timestamps_data = {
     'files': [[f, os.path.getmtime(f)] for f in file_list],
     'sha1': sha1,
@@ -487,13 +489,19 @@ def main():
 
   abs_toolchain_target_dir = os.path.abspath(toolchain_target_dir)
 
+  # The Windows SDK is either in `win_sdk` or in `Windows Kits\10`. This
+  # script must work with both layouts, so check which one it is.
+  win_sdk_in_windows_kits = os.path.isdir(
+          os.path.join(abs_toolchain_target_dir, 'Windows Kits', '10'))
+
   got_new_toolchain = False
 
   # If the current hash doesn't match what we want in the file, nuke and pave.
   # Typically this script is only run when the .sha1 one file is updated, but
   # directly calling "gclient runhooks" will also run it, so we cache
   # based on timestamps to make that case fast.
-  current_hashes = CalculateToolchainHashes(target_dir, True)
+  current_hashes = CalculateToolchainHashes(
+          target_dir, True, win_sdk_in_windows_kits)
   if desired_hash not in current_hashes:
     if options.no_download:
       raise SystemExit('Toolchain is out of date. Run "gclient runhooks" to '
@@ -536,7 +544,10 @@ def main():
 
     got_new_toolchain = True
 
-  win_sdk = os.path.join(abs_toolchain_target_dir, 'win_sdk')
+  if win_sdk_in_windows_kits:
+    win_sdk = os.path.join(abs_toolchain_target_dir, 'Windows Kits', '10')
+  else:
+    win_sdk = os.path.join(abs_toolchain_target_dir, 'win_sdk')
   try:
     version_file = os.path.join(toolchain_target_dir, 'VS_VERSION')
     vc_dir = os.path.join(toolchain_target_dir, 'VC')
@@ -568,14 +579,15 @@ def main():
     json.dump(data, f)
 
   if got_new_toolchain:
-    current_hashes = CalculateToolchainHashes(target_dir, False)
+    current_hashes = CalculateToolchainHashes(
+            target_dir, False, win_sdk_in_windows_kits)
     if desired_hash not in current_hashes:
       print(
           'Got wrong hash after pulling a new toolchain. '
           'Wanted \'%s\', got one of \'%s\'.' % (
               desired_hash, ', '.join(current_hashes)), file=sys.stderr)
       return 1
-    SaveTimestampsAndHash(target_dir, desired_hash)
+    SaveTimestampsAndHash(target_dir, desired_hash, win_sdk_in_windows_kits)
 
   if options.output_json:
     shutil.copyfile(os.path.join(target_dir, '..', 'data.json'),
