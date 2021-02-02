@@ -169,8 +169,12 @@ def calculate_roll(full_dir, dependency, roll_to):
   if not head:
     raise Error('%s is unpinned.' % dependency)
   check_call(['git', 'fetch', 'origin', '--quiet'], cwd=full_dir)
+  if roll_to == 'origin/HEAD':
+    check_output(['git', 'remote', 'set-head', 'origin', '-a'], cwd=full_dir)
+
   roll_to = check_output(['git', 'rev-parse', roll_to], cwd=full_dir).strip()
   return head, roll_to
+
 
 
 def gen_commit_msg(logs, cmdline, reviewers, bug):
@@ -218,7 +222,7 @@ def main():
       '--log-limit', type=int, default=100,
       help='Trim log after N commits (default: %(default)s)')
   parser.add_argument(
-      '--roll-to', default='origin/master',
+      '--roll-to', default='origin/HEAD',
       help='Specify the new commit to roll to (default: %(default)s)')
   parser.add_argument(
       '--key', action='append', default=[],
@@ -227,7 +231,7 @@ def main():
   args = parser.parse_args()
 
   if len(args.dep_path) > 1:
-    if args.roll_to != 'origin/master':
+    if args.roll_to != 'origin/HEAD':
       parser.error(
           'Can\'t use multiple paths to roll simultaneously and --roll-to')
     if args.key:
