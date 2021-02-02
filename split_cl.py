@@ -30,13 +30,6 @@ import git_common as git
 CL_SPLIT_FORCE_LIMIT = 10
 
 
-def ReadFile(file_path):
-  """Returns the content of |file_path|."""
-  with open(file_path) as f:
-    content = f.read()
-  return content
-
-
 def EnsureInGitRepository():
   """Throws an exception if the current directory is not a git repository."""
   git.run('rev-parse')
@@ -142,21 +135,21 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
                             publish=True)
 
 
-def GetFilesSplitByOwners(owners_database, files):
+def GetFilesSplitByOwners(files):
   """Returns a map of files split by OWNERS file.
 
   Returns:
     A map where keys are paths to directories containing an OWNERS file and
     values are lists of files sharing an OWNERS file.
   """
-  files_split_by_owners = collections.defaultdict(list)
+  files_split_by_owners = {}
   for action, path in files:
-    enclosing_dir = owners_database.enclosing_dir_with_owners(path)
-    # Anything matching a per-file rule will return its own path.
-    # Aggregate up to the parent directory so as not to over-split.
-    if enclosing_dir == path:
-      enclosing_dir = os.path.dirname(path)
-    files_split_by_owners[enclosing_dir].append((action, path))
+    dir_with_owners = os.path.dirname(path)
+    # Find the closest parent directory with an OWNERS file.
+    while (dir_with_owners not in files_split_by_owners
+           and not os.path.isfile(os.path.join(dir_with_owners, 'OWNERS'))):
+      dir_with_owners = os.path.dirname(dir_with_owners)
+    files_split_by_owners.setdefault(dir_with_owners, []).append((action, path))
   return files_split_by_owners
 
 
@@ -201,8 +194,9 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
   Returns:
     0 in case of success. 1 in case of error.
   """
-  description = AddUploadedByGitClSplitToDescription(ReadFile(description_file))
-  comment = ReadFile(comment_file) if comment_file else None
+  description = AddUploadedByGitClSplitToDescription(
+      gclient_utils.FileRead(description_file))
+  comment = gclient_utils.FileRead(comment_file) if comment_file else None
 
   try:
     EnsureInGitRepository()
@@ -228,7 +222,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     owners_database = owners.Database(repository_root, open, os.path)
     owners_database.load_data_needed_for([f for _, f in files])
 
-    files_split_by_owners = GetFilesSplitByOwners(owners_database, files)
+    files_split_by_owners = GetFilesSplitByOwners(files)
 
     num_cls = len(files_split_by_owners)
     print('Will split current branch (' + refactor_branch + ') into ' +
