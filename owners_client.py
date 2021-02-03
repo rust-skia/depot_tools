@@ -104,12 +104,15 @@ class OwnersClient(object):
         status[path] = self.INSUFFICIENT_REVIEWERS
     return status
 
-  def ScoreOwners(self, paths):
+  def ScoreOwners(self, paths, exclude=None):
     """Get sorted list of owners for the given paths."""
+    exclude = exclude or []
     positions_by_owner = {}
     owners_by_path = self.BatchListOwners(paths)
     for owners in owners_by_path.values():
       for i, owner in enumerate(owners):
+        if owner in exclude:
+          continue
         # Gerrit API lists owners of a path sorted by an internal score, so
         # owners that appear first should be prefered.
         # We define the score of an owner based on the pair
@@ -124,28 +127,34 @@ class OwnersClient(object):
         key=lambda o: (-len(positions_by_owner[o]),
                        min(positions_by_owner[o]) + random.random()))
 
-  def SuggestOwners(self, paths):
+  def SuggestOwners(self, paths, exclude=None):
     """Suggest a set of owners for the given paths."""
+    exclude = exclude or []
     paths_by_owner = {}
     owners_by_path = self.BatchListOwners(paths)
     for path, owners in owners_by_path.items():
       for owner in owners:
-        paths_by_owner.setdefault(owner, set()).add(path)
+        if owner not in exclude:
+          paths_by_owner.setdefault(owner, set()).add(path)
 
     # Select the minimum number of owners that can approve all paths.
     # We start at 2 to avoid sending all changes that require multiple
     # reviewers to top-level owners.
-    owners = self.ScoreOwners(paths)
+    owners = self.ScoreOwners(paths, exclude=exclude)
     if len(owners) < 2:
       return owners
 
-    for num_owners in range(2, len(owners)):
+    # Note that we have to iterate up to len(owners) + 1.
+    # e.g. if there are only 2 owners, we should consider num_owners = 2.
+    for num_owners in range(2, len(owners) + 1):
       # Iterate all combinations of `num_owners` by decreasing score, and
       # select the first one that covers all paths.
       for selected in _owner_combinations(owners, num_owners):
         covered = set.union(*(paths_by_owner[o] for o in selected))
         if len(covered) == len(paths):
           return list(selected)
+
+    return []
 
 
 class DepotToolsClient(OwnersClient):
