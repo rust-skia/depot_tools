@@ -1382,7 +1382,7 @@ class Changelist(object):
         f for f in files
         if status[f] == owners_client.OwnersClient.INSUFFICIENT_REVIEWERS
       ]
-      owners = client.SuggestOwners(missing_files)
+      owners = client.SuggestOwners(missing_files, exclude=[self.GetAuthor()])
       if options.add_owners_to == 'TBR':
         assert isinstance(options.tbrs, list), options.tbrs
         options.tbrs.extend(owners)
@@ -4806,7 +4806,8 @@ def CMDowners(parser, args):
 
   if options.batch:
     client = owners_client.DepotToolsClient(root, base_branch)
-    print('\n'.join(client.SuggestOwners(affected_files)))
+    print('\n'.join(
+        client.SuggestOwners(affected_files, exclude=[cl.GetAuthor()])))
     return 0
 
   owner_files = [f for f in affected_files if 'OWNERS' in os.path.basename(f)]

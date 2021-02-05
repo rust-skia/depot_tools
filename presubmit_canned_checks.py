@@ -1182,7 +1182,8 @@ def CheckOwners(
     if tbr and affects_owners:
       output_list.append(output_fn('TBR for OWNERS files are ignored.'))
     if not input_api.is_committing:
-      suggested_owners = input_api.owners_client.SuggestOwners(missing_files)
+      suggested_owners = input_api.owners_client.SuggestOwners(
+          missing_files, exclude=[owner_email])
       output_list.append(output_fn('Suggested OWNERS: ' +
           '(Use "git-cl owners" to interactively select owners.)\n    %s' %
           ('\n    '.join(suggested_owners))))
