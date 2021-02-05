@@ -771,6 +771,13 @@ def SetCommitMessage(host, change, description, notify='ALL'):
         'in change %s' % change)
 
 
+def IsCodeOwnersEnabled(host):
+  """Check if the code-owners plugin is enabled for the host."""
+  path = 'config/server/capabilities'
+  capabilities = ReadHttpJsonResponse(CreateHttpConn(host, path))
+  return 'code-owners-checkCodeOwner' in capabilities
+
+
 def GetOwnersForFile(host, project, branch, path, limit=100,
                      o_params=('DETAILS',)):
   """Gets information about owners attached to a file."""

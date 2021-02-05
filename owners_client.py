@@ -213,3 +213,13 @@ class GerritClient(OwnersClient):
     data = gerrit_util.GetOwnersForFile(
         self._host, self._project, self._branch, path)
     return [d['account']['email'] for d in data['code_owners']]
+
+
+def GetCodeOwnersClient(root, host, project, branch):
+  """Get a new OwnersClient.
+
+  Defaults to GerritClient, and falls back to DepotToolsClient if code-owners
+  plugin is not available."""
+  if gerrit_util.IsCodeOwnersEnabled(host):
+    return GerritClient(host, project, branch)
+  return DepotToolsClient(root, branch)

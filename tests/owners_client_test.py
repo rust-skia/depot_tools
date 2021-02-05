@@ -48,7 +48,6 @@ def _get_owners():
   }
 
 
-
 class DepotToolsClientTest(unittest.TestCase):
   def setUp(self):
     self.repo = filesystem_mock.MockFileSystem(files={
@@ -262,6 +261,24 @@ class OwnersClientTest(unittest.TestCase):
         },
         self.client.BatchListOwners(
             ['bar/everyone/foo.txt', 'bar/everyone/bar.txt', 'bar/foo/']))
+
+
+class GetCodeOwnersClientTest(unittest.TestCase):
+  def setUp(self):
+    mock.patch('gerrit_util.IsCodeOwnersEnabled').start()
+    self.addCleanup(mock.patch.stopall)
+
+  def testGetCodeOwnersClient_GerritClient(self):
+    gerrit_util.IsCodeOwnersEnabled.return_value = True
+    self.assertIsInstance(
+        owners_client.GetCodeOwnersClient('root', 'host', 'project', 'branch'),
+        owners_client.GerritClient)
+
+  def testGetCodeOwnersClient_DepotToolsClient(self):
+    gerrit_util.IsCodeOwnersEnabled.return_value = False
+    self.assertIsInstance(
+        owners_client.GetCodeOwnersClient('root', 'host', 'project', 'branch'),
+        owners_client.DepotToolsClient)
 
 
 if __name__ == '__main__':
