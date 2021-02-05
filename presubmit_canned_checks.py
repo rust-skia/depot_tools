@@ -1145,7 +1145,7 @@ def CheckOwners(
   affected_files = set([f.LocalPath() for f in
       input_api.change.AffectedFiles(file_filter=source_file_filter)])
   owner_email, reviewers = GetCodereviewOwnerAndReviewers(
-      input_api, None, approval_needed=input_api.is_committing)
+      input_api, approval_needed=input_api.is_committing)
 
   owner_email = owner_email or input_api.change.author_email
 
@@ -1194,7 +1194,8 @@ def CheckOwners(
   return []
 
 
-def GetCodereviewOwnerAndReviewers(input_api, _email_regexp, approval_needed):
+def GetCodereviewOwnerAndReviewers(
+    input_api, _email_regexp=None, approval_needed=True):
   """Return the owner and reviewers of a change, if any.
 
   If approval_needed is True, only reviewers who have approved the change
