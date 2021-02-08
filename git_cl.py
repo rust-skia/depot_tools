@@ -2368,6 +2368,8 @@ class Changelist(object):
 
     if options.enable_auto_submit:
       refspec_opts.append('l=Auto-Submit+1')
+    if options.set_bot_commit:
+      refspec_opts.append('l=Bot-Commit+1')
     if options.use_commit_queue:
       refspec_opts.append('l=Commit-Queue+2')
     elif options.cq_dry_run:
@@ -4124,6 +4126,8 @@ def CMDupload(parser, args):
                     action='store_true', default=False,
                     help='Send the patchset to do a CQ dry run right after '
                          'upload.')
+  parser.add_option('--set-bot-commit', action='store_true',
+                    help=optparse.SUPPRESS_HELP)
   parser.add_option('--preserve-tryjobs', action='store_true',
                     help='instruct the CQ to let tryjobs running even after '
                          'new patchsets are uploaded instead of canceling '
