@@ -33,7 +33,7 @@ $VerifiedPlatform linux-mips64 linux-mips64le linux-mipsle
 infra/tools/luci/vpython/${platform} git_revision:0f694cdc06ba054b9960aa1ae9766e45b53d02c1
 
 # LUCI editor
-infra/tools/luci/led/${platform} git_revision:d86f55356b5134249c13f0baf9d6b76294f9bdb7
+infra/tools/luci/led/${platform} git_revision:1492a186ef3a210e9d2bd824a2e6dee6b3c7a485
 
 # LUCI config generator
 infra/tools/luci/lucicfg/${platform} git_revision:f3c1280c18afc6bba9ba9884668408e07ef0512d
@@ -42,13 +42,13 @@ infra/tools/luci/lucicfg/${platform} git_revision:f3c1280c18afc6bba9ba9884668408
 infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:6e584bf785867bc3b340f82bb2f7a6cd42ba22a8
 
 # LUCI rpc command line tool
-infra/tools/prpc/${platform} git_revision:dace3c38ddbc95ee87f77f6fac1d30b8333283e4
+infra/tools/prpc/${platform} git_revision:1492a186ef3a210e9d2bd824a2e6dee6b3c7a485
 
 # LUCI authentication command line tool
 infra/tools/luci-auth/${platform} git_revision:510e7187aa80b1b0d490f069437d119c28d1ea48
 
 # LUCI Buildbucket CLI
-infra/tools/bb/${platform} git_revision:165c851a5838dd48e66240a0de3da872b4b31d01
+infra/tools/bb/${platform} git_revision:1492a186ef3a210e9d2bd824a2e6dee6b3c7a485
 
 # LUCI ResultDB CLI
 infra/tools/rdb/${platform} git_revision:0c7d9eb29011ff68ec3623d76efe3a48b5e77771
