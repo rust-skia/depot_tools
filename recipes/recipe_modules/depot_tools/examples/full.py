@@ -40,9 +40,6 @@ def RunSteps(api):
       'presubmit_support_py_path',
       ['ls', api.depot_tools.presubmit_support_py_path])
 
-  api.step(
-      'dirmd_path', ['ls', api.depot_tools.dirmd_path])
-
   with api.depot_tools.on_path():
     api.step('on_path', ['echo', '$PATH'])
 

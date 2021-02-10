@@ -241,8 +241,6 @@ the depot_tools repo.
 
 &emsp; **@property**<br>&mdash; **def [cros\_path](/recipes/recipe_modules/depot_tools/api.py#26)(self):**
 
-&emsp; **@property**<br>&mdash; **def [dirmd\_path](/recipes/recipe_modules/depot_tools/api.py#54)(self):**
-
 &emsp; **@property**<br>&mdash; **def [download\_from\_google\_storage\_path](/recipes/recipe_modules/depot_tools/api.py#13)(self):**
 
 &emsp; **@property**<br>&mdash; **def [gn\_py\_path](/recipes/recipe_modules/depot_tools/api.py#30)(self):**
@@ -251,7 +249,7 @@ the depot_tools repo.
 
 &emsp; **@property**<br>&mdash; **def [ninja\_path](/recipes/recipe_modules/depot_tools/api.py#40)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipes/recipe_modules/depot_tools/api.py#58)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipes/recipe_modules/depot_tools/api.py#54)(self):**
 
 Use this context manager to put depot_tools on $PATH.
 

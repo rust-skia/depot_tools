@@ -51,10 +51,6 @@ class DepotToolsApi(recipe_api.RecipeApi):
   def presubmit_support_py_path(self):
     return self.repo_resource('presubmit_support.py')
 
-  @property
-  def dirmd_path(self):
-    return self.repo_resource('dirmd')
-
   @contextlib.contextmanager
   def on_path(self):
     """Use this context manager to put depot_tools on $PATH.
