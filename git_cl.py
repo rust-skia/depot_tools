@@ -392,10 +392,12 @@ def _make_tryjob_schedule_requests(changelist, jobs, options, patchset):
     })
 
     if options.ensure_value('revision', None):
+      remote, remote_branch = changelist.GetRemoteBranch()
       requests[-1]['scheduleBuild']['gitilesCommit'] = {
           'host': gerrit_changes[0]['host'],
           'project': gerrit_changes[0]['project'],
-          'id': options.revision
+          'id': options.revision,
+          'ref': GetTargetRef(remote, remote_branch, None)
        }
 
   return requests

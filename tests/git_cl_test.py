@@ -86,6 +86,9 @@ class ChangelistMock(object):
     del patchset
     return self._gerrit_change
 
+  def GetRemoteBranch(self):
+    return ('origin', 'refs/remotes/origin/main')
+
 
 class GitMocks(object):
   def __init__(self, config=None, branchref=None):
@@ -3509,6 +3512,8 @@ class CMDTryTestCase(CMDTestCaseBase):
   @mock.patch('git_cl._call_buildbucket')
   def testScheduleOnBuildbucketWithRevision(self, mockCallBuildbucket):
     mockCallBuildbucket.return_value = {}
+    mock.patch('git_cl.Changelist.GetRemoteBranch',
+               return_value=('origin', 'refs/remotes/origin/main')).start()
 
     self.assertEqual(0, git_cl.main([
         'try', '-B', 'luci.chromium.try', '-b', 'win', '-b', 'linux',
@@ -3548,6 +3553,7 @@ class CMDTryTestCase(CMDTestCaseBase):
                     "host": "chromium-review.googlesource.com",
                     "project": "depot_tools",
                     "id": "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef",
+                    "ref": "refs/heads/main",
                 }
             },
         },
@@ -3578,6 +3584,7 @@ class CMDTryTestCase(CMDTestCaseBase):
                     "host": "chromium-review.googlesource.com",
                     "project": "depot_tools",
                     "id": "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef",
+                    "ref": "refs/heads/main",
                 }
             },
         }],
@@ -3801,7 +3808,8 @@ class MakeRequestsHelperTestCase(unittest.TestCase):
         requests[0]['scheduleBuild']['gitilesCommit'], {
             'host': 'chromium-review.googlesource.com',
             'id': 'ba5eba11',
-            'project': 'depot_tools'
+            'project': 'depot_tools',
+            'ref': 'refs/heads/main',
         })
 
   def testMakeRequestsHelperRetryFailedSet(self):
