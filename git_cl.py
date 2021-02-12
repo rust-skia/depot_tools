@@ -2180,6 +2180,8 @@ class Changelist(object):
       raise GitPushError(
           'Failed to create a change. Please examine output above for the '
           'reason of the failure.\n'
+          'For emergencies, Googlers can escalate to '
+          'go/gob-support or go/notify#gob\n'
           'Hint: run command below to diagnose common Git/Gerrit '
           'credential problems:\n'
           '  git cl creds-check\n'
