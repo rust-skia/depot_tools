@@ -1505,16 +1505,19 @@ class TestGitCl(unittest.TestCase):
     change_id = git_cl.GenerateGerritChangeId('line1\nline2\n')
     self.assertEqual(change_id, 'Ihashchange')
 
+  @mock.patch('gerrit_util.IsCodeOwnersEnabled')
   @mock.patch('git_cl.Settings.GetBugPrefix')
-  @mock.patch('git_cl.Settings.GetRoot')
   @mock.patch('git_cl.Changelist.FetchDescription')
   @mock.patch('git_cl.Changelist.GetBranch')
-  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
+  @mock.patch('git_cl.Changelist.GetGerritHost')
+  @mock.patch('git_cl.Changelist.GetGerritProject')
+  @mock.patch('git_cl.Changelist.GetRemoteBranch')
   @mock.patch('owners_client.OwnersClient.BatchListOwners')
   def getDescriptionForUploadTest(
-      self, mockBatchListOwners=None, mockGetCommonAncestorWithUpstream=None,
-      mockGetBranch=None, mockFetchDescription=None, mockGetRoot=None,
-      mockGetBugPrefix=None,
+      self, mockBatchListOwners=None, mockGetRemoteBranch=None,
+      mockGetGerritProject=None, mockGetGerritHost=None, mockGetBranch=None,
+      mockFetchDescription=None, mockGetBugPrefix=None,
+      mockIsCodeOwnersEnabled=None,
       initial_description='desc', bug=None, fixed=None, branch='branch',
       reviewers=None, tbrs=None, add_owners_to=None,
       expected_description='desc'):
@@ -1525,10 +1528,10 @@ class TestGitCl(unittest.TestCase):
       'b': ['b@example.com'],
       'c': ['c@example.com'],
     }
-    mockGetRoot.return_value = 'root'
+    mockIsCodeOwnersEnabled.return_value = True
     mockGetBranch.return_value = branch
     mockGetBugPrefix.return_value = 'prefix'
-    mockGetCommonAncestorWithUpstream.return_value = 'upstream'
+    mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
     mockFetchDescription.return_value = 'desc'
     mockBatchListOwners.side_effect = lambda ps: {
         p: owners_by_path.get(p)
@@ -4104,8 +4107,18 @@ class CMDOwnersTestCase(CMDTestCaseBase):
         'git_cl.Changelist.GetCommonAncestorWithUpstream',
         return_value='upstream').start()
     mock.patch(
-        'owners_client.DepotToolsClient.BatchListOwners',
+        'git_cl.Changelist.GetGerritHost',
+        return_value='host').start()
+    mock.patch(
+        'git_cl.Changelist.GetGerritProject',
+        return_value='project').start()
+    mock.patch(
+        'git_cl.Changelist.GetRemoteBranch',
+        return_value=('origin', 'refs/remotes/origin/main')).start()
+    mock.patch(
+        'owners_client.OwnersClient.BatchListOwners',
         return_value=self.owners_by_path).start()
+    mock.patch('gerrit_util.IsCodeOwnersEnabled', return_value=True).start()
     self.addCleanup(mock.patch.stopall)
 
   def testShowAllNoArgs(self):
@@ -4118,7 +4131,7 @@ class CMDOwnersTestCase(CMDTestCaseBase):
     self.assertEqual(
         0,
         git_cl.main(['owners', '--show-all', 'foo', 'bar', 'baz']))
-    owners_client.DepotToolsClient.BatchListOwners.assert_called_once_with(
+    owners_client.OwnersClient.BatchListOwners.assert_called_once_with(
         ['foo', 'bar', 'baz'])
     self.assertEqual(
         '\n'.join([

@@ -977,6 +977,7 @@ class Changelist(object):
     # Lazily cached values.
     self._gerrit_host = None    # e.g. chromium-review.googlesource.com
     self._gerrit_server = None  # e.g. https://chromium-review.googlesource.com
+    self._owners_client = None
     # Map from change number (issue) to its detail cache.
     self._detail_cache = {}
 
@@ -984,6 +985,18 @@ class Changelist(object):
       assert not codereview_host.startswith('https://'), codereview_host
       self._gerrit_host = codereview_host
       self._gerrit_server = 'https://%s' % codereview_host
+
+  @property
+  def owners_client(self):
+    if self._owners_client is None:
+      remote, remote_branch = self.GetRemoteBranch()
+      branch = GetTargetRef(remote, remote_branch, None)
+      self._owners_client = owners_client.GetCodeOwnersClient(
+          root=settings.GetRoot(),
+          host=self.GetGerritHost(),
+          project=self.GetGerritProject(),
+          branch=branch)
+    return self._owners_client
 
   def GetCCList(self):
     """Returns the users cc'd on this CL.
@@ -1375,16 +1388,14 @@ class Changelist(object):
     # Fill gaps in OWNERS coverage to tbrs/reviewers if requested.
     if options.add_owners_to:
       assert options.add_owners_to in ('TBR', 'R'), options.add_owners_to
-      client = owners_client.DepotToolsClient(
-          root=settings.GetRoot(),
-          branch=self.GetCommonAncestorWithUpstream())
-      status = client.GetFilesApprovalStatus(
+      status = self.owners_client.GetFilesApprovalStatus(
           files, [], options.tbrs + options.reviewers)
       missing_files = [
         f for f in files
-        if status[f] == owners_client.OwnersClient.INSUFFICIENT_REVIEWERS
+        if status[f] == self._owners_client.INSUFFICIENT_REVIEWERS
       ]
-      owners = client.SuggestOwners(missing_files, exclude=[self.GetAuthor()])
+      owners = self.owners_client.SuggestOwners(
+          missing_files, exclude=[self.GetAuthor()])
       if options.add_owners_to == 'TBR':
         assert isinstance(options.tbrs, list), options.tbrs
         options.tbrs.extend(owners)
@@ -4790,10 +4801,7 @@ def CMDowners(parser, args):
     if len(args) == 0:
       print('No files specified for --show-all. Nothing to do.')
       return 0
-    client = owners_client.DepotToolsClient(
-        root=settings.GetRoot(),
-        branch=cl.GetCommonAncestorWithUpstream())
-    owners_by_path = client.BatchListOwners(args)
+    owners_by_path = cl.owners_client.BatchListOwners(args)
     for path in args:
       print('Owners for %s:' % path)
       print('\n'.join(
@@ -4809,15 +4817,14 @@ def CMDowners(parser, args):
     # Default to diffing against the common ancestor of the upstream branch.
     base_branch = cl.GetCommonAncestorWithUpstream()
 
-  root = settings.GetRoot()
   affected_files = cl.GetAffectedFiles(base_branch)
 
   if options.batch:
-    client = owners_client.DepotToolsClient(root, base_branch)
-    print('\n'.join(
-        client.SuggestOwners(affected_files, exclude=[cl.GetAuthor()])))
+    owners = cl.owners_client.SuggestOwners(affected_files, exclude=[author])
+    print('\n'.join(owners))
     return 0
 
+  root = settings.GetRoot()
   owner_files = [f for f in affected_files if 'OWNERS' in os.path.basename(f)]
   original_owner_files = {
       f: scm.GIT.GetOldContents(root, f, base_branch).splitlines()
