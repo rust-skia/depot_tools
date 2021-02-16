@@ -205,14 +205,20 @@ class GerritClient(OwnersClient):
     self._host = host
     self._project = project
     self._branch = branch
+    self._owners_cache = {}
 
   def ListOwners(self, path):
-    # GetOwnersForFile returns a list of account details sorted by order of
-    # best reviewer for path. If owners have the same score, the order is
-    # random.
-    data = gerrit_util.GetOwnersForFile(
-        self._host, self._project, self._branch, path)
-    return [d['account']['email'] for d in data['code_owners']]
+    if path not in self._owners_cache:
+      # GetOwnersForFile returns a list of account details sorted by order of
+      # best reviewer for path. If owners have the same score, the order is
+      # random.
+      data = gerrit_util.GetOwnersForFile(
+          self._host, self._project, self._branch, path)
+      self._owners_cache[path] = [
+        d['account']['email']
+        for d in data['code_owners']
+      ]
+    return self._owners_cache[path]
 
 
 def GetCodeOwnersClient(root, host, project, branch):

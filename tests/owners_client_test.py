@@ -87,6 +87,13 @@ class GerritClientTest(unittest.TestCase):
         ['approver@example.com', 'reviewer@example.com', 'missing@example.com'],
         self.client.ListOwners('bar/everyone/foo.txt'))
 
+    # Result should be cached.
+    self.assertEquals(
+        ['approver@example.com', 'reviewer@example.com', 'missing@example.com'],
+        self.client.ListOwners('bar/everyone/foo.txt'))
+    gerrit_util.GetOwnersForFile.assert_called_once_with(
+        'host', 'project', 'branch', 'bar/everyone/foo.txt')
+
 
 class TestClient(owners_client.OwnersClient):
   def __init__(self, owners_by_path):
