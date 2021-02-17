@@ -51,7 +51,7 @@ infra/tools/luci-auth/${platform} git_revision:510e7187aa80b1b0d490f069437d119c2
 infra/tools/bb/${platform} git_revision:1492a186ef3a210e9d2bd824a2e6dee6b3c7a485
 
 # LUCI ResultDB CLI
-infra/tools/rdb/${platform} git_revision:0c7d9eb29011ff68ec3623d76efe3a48b5e77771
+infra/tools/rdb/${platform} git_revision:53569bdc22443e161d94504bc66666c2a7a7417c
 
 # CHROMEOS Buildjobs CLI
 chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d39d34907050d2949121d6ae8
