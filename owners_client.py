@@ -208,6 +208,8 @@ class GerritClient(OwnersClient):
     self._owners_cache = {}
 
   def ListOwners(self, path):
+    # Always use slashes as separators.
+    path = path.replace(os.sep, '/')
     if path not in self._owners_cache:
       # GetOwnersForFile returns a list of account details sorted by order of
       # best reviewer for path. If owners have the same score, the order is

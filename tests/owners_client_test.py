@@ -26,28 +26,6 @@ dave = 'dave@example.com'
 emily = 'emily@example.com'
 
 
-def _get_owners():
-  return {
-    "code_owners": [
-      {
-        "account": {
-          "email": 'approver@example.com'
-        }
-      },
-      {
-        "account": {
-          "email": 'reviewer@example.com'
-        },
-      },
-      {
-        "account": {
-          "email": 'missing@example.com'
-        },
-      }
-    ]
-  }
-
-
 class DepotToolsClientTest(unittest.TestCase):
   def setUp(self):
     self.repo = filesystem_mock.MockFileSystem(files={
@@ -80,17 +58,39 @@ class DepotToolsClientTest(unittest.TestCase):
 class GerritClientTest(unittest.TestCase):
   def setUp(self):
     self.client = owners_client.GerritClient('host', 'project', 'branch')
+    mock.patch(
+        'gerrit_util.GetOwnersForFile',
+        return_value={
+          "code_owners": [
+            {
+              "account": {
+                "email": 'approver@example.com'
+              }
+            },
+            {
+              "account": {
+                "email": 'reviewer@example.com'
+              },
+            },
+            {
+              "account": {
+                "email": 'missing@example.com'
+              },
+            }
+          ]
+        }).start()
+    self.addCleanup(mock.patch.stopall)
 
-  @mock.patch('gerrit_util.GetOwnersForFile', return_value=_get_owners())
-  def testListOwners(self, _get_owners_mock):
+  def testListOwners(self):
     self.assertEquals(
         ['approver@example.com', 'reviewer@example.com', 'missing@example.com'],
-        self.client.ListOwners('bar/everyone/foo.txt'))
+        self.client.ListOwners(os.path.join('bar', 'everyone', 'foo.txt')))
 
     # Result should be cached.
     self.assertEquals(
         ['approver@example.com', 'reviewer@example.com', 'missing@example.com'],
-        self.client.ListOwners('bar/everyone/foo.txt'))
+        self.client.ListOwners(os.path.join('bar', 'everyone', 'foo.txt')))
+    # Always use slashes as separators.
     gerrit_util.GetOwnersForFile.assert_called_once_with(
         'host', 'project', 'branch', 'bar/everyone/foo.txt')
 
