@@ -16,7 +16,6 @@ import tempfile
 
 import gclient_utils
 import git_footers
-import owners_client
 import scm
 
 import git_common as git
@@ -218,10 +217,6 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     assert refactor_branch_upstream, \
         "Branch %s must have an upstream." % refactor_branch
 
-    client = owners_client.DepotToolsClient(
-        root=repository_root,
-        branch=refactor_branch_upstream)
-
     files_split_by_owners = GetFilesSplitByOwners(files)
 
     num_cls = len(files_split_by_owners)
@@ -244,8 +239,8 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
       # and comment.
       directory = directory.replace(os.path.sep, '/')
       file_paths = [f for _, f in files]
-      reviewers = client.SuggestOwners(
-          file_paths, exclude=[author, owners_client.OwnersClient.EVERYONE])
+      reviewers = cl.owners_client.SuggestOwners(
+          file_paths, exclude=[author, cl.owners_client.EVERYONE])
       if dry_run:
         PrintClInfo(cl_index, num_cls, directory, file_paths, description,
                     reviewers)
