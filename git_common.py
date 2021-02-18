@@ -1045,10 +1045,11 @@ def get_branches_info(include_tracking_status):
     (branch, branch_hash, upstream_branch, tracking_status) = line.split(':')
 
     commits = None
-    base = get_or_create_merge_base(branch)
-    if base:
-      commits_list = run('rev-list', '--count', branch, '^%s' % base, '--')
-      commits = int(commits_list) or None
+    if include_tracking_status:
+      base = get_or_create_merge_base(branch)
+      if base:
+        commits_list = run('rev-list', '--count', branch, '^%s' % base, '--')
+        commits = int(commits_list) or None
 
     behind_match = re.search(r'behind (\d+)', tracking_status)
     behind = int(behind_match.group(1)) if behind_match else None
