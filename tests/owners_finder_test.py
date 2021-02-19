@@ -33,12 +33,6 @@ tom = 'tom@example.com'
 nonowner = 'nonowner@example.com'
 
 
-def _get_score_owners_darin_variant():
-  return [brett, darin, john, peter, ken, ben, tom]
-
-
-def _get_score_owners_john_variant():
-  return [brett, john, darin, peter, ken, ben, tom]
 
 
 def owners_file(*email_addresses, **kwargs):
@@ -50,45 +44,36 @@ def owners_file(*email_addresses, **kwargs):
   return s + '\n'.join(email_addresses) + '\n'
 
 
-def test_repo():
-  return filesystem_mock.MockFileSystem(files={
-    '/DEPS': '',
-    '/OWNERS': owners_file(ken, peter, tom,
-                           comment='OWNERS_STATUS = build/OWNERS.status'),
-    '/build/OWNERS.status': '%s: bar' % jochen,
-    '/base/vlog.h': '',
-    '/chrome/OWNERS': owners_file(ben, brett),
-    '/chrome/browser/OWNERS': owners_file(brett),
-    '/chrome/browser/defaults.h': '',
-    '/chrome/gpu/OWNERS': owners_file(ken),
-    '/chrome/gpu/gpu_channel.h': '',
-    '/chrome/renderer/OWNERS': owners_file(peter),
-    '/chrome/renderer/gpu/gpu_channel_host.h': '',
-    '/chrome/renderer/safe_browsing/scorer.h': '',
-    '/content/OWNERS': owners_file(john, darin, comment='foo', noparent=True),
-    '/content/content.gyp': '',
-    '/content/bar/foo.cc': '',
-    '/content/baz/OWNERS': owners_file(brett),
-    '/content/baz/froboz.h': '',
-    '/content/baz/ugly.cc': '',
-    '/content/baz/ugly.h': '',
-    '/content/common/OWNERS': owners_file(jochen),
-    '/content/common/common.cc': '',
-    '/content/foo/OWNERS': owners_file(jochen, comment='foo'),
-    '/content/foo/foo.cc': '',
-    '/content/views/OWNERS': owners_file(ben, john,
-                                         owners_client.OwnersClient.EVERYONE,
-                                         noparent=True),
-    '/content/views/pie.h': '',
-  })
+class TestClient(owners_client.OwnersClient):
+  def __init__(self):
+    super(TestClient, self).__init__()
+    self.owners_by_path = {
+      'DEPS': [ken, peter, tom],
+      'base/vlog.h': [ken, peter, tom],
+      'chrome/browser/defaults.h': [brett, ben, ken, peter, tom],
+      'chrome/gpu/gpu_channel.h': [ken, ben, brett, ken, peter, tom],
+      'chrome/renderer/gpu/gpu_channel_host.h': [peter, ben, brett, ken, tom],
+      'chrome/renderer/safe_browsing/scorer.h': [peter, ben, brett, ken, tom],
+      'content/content.gyp': [john, darin],
+      'content/bar/foo.cc': [john, darin],
+      'content/baz/froboz.h': [brett, john, darin],
+      'content/baz/ugly.cc': [brett, john, darin],
+      'content/baz/ugly.h': [brett, john, darin],
+      'content/common/common.cc': [jochen, john, darin],
+      'content/foo/foo.cc': [jochen, john, darin],
+      'content/views/pie.h': [ben, john, self.EVERYONE],
+    }
+
+  def ListOwners(self, path):
+    path = path.replace(os.sep, '/')
+    return self.owners_by_path[path]
 
 
 class OutputInterceptedOwnersFinder(owners_finder.OwnersFinder):
-  def __init__(self, files, local_root, author, reviewers,
-               fopen, os_path, disable_color=False):
+  def __init__(
+      self, files, author, reviewers, client, disable_color=False):
     super(OutputInterceptedOwnersFinder, self).__init__(
-      files, local_root, author, reviewers, fopen, os_path,
-      disable_color=disable_color)
+      files, author, reviewers, client, disable_color=disable_color)
     self.output = []
     self.indentation_stack = []
 
@@ -123,24 +108,10 @@ class _BaseTestCase(unittest.TestCase):
     'content/views/pie.h'
   ]
 
-  def setUp(self):
-    self.repo = test_repo()
-    self.root = '/'
-    self.fopen = self.repo.open_for_reading
-    mock.patch('owners_client.DepotToolsClient._GetOriginalOwnersFiles',
-      return_value={}).start()
-    self.addCleanup(mock.patch.stopall)
-
   def ownersFinder(self, files, author=nonowner, reviewers=None):
     reviewers = reviewers or []
-    finder = OutputInterceptedOwnersFinder(files,
-                                           self.root,
-                                           author,
-                                           reviewers,
-                                           fopen=self.fopen,
-                                           os_path=self.repo,
-                                           disable_color=True)
-    return finder
+    return OutputInterceptedOwnersFinder(
+        files, author, reviewers, TestClient(), disable_color=True)
 
   def defaultFinder(self):
     return self.ownersFinder(self.default_files)
@@ -177,14 +148,9 @@ class OwnersFinderTests(_BaseTestCase):
     finder = self.ownersFinder(files, reviewers=[brett])
     self.assertEqual(finder.unreviewed_files, {'content/bar/foo.cc'})
 
-  def test_reset(self):
-    mock.patch('owners_client.DepotToolsClient.ScoreOwners',
-      side_effect=[
-        _get_score_owners_darin_variant(),
-        _get_score_owners_darin_variant(),
-        _get_score_owners_darin_variant()
-      ]).start()
-
+  @mock.patch('owners_client.OwnersClient.ScoreOwners')
+  def test_reset(self, mockScoreOwners):
+    mockScoreOwners.return_value = [brett, darin, john, peter, ken, ben, tom]
     finder = self.defaultFinder()
     for _ in range(2):
       expected = [brett, darin, john, peter, ken, ben, tom]
@@ -209,14 +175,9 @@ class OwnersFinderTests(_BaseTestCase):
       finder.reset()
       finder.resetText()
 
-  def test_select(self):
-    mock.patch('owners_client.DepotToolsClient.ScoreOwners',
-      side_effect=[
-        _get_score_owners_darin_variant(),
-        _get_score_owners_john_variant(),
-        _get_score_owners_darin_variant()
-      ]).start()
-
+  @mock.patch('owners_client.OwnersClient.ScoreOwners')
+  def test_select(self, mockScoreOwners):
+    mockScoreOwners.return_value = [brett, darin, john, peter, ken, ben, tom]
     finder = self.defaultFinder()
     finder.select_owner(john)
     self.assertEqual(finder.owners_queue, [brett, peter, ken, ben, tom])
@@ -257,10 +218,9 @@ class OwnersFinderTests(_BaseTestCase):
     self.assertEqual(finder.output,
                      ['Selected: ' + brett, 'Deselected: ' + ben])
 
-  def test_deselect(self):
-    mock.patch('owners_client.DepotToolsClient.ScoreOwners',
-      return_value=_get_score_owners_darin_variant()).start()
-
+  @mock.patch('owners_client.OwnersClient.ScoreOwners')
+  def test_deselect(self, mockScoreOwners):
+    mockScoreOwners.return_value = [brett, darin, john, peter, ken, ben, tom]
     finder = self.defaultFinder()
     finder.deselect_owner(john)
     self.assertEqual(finder.owners_queue, [brett, peter, ken, ben, tom])

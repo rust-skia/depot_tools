@@ -4831,21 +4831,12 @@ def CMDowners(parser, args):
     print('\n'.join(owners))
     return 0
 
-  root = settings.GetRoot()
-  owner_files = [f for f in affected_files if 'OWNERS' in os.path.basename(f)]
-  original_owner_files = {
-      f: scm.GIT.GetOldContents(root, f, base_branch).splitlines()
-      for f in owner_files}
-
   return owners_finder.OwnersFinder(
       affected_files,
-      root,
       author,
       [] if options.ignore_current else cl.GetReviewers(),
-      fopen=open,
-      os_path=os.path,
+      cl.owners_client,
       disable_color=options.no_color,
-      override_files=original_owner_files,
       ignore_author=options.ignore_self).run()
 
 

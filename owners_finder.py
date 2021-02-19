@@ -8,7 +8,6 @@ from __future__ import print_function
 
 import os
 import copy
-import owners_client
 
 
 import git_common
@@ -28,11 +27,9 @@ class OwnersFinder(object):
 
   indentation = 0
 
-  def __init__(self, files, local_root, author, reviewers,
-               fopen, os_path,
+  def __init__(self, files, author, reviewers, owners_client,
                email_postfix='@chromium.org',
                disable_color=False,
-               override_files=None,
                ignore_author=False):
     self.email_postfix = email_postfix
 
@@ -41,8 +38,6 @@ class OwnersFinder(object):
       self.COLOR_BOLD = ''
       self.COLOR_GREY = ''
       self.COLOR_RESET = ''
-
-    self.os_path = os_path
 
     self.author = author
 
@@ -53,23 +48,18 @@ class OwnersFinder(object):
       reviewers.append(author)
 
     # Eliminate files that existing reviewers can review.
-    self.client = owners_client.DepotToolsClient(
-      root=local_root,
-      branch=git_common.current_branch(),
-      fopen=fopen,
-      os_path=os_path)
-
-    approval_status = self.client.GetFilesApprovalStatus(
+    self.owners_client = owners_client
+    approval_status = self.owners_client.GetFilesApprovalStatus(
       filtered_files, reviewers, [])
     filtered_files = [
       f for f in filtered_files
-      if approval_status[f] != owners_client.OwnersClient.APPROVED]
+      if approval_status[f] != self.owners_client.APPROVED]
 
     # If some files are eliminated.
     if len(filtered_files) != len(files):
       files = filtered_files
 
-    self.files_to_owners = self.client.BatchListOwners(files)
+    self.files_to_owners = self.owners_client.BatchListOwners(files)
 
     self.owners_to_files = {}
     self._map_owners_to_files()
@@ -151,7 +141,7 @@ class OwnersFinder(object):
 
     # Randomize owners' names so that if many reviewers have identical scores
     # they will be randomly ordered to avoid bias.
-    owners = self.client.ScoreOwners(self.files_to_owners.keys())
+    owners = list(self.owners_client.ScoreOwners(self.files_to_owners.keys()))
     if self.author and self.author in owners:
       owners.remove(self.author)
     self.owners_queue = owners
