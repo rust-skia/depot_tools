@@ -8,6 +8,21 @@ import hashlib
 from recipe_engine import recipe_api
 
 
+class Constants:
+  def __init__(self):
+    self.NONTRIVIAL_ROLL_FOOTER = 'Recipe-Nontrivial-Roll'
+    self.MANUAL_CHANGE_FOOTER = 'Recipe-Manual-Change'
+    self.BYPASS_FOOTER = 'Recipe-Tryjob-Bypass-Reason'
+    self.SKIP_RETRY_FOOTER = 'Disable-Retries'
+    self.ALL_VALID_FOOTERS = set([
+        self.NONTRIVIAL_ROLL_FOOTER, self.MANUAL_CHANGE_FOOTER,
+        self.BYPASS_FOOTER, self.SKIP_RETRY_FOOTER
+    ])
+
+
+constants = Constants()
+
+
 class TryserverApi(recipe_api.RecipeApi):
   def __init__(self, *args, **kwargs):
     super(TryserverApi, self).__init__(*args, **kwargs)
@@ -25,6 +40,15 @@ class TryserverApi(recipe_api.RecipeApi):
     changes = self.m.buildbucket.build.input.gerrit_changes
     if len(changes) == 1:
       self.set_change(changes[0])
+
+  @property
+  def valid_footers(self):  #pragma: nocover
+    return constants.ALL_VALID_FOOTERS
+
+  @property
+  def constants(self):  #pragma: nocover
+    # Nocover to be removed when callers (not within depot_tools) exercise this
+    return constants
 
   @property
   def gerrit_change(self):
