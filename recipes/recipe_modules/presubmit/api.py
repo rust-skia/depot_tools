@@ -98,6 +98,7 @@ class PresubmitApi(recipe_api.RecipeApi):
       '--issue', self.m.tryserver.gerrit_change.change,
       '--patchset', self.m.tryserver.gerrit_change.patchset,
       '--gerrit_url', 'https://%s' % self.m.tryserver.gerrit_change.host,
+      '--target_ref', self.m.tryserver.gerrit_change_target_ref,
       '--gerrit_fetch',
     ]
     if self.m.cq.state == self.m.cq.DRY:

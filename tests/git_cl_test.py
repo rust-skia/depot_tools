@@ -2958,6 +2958,9 @@ class ChangelistTest(unittest.TestCase):
     mock.patch('git_cl.Changelist.GetAuthor', return_value='author').start()
     mock.patch('git_cl.Changelist.GetIssue', return_value=123456).start()
     mock.patch('git_cl.Changelist.GetPatchset', return_value=7).start()
+    mock.patch('git_cl.Changelist.GetRemoteBranch',
+        return_value=('foo', 'bar')).start()
+    mock.patch('git_cl.GetTargetRef', return_value='ref').start()
     mock.patch('git_cl.PRESUBMIT_SUPPORT', 'PRESUBMIT_SUPPORT').start()
     mock.patch('git_cl.Settings.GetRoot', return_value='root').start()
     mock.patch('git_cl.time_time').start()
@@ -3000,6 +3003,7 @@ class ChangelistTest(unittest.TestCase):
         '--gerrit_url', 'https://chromium-review.googlesource.com',
         '--issue', '123456',
         '--patchset', '7',
+        '--target_ref', 'ref',
         '--commit',
         '--may_prompt',
         '--parallel',
@@ -3048,6 +3052,7 @@ class ChangelistTest(unittest.TestCase):
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
+        '--target_ref', 'ref',
         '--upload',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
@@ -3095,6 +3100,7 @@ class ChangelistTest(unittest.TestCase):
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
+        '--target_ref', 'ref',
         '--upload',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
@@ -3135,6 +3141,7 @@ class ChangelistTest(unittest.TestCase):
         '--gerrit_url', 'https://chromium-review.googlesource.com',
         '--issue', '123456',
         '--patchset', '7',
+        '--target_ref', 'ref',
         '--post_upload',
         '--description_file', '/tmp/fake-temp1',
     ])

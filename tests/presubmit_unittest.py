@@ -184,6 +184,7 @@ index fe3de7b..54ae6e1 100755
     mock.patch('os.path.abspath', lambda f: f).start()
     mock.patch('os.path.isfile').start()
     mock.patch('os.remove').start()
+    mock.patch('owners_client.GetCodeOwnersClient').start()
     mock.patch('presubmit_support._parse_files').start()
     mock.patch('presubmit_support.rdb_wrapper.client',
                return_value=self.rdb_client).start()
@@ -1144,9 +1145,10 @@ def CheckChangeOnCommit(input_api, output_api):
         upstream=options.upstream)
     scm.GIT.GetAllFiles.assert_called_once_with(options.root)
 
-  def testParseGerritOptions_NoGerritUrl(self):
+  def testParseGerritOptions_NoGerritUrlOrProject(self):
     options = mock.Mock(
         gerrit_url=None,
+        gerrit_project=None,
         gerrit_fetch=False,
         author='author',
         description='description')
@@ -1160,14 +1162,16 @@ def CheckChangeOnCommit(input_api, output_api):
   def testParseGerritOptions_NoGerritFetch(self):
     options = mock.Mock(
         gerrit_url='https://foo-review.googlesource.com/bar',
+        gerrit_project='baz/project',
         gerrit_fetch=False,
+        target_ref='refs/heads/foobar',
         author='author',
         description='description')
 
     gerrit_obj = presubmit._parse_gerrit_options(None, options)
 
     presubmit.GerritAccessor.assert_called_once_with(
-        'foo-review.googlesource.com')
+        'foo-review.googlesource.com', 'baz/project', 'refs/heads/foobar')
     self.assertEqual(presubmit.GerritAccessor.return_value, gerrit_obj)
     self.assertEqual('author', options.author)
     self.assertEqual('description', options.description)
@@ -1181,14 +1185,16 @@ def CheckChangeOnCommit(input_api, output_api):
 
     options = mock.Mock(
         gerrit_url='https://foo-review.googlesource.com/bar',
+        gerrit_project='baz/project',
         gerrit_fetch=True,
+        target_ref='refs/heads/foobar',
         issue=123,
         patchset=4)
 
     gerrit_obj = presubmit._parse_gerrit_options(None, options)
 
     presubmit.GerritAccessor.assert_called_once_with(
-        'foo-review.googlesource.com')
+        'foo-review.googlesource.com', 'baz/project', 'refs/heads/foobar')
     self.assertEqual(presubmit.GerritAccessor.return_value, gerrit_obj)
     self.assertEqual('new owner', options.author)
     self.assertEqual('new description', options.description)
