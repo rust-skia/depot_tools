@@ -5,6 +5,58 @@ chromiumos/infra/crosjobs/linux-amd64
 	git_revision:ed616d595eb7241d39d34907050d2949121d6ae8
 	_vAeU0Q9lAxn933K8vDhwGK40zKVvV-yXGpIy43ATXAC
 
+infra/chromeperf/pinpoint/linux-386
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	xyH1aLTcVvhGIZMq62hzkjA21mK7b6cadLSI-FtCRN0C
+
+infra/chromeperf/pinpoint/linux-amd64
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	3A-wcQKR_m28KYTCwnwXBt5gvR9g_BeCouhdNfgDMmIC
+
+infra/chromeperf/pinpoint/linux-arm64
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	X7QcBfQGRESUpjmXPbEs7yZuIXBSVmQPvnIDLEVJygwC
+
+infra/chromeperf/pinpoint/linux-armv6l
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	fb5tmdVShOkScZF8GBHSGA8HzR_XC_A4XHrek7tHk2cC
+
+infra/chromeperf/pinpoint/linux-mips64
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	Fn52XTW3rcd22EpsIAdIYeo7TMYk8TunUdVUylRFJosC
+
+infra/chromeperf/pinpoint/linux-mips64le
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	E7B-Edk1PXb39H8JsqPi-96g442wdYPOW9WWWZupC20C
+
+infra/chromeperf/pinpoint/linux-mipsle
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	Q5ibG4COMsicmzK_2tg8fzQ15q_mOuDih5l0pu_Mf8AC
+
+infra/chromeperf/pinpoint/linux-ppc64
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	RCftsHdx_b4pX7vD3XFrAogwFUkCM38_qlmeUQ2ZIQoC
+
+infra/chromeperf/pinpoint/linux-ppc64le
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	QU8X7vZ7LVkTe6lWL4y-OXQvsVcTzxuAGVaE0_hb62IC
+
+infra/chromeperf/pinpoint/linux-s390x
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	L5huZIsmzsu0ld6jPBmYw2PmwTW8JJeak6B3ll4NNiAC
+
+infra/chromeperf/pinpoint/mac-amd64
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	q6N3S4cefdTenMrm8dvj2mIwh7X-ZpDB2yn0-8Pw06gC
+
+infra/chromeperf/pinpoint/windows-386
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	mRPDL2AaEJBr_WfB61rpcEklRvwre9ZI-tzM9iYf7cEC
+
+infra/chromeperf/pinpoint/windows-amd64
+	git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+	oeW2h94CqmZmx73kDnT0-xM0huDNjqoEYlS3ya_4V9oC
+
 infra/goma/client/linux-amd64
 	git_revision:be1b7f4547023e809b636dc9572c976ccb33dcac
 	hfsS3xwgShyugKiAzczd3lgaz7BkznLrFDIFr1MjGFEC
