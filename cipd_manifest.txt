@@ -20,7 +20,7 @@
 $ResolvedVersions cipd_manifest.versions
 
 # Fully supported platforms.
-$VerifiedPlatform linux-amd64 mac-amd64 windows-amd64 windows-386
+$VerifiedPlatform linux-amd64 mac-amd64 mac-arm64 windows-amd64 windows-386
 
 # Platform with best-effort support: we have some binaries cross-compiled for
 # them, but we do not test they work. They also may not have all necessary
@@ -30,28 +30,28 @@ $VerifiedPlatform linux-arm64 linux-armv6l
 $VerifiedPlatform linux-mips64 linux-mips64le linux-mipsle
 
 # vpython.
-infra/tools/luci/vpython/${platform} git_revision:0f694cdc06ba054b9960aa1ae9766e45b53d02c1
+infra/tools/luci/vpython/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # LUCI editor
-infra/tools/luci/led/${platform} git_revision:1492a186ef3a210e9d2bd824a2e6dee6b3c7a485
+infra/tools/luci/led/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # LUCI config generator
-infra/tools/luci/lucicfg/${platform} git_revision:326bf82114c1afe63ee8d4ea40f29fc797de016b
+infra/tools/luci/lucicfg/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # Mac toolchain installer
-infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:8811b82233df02ee372cae1e19e379ca8c6a2776
+infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # LUCI rpc command line tool
-infra/tools/prpc/${platform} git_revision:1492a186ef3a210e9d2bd824a2e6dee6b3c7a485
+infra/tools/prpc/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # LUCI authentication command line tool
-infra/tools/luci-auth/${platform} git_revision:510e7187aa80b1b0d490f069437d119c28d1ea48
+infra/tools/luci-auth/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # LUCI Buildbucket CLI
-infra/tools/bb/${platform} git_revision:1492a186ef3a210e9d2bd824a2e6dee6b3c7a485
+infra/tools/bb/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # LUCI ResultDB CLI
-infra/tools/rdb/${platform} git_revision:53569bdc22443e161d94504bc66666c2a7a7417c
+infra/tools/rdb/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # CHROMEOS Buildjobs CLI
 chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d39d34907050d2949121d6ae8
@@ -60,7 +60,7 @@ chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d3
 infra/goma/client/${os}-amd64 git_revision:be1b7f4547023e809b636dc9572c976ccb33dcac
 
 # dirmd, a tool to work with DIR_METADATA files
-infra/tools/dirmd/${platform} git_revision:e338559e3b43debaad0de9605d13cfef52f566ec
+infra/tools/dirmd/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 
 # Pinpoint CLI
-infra/chromeperf/pinpoint/${platform} git_revision:527b8fd5485ed6bafca89042a3f0ead5ed4fe1a6
+infra/chromeperf/pinpoint/${platform} git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
