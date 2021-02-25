@@ -779,13 +779,13 @@ def IsCodeOwnersEnabled(host):
 
 
 def GetOwnersForFile(host, project, branch, path, limit=100,
-                     o_params=('DETAILS',)):
+                     resolve_all_users=True, o_params=('DETAILS',)):
   """Gets information about owners attached to a file."""
   path = 'projects/%s/branches/%s/code_owners/%s' % (
       urllib.parse.quote(project, ''),
       urllib.parse.quote(branch, ''),
       urllib.parse.quote(path, ''))
-  q = []
+  q = ['resolve-all-users=%s' % json.dumps(resolve_all_users)]
   if limit:
     q.append('n=%d' % limit)
   if o_params:

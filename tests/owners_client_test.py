@@ -58,6 +58,9 @@ class DepotToolsClientTest(unittest.TestCase):
 class GerritClientTest(unittest.TestCase):
   def setUp(self):
     self.client = owners_client.GerritClient('host', 'project', 'branch')
+    self.addCleanup(mock.patch.stopall)
+
+  def testListOwners(self):
     mock.patch(
         'gerrit_util.GetOwnersForFile',
         return_value={
@@ -76,12 +79,12 @@ class GerritClientTest(unittest.TestCase):
               "account": {
                 "email": 'missing@example.com'
               },
+            },
+            {
+              "account": {},
             }
           ]
         }).start()
-    self.addCleanup(mock.patch.stopall)
-
-  def testListOwners(self):
     self.assertEquals(
         ['approver@example.com', 'reviewer@example.com', 'missing@example.com'],
         self.client.ListOwners(os.path.join('bar', 'everyone', 'foo.txt')))
@@ -92,7 +95,41 @@ class GerritClientTest(unittest.TestCase):
         self.client.ListOwners(os.path.join('bar', 'everyone', 'foo.txt')))
     # Always use slashes as separators.
     gerrit_util.GetOwnersForFile.assert_called_once_with(
-        'host', 'project', 'branch', 'bar/everyone/foo.txt')
+        'host', 'project', 'branch', 'bar/everyone/foo.txt',
+        resolve_all_users=False)
+
+  def testListOwnersOwnedByAll(self):
+    mock.patch(
+      'gerrit_util.GetOwnersForFile',
+      side_effect=[
+        {
+          "code_owners": [
+            {
+              "account": {
+                "email": 'foo@example.com'
+              },
+            },
+          ],
+          "owned_by_all_users": True,
+        },
+        {
+          "code_owners": [
+            {
+              "account": {
+                "email": 'bar@example.com'
+              },
+            },
+          ],
+          "owned_by_all_users": False,
+        },
+      ]
+    ).start()
+    self.assertEquals(
+        ['foo@example.com', self.client.EVERYONE],
+        self.client.ListOwners('foo.txt'))
+    self.assertEquals(
+        ['bar@example.com'],
+        self.client.ListOwners('bar.txt'))
 
 
 class TestClient(owners_client.OwnersClient):
