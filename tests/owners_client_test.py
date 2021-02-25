@@ -275,13 +275,6 @@ class GetCodeOwnersClientTest(unittest.TestCase):
     mock.patch('gerrit_util.IsCodeOwnersEnabled').start()
     self.addCleanup(mock.patch.stopall)
 
-  def testGetCodeOwnersClient_NoHost(self):
-    owners_client.GetCodeOwnersClient('root', None, 'project', 'branch')
-    gerrit_util.IsCodeOwnersEnabled.assert_not_called()
-
-    owners_client.GetCodeOwnersClient('root', '', 'project', 'branch')
-    gerrit_util.IsCodeOwnersEnabled.assert_not_called()
-
   def testGetCodeOwnersClient_GerritClient(self):
     gerrit_util.IsCodeOwnersEnabled.return_value = True
     self.assertIsInstance(

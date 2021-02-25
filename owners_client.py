@@ -228,6 +228,6 @@ def GetCodeOwnersClient(root, host, project, branch):
 
   Defaults to GerritClient, and falls back to DepotToolsClient if code-owners
   plugin is not available."""
-  if host and gerrit_util.IsCodeOwnersEnabled(host):
+  if gerrit_util.IsCodeOwnersEnabled(host):
     return GerritClient(host, project, branch)
   return DepotToolsClient(root, branch)

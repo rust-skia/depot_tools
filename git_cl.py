@@ -1294,8 +1294,6 @@ class Changelist(object):
     gerrit_url = self.GetCodereviewServer()
     issue = self.GetIssue()
     patchset = self.GetPatchset()
-    remote, remote_branch = self.GetRemoteBranch()
-    target_ref = GetTargetRef(remote, remote_branch, None)
     if author:
       args.extend(['--author', author])
     if gerrit_url:
@@ -1304,8 +1302,6 @@ class Changelist(object):
       args.extend(['--issue', str(issue)])
     if patchset:
       args.extend(['--patchset', str(patchset)])
-    if target_ref:
-      args.extend(['--target_ref', target_ref])
 
     return args
 
