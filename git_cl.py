@@ -1290,14 +1290,17 @@ class Changelist(object):
 
     args.extend(['--verbose'] * verbose)
 
+    remote, remote_branch = self.GetRemoteBranch()
+    target_ref = GetTargetRef(remote, remote_branch, None)
+    args.extend(['--gerrit_url', self.GetCodereviewServer()])
+    args.extend(['--gerrit_project', self.GetGerritProject()])
+    args.extend(['--gerrit_branch', target_ref])
+
     author = self.GetAuthor()
-    gerrit_url = self.GetCodereviewServer()
     issue = self.GetIssue()
     patchset = self.GetPatchset()
     if author:
       args.extend(['--author', author])
-    if gerrit_url:
-      args.extend(['--gerrit_url', gerrit_url])
     if issue:
       args.extend(['--issue', str(issue)])
     if patchset:
@@ -1319,11 +1322,9 @@ class Changelist(object):
 
     with gclient_utils.temporary_file() as description_file:
       with gclient_utils.temporary_file() as json_output:
-
         gclient_utils.FileWrite(description_file, description)
         args.extend(['--json_output', json_output])
         args.extend(['--description_file', description_file])
-        args.extend(['--gerrit_project', self.GetGerritProject()])
 
         start = time_time()
         cmd = ['vpython', PRESUBMIT_SUPPORT] + args

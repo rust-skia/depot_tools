@@ -500,7 +500,8 @@ class PresubmitUnittest(PresubmitTestsBase):
         0,
         0,
         None)
-    executer = presubmit.PresubmitExecuter(change, False, None, False)
+    executer = presubmit.PresubmitExecuter(
+        change, False, None, presubmit.GerritAccessor())
     self.assertFalse(executer.ExecPresubmitScript('', fake_presubmit))
     # No error if no on-upload entry point
     self.assertFalse(executer.ExecPresubmitScript(
@@ -509,7 +510,8 @@ class PresubmitUnittest(PresubmitTestsBase):
       fake_presubmit
     ))
 
-    executer = presubmit.PresubmitExecuter(change, True, None, False)
+    executer = presubmit.PresubmitExecuter(
+        change, True, None, presubmit.GerritAccessor())
     # No error if no on-commit entry point
     self.assertFalse(executer.ExecPresubmitScript(
       ('def CheckChangeOnUpload(input_api, output_api):\n'
@@ -556,7 +558,8 @@ class PresubmitUnittest(PresubmitTestsBase):
     fake_presubmit = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
     change = presubmit.Change('mychange', '\n'.join(description_lines),
                               self.fake_root_dir, files, 0, 0, None)
-    executer = presubmit.PresubmitExecuter(change, True, None, False)
+    executer = presubmit.PresubmitExecuter(
+        change, True, None, presubmit.GerritAccessor())
     sink = self.rdb_client.__enter__.return_value = mock.MagicMock()
 
     # STATUS_PASS on success
@@ -591,7 +594,7 @@ class PresubmitUnittest(PresubmitTestsBase):
 
     fake_presubmit = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
     executer = presubmit.PresubmitExecuter(
-        self.fake_change, False, None, False)
+        self.fake_change, False, None, presubmit.GerritAccessor())
 
     self.assertEqual([], executer.ExecPresubmitScript(
       ('def CheckChangeOnUpload(input_api, output_api):\n'
@@ -1156,40 +1159,43 @@ def CheckChangeOnCommit(input_api, output_api):
     self.assertEqual('author', options.author)
     self.assertEqual('description', options.description)
 
-  @mock.patch('presubmit_support.GerritAccessor', mock.Mock())
   def testParseGerritOptions_NoGerritFetch(self):
     options = mock.Mock(
         gerrit_url='https://foo-review.googlesource.com/bar',
+        gerrit_project='project',
+        gerrit_branch='refs/heads/main',
         gerrit_fetch=False,
         author='author',
         description='description')
 
     gerrit_obj = presubmit._parse_gerrit_options(None, options)
 
-    presubmit.GerritAccessor.assert_called_once_with(
-        'foo-review.googlesource.com')
-    self.assertEqual(presubmit.GerritAccessor.return_value, gerrit_obj)
+    self.assertEqual('foo-review.googlesource.com', gerrit_obj.host)
+    self.assertEqual('project', gerrit_obj.project)
+    self.assertEqual('refs/heads/main', gerrit_obj.branch)
     self.assertEqual('author', options.author)
     self.assertEqual('description', options.description)
 
-  @mock.patch('presubmit_support.GerritAccessor', mock.Mock())
-  def testParseGerritOptions_GerritFetch(self):
-    accessor = mock.Mock()
-    accessor.GetChangeOwner.return_value = 'new owner'
-    accessor.GetChangeDescription.return_value = 'new description'
-    presubmit.GerritAccessor.return_value = accessor
+  @mock.patch('presubmit_support.GerritAccessor.GetChangeOwner')
+  @mock.patch('presubmit_support.GerritAccessor.GetChangeDescription')
+  def testParseGerritOptions_GerritFetch(
+      self, mockDescription, mockOwner):
+    mockDescription.return_value = 'new description'
+    mockOwner.return_value = 'new owner'
 
     options = mock.Mock(
         gerrit_url='https://foo-review.googlesource.com/bar',
+        gerrit_project='project',
+        gerrit_branch='refs/heads/main',
         gerrit_fetch=True,
         issue=123,
         patchset=4)
 
     gerrit_obj = presubmit._parse_gerrit_options(None, options)
 
-    presubmit.GerritAccessor.assert_called_once_with(
-        'foo-review.googlesource.com')
-    self.assertEqual(presubmit.GerritAccessor.return_value, gerrit_obj)
+    self.assertEqual('foo-review.googlesource.com', gerrit_obj.host)
+    self.assertEqual('project', gerrit_obj.project)
+    self.assertEqual('refs/heads/main', gerrit_obj.branch)
     self.assertEqual('new owner', options.author)
     self.assertEqual('new description', options.description)
 

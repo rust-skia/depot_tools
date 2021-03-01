@@ -2958,13 +2958,16 @@ class ChangelistTest(unittest.TestCase):
     mock.patch('git_cl.Changelist.GetAuthor', return_value='author').start()
     mock.patch('git_cl.Changelist.GetIssue', return_value=123456).start()
     mock.patch('git_cl.Changelist.GetPatchset', return_value=7).start()
+    mock.patch(
+        'git_cl.Changelist.GetRemoteBranch',
+        return_value=('origin', 'refs/remotes/origin/main')).start()
     mock.patch('git_cl.PRESUBMIT_SUPPORT', 'PRESUBMIT_SUPPORT').start()
     mock.patch('git_cl.Settings.GetRoot', return_value='root').start()
     mock.patch('git_cl.time_time').start()
     mock.patch('metrics.collector').start()
     mock.patch('subprocess2.Popen').start()
-    mock.patch('git_cl.Changelist.GetGerritProject',
-        return_value='https://chromium-review.googlesource.com').start()
+    mock.patch(
+        'git_cl.Changelist.GetGerritProject', return_value='project').start()
     self.addCleanup(mock.patch.stopall)
     self.temp_count = 0
 
@@ -2996,8 +2999,10 @@ class ChangelistTest(unittest.TestCase):
         '--root', 'root',
         '--upstream', 'upstream',
         '--verbose', '--verbose',
-        '--author', 'author',
         '--gerrit_url', 'https://chromium-review.googlesource.com',
+        '--gerrit_project', 'project',
+        '--gerrit_branch', 'refs/heads/main',
+        '--author', 'author',
         '--issue', '123456',
         '--patchset', '7',
         '--commit',
@@ -3006,7 +3011,6 @@ class ChangelistTest(unittest.TestCase):
         '--all_files',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
-        '--gerrit_project', 'https://chromium-review.googlesource.com',
     ])
     gclient_utils.FileWrite.assert_called_once_with(
         '/tmp/fake-temp1', 'description')
@@ -3030,7 +3034,6 @@ class ChangelistTest(unittest.TestCase):
     git_cl.Changelist.GetAuthor.return_value = None
     git_cl.Changelist.GetIssue.return_value = None
     git_cl.Changelist.GetPatchset.return_value = None
-    git_cl.Changelist.GetCodereviewServer.return_value = None
 
     cl = git_cl.Changelist()
     results = cl.RunHook(
@@ -3048,10 +3051,12 @@ class ChangelistTest(unittest.TestCase):
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
+        '--gerrit_url', 'https://chromium-review.googlesource.com',
+        '--gerrit_project', 'project',
+        '--gerrit_branch', 'refs/heads/main',
         '--upload',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
-        '--gerrit_project', 'https://chromium-review.googlesource.com',
     ])
     gclient_utils.FileWrite.assert_called_once_with(
         '/tmp/fake-temp1', 'description')
@@ -3075,7 +3080,6 @@ class ChangelistTest(unittest.TestCase):
     git_cl.Changelist.GetAuthor.return_value = None
     git_cl.Changelist.GetIssue.return_value = None
     git_cl.Changelist.GetPatchset.return_value = None
-    git_cl.Changelist.GetCodereviewServer.return_value = None
 
     cl = git_cl.Changelist()
     results = cl.RunHook(
@@ -3095,10 +3099,12 @@ class ChangelistTest(unittest.TestCase):
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
+        '--gerrit_url', 'https://chromium-review.googlesource.com',
+        '--gerrit_project', 'project',
+        '--gerrit_branch', 'refs/heads/main',
         '--upload',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
-        '--gerrit_project', 'https://chromium-review.googlesource.com',
     ])
 
   @mock.patch('sys.exit', side_effect=SystemExitMock)
@@ -3131,8 +3137,10 @@ class ChangelistTest(unittest.TestCase):
         '--root', 'root',
         '--upstream', 'upstream',
         '--verbose', '--verbose',
-        '--author', 'author',
         '--gerrit_url', 'https://chromium-review.googlesource.com',
+        '--gerrit_project', 'project',
+        '--gerrit_branch', 'refs/heads/main',
+        '--author', 'author',
         '--issue', '123456',
         '--patchset', '7',
         '--post_upload',
