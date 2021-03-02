@@ -176,9 +176,12 @@ class DepotToolsClient(OwnersClient):
     self._db.override_files = self._GetOriginalOwnersFiles()
 
   def _GetOriginalOwnersFiles(self):
+    remote, _ = scm.GIT.FetchUpstreamTuple(self._root)
+    branch = ''.join(scm.GIT.RefToRemoteRef(self._branch, remote))
+
     return {
-      f: scm.GIT.GetOldContents(self._root, f, self._branch).splitlines()
-      for _, f in scm.GIT.CaptureStatus(self._root, self._branch)
+      f: scm.GIT.GetOldContents(self._root, f, branch).splitlines()
+      for _, f in scm.GIT.CaptureStatus(self._root, branch)
       if os.path.basename(f) == 'OWNERS'
     }
 
