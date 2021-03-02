@@ -1509,13 +1509,15 @@ class TestGitCl(unittest.TestCase):
   @mock.patch('git_cl.Settings.GetBugPrefix')
   @mock.patch('git_cl.Changelist.FetchDescription')
   @mock.patch('git_cl.Changelist.GetBranch')
+  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
   @mock.patch('git_cl.Changelist.GetGerritHost')
   @mock.patch('git_cl.Changelist.GetGerritProject')
   @mock.patch('git_cl.Changelist.GetRemoteBranch')
   @mock.patch('owners_client.OwnersClient.BatchListOwners')
   def getDescriptionForUploadTest(
       self, mockBatchListOwners=None, mockGetRemoteBranch=None,
-      mockGetGerritProject=None, mockGetGerritHost=None, mockGetBranch=None,
+      mockGetGerritProject=None, mockGetGerritHost=None,
+      mockGetCommonAncestorWithUpstream=None, mockGetBranch=None,
       mockFetchDescription=None, mockGetBugPrefix=None,
       mockIsCodeOwnersEnabled=None,
       initial_description='desc', bug=None, fixed=None, branch='branch',
@@ -1531,6 +1533,7 @@ class TestGitCl(unittest.TestCase):
     mockIsCodeOwnersEnabled.return_value = True
     mockGetBranch.return_value = branch
     mockGetBugPrefix.return_value = 'prefix'
+    mockGetCommonAncestorWithUpstream.return_value = 'upstream'
     mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
     mockFetchDescription.return_value = 'desc'
     mockBatchListOwners.side_effect = lambda ps: {

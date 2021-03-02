@@ -176,12 +176,9 @@ class DepotToolsClient(OwnersClient):
     self._db.override_files = self._GetOriginalOwnersFiles()
 
   def _GetOriginalOwnersFiles(self):
-    remote, _ = scm.GIT.FetchUpstreamTuple(self._root)
-    branch = ''.join(scm.GIT.RefToRemoteRef(self._branch, remote))
-
     return {
-      f: scm.GIT.GetOldContents(self._root, f, branch).splitlines()
-      for _, f in scm.GIT.CaptureStatus(self._root, branch)
+      f: scm.GIT.GetOldContents(self._root, f, self._branch).splitlines()
+      for _, f in scm.GIT.CaptureStatus(self._root, self._branch)
       if os.path.basename(f) == 'OWNERS'
     }
 
@@ -232,11 +229,11 @@ class GerritClient(OwnersClient):
     return self._owners_cache[path]
 
 
-def GetCodeOwnersClient(root, host, project, branch):
+def GetCodeOwnersClient(root, upstream, host, project, branch):
   """Get a new OwnersClient.
 
   Defaults to GerritClient, and falls back to DepotToolsClient if code-owners
   plugin is not available."""
   # TODO(crbug.com/1183447): Use code-owners plugin if available on host once
   # code-owners plugin issues have been fixed.
-  return DepotToolsClient(root, branch)
+  return DepotToolsClient(root, upstream)

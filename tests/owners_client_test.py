@@ -44,14 +44,11 @@ class DepotToolsClientTest(unittest.TestCase):
     self.fopen = self.repo.open_for_reading
     self.addCleanup(mock.patch.stopall)
     self.client = owners_client.DepotToolsClient(
-        '/', 'refs/heads/main', self.fopen, self.repo)
+        '/', 'branch', self.fopen, self.repo)
 
   @mock.patch('scm.GIT.CaptureStatus')
   @mock.patch('scm.GIT.GetOldContents')
-  @mock.patch('scm.GIT.FetchUpstreamTuple')
-  def testListOwners(
-      self, mockFetchUpstreamTuple, mockGetOldContents, mockCaptureStatus):
-    mockFetchUpstreamTuple.return_value = ('remote', 'refs/heads/blah')
+  def testListOwners(self, mockGetOldContents, mockCaptureStatus):
     mockGetOldContents.side_effect = lambda r, f, _b: self.repo.files[r + f]
     mockCaptureStatus.return_value = [
         ('M', 'bar/everyone/foo.txt'),
@@ -61,8 +58,7 @@ class DepotToolsClientTest(unittest.TestCase):
     self.assertEqual(
         ['*', 'missing@example.com'],
         self.client.ListOwners('bar/everyone/foo.txt'))
-    mockCaptureStatus.assert_called_once_with(
-        '/', 'refs/remotes/remote/main')
+    mockCaptureStatus.assert_called_once_with('/', 'branch')
 
 
 class GerritClientTest(unittest.TestCase):
@@ -330,7 +326,7 @@ class GetCodeOwnersClientTest(unittest.TestCase):
   def testGetCodeOwnersClient_DepotToolsClient(self):
     gerrit_util.IsCodeOwnersEnabled.return_value = False
     self.assertIsInstance(
-        owners_client.GetCodeOwnersClient('root', 'host', 'project', 'branch'),
+        owners_client.GetCodeOwnersClient('root', 'branch', '', '', ''),
         owners_client.DepotToolsClient)
 
 
