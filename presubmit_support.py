@@ -470,7 +470,7 @@ class GerritAccessor(object):
   def IsCodeOwnersEnabledOnRepo(self):
     if self.code_owners_enabled is None:
       self.code_owners_enabled = gerrit_util.IsCodeOwnersEnabledOnRepo(
-          self.host, self.repo)
+          self.host, self.project)
     return self.code_owners_enabled
 
 
