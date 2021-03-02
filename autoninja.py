@@ -132,7 +132,7 @@ if use_goma:
             file=sys.stderr)
       if sys.platform.startswith('win'):
         # Set an exit code of 1 in the batch file.
-        print('cmd /c exit 1')
+        print('cmd "/c exit 1"')
       else:
         # Set an exit code of 1 by executing 'false' in the bash script.
         print('false')
