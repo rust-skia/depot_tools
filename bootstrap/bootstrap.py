@@ -228,20 +228,15 @@ def clean_up_old_installations(skip_dir):
   that is using the bootstrapped Python!
   """
   root_contents = os.listdir(ROOT_DIR)
-  cleanup_paths = ('win_tools-*_bin', 'python27*_bin', 'git-*_bin',
-                   'bootstrap-*_bin', 'python.bat', 'python3.bat')
-  for f in cleanup_paths:
+  for f in ('win_tools-*_bin', 'python27*_bin', 'git-*_bin', 'bootstrap-*_bin'):
     for entry in fnmatch.filter(root_contents, f):
       full_entry = os.path.join(ROOT_DIR, entry)
-      if full_entry == skip_dir:
+      if full_entry == skip_dir or not os.path.isdir(full_entry):
         continue
 
       logging.info('Cleaning up old installation %r', entry)
       if not _toolchain_in_use(full_entry):
-        if os.path.isdir(full_entry):
-          _safe_rmtree(full_entry)
-        else:
-          os.remove(full_entry)
+        _safe_rmtree(full_entry)
       else:
         logging.info('Toolchain at %r is in-use; skipping', full_entry)
 
@@ -326,6 +321,8 @@ def main(argv):
     git_postprocess(template, os.path.join(bootstrap_dir, 'git'))
     templates = [
         ('git-bash.template.sh', 'git-bash', ROOT_DIR),
+        ('python27.bat', 'python.bat', ROOT_DIR),
+        ('python3.bat', 'python3.bat', ROOT_DIR),
     ]
     for src_name, dst_name, dst_dir in templates:
       # Re-evaluate and regenerate our root templated files.
