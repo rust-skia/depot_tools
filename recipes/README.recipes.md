@@ -879,9 +879,9 @@ Returns true iff the properties exist to match a Gerrit issue.
 
 Returns true iff we have a change to check out.
 
-&mdash; **def [normalize\_footer\_name](/recipes/recipe_modules/tryserver/api.py#334)(self, footer):**
+&mdash; **def [normalize\_footer\_name](/recipes/recipe_modules/tryserver/api.py#338)(self, footer):**
 
-&mdash; **def [set\_change](/recipes/recipe_modules/tryserver/api.py#337)(self, change):**
+&mdash; **def [set\_change](/recipes/recipe_modules/tryserver/api.py#341)(self, change):**
 
 Set the gerrit change for this module.
 
