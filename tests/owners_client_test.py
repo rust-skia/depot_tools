@@ -296,9 +296,10 @@ class GetCodeOwnersClientTest(unittest.TestCase):
     self.addCleanup(mock.patch.stopall)
 
   def testGetCodeOwnersClient_GerritClient(self):
-    # TODO(crbug.com/1183447): Check that code-owners is used if available once
-    # code-owners plugin issues have been fixed.
-    pass
+    gerrit_util.IsCodeOwnersEnabled.return_value = True
+    self.assertIsInstance(
+        owners_client.GetCodeOwnersClient('', '', 'host', 'project', 'branch'),
+        owners_client.GerritClient)
 
   def testGetCodeOwnersClient_DepotToolsClient(self):
     gerrit_util.IsCodeOwnersEnabled.return_value = False
