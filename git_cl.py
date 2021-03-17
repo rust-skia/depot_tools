@@ -3746,8 +3746,10 @@ def CMDissue(parser, args):
   print('Issue number: %s (%s)' % (cl.GetIssue(), cl.GetIssueURL()))
   if options.json:
     write_json(options.json, {
-      'issue': cl.GetIssue(),
+      'gerrit_host': cl.GetGerritHost(),
+      'gerrit_project': cl.GetGerritProject(),
       'issue_url': cl.GetIssueURL(),
+      'issue': cl.GetIssue(),
     })
   return 0
 

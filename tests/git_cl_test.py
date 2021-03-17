@@ -2350,12 +2350,22 @@ class TestGitCl(unittest.TestCase):
     self.mockGit.config['branch.master.gerritissue'] = '123'
     self.mockGit.config['branch.master.gerritserver'] = (
          'https://chromium-review.googlesource.com')
-    self.calls = [
-        (('write_json', 'output.json',
-          {'issue': 123,
-           'issue_url': 'https://chromium-review.googlesource.com/123'}),
-         ''),
-    ]
+    self.mockGit.config['remote.origin.url'] = (
+        'https://chromium.googlesource.com/chromium/src'
+    )
+    self.calls = [(
+        (
+          'write_json',
+          'output.json',
+          {
+            'issue': 123,
+            'issue_url': 'https://chromium-review.googlesource.com/123',
+            'gerrit_host': 'chromium-review.googlesource.com',
+            'gerrit_project': 'chromium/src',
+          },
+        ),
+        '',
+    )]
     self.assertEqual(0, git_cl.main(['issue', '--json', 'output.json']))
 
   def _common_GerritCommitMsgHookCheck(self):
