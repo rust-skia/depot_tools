@@ -2795,6 +2795,37 @@ the current line as well!
         response=response,
         expected_output='')
 
+  def testCannedCheckOwners_BotCommit(self):
+    response = {
+      "owner": {"email": "john@example.com"},
+      "labels": {"Bot-Commit": {
+        u'all': [
+          {
+            u'email': u'bot@example.com',
+            u'value': 1
+          },
+        ],
+        u'approved': {u'email': u'bot@example.org'},
+        u'default_value': 0,
+        u'values': {u' 0': u'No score',
+                    u'+1': u'Looks good to me'},
+      }},
+      "reviewers": {"REVIEWER": [{u'email': u'bot@example.com'}]},
+    }
+    self.AssertOwnersWorks(
+        approvers=set(),
+        modified_files={'foo/xyz.cc': ['john@example.com']},
+        response=response,
+        is_committing=True,
+        expected_output='')
+
+    self.AssertOwnersWorks(
+        approvers=set(),
+        modified_files={'foo/xyz.cc': ['john@example.com']},
+        is_committing=False,
+        response=response,
+        expected_output='')
+
   def testCannedCheckOwners_OwnersOverride(self):
     response = {
       "owner": {"email": "john@example.com"},

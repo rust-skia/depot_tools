@@ -446,6 +446,9 @@ class GerritAccessor(object):
     return [v for v in label_info.get('all', [])
             if v.get('value', 0) == max_value]
 
+  def IsBotCommitApproved(self, issue):
+    return bool(self._GetApproversForLabel(issue, 'Bot-Commit'))
+
   def IsOwnersOverrideApproved(self, issue):
     return bool(self._GetApproversForLabel(issue, 'Owners-Override'))
 
