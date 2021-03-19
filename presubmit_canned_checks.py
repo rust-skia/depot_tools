@@ -1136,17 +1136,8 @@ def CheckOwners(
       and input_api.gerrit.IsOwnersOverrideApproved(input_api.change.issue)):
     return []
 
-  code_owners_enabled = False
   if input_api.gerrit and input_api.gerrit.IsCodeOwnersEnabledOnRepo():
-    code_owners_enabled = True
-
-  # Skip OWNERS check on commit if code-owners plugin is enabled, as owners
-  # enforcement is done by the plugin.
-  if input_api.is_committing and code_owners_enabled:
     return []
-
-  # Ignore tbr if the code-owners plugin is enabled on this repo.
-  tbr = not code_owners_enabled and input_api.tbr
 
   affected_files = set([f.LocalPath() for f in
       input_api.change.AffectedFiles(file_filter=source_file_filter)])
@@ -1163,7 +1154,7 @@ def CheckOwners(
   affects_owners = any('OWNERS' in name for name in missing_files)
 
   if input_api.is_committing:
-    if tbr and not affects_owners:
+    if input_api.tbr and not affects_owners:
       return [output_api.PresubmitNotifyResult(
           '--tbr was specified, skipping OWNERS check')]
     needed = 'LGTM from an OWNER'
@@ -1185,7 +1176,7 @@ def CheckOwners(
     output_list = [
         output_fn('Missing %s for these files:\n    %s' %
                   (needed, '\n    '.join(sorted(missing_files))))]
-    if tbr and affects_owners:
+    if input_api.tbr and affects_owners:
       output_list.append(output_fn('TBR for OWNERS files are ignored.'))
     if not input_api.is_committing:
       suggested_owners = input_api.owners_client.SuggestOwners(
