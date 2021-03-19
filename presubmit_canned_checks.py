@@ -1184,7 +1184,8 @@ def CheckOwners(
           ('\n    '.join(suggested_owners))))
     return output_list
 
-  if input_api.is_committing and not reviewers:
+  if (input_api.is_committing and not reviewers and
+      not input_api.gerrit.IsBotCommitApproved(input_api.change.issue)):
     return [output_fn('Missing LGTM from someone other than %s' % owner_email)]
   return []
 
