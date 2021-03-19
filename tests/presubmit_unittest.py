@@ -178,6 +178,7 @@ index fe3de7b..54ae6e1 100755
     mock.patch('gclient_utils.FileWrite').start()
     mock.patch('json.load').start()
     mock.patch('multiprocessing.cpu_count', lambda: 2)
+    mock.patch('gerrit_util.IsCodeOwnersEnabled').start()
     mock.patch('os.chdir').start()
     mock.patch('os.getcwd', self.RootDir)
     mock.patch('os.listdir').start()
@@ -2749,9 +2750,9 @@ the current line as well!
     input_api.dry_run = dry_run
     input_api.gerrit._FetchChangeDetail = lambda _: response
 
-    input_api.owners_client = owners_client.DepotToolsClient('root', 'branch')
+    input_api.owners_client = owners_client.OwnersClient()
 
-    with mock.patch('owners_client.DepotToolsClient.ListOwners',
+    with mock.patch('owners_client.OwnersClient.ListOwners',
                     side_effect=lambda f: owners_by_path.get(f, [])):
       results = presubmit_canned_checks.CheckOwners(
           input_api, presubmit.OutputApi, allow_tbr=allow_tbr)
