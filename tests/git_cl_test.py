@@ -1505,7 +1505,7 @@ class TestGitCl(unittest.TestCase):
     change_id = git_cl.GenerateGerritChangeId('line1\nline2\n')
     self.assertEqual(change_id, 'Ihashchange')
 
-  @mock.patch('gerrit_util.IsCodeOwnersEnabled')
+  @mock.patch('gerrit_util.IsCodeOwnersEnabledOnHost')
   @mock.patch('git_cl.Settings.GetBugPrefix')
   @mock.patch('git_cl.Changelist.FetchDescription')
   @mock.patch('git_cl.Changelist.GetBranch')
@@ -1519,7 +1519,7 @@ class TestGitCl(unittest.TestCase):
       mockGetGerritProject=None, mockGetGerritHost=None,
       mockGetCommonAncestorWithUpstream=None, mockGetBranch=None,
       mockFetchDescription=None, mockGetBugPrefix=None,
-      mockIsCodeOwnersEnabled=None,
+      mockIsCodeOwnersEnabledOnHost=None,
       initial_description='desc', bug=None, fixed=None, branch='branch',
       reviewers=None, tbrs=None, add_owners_to=None,
       expected_description='desc'):
@@ -1530,7 +1530,7 @@ class TestGitCl(unittest.TestCase):
       'b': ['b@example.com'],
       'c': ['c@example.com'],
     }
-    mockIsCodeOwnersEnabled.return_value = True
+    mockIsCodeOwnersEnabledOnHost.return_value = True
     mockGetBranch.return_value = branch
     mockGetBugPrefix.return_value = 'prefix'
     mockGetCommonAncestorWithUpstream.return_value = 'upstream'
@@ -4139,7 +4139,8 @@ class CMDOwnersTestCase(CMDTestCaseBase):
     mock.patch(
         'owners_client.OwnersClient.BatchListOwners',
         return_value=self.owners_by_path).start()
-    mock.patch('gerrit_util.IsCodeOwnersEnabled', return_value=True).start()
+    mock.patch(
+        'gerrit_util.IsCodeOwnersEnabledOnHost', return_value=True).start()
     self.addCleanup(mock.patch.stopall)
 
   def testShowAllNoArgs(self):

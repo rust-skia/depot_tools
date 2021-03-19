@@ -1108,6 +1108,8 @@ def CheckOwnersDirMetadataExclusive(input_api, output_api):
 
 
 def CheckOwnersFormat(input_api, output_api):
+  if input_api.gerrit and input_api.gerrit.IsCodeOwnersEnabledOnRepo():
+    return []
   affected_files = set([
       f.LocalPath()
       for f in input_api.change.AffectedFiles()
@@ -1134,8 +1136,17 @@ def CheckOwners(
       and input_api.gerrit.IsOwnersOverrideApproved(input_api.change.issue)):
     return []
 
-  # Ignore tbr if not allowed for this repo.
-  tbr = input_api.tbr and allow_tbr
+  code_owners_enabled = False
+  if input_api.gerrit and input_api.gerrit.IsCodeOwnersEnabledOnRepo():
+    code_owners_enabled = True
+
+  # Skip OWNERS check on commit if code-owners plugin is enabled, as owners
+  # enforcement is done by the plugin.
+  if input_api.is_committing and code_owners_enabled:
+    return []
+
+  # Ignore tbr if the code-owners plugin is enabled on this repo.
+  tbr = not code_owners_enabled and input_api.tbr
 
   affected_files = set([f.LocalPath() for f in
       input_api.change.AffectedFiles(file_filter=source_file_filter)])

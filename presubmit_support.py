@@ -381,6 +381,7 @@ class GerritAccessor(object):
     self.project = project
     self.branch = branch
     self.cache = {}
+    self.code_owners_enabled = None
 
   def _FetchChangeDetail(self, issue):
     # Separate function to be easily mocked in tests.
@@ -465,6 +466,12 @@ class GerritAccessor(object):
 
   def UpdateDescription(self, description, issue):
     gerrit_util.SetCommitMessage(self.host, issue, description, notify='NONE')
+
+  def IsCodeOwnersEnabledOnRepo(self):
+    if self.code_owners_enabled is None:
+      self.code_owners_enabled = gerrit_util.IsCodeOwnersEnabledOnRepo(
+          self.host, self.repo)
+    return self.code_owners_enabled
 
 
 class OutputApi(object):

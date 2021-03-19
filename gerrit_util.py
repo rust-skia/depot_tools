@@ -771,11 +771,19 @@ def SetCommitMessage(host, change, description, notify='ALL'):
         'in change %s' % change)
 
 
-def IsCodeOwnersEnabled(host):
+def IsCodeOwnersEnabledOnHost(host):
   """Check if the code-owners plugin is enabled for the host."""
   path = 'config/server/capabilities'
   capabilities = ReadHttpJsonResponse(CreateHttpConn(host, path))
   return 'code-owners-checkCodeOwner' in capabilities
+
+
+def IsCodeOwnersEnabledOnRepo(host, repo):
+  """Check if the code-owners plugin is enabled for the repo."""
+  repo = PercentEncodeForGitRef(repo)
+  path = '/projects/%s/code_owners.project_config' % repo
+  config = ReadHttpJsonResponse(CreateHttpConn(host, path))
+  return config['status'].get('disabled', False)
 
 
 def GetOwnersForFile(host, project, branch, path, limit=100,

@@ -178,7 +178,7 @@ index fe3de7b..54ae6e1 100755
     mock.patch('gclient_utils.FileWrite').start()
     mock.patch('json.load').start()
     mock.patch('multiprocessing.cpu_count', lambda: 2)
-    mock.patch('gerrit_util.IsCodeOwnersEnabled').start()
+    mock.patch('gerrit_util.IsCodeOwnersEnabledOnHost').start()
     mock.patch('os.chdir').start()
     mock.patch('os.getcwd', self.RootDir)
     mock.patch('os.listdir').start()
@@ -2669,13 +2669,14 @@ the current line as well!
     self.assertEqual(1, len(results))
     self.assertIsInstance(results[0], presubmit.OutputApi.PresubmitError)
 
-  def GetInputApiWithOWNERS(self, owners_content):
+  def GetInputApiWithOWNERS(self, owners_content, code_owners_enabled=False):
     input_api = self.GetInputApiWithFiles({'OWNERS': ('M', owners_content)})
 
     owners_file = StringIO(owners_content)
     fopen = lambda *args: owners_file
 
     input_api.owners_db = owners.Database('', fopen, os.path)
+    input_api.gerrit.IsCodeOwnersEnabledOnRepo = lambda: code_owners_enabled
 
     return input_api
 
@@ -2684,6 +2685,17 @@ the current line as well!
         'set noparent',
         'per-file lalala = lemur@chromium.org',
     ]))
+    self.assertEqual(
+        [],
+        presubmit_canned_checks.CheckOwnersFormat(
+            input_api, presubmit.OutputApi)
+    )
+
+  def testCheckOwnersFormatWorks_CodeOwners(self):
+    # If code owners is enabled, we rely on it to check owners format instead of
+    # depot tools.
+    input_api = self.GetInputApiWithOWNERS(
+        'any content', code_owners_enabled=True)
     self.assertEqual(
         [],
         presubmit_canned_checks.CheckOwnersFormat(
@@ -2705,7 +2717,7 @@ the current line as well!
       self, tbr=False, issue='1', approvers=None, modified_files=None,
       owners_by_path=None, is_committing=True, response=None,
       expected_output='', manually_specified_reviewers=None, dry_run=None,
-      allow_tbr=True):
+      code_owners_enabled=False):
     # The set of people who lgtm'ed a change.
     approvers = approvers or set()
     manually_specified_reviewers = manually_specified_reviewers or []
@@ -2749,13 +2761,14 @@ the current line as well!
     input_api.tbr = tbr
     input_api.dry_run = dry_run
     input_api.gerrit._FetchChangeDetail = lambda _: response
+    input_api.gerrit.IsCodeOwnersEnabledOnRepo = lambda: code_owners_enabled
 
     input_api.owners_client = owners_client.OwnersClient()
 
     with mock.patch('owners_client.OwnersClient.ListOwners',
                     side_effect=lambda f: owners_by_path.get(f, [])):
       results = presubmit_canned_checks.CheckOwners(
-          input_api, presubmit.OutputApi, allow_tbr=allow_tbr)
+          input_api, presubmit.OutputApi)
     for result in results:
       result.handle()
     if expected_output:
@@ -3037,12 +3050,11 @@ the current line as well!
   def testCannedCheckOwners_TBRIgnored(self):
     self.AssertOwnersWorks(
         tbr=True,
-        allow_tbr=False,
-        expected_output='Missing LGTM from someone other than '
-                        'john@example.com\n')
+        code_owners_enabled=True,
+        expected_output='')
     self.AssertOwnersWorks(
         tbr=True,
-        allow_tbr=False,
+        code_owners_enabled=True,
         is_committing=False,
         expected_output='')
 
