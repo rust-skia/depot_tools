@@ -102,7 +102,7 @@ class PresubmitApi(recipe_api.RecipeApi):
       '--gerrit_branch', self.m.tryserver.gerrit_change_target_ref,
       '--gerrit_fetch',
     ]
-    if self.m.cq.state == self.m.cq.DRY:
+    if self.m.cq.active and self.m.cq.run_mode == self.m.cq.DRY_RUN:
       presubmit_args.append('--dry_run')
 
     presubmit_args.extend([
