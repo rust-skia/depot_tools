@@ -783,7 +783,7 @@ def IsCodeOwnersEnabledOnRepo(host, repo):
   repo = PercentEncodeForGitRef(repo)
   path = '/projects/%s/code_owners.project_config' % repo
   config = ReadHttpJsonResponse(CreateHttpConn(host, path))
-  return config['status'].get('disabled', False)
+  return not config['status'].get('disabled', False)
 
 
 def GetOwnersForFile(host, project, branch, path, limit=100,
