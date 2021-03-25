@@ -2166,7 +2166,10 @@ class Changelist(object):
 
     gclient_utils.rmtree(git_info_dir)
 
-  def _RunGitPushWithTraces(self, refspec, refspec_opts, git_push_metadata):
+  def _RunGitPushWithTraces(self,
+                            refspec,
+                            push_options,
+                            git_push_metadata):
     """Run git push and collect the traces resulting from the execution."""
     # Create a temporary directory to store traces in. Traces will be compressed
     # and stored in a 'traces' dir inside depot_tools.
@@ -2186,8 +2189,12 @@ class Changelist(object):
       push_returncode = 0
       remote_url = self.GetRemoteUrl()
       before_push = time_time()
+      push_cmd = ['git', 'push', remote_url, refspec]
+      for opt in push_options:
+        push_cmd.extend(['-o', opt])
+
       push_stdout = gclient_utils.CheckCallAndFilter(
-          ['git', 'push', remote_url, refspec],
+          push_cmd,
           env=env,
           print_stdout=True,
           # Flush after every line: useful for seeing progress when running as
@@ -2217,7 +2224,7 @@ class Changelist(object):
         'command': 'git push',
         'execution_time': execution_time,
         'exit_code': push_returncode,
-        'arguments': metrics_utils.extract_known_subcommand_args(refspec_opts),
+        'arguments': metrics_utils.extract_known_subcommand_args(push_options),
       })
 
       git_push_metadata['execution_time'] = execution_time
@@ -2342,18 +2349,18 @@ class Changelist(object):
 
     # Extra options that can be specified at push time. Doc:
     # https://gerrit-review.googlesource.com/Documentation/user-upload.html
-    refspec_opts = []
+    push_options = options.push_options if options.push_options else []
 
     # By default, new changes are started in WIP mode, and subsequent patchsets
     # don't send email. At any time, passing --send-mail will mark the change
     # ready and send email for that particular patch.
     if options.send_mail:
-      refspec_opts.append('ready')
-      refspec_opts.append('notify=ALL')
+      push_options.append('ready')
+      push_options.append('notify=ALL')
     elif not self.GetIssue() and options.squash:
-      refspec_opts.append('wip')
+      push_options.append('wip')
     else:
-      refspec_opts.append('notify=NONE')
+      push_options.append('notify=NONE')
 
     # TODO(tandrii): options.message should be posted as a comment
     # if --send-mail is set on non-initial upload as Rietveld used to do it.
@@ -2363,15 +2370,15 @@ class Changelist(object):
     options.title = self._GetTitleForUpload(options)
     if options.title:
       # Punctuation and whitespace in |title| must be percent-encoded.
-      refspec_opts.append(
+      push_options.append(
           'm=' + gerrit_util.PercentEncodeForGitRef(options.title))
 
     if options.private:
-      refspec_opts.append('private')
+      push_options.append('private')
 
     for r in sorted(reviewers):
       if r in valid_accounts:
-        refspec_opts.append('r=%s' % r)
+        push_options.append('r=%s' % r)
         reviewers.remove(r)
       else:
         # TODO(tandrii): this should probably be a hard failure.
@@ -2381,41 +2388,34 @@ class Changelist(object):
       # refspec option will be rejected if cc doesn't correspond to an
       # account, even though REST call to add such arbitrary cc may succeed.
       if c in valid_accounts:
-        refspec_opts.append('cc=%s' % c)
+        push_options.append('cc=%s' % c)
         cc.remove(c)
 
     if options.topic:
       # Documentation on Gerrit topics is here:
       # https://gerrit-review.googlesource.com/Documentation/user-upload.html#topic
-      refspec_opts.append('topic=%s' % options.topic)
+      push_options.append('topic=%s' % options.topic)
 
     if options.enable_auto_submit:
-      refspec_opts.append('l=Auto-Submit+1')
+      push_options.append('l=Auto-Submit+1')
     if options.set_bot_commit:
-      refspec_opts.append('l=Bot-Commit+1')
+      push_options.append('l=Bot-Commit+1')
     if options.use_commit_queue:
-      refspec_opts.append('l=Commit-Queue+2')
+      push_options.append('l=Commit-Queue+2')
     elif options.cq_dry_run:
-      refspec_opts.append('l=Commit-Queue+1')
+      push_options.append('l=Commit-Queue+1')
 
     if change_desc.get_reviewers(tbr_only=True):
       score = gerrit_util.GetCodeReviewTbrScore(
           self.GetGerritHost(),
           self.GetGerritProject())
-      refspec_opts.append('l=Code-Review+%s' % score)
+      push_options.append('l=Code-Review+%s' % score)
 
     # Gerrit sorts hashtags, so order is not important.
     hashtags = {change_desc.sanitize_hash_tag(t) for t in options.hashtags}
     if not self.GetIssue():
       hashtags.update(change_desc.get_hash_tags())
-    refspec_opts += ['hashtag=%s' % t for t in sorted(hashtags)]
-
-    refspec_suffix = ''
-    if refspec_opts:
-      refspec_suffix = '%' + ','.join(refspec_opts)
-      assert ' ' not in refspec_suffix, (
-          'spaces not allowed in refspec: "%s"' % refspec_suffix)
-    refspec = '%s:refs/for/%s%s' % (ref_to_push, branch, refspec_suffix)
+    push_options += ['hashtag=%s' % t for t in sorted(hashtags)]
 
     git_push_metadata = {
         'gerrit_host': self.GetGerritHost(),
@@ -2423,8 +2423,11 @@ class Changelist(object):
         'change_id': change_id,
         'description': change_desc.description,
     }
-    push_stdout = self._RunGitPushWithTraces(refspec, refspec_opts,
-                                             git_push_metadata)
+
+    push_stdout = self._RunGitPushWithTraces(
+        '%s:refs/for/%s' % (ref_to_push, branch),
+        push_options,
+        git_push_metadata)
 
     if options.squash:
       regex = re.compile(r'remote:\s+https?://[\w\-\.\+\/#]*/(\d+)\s.*')
@@ -4192,6 +4195,10 @@ def CMDupload(parser, args):
                     help='Run presubmit checks in the ResultSink environment '
                          'and send results to the ResultDB database.')
   parser.add_option('--realm', help='LUCI realm if reporting to ResultDB')
+  parser.add_option('-o', '--push-options', action='append', default=[],
+                    help='Transmit the given string to the server when '
+                    'performing git push (pass-through). See git-push '
+                    'documentation for more details.')
 
   orig_args = args
   (options, args) = parser.parse_args(args)
