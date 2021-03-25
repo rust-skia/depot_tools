@@ -53,10 +53,6 @@ infra/chromeperf/pinpoint/mac-arm64
 	git_revision:3c08bc7f9da8e336a5bc2745504ffe4f0103e39e
 	L7KSqaThgUwXj2z3_6ryzfw61usMG-UByDVykNlJUZ8C
 
-infra/chromeperf/pinpoint/windows-386
-	git_revision:3c08bc7f9da8e336a5bc2745504ffe4f0103e39e
-	pSGfB8JX2WwyKTVIuKjqXWzklMdHyBqXA9VXAX4BhEQC
-
 infra/chromeperf/pinpoint/windows-amd64
 	git_revision:3c08bc7f9da8e336a5bc2745504ffe4f0103e39e
 	pvE2sLLZ1qSTTC4kuU9hvpXh3BJ_ZEqlLz7N3C4l6rMC
@@ -121,10 +117,6 @@ infra/tools/bb/mac-arm64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 	rHhXUD6yTCIeneNwH2vpvKQgHbIaGJ90iB_YComQ_lgC
 
-infra/tools/bb/windows-386
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	z2zwJz8DvuPlekL2EB3MqyjZBelwREIHP9EGpbHqQIEC
-
 infra/tools/bb/windows-amd64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 	luBELxQ6rVbt4xyS_kU3xFvhS3CFr92wp0byfW2-f3sC
@@ -176,10 +168,6 @@ infra/tools/dirmd/mac-amd64
 infra/tools/dirmd/mac-arm64
 	git_revision:9279002e230abdc26e4f482d44f543dddc087d38
 	Ca0gw6VfGYUnYX6c8fzltA_XI0QhX5p5eV3NNztGOpsC
-
-infra/tools/dirmd/windows-386
-	git_revision:9279002e230abdc26e4f482d44f543dddc087d38
-	4HT2G4E1LTv80_eQ0b4eyXHBIwJv6DODPlw3Jjz11QMC
 
 infra/tools/dirmd/windows-amd64
 	git_revision:9279002e230abdc26e4f482d44f543dddc087d38
@@ -233,10 +221,6 @@ infra/tools/luci-auth/mac-arm64
 	git_revision:297491c0babda68d84d8240c9d4504be671bc804
 	cR0PKTchP7f5iIXZdCSffnp_p1_ySee-16Gg56qhxqIC
 
-infra/tools/luci-auth/windows-386
-	git_revision:297491c0babda68d84d8240c9d4504be671bc804
-	tVTYd4DkkTA4sVXm8J917NRRnzl_jb76Yg576QMpMMYC
-
 infra/tools/luci-auth/windows-amd64
 	git_revision:297491c0babda68d84d8240c9d4504be671bc804
 	McEKBb2FM2gMj1og3guOfA_jd690eGivhdSbKP90ruwC
@@ -288,10 +272,6 @@ infra/tools/luci/led/mac-amd64
 infra/tools/luci/led/mac-arm64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 	EMB0seZ_Mxl01SvYptP_gBsSoPCnQeUVZA7IEYOzvusC
-
-infra/tools/luci/led/windows-386
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	sse4kwQu5Wo3JuCRVCzknJpO2-VjiOuvhKnogt99S7YC
 
 infra/tools/luci/led/windows-amd64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
@@ -345,10 +325,6 @@ infra/tools/luci/lucicfg/mac-arm64
 	git_revision:d759c61ccfabc12e0da549ccc25aa8bfdaf37615
 	MOOImqx3de3lit0Oo6u1BvWeIKJp4WgcsctyBhc4a3oC
 
-infra/tools/luci/lucicfg/windows-386
-	git_revision:d759c61ccfabc12e0da549ccc25aa8bfdaf37615
-	VE25FVu1DU59XDQ-S0JmOdUO5Y2NK5ZjDyDpc89yHA8C
-
 infra/tools/luci/lucicfg/windows-amd64
 	git_revision:d759c61ccfabc12e0da549ccc25aa8bfdaf37615
 	fGTX4AKfieWa9pZM2mjcEppEVnYZgQnXPeIWhe2NTxEC
@@ -400,10 +376,6 @@ infra/tools/luci/vpython/mac-amd64
 infra/tools/luci/vpython/mac-arm64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 	l-R1IIcoskcFcLsMYK4ZtAr0gLbpw2bZ3SFNcwzCHt0C
-
-infra/tools/luci/vpython/windows-386
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	sBUGXI_-HJ7Zc4chqn_pJpPgL-_EWj88lCEJ6doxq4YC
 
 infra/tools/luci/vpython/windows-amd64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
@@ -465,10 +437,6 @@ infra/tools/prpc/mac-arm64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 	63ICGLS_pq0YLXo0gljqa0LqHa37T8K_mCSJ37UkweQC
 
-infra/tools/prpc/windows-386
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	Paf4GnukzP4udFlfH-dg6RtrVw_V90d_4nXwCsK9MGEC
-
 infra/tools/prpc/windows-amd64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 	6Oa6Qp8os-roqwHgFdTaA0vlYp_ub6gSPA6Nmo-R9zwC
@@ -520,10 +488,6 @@ infra/tools/rdb/mac-amd64
 infra/tools/rdb/mac-arm64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
 	vE1wc3Zla6JnCK-s75yeLICLHBnzkqA_OyWm18RdzUIC
-
-infra/tools/rdb/windows-386
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	xeSt9nVoRg7nH9rpJ-lDnNDo6Zfa-dSb71OZXlVlvqIC
 
 infra/tools/rdb/windows-amd64
 	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
