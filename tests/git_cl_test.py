@@ -808,16 +808,27 @@ class TestGitCl(unittest.TestCase):
 
     return calls
 
-  def _gerrit_upload_calls(self, description, reviewers, squash,
+  def _gerrit_upload_calls(self,
+                           description,
+                           reviewers,
+                           squash,
                            squash_mode='default',
-                           title=None, notify=False,
-                           post_amend_description=None, issue=None, cc=None,
-                           custom_cl_base=None, tbr=None,
+                           title=None,
+                           notify=False,
+                           post_amend_description=None,
+                           issue=None,
+                           cc=None,
+                           custom_cl_base=None,
+                           tbr=None,
                            short_hostname='chromium',
-                           labels=None, change_id=None,
-                           final_description=None, gitcookies_exists=True,
-                           force=False, edit_description=None,
-                           default_branch='master'):
+                           labels=None,
+                           change_id=None,
+                           final_description=None,
+                           gitcookies_exists=True,
+                           force=False,
+                           edit_description=None,
+                           default_branch='master',
+                           push_opts=None):
     if post_amend_description is None:
       post_amend_description = description
     cc = cc or []
@@ -952,35 +963,47 @@ class TestGitCl(unittest.TestCase):
       ]
 
     calls += [
-      (('time.time',), 1000,),
-      ((['git', 'push',
-         'https://%s.googlesource.com/my/repo' % short_hostname,
-         ref_to_push + ':refs/for/refs/heads/' + default_branch + ref_suffix],),
-       (('remote:\n'
-         'remote: Processing changes: (\)\n'
-         'remote: Processing changes: (|)\n'
-         'remote: Processing changes: (/)\n'
-         'remote: Processing changes: (-)\n'
-         'remote: Processing changes: new: 1 (/)\n'
-         'remote: Processing changes: new: 1, done\n'
-         'remote:\n'
-         'remote: New Changes:\n'
-         'remote:   https://%s-review.googlesource.com/#/c/my/repo/+/123456'
-             ' XXX\n'
-         'remote:\n'
-         'To https://%s.googlesource.com/my/repo\n'
-         ' * [new branch]      hhhh -> refs/for/refs/heads/%s\n'
-         ) % (short_hostname, short_hostname, default_branch)),),
-      (('time.time',), 2000,),
-      (('add_repeated',
-        'sub_commands',
-        {
-          'execution_time': 1000,
-          'command': 'git push',
-          'exit_code': 0,
-          'arguments': sorted(metrics_arguments),
-        }),
-        None,),
+        (
+            ('time.time', ),
+            1000,
+        ),
+        (
+            ([
+                'git', 'push',
+                'https://%s.googlesource.com/my/repo' % short_hostname,
+                ref_to_push + ':refs/for/refs/heads/' + default_branch +
+                ref_suffix
+            ] + (push_opts if push_opts else []), ),
+            (('remote:\n'
+              'remote: Processing changes: (\)\n'
+              'remote: Processing changes: (|)\n'
+              'remote: Processing changes: (/)\n'
+              'remote: Processing changes: (-)\n'
+              'remote: Processing changes: new: 1 (/)\n'
+              'remote: Processing changes: new: 1, done\n'
+              'remote:\n'
+              'remote: New Changes:\n'
+              'remote:   '
+              'https://%s-review.googlesource.com/#/c/my/repo/+/123456'
+              ' XXX\n'
+              'remote:\n'
+              'To https://%s.googlesource.com/my/repo\n'
+              ' * [new branch]      hhhh -> refs/for/refs/heads/%s\n') %
+             (short_hostname, short_hostname, default_branch)),
+        ),
+        (
+            ('time.time', ),
+            2000,
+        ),
+        (
+            ('add_repeated', 'sub_commands', {
+                'execution_time': 1000,
+                'command': 'git push',
+                'exit_code': 0,
+                'arguments': sorted(metrics_arguments),
+            }),
+            None,
+        ),
     ]
 
     final_description = final_description or post_amend_description.strip()
@@ -1087,32 +1110,32 @@ class TestGitCl(unittest.TestCase):
       ]
     return calls
 
-  def _run_gerrit_upload_test(
-      self,
-      upload_args,
-      description,
-      reviewers=None,
-      squash=True,
-      squash_mode=None,
-      title=None,
-      notify=False,
-      post_amend_description=None,
-      issue=None,
-      cc=None,
-      fetched_status=None,
-      other_cl_owner=None,
-      custom_cl_base=None,
-      tbr=None,
-      short_hostname='chromium',
-      labels=None,
-      change_id=None,
-      final_description=None,
-      gitcookies_exists=True,
-      force=False,
-      log_description=None,
-      edit_description=None,
-      fetched_description=None,
-      default_branch='master'):
+  def _run_gerrit_upload_test(self,
+                              upload_args,
+                              description,
+                              reviewers=None,
+                              squash=True,
+                              squash_mode=None,
+                              title=None,
+                              notify=False,
+                              post_amend_description=None,
+                              issue=None,
+                              cc=None,
+                              fetched_status=None,
+                              other_cl_owner=None,
+                              custom_cl_base=None,
+                              tbr=None,
+                              short_hostname='chromium',
+                              labels=None,
+                              change_id=None,
+                              final_description=None,
+                              gitcookies_exists=True,
+                              force=False,
+                              log_description=None,
+                              edit_description=None,
+                              fetched_description=None,
+                              default_branch='master',
+                              push_opts=None):
     """Generic gerrit upload test framework."""
     if squash_mode is None:
       if '--no-squash' in upload_args:
@@ -1192,12 +1215,17 @@ class TestGitCl(unittest.TestCase):
           'gclient_utils.temporary_file', TemporaryFileMock()).start()
       mock.patch('os.remove', return_value=True).start()
       self.calls += self._gerrit_upload_calls(
-          description, reviewers, squash,
+          description,
+          reviewers,
+          squash,
           squash_mode=squash_mode,
-          title=title, notify=notify,
+          title=title,
+          notify=notify,
           post_amend_description=post_amend_description,
-          issue=issue, cc=cc,
-          custom_cl_base=custom_cl_base, tbr=tbr,
+          issue=issue,
+          cc=cc,
+          custom_cl_base=custom_cl_base,
+          tbr=tbr,
           short_hostname=short_hostname,
           labels=labels,
           change_id=change_id,
@@ -1205,7 +1233,8 @@ class TestGitCl(unittest.TestCase):
           gitcookies_exists=gitcookies_exists,
           force=force,
           edit_description=edit_description,
-          default_branch=default_branch)
+          default_branch=default_branch,
+          push_opts=push_opts)
     # Uncomment when debugging.
     # print('\n'.join(map(lambda x: '%2i: %s' % x, enumerate(self.calls))))
     git_cl.main(['upload'] + upload_args)
@@ -1260,16 +1289,24 @@ class TestGitCl(unittest.TestCase):
         squash_mode='override_nosquash',
         change_id='I123456789')
 
+  def test_gerrit_push_opts(self):
+    self._run_gerrit_upload_test(['-o', 'wip'],
+                                 'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n',
+                                 [],
+                                 squash=False,
+                                 squash_mode='override_nosquash',
+                                 change_id='I123456789',
+                                 push_opts=['-o', 'wip'])
+
   def test_gerrit_no_reviewer_non_chromium_host(self):
     # TODO(crbug/877717): remove this test case.
-    self._run_gerrit_upload_test(
-        [],
-        'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n',
-        [],
-        squash=False,
-        squash_mode='override_nosquash',
-        short_hostname='other',
-        change_id='I123456789')
+    self._run_gerrit_upload_test([],
+                                 'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n',
+                                 [],
+                                 squash=False,
+                                 squash_mode='override_nosquash',
+                                 short_hostname='other',
+                                 change_id='I123456789')
 
   def test_gerrit_patchset_title_special_chars_nosquash(self):
     self._run_gerrit_upload_test(
