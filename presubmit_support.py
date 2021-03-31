@@ -1647,11 +1647,11 @@ class PresubmitExecuter(object):
     try:
       result = eval(function_name + '(*__args)', context)
       self._check_result_type(result)
-    except:
+    except Exception as e:
       if sink:
         elapsed_time = time_time() - start_time
         sink.report(function_name, rdb_wrapper.STATUS_FAIL, elapsed_time)
-      raise
+      raise type(e)('Evaluation of %s failed: %s' % (function_name, e))
 
     if sink:
       elapsed_time = time_time() - start_time
