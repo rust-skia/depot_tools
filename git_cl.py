@@ -2333,6 +2333,13 @@ class Changelist(object):
     # the initial upload, the CL is private, or auto-CCing has ben disabled.
     if not (self.GetIssue() or options.private or options.no_autocc):
       cc = self.GetCCList().split(',')
+    if len(cc) > 100:
+      lsc = ('https://chromium.googlesource.com/chromium/src/+/HEAD/docs/'
+             'process/lsc/lsc_workflow.md')
+      print('WARNING: This will auto-CC %s users.' % len(cc))
+      print('LSC may be more appropriate: %s' % lsc)
+      print('You can also use the --no-autocc flag to disable auto-CC.')
+      confirm_or_exit(action='continue')
     # Add cc's from the --cc flag.
     if options.cc:
       cc.extend(options.cc)
