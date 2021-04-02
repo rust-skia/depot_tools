@@ -153,6 +153,64 @@ def CMDchanges(parser, args):
   write_result(result, opt)
 
 
+@subcommand.usage('[args ...]')
+def CMDcreatechange(parser, args):
+  parser.add_option('-s', '--subject', help='subject for change')
+  parser.add_option('-b',
+                    '--branch',
+                    default='main',
+                    help='target branch for change')
+  parser.add_option(
+      '-p',
+      '--param',
+      dest='params',
+      action='append',
+      help='repeatable field value parameter, format: -p key=value')
+
+  (opt, args) = parser.parse_args(args)
+  for p in opt.params:
+    assert '=' in p, '--param is key=value, not "%s"' % p
+
+  result = gerrit_util.CreateChange(
+      urlparse.urlparse(opt.host).netloc,
+      opt.project,
+      branch=opt.branch,
+      subject=opt.subject,
+      params=list(tuple(p.split('=', 1)) for p in opt.params),
+  )
+  logging.info(result)
+  write_result(result, opt)
+
+
+@subcommand.usage('[args ...]')
+def CMDchangeedit(parser, args):
+  parser.add_option('-c', '--change', type=int, help='change number')
+  parser.add_option('--path', help='path for file')
+  parser.add_option('--file', help='file to place at |path|')
+
+  (opt, args) = parser.parse_args(args)
+
+  with open(opt.file) as f:
+    data = f.read()
+  result = gerrit_util.ChangeEdit(
+      urlparse.urlparse(opt.host).netloc, opt.change, opt.path, data)
+  logging.info(result)
+  write_result(result, opt)
+
+
+@subcommand.usage('[args ...]')
+def CMDpublishchangeedit(parser, args):
+  parser.add_option('-c', '--change', type=int, help='change number')
+  parser.add_option('--notify', help='whether to notify')
+
+  (opt, args) = parser.parse_args(args)
+
+  result = gerrit_util.PublishChangeEdit(
+      urlparse.urlparse(opt.host).netloc, opt.change, opt.notify)
+  logging.info(result)
+  write_result(result, opt)
+
+
 @subcommand.usage('')
 def CMDabandon(parser, args):
   parser.add_option('-c', '--change', type=int, help='change number')

@@ -737,6 +737,25 @@ def SubmitChange(host, change, wait_for_merge=True):
   return ReadHttpJsonResponse(conn)
 
 
+def PublishChangeEdit(host, change, notify=True):
+  """Publish a Gerrit change edit."""
+  path = 'changes/%s/edit:publish' % change
+  body = {'notify': 'ALL' if notify else 'NONE'}
+  conn = CreateHttpConn(host, path, reqtype='POST', body=body)
+  return ReadHttpJsonResponse(conn, accept_statuses=(204, ))
+
+
+def ChangeEdit(host, change, path, data):
+  """Puts content of a file into a change edit."""
+  path = 'changes/%s/edit/%s' % (change, urllib.parse.quote(path, ''))
+  body = {
+      'binary_content':
+      'data:text/plain;base64,%s' % base64.b64encode(data.encode('utf-8'))
+  }
+  conn = CreateHttpConn(host, path, reqtype='PUT', body=body)
+  return ReadHttpJsonResponse(conn, accept_statuses=(204, 409))
+
+
 def HasPendingChangeEdit(host, change):
   conn = CreateHttpConn(host, 'changes/%s/edit' % change)
   try:
@@ -928,6 +947,29 @@ def ResetReviewLabels(host, change, label, value='0', message=None,
   elif jmsg[0]['current_revision'] != revision:
     raise GerritError(200, 'While resetting labels on change "%s", '
                    'a new patchset was uploaded.' % change)
+
+
+def CreateChange(host, project, branch='main', subject='', params=()):
+  """
+  Creates a new change.
+
+  Args:
+    params: A list of additional ChangeInput specifiers, as documented here:
+        (e.g. ('is_private', 'true') to mark the change private.
+        https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-input
+
+  Returns:
+    ChangeInfo for the new change.
+  """
+  path = 'changes/'
+  body = {'project': project, 'branch': branch, 'subject': subject}
+  body.update({k: v for k, v in params})
+  for key in 'project', 'branch', 'subject':
+    if not body[key]:
+      raise GerritError(200, '%s is required' % key.title())
+
+  conn = CreateHttpConn(host, path, reqtype='POST', body=body)
+  return ReadHttpJsonResponse(conn, accept_statuses=[201])
 
 
 def CreateGerritBranch(host, project, branch, commit):
