@@ -989,39 +989,6 @@ def RunPylint(input_api, *args, **kwargs):
   return input_api.RunTests(GetPylint(input_api, *args, **kwargs), False)
 
 
-def CheckBuildbotPendingBuilds(input_api, output_api, url, max_pendings,
-    ignored):
-  try:
-    connection = input_api.urllib_request.urlopen(url)
-    raw_data = connection.read()
-    connection.close()
-  except IOError:
-    return [output_api.PresubmitNotifyResult('%s is not accessible' % url)]
-
-  try:
-    data = input_api.json.loads(raw_data)
-  except ValueError:
-    return [output_api.PresubmitNotifyResult('Received malformed json while '
-                                             'looking up buildbot status')]
-
-  out = []
-  for (builder_name, builder) in data.items():
-    if builder_name in ignored:
-      continue
-    if builder.get('state', '') == 'offline':
-      continue
-    pending_builds_len = len(builder.get('pending_builds', []))
-    if pending_builds_len > max_pendings:
-      out.append('%s has %d build(s) pending' %
-                  (builder_name, pending_builds_len))
-  if out:
-    return [output_api.PresubmitPromptWarning(
-        'Build(s) pending. It is suggested to wait that no more than %d '
-            'builds are pending.' % max_pendings,
-        long_text='\n'.join(out))]
-  return []
-
-
 def CheckDirMetadataFormat(input_api, output_api, dirmd_bin=None):
   # TODO(crbug.com/1102997): Remove OWNERS once DIR_METADATA migration is
   # complete.

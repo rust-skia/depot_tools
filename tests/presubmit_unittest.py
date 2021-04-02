@@ -2552,31 +2552,6 @@ the current line as well!
 
     self.checkstdout('')
 
-  def testCheckBuildbotPendingBuildsBad(self):
-    input_api = self.MockInputApi(None, True)
-    input_api.urllib_request.urlopen().read.return_value = 'foo'
-
-    results = presubmit_canned_checks.CheckBuildbotPendingBuilds(
-        input_api, presubmit.OutputApi, 'uurl', 2, ('foo'))
-    self.assertEqual(len(results), 1)
-    self.assertEqual(results[0].__class__,
-        presubmit.OutputApi.PresubmitNotifyResult)
-
-  def testCheckBuildbotPendingBuildsGood(self):
-    input_api = self.MockInputApi(None, True)
-    input_api.urllib_request.urlopen().read.return_value = """
-    {
-      'b1': { 'pending_builds': [0, 1, 2, 3, 4, 5, 6, 7] },
-      'foo': { 'pending_builds': [0, 1, 2, 3, 4, 5, 6, 7] },
-      'b2': { 'pending_builds': [0] }
-    }"""
-
-    results = presubmit_canned_checks.CheckBuildbotPendingBuilds(
-        input_api, presubmit.OutputApi, 'uurl', 2, ('foo'))
-    self.assertEqual(len(results), 1)
-    self.assertEqual(results[0].__class__,
-        presubmit.OutputApi.PresubmitNotifyResult)
-
   def GetInputApiWithFiles(self, files):
     change = mock.MagicMock(presubmit.Change)
     change.AffectedFiles = lambda *a, **kw: (

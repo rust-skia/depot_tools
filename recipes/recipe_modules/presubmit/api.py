@@ -110,7 +110,6 @@ class PresubmitApi(recipe_api.RecipeApi):
       '--commit',
       '--verbose', '--verbose',
       '--skip_canned', 'CheckTreeIsOpen',
-      '--skip_canned', 'CheckBuildbotPendingBuilds',
       '--upstream', upstream,  # '' if not in bot_update mode.
     ])
 
