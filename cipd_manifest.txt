@@ -63,4 +63,4 @@ infra/goma/client/${os}-amd64 git_revision:f5efece09286e7fab5fe52a77a6f3bd515718
 infra/tools/dirmd/${platform} git_revision:9279002e230abdc26e4f482d44f543dddc087d38
 
 # Pinpoint CLI
-infra/chromeperf/pinpoint/${platform} git_revision:3c08bc7f9da8e336a5bc2745504ffe4f0103e39e
+infra/chromeperf/pinpoint/${platform} git_revision:97ee9cecaac4d99be09278169f987e61b8116672
