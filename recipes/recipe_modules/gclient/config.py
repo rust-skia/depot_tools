@@ -141,16 +141,6 @@ def webports(c):
   m['src'] = 'got_revision'
 
 @config_ctx()
-def wasm_llvm(c):
-  s = c.solutions.add()
-  s.name = 'src'
-  s.url = ChromiumGitURL(
-      c, 'external', 'github.com', 'WebAssembly', 'waterfall.git')
-  m = c.got_revision_mapping
-  m['src'] = 'got_waterfall_revision'
-  c.revisions['src'] = 'origin/master'
-
-@config_ctx()
 def emscripten_releases(c):
   s = c.solutions.add()
   s.name = 'emscripten-releases'
