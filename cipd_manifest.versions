@@ -58,16 +58,20 @@ infra/chromeperf/pinpoint/windows-amd64
 	kPQcJGGgJc7rPEL8chx9dd3JnDVkrWeoT5vG1Nf6WBUC
 
 infra/goma/client/linux-amd64
-	git_revision:f5efece09286e7fab5fe52a77a6f3bd515718ae6
-	KEe3h9iBuvGK1k_uGq74q0J7Mqs_TDD3tSOQ3hnvkQ4C
+	git_revision:e96e1478f7ba3929aa9fc8d86b866008f484b28f
+	OIyk7MfjQm_51D62r21B84DYy_KVjd9kOC_JVRdj0mQC
 
 infra/goma/client/mac-amd64
-	git_revision:f5efece09286e7fab5fe52a77a6f3bd515718ae6
-	HlThEKNzLajyWEid11jf3oaA6S9mi78AKO7qDBpH2L8C
+	git_revision:e96e1478f7ba3929aa9fc8d86b866008f484b28f
+	MvO4zoamFMkovYhwC4fpSR7GjlgwLtok5CpU4ksMYnEC
+
+infra/goma/client/mac-arm64
+	git_revision:e96e1478f7ba3929aa9fc8d86b866008f484b28f
+	QaCbcRWcsEFHD1CEuk7y8PvVfp1Kg3tBX3bQLEhlTwAC
 
 infra/goma/client/windows-amd64
-	git_revision:f5efece09286e7fab5fe52a77a6f3bd515718ae6
-	aBpIgkKOyQlS5WayaZEThpfbFSkl2qcdFI7uPY_ZvykC
+	git_revision:e96e1478f7ba3929aa9fc8d86b866008f484b28f
+	xojMGRceTfiT37i7NcvkEusTOVlabZ440fKPgqEV0FcC
 
 infra/tools/bb/linux-386
 	git_revision:1563088c23532d1e45b8c3041afb9458c1788fc3
