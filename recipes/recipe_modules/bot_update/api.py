@@ -30,7 +30,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
     # aborted. Otherwise, it would wait for global timeout to be reached.
     env = {
         'GIT_HTTP_LOW_SPEED_LIMIT': '102400',  # in bytes
-        'GIT_HTTP_LOW_SPEED_TIME': 300,  # in seconds
+        'GIT_HTTP_LOW_SPEED_TIME': 1800,  # in seconds
     }
     with self.m.context(env=env):
       with self.m.depot_tools.on_path():
