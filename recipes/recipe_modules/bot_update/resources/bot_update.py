@@ -637,7 +637,8 @@ def _has_in_git_cache(revision_sha1, refs, git_cache_dir, url):
   try:
     mirror_dir = git(
         'cache', 'exists', '--quiet', '--cache-dir', git_cache_dir, url).strip()
-    git('cat-file', '-e', revision_sha1, cwd=mirror_dir)
+    if revision_sha1:
+      git('cat-file', '-e', revision_sha1, cwd=mirror_dir)
     for ref in refs:
       git('cat-file', '-e', ref, cwd=mirror_dir)
     return True
@@ -728,44 +729,32 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
   branch, revision = get_target_branch_and_revision(name, url, revisions)
   pin = revision if COMMIT_HASH_RE.match(revision) else None
 
-  if enforce_fetch:
+  # Step 1: populate/refresh cache, if necessary.
+  if (enforce_fetch
+      or not pin
+      or not _has_in_git_cache(pin, refs, git_cache_dir, url)):
     git(*populate_cmd, env=env)
 
-  # Step 1: populate/refresh cache, if necessary.
-  if not pin:
-    # Refresh only once.
-    git(*populate_cmd, env=env)
-  elif _has_in_git_cache(pin, refs, git_cache_dir, url):
-    # No need to fetch at all, because we already have needed revision.
-    pass
-  else:
-    # We may need to retry a bit due to eventual consinstency in replication of
-    # git servers.
-    soft_deadline = time.time() + 60
-    attempt = 0
-    while True:
-      attempt += 1
-      # TODO(tandrii): propagate the pin to git server per recommendation of
-      # maintainers of *.googlesource.com (workaround git server replication
-      # lag).
+  # If cache still doesn't have required pin/refs, try again and fetch pin/refs
+  # directly.
+  for attempt in range(3):
+    if _has_in_git_cache(pin, refs, git_cache_dir, url):
+      break
+    try:
+      mirror_dir = git(
+          'cache', 'exists', '--quiet', '--cache-dir', git_cache_dir, url).strip()
       with git_config_if_not_set(
           'http.extraheader', 'X-Return-Encrypted-Headers: all'):
-        git(*populate_cmd, env=env)
-      if _has_in_git_cache(pin, refs, git_cache_dir, url):
-        break
-      overrun = time.time() - soft_deadline
-      # Only kick in deadline after second attempt to ensure we retry at least
-      # once after initial fetch from not-yet-replicated server.
-      if attempt >= 2 and overrun > 0:
-        print('Ran %s seconds past deadline. Aborting.' % (overrun,))
-        # TODO(tandrii): raise exception immediately here, instead of doing
-        # useless step 2 trying to fetch something that we know doesn't exist
-        # in cache **after production data gives us confidence to do so**.
-        break
-
-      sleep_secs = min(60, 2**attempt)
-      print('waiting %s seconds and trying to fetch again...' % sleep_secs)
-      time.sleep(sleep_secs)
+        if pin:
+          git('fetch', 'origin', pin, env=env, cwd=mirror_dir)
+        for ref in refs:
+          git('fetch', 'origin', '%s:%s' % (ref, ref),
+              env=env, cwd=mirror_dir)
+      break
+    except SubprocessFailed as e:
+      print('Failed to fetch required commits and refs: %s' % str(e))
+      print('Waiting 60s and trying again')
+      time.sleep(60)
 
   # Step 2: populate a checkout from local cache. All operations are local.
   mirror_dir = git(
@@ -791,6 +780,8 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
         git('fetch', 'origin', cwd=sln_dir)
       git('remote', 'set-url', '--push', 'origin', url, cwd=sln_dir)
       _set_remote_head(sln_dir)
+      if pin:
+        git('fetch', 'origin', pin, cwd=sln_dir)
       for ref in refs:
         refspec = '%s:%s' % (ref, ref_to_remote_ref(ref.lstrip('+')))
         git('fetch', 'origin', refspec, cwd=sln_dir)
