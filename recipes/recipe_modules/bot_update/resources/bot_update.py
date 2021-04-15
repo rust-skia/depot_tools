@@ -711,8 +711,6 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
                    '--cache-dir', git_cache_dir, url, '--reset-fetch-config'])
   if no_fetch_tags:
     populate_cmd.extend(['--no-fetch-tags'])
-    if TAGS_REFSPEC in refs:
-      refs.remove(TAGS_REFSPEC)
   for ref in refs:
     populate_cmd.extend(['--ref', ref])
 
