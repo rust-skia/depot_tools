@@ -2304,17 +2304,26 @@ class Changelist(object):
         ref_to_push = RunGit(
             ['commit-tree', tree, '-p', parent, '-F', desc_tempfile]).strip()
     else:  # if not options.squash
-      if not git_footers.get_footer_change_id(change_desc.description):
-        DownloadGerritHook(False)
-        change_desc.set_description(
-            self._AddChangeIdToCommitMessage(
-                change_desc.description, git_diff_args))
+      if options.no_add_changeid:
+        pass
+      else:  # adding Change-Ids is okay.
+        if not git_footers.get_footer_change_id(change_desc.description):
+          DownloadGerritHook(False)
+          change_desc.set_description(
+              self._AddChangeIdToCommitMessage(change_desc.description,
+                                               git_diff_args))
       ref_to_push = 'HEAD'
       # For no-squash mode, we assume the remote called "origin" is the one we
       # want. It is not worthwhile to support different workflows for
       # no-squash mode.
       parent = 'origin/%s' % branch
-      change_id = git_footers.get_footer_change_id(change_desc.description)[0]
+      # attempt to extract the changeid from the current description
+      # fail informatively if not possible.
+      change_id_candidates = git_footers.get_footer_change_id(
+          change_desc.description)
+      if not change_id_candidates:
+        DieWithError("Unable to extract change-id from message.")
+      change_id = change_id_candidates[0]
 
     SaveDescriptionBackup(change_desc)
     commits = RunGitSilent(['rev-list', '%s..%s' % (parent,
@@ -4217,6 +4226,10 @@ def CMDupload(parser, args):
                     help='Transmit the given string to the server when '
                     'performing git push (pass-through). See git-push '
                     'documentation for more details.')
+  parser.add_option('--no-add-changeid',
+                    action='store_true',
+                    dest='no_add_changeid',
+                    help='Do not add change-ids to messages.')
 
   orig_args = args
   (options, args) = parser.parse_args(args)
