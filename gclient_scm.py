@@ -399,7 +399,7 @@ class GitWrapper(SCMWrapper):
     elif not scm.GIT.IsValidRevision(self.checkout_path, target_rev):
       # Fetch |target_rev| if it's not already available.
       url, _ = gclient_utils.SplitUrlRevision(self.url)
-      mirror = self._GetMirror(url, options, target_rev, target_rev)
+      mirror = self._GetMirror(url, options, target_rev)
       if mirror:
         rev_type = 'branch' if target_rev.startswith('refs/') else 'hash'
         self._UpdateMirrorIfNotContains(mirror, options, rev_type, target_rev)
@@ -506,7 +506,7 @@ class GitWrapper(SCMWrapper):
     if revision_ref.startswith('refs/branch-heads'):
       options.with_branch_heads = True
 
-    mirror = self._GetMirror(url, options, revision, revision_ref)
+    mirror = self._GetMirror(url, options, revision_ref)
     if mirror:
       url = mirror.mirror_path
 
@@ -946,14 +946,13 @@ class GitWrapper(SCMWrapper):
     return os.path.join(self._root_dir,
                         'old_' + self.relpath.replace(os.sep, '_')) + '.git'
 
-  def _GetMirror(self, url, options, revision=None, revision_ref=None):
+  def _GetMirror(self, url, options, revision_ref=None):
     """Get a git_cache.Mirror object for the argument url."""
     if not self.cache_dir:
       return None
     mirror_kwargs = {
         'print_func': self.filter,
-        'refs': [],
-        'commits': [],
+        'refs': []
     }
     if hasattr(options, 'with_branch_heads') and options.with_branch_heads:
       mirror_kwargs['refs'].append('refs/branch-heads/*')
@@ -963,8 +962,6 @@ class GitWrapper(SCMWrapper):
       mirror_kwargs['refs'].append('refs/tags/*')
     elif revision_ref and revision_ref.startswith('refs/tags/'):
       mirror_kwargs['refs'].append(revision_ref)
-    if revision and not revision.startswith('refs/'):
-      mirror_kwargs['commits'].append(revision)
     return git_cache.Mirror(url, **mirror_kwargs)
 
   def _UpdateMirrorIfNotContains(self, mirror, options, rev_type, revision):

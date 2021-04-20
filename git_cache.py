@@ -107,10 +107,9 @@ class Mirror(object):
     regex = r'\+%s:.*' % src.replace('*', r'\*')
     return ('+%s:%s' % (src, dest), regex)
 
-  def __init__(self, url, refs=None, commits=None, print_func=None):
+  def __init__(self, url, refs=None, print_func=None):
     self.url = url
     self.fetch_specs = set([self.parse_fetch_spec(ref) for ref in (refs or [])])
-    self.fetch_commits = set(commits or [])
     self.basedir = self.UrlToCacheDir(url)
     self.mirror_path = os.path.join(self.GetCachePath(), self.basedir)
     if print_func:
@@ -449,13 +448,6 @@ class Mirror(object):
         if spec == '+refs/heads/*:refs/heads/*':
           raise ClobberNeeded()  # Corrupted cache.
         logging.warning('Fetch of %s failed' % spec)
-    for commit in self.fetch_commits:
-      self.print('Fetching %s' % commit)
-      try:
-        with self.print_duration_of('fetch %s' % commit):
-          self.RunGit(['fetch', 'origin', commit], cwd=rundir, retry=True)
-      except subprocess.CalledProcessError:
-        logging.warning('Fetch of %s failed' % commit)
 
   def populate(self,
                depth=None,
@@ -643,8 +635,6 @@ def CMDpopulate(parser, args):
                     help='Only cache 10000 commits of history')
   parser.add_option('--ref', action='append',
                     help='Specify additional refs to be fetched')
-  parser.add_option('--commit', action='append',
-                    help='Specify additional commits to be fetched')
   parser.add_option('--no_bootstrap', '--no-bootstrap',
                     action='store_true',
                     help='Don\'t bootstrap from Google Storage')
@@ -667,7 +657,7 @@ def CMDpopulate(parser, args):
     print('break_locks is no longer used. Please remove its usage.')
   url = args[0]
 
-  mirror = Mirror(url, refs=options.ref, commits=options.commit)
+  mirror = Mirror(url, refs=options.ref)
   kwargs = {
       'no_fetch_tags': options.no_fetch_tags,
       'verbose': options.verbose,

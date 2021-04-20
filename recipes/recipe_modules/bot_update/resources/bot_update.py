@@ -708,16 +708,10 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
                   cleanup_dir, enforce_fetch):
   name = sln['name']
   url = sln['url']
-
-  branch, revision = get_target_branch_and_revision(name, url, revisions)
-  pin = revision if COMMIT_HASH_RE.match(revision) else None
-
   populate_cmd = (['cache', 'populate', '--ignore_locks', '-v',
                    '--cache-dir', git_cache_dir, url, '--reset-fetch-config'])
   if no_fetch_tags:
     populate_cmd.extend(['--no-fetch-tags'])
-  if pin:
-    populate_cmd.extend(['--commit', pin])
   for ref in refs:
     populate_cmd.extend(['--ref', ref])
 
@@ -732,21 +726,34 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
         'GIT_REDACT_COOKIES': 'o,SSO,GSSO_UberProxy,__Secure-GSSO_UberProxy',
     }
 
+  branch, revision = get_target_branch_and_revision(name, url, revisions)
+  pin = revision if COMMIT_HASH_RE.match(revision) else None
+
   # Step 1: populate/refresh cache, if necessary.
-  if enforce_fetch or not pin:
+  if (enforce_fetch
+      or not pin
+      or not _has_in_git_cache(pin, refs, git_cache_dir, url)):
     git(*populate_cmd, env=env)
 
   # If cache still doesn't have required pin/refs, try again and fetch pin/refs
   # directly.
-  if not _has_in_git_cache(pin, refs, git_cache_dir, url):
-    for attempt in range(3):
+  for attempt in range(3):
+    if _has_in_git_cache(pin, refs, git_cache_dir, url):
+      break
+    try:
+      mirror_dir = git(
+          'cache', 'exists', '--quiet', '--cache-dir', git_cache_dir, url).strip()
       with git_config_if_not_set(
           'http.extraheader', 'X-Return-Encrypted-Headers: all'):
-        git(*populate_cmd, env=env)
-      if _has_in_git_cache(pin, refs, git_cache_dir, url):
-        break
-      print('Some required refs/commits are still not present.')
-      print('Waiting 60s and trying again.')
+        if pin:
+          git('fetch', 'origin', pin, env=env, cwd=mirror_dir)
+        for ref in refs:
+          git('fetch', 'origin', '%s:%s' % (ref, ref),
+              env=env, cwd=mirror_dir)
+      break
+    except SubprocessFailed as e:
+      print('Failed to fetch required commits and refs: %s' % str(e))
+      print('Waiting 60s and trying again')
       time.sleep(60)
 
   # Step 2: populate a checkout from local cache. All operations are local.
