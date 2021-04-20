@@ -488,6 +488,8 @@ class GitWrapper(SCMWrapper):
       # If a dependency is not pinned, track the default remote branch.
       revision = scm.GIT.GetRemoteHeadRef(self.checkout_path, self.url,
                                           self.remote)
+    if revision.startswith('origin/'):
+      revision = 'refs/remotes/' + revision
 
     if managed:
       self._DisableHooks()
