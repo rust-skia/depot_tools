@@ -314,11 +314,11 @@ def infra_internal(c):  # pragma: no cover
 @config_ctx(includes=['infra'])
 def luci_gae(c):
   # luci/gae is checked out as a part of infra.git solution at HEAD.
-  c.revisions['infra'] = 'origin/master'
+  c.revisions['infra'] = 'refs/heads/master'
   # luci/gae is developed together with luci-go, which should be at HEAD.
-  c.revisions['infra/go/src/go.chromium.org/luci'] = 'origin/master'
+  c.revisions['infra/go/src/go.chromium.org/luci'] = 'refs/heads/master'
   c.revisions['infra/go/src/go.chromium.org/gae'] = (
-      gclient_api.RevisionFallbackChain('origin/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/master'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/go/src/go.chromium.org/gae'] = 'got_revision'
@@ -326,9 +326,9 @@ def luci_gae(c):
 @config_ctx(includes=['infra'])
 def luci_go(c):
   # luci-go is checked out as a part of infra.git solution at HEAD.
-  c.revisions['infra'] = 'origin/master'
+  c.revisions['infra'] = 'refs/heads/master'
   c.revisions['infra/go/src/go.chromium.org/luci'] = (
-      gclient_api.RevisionFallbackChain('origin/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/master'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/go/src/go.chromium.org/luci'] = 'got_revision'
@@ -337,18 +337,18 @@ def luci_go(c):
 def luci_py(c):
   # luci-py is checked out as part of infra just to have appengine
   # pre-installed, as that's what luci-py PRESUBMIT relies on.
-  c.revisions['infra'] = 'origin/master'
+  c.revisions['infra'] = 'refs/heads/master'
   c.revisions['infra/luci'] = (
-      gclient_api.RevisionFallbackChain('origin/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/master'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/luci'] = 'got_revision'
 
 @config_ctx(includes=['infra'])
 def recipes_py(c):
-  c.revisions['infra'] = 'origin/master'
+  c.revisions['infra'] = 'refs/heads/master'
   c.revisions['infra/recipes-py'] = (
-      gclient_api.RevisionFallbackChain('origin/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/master'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/recipes-py'] = 'got_revision'

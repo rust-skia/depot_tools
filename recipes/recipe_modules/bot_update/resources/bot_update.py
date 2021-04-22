@@ -418,7 +418,7 @@ def gclient_sync(
     args += ['--disable-syntax-validation']
   for name, revision in sorted(revisions.items()):
     if revision.upper() == 'HEAD':
-      revision = 'origin/master'
+      revision = 'refs/remotes/origin/master'
     args.extend(['--revision', '%s@%s' % (name, revision)])
 
   if patch_refs:
