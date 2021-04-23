@@ -3023,11 +3023,13 @@ class ChangelistTest(unittest.TestCase):
 
   def testRunHook(self):
     expected_results = {
-        'more_cc': ['more@example.com', 'cc@example.com'],
-        'should_continue': True,
+        'more_cc': ['cc@example.com', 'more@example.com'],
+        'errors': [],
+        'notifications': [],
+        'warnings': [],
     }
     gclient_utils.FileRead.return_value = json.dumps(expected_results)
-    git_cl.time_time.side_effect = [100, 200]
+    git_cl.time_time.side_effect = [100, 200, 300, 400]
     mockProcess = mock.Mock()
     mockProcess.wait.return_value = 0
     subprocess2.Popen.return_value = mockProcess
@@ -3044,7 +3046,7 @@ class ChangelistTest(unittest.TestCase):
         resultdb=False)
 
     self.assertEqual(expected_results, results)
-    subprocess2.Popen.assert_called_once_with([
+    subprocess2.Popen.assert_any_call([
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
@@ -3062,7 +3064,25 @@ class ChangelistTest(unittest.TestCase):
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
     ])
-    gclient_utils.FileWrite.assert_called_once_with(
+    subprocess2.Popen.assert_any_call([
+        'vpython3', 'PRESUBMIT_SUPPORT',
+        '--root', 'root',
+        '--upstream', 'upstream',
+        '--verbose', '--verbose',
+        '--gerrit_url', 'https://chromium-review.googlesource.com',
+        '--gerrit_project', 'project',
+        '--gerrit_branch', 'refs/heads/main',
+        '--author', 'author',
+        '--issue', '123456',
+        '--patchset', '7',
+        '--commit',
+        '--may_prompt',
+        '--parallel',
+        '--all_files',
+        '--json_output', '/tmp/fake-temp4',
+        '--description_file', '/tmp/fake-temp3',
+    ])
+    gclient_utils.FileWrite.assert_any_call(
         '/tmp/fake-temp1', 'description')
     metrics.collector.add_repeated('sub_commands', {
       'command': 'presubmit',
@@ -3072,11 +3092,13 @@ class ChangelistTest(unittest.TestCase):
 
   def testRunHook_FewerOptions(self):
     expected_results = {
-        'more_cc': ['more@example.com', 'cc@example.com'],
-        'should_continue': True,
+        'more_cc': ['cc@example.com', 'more@example.com'],
+        'errors': [],
+        'notifications': [],
+        'warnings': [],
     }
     gclient_utils.FileRead.return_value = json.dumps(expected_results)
-    git_cl.time_time.side_effect = [100, 200]
+    git_cl.time_time.side_effect = [100, 200, 300, 400]
     mockProcess = mock.Mock()
     mockProcess.wait.return_value = 0
     subprocess2.Popen.return_value = mockProcess
@@ -3097,7 +3119,7 @@ class ChangelistTest(unittest.TestCase):
         resultdb=False)
 
     self.assertEqual(expected_results, results)
-    subprocess2.Popen.assert_called_once_with([
+    subprocess2.Popen.assert_any_call([
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
@@ -3108,7 +3130,7 @@ class ChangelistTest(unittest.TestCase):
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
     ])
-    gclient_utils.FileWrite.assert_called_once_with(
+    gclient_utils.FileWrite.assert_any_call(
         '/tmp/fake-temp1', 'description')
     metrics.collector.add_repeated('sub_commands', {
       'command': 'presubmit',
@@ -3118,11 +3140,13 @@ class ChangelistTest(unittest.TestCase):
 
   def testRunHook_FewerOptionsResultDB(self):
     expected_results = {
-      'more_cc': ['more@example.com', 'cc@example.com'],
-      'should_continue': True,
+      'more_cc': ['cc@example.com', 'more@example.com'],
+      'errors': [],
+      'notifications': [],
+      'warnings': [],
     }
     gclient_utils.FileRead.return_value = json.dumps(expected_results)
-    git_cl.time_time.side_effect = [100, 200]
+    git_cl.time_time.side_effect = [100, 200, 300, 400]
     mockProcess = mock.Mock()
     mockProcess.wait.return_value = 0
     subprocess2.Popen.return_value = mockProcess
@@ -3144,7 +3168,7 @@ class ChangelistTest(unittest.TestCase):
         realm='chromium:public')
 
     self.assertEqual(expected_results, results)
-    subprocess2.Popen.assert_called_once_with([
+    subprocess2.Popen.assert_any_call([
         'rdb', 'stream', '-new', '-realm', 'chromium:public', '--',
         'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',

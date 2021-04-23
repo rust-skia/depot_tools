@@ -1564,6 +1564,16 @@ class PresubmitExecuter(object):
     output_api = OutputApi(self.committing)
     context = {}
 
+    # Try to figure out whether these presubmit checks should be run under
+    # python2 or python3. We need to do this without actually trying to
+    # compile the text, since the text might compile in one but not the
+    # other.
+    m = re.search('^USE_PYTHON3 = True$', script_text, flags=re.MULTILINE)
+    use_python3 = m is not None
+    if (((sys.version_info.major == 2) and use_python3) or
+        ((sys.version_info.major == 3) and not use_python3)):
+      return []
+
     try:
       exec(compile(script_text, 'PRESUBMIT.py', 'exec', dont_inherit=True),
            context)
@@ -1712,10 +1722,13 @@ def DoPresubmitChecks(change,
     os.environ = os.environ.copy()
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
+    python_version = 'Python %s' % sys.version_info.major
     if committing:
-      sys.stdout.write('Running presubmit commit checks ...\n')
+      sys.stdout.write('Running %s presubmit commit checks ...\n' % 
+                       python_version)
     else:
-      sys.stdout.write('Running presubmit upload checks ...\n')
+      sys.stdout.write('Running %s presubmit upload checks ...\n' %
+                       python_version)
     start_time = time_time()
     presubmit_files = ListRelevantPresubmitFiles(
         change.AbsoluteLocalPaths(), change.RepositoryRoot())
@@ -1765,9 +1778,9 @@ def DoPresubmitChecks(change,
           'Presubmit checks took %.1fs to calculate.\n\n' % total_time)
 
     if not should_prompt and not presubmits_failed:
-      sys.stdout.write('Presubmit checks passed.\n')
+      sys.stdout.write('%s presubmit checks passed.\n' % python_version)
     elif should_prompt:
-      sys.stdout.write('There were presubmit warnings. ')
+      sys.stdout.write('There were %s presubmit warnings. ' % python_version)
       if may_prompt:
         presubmits_failed = not prompt_should_continue(
             'Are you sure you wish to continue? (y/N): ')
