@@ -444,3 +444,10 @@ def tint(c):
   soln.name = 'tint'
   soln.url = 'https://dawn.googlesource.com/tint.git'
   c.got_revision_mapping['tint'] = 'got_revision'
+
+@config_ctx()
+def gerrit_plugins(c):
+  s = c.solutions.add()
+  s.name = 'gerrit_plugins'
+  s.url = ChromiumGitURL(c, 'infra', 'gerrit-plugins', 'tricium.git')
+  c.got_revision_mapping['gerrit_plugins'] = 'got_revision'

@@ -26,6 +26,7 @@ TEST_CONFIGS = [
   'disable_syntax_validation',
   'emscripten_releases',
   'expect_tests',
+  'gerrit_plugins',
   'gerrit_test_cq_normal',
   'gyp',
   'infra',
