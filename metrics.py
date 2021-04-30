@@ -117,12 +117,16 @@ class _Config(object):
 
   @property
   def should_collect_metrics(self):
-    # Don't collect the metrics unless the user is a googler, the user has opted
-    # in, or the countdown has expired.
+    # DEPOT_TOOLS_REPORT_BUILD is set on bots to report metrics.
+    if os.getenv(metrics_utils.DEPOT_TOOLS_REPORT_BUILD):
+      return True
+    # Don't report metrics if user is not a Googler.
     if not self.is_googler:
       return False
+    # Don't report metrics if user has opted out.
     if self.opted_in is False:
       return False
+    # Don't report metrics if countdown hasn't reached 0.
     if self.opted_in is None and self.countdown > 0:
       return False
     return True
@@ -226,6 +230,10 @@ class MetricsCollector(object):
     git_version = metrics_utils.get_git_version()
     if git_version:
       self.add('git_version', git_version)
+
+    bot_metrics = metrics_utils.get_bot_metrics()
+    if bot_metrics:
+      self.add('bot_metrics', bot_metrics)
 
     self._upload_metrics_data()
     if exception:
