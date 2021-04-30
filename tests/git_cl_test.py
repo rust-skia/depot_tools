@@ -3947,8 +3947,8 @@ class CMDFormatTestCase(unittest.TestCase):
     super(CMDFormatTestCase, self).tearDown()
 
   def _make_temp_file(self, fname, contents):
-    with open(os.path.join(self._top_dir, fname), 'w') as tf:
-      tf.write('\n'.join(contents))
+    gclient_utils.FileWrite(os.path.join(self._top_dir, fname),
+                            ('\n'.join(contents)))
 
   def _make_yapfignore(self, contents):
     self._make_temp_file('.yapfignore', contents)
@@ -4056,6 +4056,18 @@ class CMDFormatTestCase(unittest.TestCase):
     self._make_yapfignore(['test.py', '#test2.py'])
     files = [
       'test.py',
+      'test2.py',
+    ]
+    expected = [
+      'test2.py',
+    ]
+    self._check_yapf_filtering(files, expected)
+
+  def testYapfHandleUtf8(self):
+    self._make_yapfignore(['test.py', 'test_🌐.py'])
+    files = [
+      'test.py',
+      'test_🌐.py',
       'test2.py',
     ]
     expected = [

@@ -666,13 +666,12 @@ def _GetYapfIgnorePatterns(top_dir):
   if not os.path.exists(yapfignore_file):
     return ignore_patterns
 
-  with open(yapfignore_file) as f:
-    for line in f.readlines():
-      stripped_line = line.strip()
-      # Comments and blank lines should be ignored.
-      if stripped_line.startswith('#') or stripped_line == '':
-        continue
-      ignore_patterns.add(stripped_line)
+  for line in gclient_utils.FileRead(yapfignore_file).split('\n'):
+    stripped_line = line.strip()
+    # Comments and blank lines should be ignored.
+    if stripped_line.startswith('#') or stripped_line == '':
+      continue
+    ignore_patterns.add(stripped_line)
   return ignore_patterns
 
 
