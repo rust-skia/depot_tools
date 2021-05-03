@@ -14,9 +14,10 @@ class Constants:
     self.MANUAL_CHANGE_FOOTER = 'Recipe-Manual-Change'
     self.BYPASS_FOOTER = 'Recipe-Tryjob-Bypass-Reason'
     self.SKIP_RETRY_FOOTER = 'Disable-Retries'
+    self.CQ_DEPEND_FOOTER = 'Cq-Depend'
     self.ALL_VALID_FOOTERS = set([
         self.NONTRIVIAL_ROLL_FOOTER, self.MANUAL_CHANGE_FOOTER,
-        self.BYPASS_FOOTER, self.SKIP_RETRY_FOOTER
+        self.BYPASS_FOOTER, self.SKIP_RETRY_FOOTER, self.CQ_DEPEND_FOOTER
     ])
 
 
