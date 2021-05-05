@@ -1456,6 +1456,10 @@ class Changelist(object):
     if options.force or options.skip_title:
       return title
     user_title = gclient_utils.AskForData('Title for patchset [%s]: ' % title)
+
+    # Use the default title if the user confirms the default with a 'y'.
+    if user_title.lower() == 'y':
+      return title
     return user_title or title
 
   def CMDUpload(self, options, git_diff_args, orig_args):

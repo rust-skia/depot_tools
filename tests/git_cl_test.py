@@ -2997,6 +2997,12 @@ class TestGitCl(unittest.TestCase):
 
 
 class ChangelistTest(unittest.TestCase):
+  LAST_COMMIT_SUBJECT = 'Fixes goat teleporter destination to be Australia'
+
+  def _mock_run_git(commands):
+    if commands == ['show', '-s', '--format=%s', 'HEAD']:
+      return ChangelistTest.LAST_COMMIT_SUBJECT
+
   def setUp(self):
     super(ChangelistTest, self).setUp()
     mock.patch('gclient_utils.FileRead').start()
@@ -3222,6 +3228,25 @@ class ChangelistTest(unittest.TestCase):
     ])
     gclient_utils.FileWrite.assert_called_once_with(
         '/tmp/fake-temp1', 'description')
+
+  @mock.patch('git_cl.RunGit', _mock_run_git)
+  def testDefaultTitleEmptyMessage(self):
+    cl = git_cl.Changelist()
+    cl.issue = 100
+    options = optparse.Values({
+        'squash': True,
+        'title': None,
+        'message': None,
+        'force': None,
+        'skip_title': None
+    })
+
+    mock.patch('gclient_utils.AskForData', lambda _: user_title).start()
+    for user_title in ['', 'y', 'Y']:
+      self.assertEqual(cl._GetTitleForUpload(options), self.LAST_COMMIT_SUBJECT)
+
+    for user_title in ['not empty', 'yes', 'YES']:
+      self.assertEqual(cl._GetTitleForUpload(options), user_title)
 
 
 class CMDTestCaseBase(unittest.TestCase):
