@@ -27,7 +27,6 @@ except ImportError:  # For Py3 compatibility
 from download_from_google_storage import Gsutil
 import gclient_utils
 import lockfile
-import metrics
 import subcommand
 
 # Analogous to gc.autopacklimit git config.
@@ -583,7 +582,6 @@ class Mirror(object):
 
 
 @subcommand.usage('[url of repo to check for caching]')
-@metrics.collector.collect_metrics('git cache exists')
 def CMDexists(parser, args):
   """Check to see if there already is a cache of the given repo."""
   _, args = parser.parse_args(args)
@@ -598,7 +596,6 @@ def CMDexists(parser, args):
 
 
 @subcommand.usage('[url of repo to create a bootstrap zip file]')
-@metrics.collector.collect_metrics('git cache update-bootstrap')
 def CMDupdate_bootstrap(parser, args):
   """Create and uploads a bootstrap tarball."""
   # Lets just assert we can't do this on Windows.
@@ -633,7 +630,6 @@ def CMDupdate_bootstrap(parser, args):
 
 
 @subcommand.usage('[url of repo to add to or update in cache]')
-@metrics.collector.collect_metrics('git cache populate')
 def CMDpopulate(parser, args):
   """Ensure that the cache has all up-to-date objects for the given repo."""
   parser.add_option('--depth', type='int',
@@ -686,7 +682,6 @@ def CMDpopulate(parser, args):
 
 
 @subcommand.usage('Fetch new commits into cache and current checkout')
-@metrics.collector.collect_metrics('git cache fetch')
 def CMDfetch(parser, args):
   """Update mirror, and fetch in cwd."""
   parser.add_option('--all', action='store_true', help='Fetch all remotes')
@@ -752,7 +747,6 @@ def CMDfetch(parser, args):
 
 
 @subcommand.usage('do not use - it is a noop.')
-@metrics.collector.collect_metrics('git cache unlock')
 def CMDunlock(parser, args):
   """This command does nothing."""
   print('This command does nothing and will be removed in the future.')
@@ -776,19 +770,7 @@ class OptionParser(optparse.OptionParser):
                     help='Timeout for acquiring cache lock, in seconds')
 
   def parse_args(self, args=None, values=None):
-    # Create an optparse.Values object that will store only the actual passed
-    # options, without the defaults.
-    actual_options = optparse.Values()
-    _, args = optparse.OptionParser.parse_args(self, args, actual_options)
-    # Create an optparse.Values object with the default options.
-    options = optparse.Values(self.get_default_values().__dict__)
-    # Update it with the options passed by the user.
-    options._update_careful(actual_options.__dict__)
-    # Store the options passed by the user in an _actual_options attribute.
-    # We store only the keys, and not the values, since the values can contain
-    # arbitrary information, which might be PII.
-    metrics.collector.add('arguments', list(actual_options.__dict__.keys()))
-
+    options, args = optparse.OptionParser.parse_args(self, args, values)
     if options.quiet:
       options.verbose = 0
 
@@ -816,8 +798,7 @@ def main(argv):
 
 if __name__ == '__main__':
   try:
-    with metrics.collector.print_notice_and_exit():
-      sys.exit(main(sys.argv[1:]))
+    sys.exit(main(sys.argv[1:]))
   except KeyboardInterrupt:
     sys.stderr.write('interrupted\n')
     sys.exit(1)
