@@ -24,7 +24,8 @@ CURRENT_VERSION = 2
 
 APP_URL = 'https://cit-cli-metrics.appspot.com'
 
-DEPOT_TOOLS_REPORT_BUILD = 'DEPOT_TOOLS_REPORT_BUILD'
+REPORT_BUILD = os.getenv('DEPOT_TOOLS_REPORT_BUILD')
+COLLECT_METRICS = os.getenv('DEPOT_TOOLS_COLLECT_METRICS') != '0'
 
 
 def get_notice_countdown_header(countdown):
@@ -192,18 +193,18 @@ def get_git_version():
 
 
 def get_bot_metrics():
-  build = os.getenv(DEPOT_TOOLS_REPORT_BUILD)
-  if not build or build.count('/') != 3:
+  try:
+    project, bucket, builder, build = REPORT_BUILD.split('/')
+    return {
+      'build_id': int(build),
+      'builder': {
+        'project': project,
+        'bucket': bucket,
+        'builder': builder,
+      },
+    }
+  except (AttributeError, ValueError):
     return None
-  project, bucket, builder, build = build.split('/')
-  return {
-    'build_id': int(build),
-    'builder': {
-      'project': project,
-      'bucket': bucket,
-      'builder': builder,
-    },
-  }
 
 
 

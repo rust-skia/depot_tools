@@ -31,8 +31,9 @@ else:
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import metrics
+import metrics_utils
 # We have to disable monitoring before importing git_cl.
-metrics.DISABLE_METRICS_COLLECTION = True
+metrics_utils.COLLECT_METRICS = False
 
 import clang_format
 import contextlib

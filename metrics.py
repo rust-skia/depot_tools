@@ -30,7 +30,6 @@ DEPOT_TOOLS = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(DEPOT_TOOLS, 'metrics.cfg')
 UPLOAD_SCRIPT = os.path.join(DEPOT_TOOLS, 'upload_metrics.py')
 
-DISABLE_METRICS_COLLECTION = os.environ.get('DEPOT_TOOLS_METRICS') == '0'
 DEFAULT_COUNTDOWN = 10
 
 INVALID_CONFIG_WARNING = (
@@ -50,6 +49,28 @@ class _Config(object):
 
   def _ensure_initialized(self):
     if self._initialized:
+      return
+
+    # Metrics collection is disabled, so don't collect any metrics.
+    if not metrics_utils.COLLECT_METRICS:
+      self._config = {
+        'is-googler': False,
+        'countdown': 0,
+        'opt-in': False,
+        'version': metrics_utils.CURRENT_VERSION,
+      }
+      self._initialized = True
+      return
+
+    # We are running on a bot. Ignore config and collect metrics. 
+    if metrics_utils.REPORT_BUILD:
+      self._config = {
+        'is-googler': True,
+        'countdown': 0,
+        'opt-in': True,
+        'version': metrics_utils.CURRENT_VERSION,
+      }
+      self._initialized = True
       return
 
     try:
@@ -117,9 +138,6 @@ class _Config(object):
 
   @property
   def should_collect_metrics(self):
-    # DEPOT_TOOLS_REPORT_BUILD is set on bots to report metrics.
-    if os.getenv(metrics_utils.DEPOT_TOOLS_REPORT_BUILD):
-      return True
     # Don't report metrics if user is not a Googler.
     if not self.is_googler:
       return False
@@ -247,13 +265,8 @@ class MetricsCollector(object):
     environment and the function performance.
     """
     def _decorator(func):
-      # Do this first so we don't have to read, and possibly create a config
-      # file.
-      if DISABLE_METRICS_COLLECTION:
-        return func
       if not self.config.should_collect_metrics:
         return func
-      # Otherwise, collect the metrics.
       # Needed to preserve the __name__ and __doc__ attributes of func.
       @functools.wraps(func)
       def _inner(*args, **kwargs):
@@ -287,15 +300,14 @@ class MetricsCollector(object):
         traceback.print_exception(*exception)
 
     # Check if the version has changed
-    if (not DISABLE_METRICS_COLLECTION and self.config.is_googler
+    if (self.config.is_googler
         and self.config.opted_in is not False
         and self.config.version != metrics_utils.CURRENT_VERSION):
       metrics_utils.print_version_change(self.config.version)
       self.config.reset_config()
 
     # Print the notice
-    if (not DISABLE_METRICS_COLLECTION and self.config.is_googler
-        and self.config.opted_in is None):
+    if self.config.is_googler and self.config.opted_in is None:
       metrics_utils.print_notice(self.config.countdown)
       self.config.decrease_countdown()
 

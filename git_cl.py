@@ -5336,7 +5336,7 @@ class OptionParser(optparse.OptionParser):
       global settings
       settings = Settings()
 
-      if not metrics.DISABLE_METRICS_COLLECTION:
+      if metrics.collector.config.should_collect_metrics:
         # GetViewVCUrl ultimately calls logging method.
         project_url = settings.GetViewVCUrl().strip('/+')
         if project_url in metrics_utils.KNOWN_PROJECT_URLS:
