@@ -203,11 +203,14 @@ class MetricsCollector(object):
 
   def _upload_metrics_data(self):
     """Upload the metrics data to the AppEngine app."""
+    p = subprocess2.Popen(['vpython3', UPLOAD_SCRIPT], stdin=subprocess2.PIPE)
     # We invoke a subprocess, and use stdin.write instead of communicate(),
     # so that we are able to return immediately, leaving the upload running in
     # the background.
-    p = subprocess2.Popen(['vpython3', UPLOAD_SCRIPT], stdin=subprocess2.PIPE)
     p.stdin.write(json.dumps(self._reported_metrics).encode('utf-8'))
+    # ... but if we're running on a bot, wait until upload has completed.
+    if metrics_utils.REPORT_BUILD:
+      p.communicate()
 
   def _collect_metrics(self, func, command_name, *args, **kwargs):
     # If we're already collecting metrics, just execute the function.
