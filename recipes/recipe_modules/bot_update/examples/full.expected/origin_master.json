@@ -17,7 +17,7 @@
       "--revision",
       "src@origin/master",
       "--refs",
-      "refs/heads/master",
+      "refs/heads/main",
       "--disable-syntax-validation"
     ],
     "env": {
