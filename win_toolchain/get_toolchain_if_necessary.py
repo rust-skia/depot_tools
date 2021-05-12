@@ -560,7 +560,7 @@ def main():
   version_file = os.path.join(toolchain_target_dir, 'VS_VERSION')
   vc_dir = os.path.join(toolchain_target_dir, 'VC')
   with open(version_file, 'rb') as f:
-    vs_version = f.read().strip()
+    vs_version = f.read().decode('utf-8').strip()
     # Touch the VC directory so we can use its timestamp to know when this
     # version of the toolchain has been used for the last time.
   os.utime(vc_dir, None)
