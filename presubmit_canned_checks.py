@@ -1510,12 +1510,12 @@ def CheckForCommitObjects(input_api, output_api):
   full_tree = input_api.subprocess.check_output(
           ['git', 'ls-tree', '-r', '--full-tree', 'HEAD'],
           cwd=input_api.PresubmitLocalPath()
-        )
+        ).decode('utf8')
   tree_entries = full_tree.split('\n')
-  tree_entries = filter(lambda x: len(x) > 0, tree_entries)
+  tree_entries = [x for x in tree_entries if len(x) > 0]
   tree_entries = map(parse_tree_entry, tree_entries)
-  bad_tree_entries = filter(lambda x: x[1] == 'commit', tree_entries)
-  bad_tree_entries = map(lambda x: x[3], bad_tree_entries)
+  bad_tree_entries = [x for x in tree_entries if x[1] == 'commit']
+  bad_tree_entries = [x[3] for x in bad_tree_entries]
   if len(bad_tree_entries) > 0:
     return [output_api.PresubmitError(
       'Commit objects present within tree.\n'
