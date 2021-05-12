@@ -212,7 +212,11 @@ def call(*args, **kwargs):  # pragma: no cover
   hanging_cr = False
   while True:
     for observer in observers:
-      observer.poke()
+      try:
+        observer.poke()
+      except:
+        print('failed to poke, active thread count is %d' % threading.active_count())
+        raise
     buf = proc.stdout.read(BUF_SIZE)
     if not buf:
       break
