@@ -2232,6 +2232,17 @@ class Changelist(object):
       push_stdout = push_stdout.decode('utf-8', 'replace')
     except subprocess2.CalledProcessError as e:
       push_returncode = e.returncode
+      if 'blocked keyword' in str(e.stdout):
+        raise GitPushError(
+            'Failed to create a change, very likely due to blocked keyword. '
+            'Please examine output above for the reason of the failure.\n'
+            'If this is a false positive, you can try to bypass blocked '
+            'keyword by using push option '
+            '-o uploadvalidator~skip, e.g.:\n'
+            'git cl upload -o uploadvalidator~skip\n\n'
+            'If git-cl is not working correctly, file a bug under the '
+            'Infra>SDK component.')
+
       raise GitPushError(
           'Failed to create a change. Please examine output above for the '
           'reason of the failure.\n'
