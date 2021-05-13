@@ -576,7 +576,7 @@ def main():
         os.path.join(abs_toolchain_target_dir, 'sysarm64'),
       ],
   }
-  data_json = json.dumps(data)
+  data_json = json.dumps(data, indent=2)
   data_path = os.path.join(target_dir, '..', 'data.json')
   if not os.path.exists(data_path) or open(data_path).read() != data_json:
     with open(data_path, 'w') as f:
