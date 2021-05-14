@@ -546,10 +546,32 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
     return []
 
 
-def CheckLicense(input_api, output_api, license_re, source_file_filter=None,
-    accept_empty_files=True):
+def CheckLicense(input_api, output_api, license_re=None, project_name=None,
+    source_file_filter=None, accept_empty_files=True):
   """Verifies the license header.
   """
+
+  project_name = project_name or 'Chromium'
+
+  # Accept any year number from 2006 to the current year, or the special
+  # 2006-20xx string used on the oldest files. 2006-20xx is deprecated, but
+  # tolerated on old files.
+  current_year = int(input_api.time.strftime('%Y'))
+  allowed_years = (str(s) for s in reversed(range(2006, current_year + 1)))
+  years_re = '(' + '|'.join(allowed_years) + '|2006-2008|2006-2009|2006-2010)'
+
+  # The (c) is deprecated, but tolerate it until it's removed from all files.
+  license_re = license_re or (
+      r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors\. '
+        r'All rights reserved\.\n'
+      r'.*? Use of this source code is governed by a BSD-style license that '
+        r'can be\n'
+      r'.*? found in the LICENSE file\.(?: \*/)?\n'
+  ) % {
+      'year': years_re,
+      'project': project_name,
+  }
+
   license_re = input_api.re.compile(license_re, input_api.re.MULTILINE)
   bad_files = []
   for f in input_api.AffectedSourceFiles(source_file_filter):
@@ -1231,26 +1253,6 @@ def PanProjectChecks(input_api, output_api,
       r'.+\.txt$',
       r'.+\.json$',
   ))
-  project_name = project_name or 'Chromium'
-
-  # Accept any year number from 2006 to the current year, or the special
-  # 2006-20xx string used on the oldest files. 2006-20xx is deprecated, but
-  # tolerated on old files.
-  current_year = int(input_api.time.strftime('%Y'))
-  allowed_years = (str(s) for s in reversed(range(2006, current_year + 1)))
-  years_re = '(' + '|'.join(allowed_years) + '|2006-2008|2006-2009|2006-2010)'
-
-  # The (c) is deprecated, but tolerate it until it's removed from all files.
-  license_header = license_header or (
-      r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors\. '
-        r'All rights reserved\.\n'
-      r'.*? Use of this source code is governed by a BSD-style license that '
-        r'can be\n'
-      r'.*? found in the LICENSE file\.(?: \*/)?\n'
-  ) % {
-      'year': years_re,
-      'project': project_name,
-  }
 
   results = []
   # This code loads the default skip list (e.g. third_party, experimental, etc)
@@ -1296,7 +1298,8 @@ def PanProjectChecks(input_api, output_api,
       input_api, output_api, source_file_filter=sources))
   snapshot("checking license")
   results.extend(input_api.canned_checks.CheckLicense(
-      input_api, output_api, license_header, source_file_filter=sources))
+      input_api, output_api, license_header, project_name,
+      source_file_filter=sources))
 
   if input_api.is_committing:
     snapshot("checking was uploaded")
