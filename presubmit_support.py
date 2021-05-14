@@ -643,6 +643,8 @@ class InputApi(object):
     # repos (e.g. src.git) to automatically pick up that repo's .vpython file,
     # instead of inheriting the one in depot_tools.
     self.python_executable = 'vpython'
+    # Offer a python 3 executable for use during the migration off of python 2.
+    self.python3_executable = 'vpython3'
     self.environ = os.environ
 
     # InputApi.platform is the platform you're currently running on.
