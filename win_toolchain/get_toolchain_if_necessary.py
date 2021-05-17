@@ -223,7 +223,7 @@ def SaveTimestampsAndHash(root, sha1):
     'sha1': sha1,
   }
   with open(MakeTimestampsFileName(root, sha1), 'wb') as f:
-    json.dump(timestamps_data, f)
+    f.write(json.dumps(timestamps_data).encode('utf-8'))
 
 
 def HaveSrcInternalAccess():
