@@ -394,56 +394,56 @@ infra/tools/mac_toolchain/mac-arm64
 	c7zREjzvqW-OWtk7lA6EKb67ZmsziuMrUjN0ZulQ-L0C
 
 infra/tools/prpc/linux-386
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	NMhFUzejvjQIiV5bmMPGlmh22AR3lvg6_LnqCxVs90oC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	0jh5WJiKY3YuD_Jb8PqwvoEpkIErWxDjPK1zHJt7AWsC
 
 infra/tools/prpc/linux-amd64
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	W-1qNoaEoIMoLQZiwIi3Mniiirl6w6SmPbLMrG6qR7IC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	ifuMgrBw52FZoNeCoOOBKJnEOVZissbo16oyfdNNFR4C
 
 infra/tools/prpc/linux-arm64
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	_TJP_DSBvKBLRsELGo1pE4ACmcHVC-g8Ay4Z76oMF48C
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	37GBPQH01OFQ_mNexmZL4JXvTJrJZ6lupI2oipo7NygC
 
 infra/tools/prpc/linux-armv6l
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	c32yDGBnO-_nuY01PPb0BmFD3mTrHnGIW-1gJGhOlmwC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	p5RXqsNOyauZgCE7fUiaJjjvfiyOaduXWxsPi79jSusC
 
 infra/tools/prpc/linux-mips64
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	EC6VSGPEk-1jIrNKeJmwpXlEN_7-TbzXysgyn13oSBoC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	5vO0g5QLGwZINTFQjnhKEEMDTaQ2geUUP16w3T7icicC
 
 infra/tools/prpc/linux-mips64le
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	tAUa8HKCYSxuJGsyn7AZgbj4h2_PIvUxqcHWprK3gkcC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	FV4lcmPr2Y3qx5dC85IxvN6j26tgBTIZY3KL3OO6ggQC
 
 infra/tools/prpc/linux-mipsle
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	eYrdMuDBUiypBxOHbeFXW6biRRUaQTuFG4x6qMpvrWIC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	ZLw57efe_OTsHW_Sl5W2tK29zOx2xEi7m6XqQVEAS6EC
 
 infra/tools/prpc/linux-ppc64
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	Lpa6yMxnDgH3ZsxkzKrUKbUwikvZFpBs8VvsqmgiitcC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	1KLg18xHw43xbVYfPMPXBhqANzzRwP3aYRl0wi3qohIC
 
 infra/tools/prpc/linux-ppc64le
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	XEDr7UcCP9ZaYD0JaajPIIUbDuGdUu9t5HCKkKTX01MC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	hKB-qdoedy6YFlpMY_B2sNmhdoJzQbcRRU-ivr_nPZsC
 
 infra/tools/prpc/linux-s390x
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	WHhHSan56GNtiuqRFPxsvh8NOJVbiC8pu9IdTru-5b0C
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	Z8errTmVek00stSE8njJ4agFHThZWdziTgN5qpNDFbcC
 
 infra/tools/prpc/mac-amd64
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	L53gVrGaRNpYo2cEWTfZO4JMet8e1LNMlkNIYQKGSEAC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	SyQL0RzHkWotXKicxXx49tVIBYW56N-NeDSB046eXwkC
 
 infra/tools/prpc/mac-arm64
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	63ICGLS_pq0YLXo0gljqa0LqHa37T8K_mCSJ37UkweQC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	M2wFOESsz-1S_BtbL2dKzUhxAspQa1OolA-J954ggjQC
 
 infra/tools/prpc/windows-amd64
-	git_revision:e75c9bf286fbb31347379cb478df2a556ab185b1
-	6Oa6Qp8os-roqwHgFdTaA0vlYp_ub6gSPA6Nmo-R9zwC
+	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
+	pZ4PpzsgPaEjhtfUbbynrRQQ6e7zNBnEWnKn6aupqyQC
 
 infra/tools/rdb/linux-386
 	git_revision:050cbe058399cf0c2c3625188f501963c64e8d70
