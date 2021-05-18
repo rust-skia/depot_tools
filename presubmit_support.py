@@ -29,6 +29,7 @@ import os  # Somewhat exposed through the API.
 import random
 import re  # Exposed through the API.
 import signal
+import six
 import sys  # Parts exposed through API.
 import tempfile  # Exposed through the API.
 import threading
@@ -1659,20 +1660,16 @@ class PresubmitExecuter(object):
     try:
       result = eval(function_name + '(*__args)', context)
       self._check_result_type(result)
-    except Exception as e:
+    except Exception:
       if sink:
         elapsed_time = time_time() - start_time
         sink.report(function_name, rdb_wrapper.STATUS_FAIL, elapsed_time)
-      # TODO(crbug.com/953884): replace raise_from with native py3:
+      # TODO(crbug.com/953884): replace reraise with native py3:
       #   raise .. from e
-      try:
-        from future.utils import raise_from
-        raise_from(type(e)('Evaluation of %s failed: %s' % (function_name, e)),
-                   e)
-      except ImportError:
-        if self.verbose:
-          traceback.print_exc()
-        raise type(e)('Evaluation of %s failed: %s' % (function_name, e))
+      e_type, e_value, e_tb = sys.exc_info()
+      six.reraise(e_type, 'Evaluation of %s failed: %s' % (function_name,
+                                                           e_value),
+                  e_tb)
 
     if sink:
       elapsed_time = time_time() - start_time
