@@ -294,6 +294,9 @@ class BotUpdateApi(recipe_api.RecipeApi):
       cmd.append('--gerrit_no_rebase_patch_ref')
     if disable_syntax_validation or cfg.disable_syntax_validation:
       cmd.append('--disable-syntax-validation')
+    if self.m.properties.get('bot_update_experiments'):
+      cmd.append('--experiments=%s' %
+          ','.join(self.m.properties['bot_update_experiments']))
 
     # Inject Json output for testing.
     first_sln = cfg.solutions[0].name
