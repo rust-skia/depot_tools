@@ -128,7 +128,7 @@ def CheckAuthorizedAuthor(input_api, output_api, bot_allowlist=None):
       input_api.PresubmitLocalPath(), 'AUTHORS')
   valid_authors = (
       input_api.re.match(r'[^#]+\s+\<(.+?)\>\s*$', line)
-      for line in open(authors_path, encoding="utf-8"))
+      for line in open(authors_path))
   valid_authors = [item.group(1).lower() for item in valid_authors if item]
   if not any(input_api.fnmatch.fnmatch(author.lower(), valid)
              for valid in valid_authors):
