@@ -29,13 +29,12 @@ import zipfile
 GSUTIL_URL = 'https://storage.googleapis.com/pub/'
 API_URL = 'https://www.googleapis.com/storage/v1/b/pub/o/'
 
-
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BIN_DIR = os.path.join(THIS_DIR, 'external_bin', 'gsutil')
+DEFAULT_FALLBACK_GSUTIL = os.path.join(
+    THIS_DIR, 'third_party', 'gsutil', 'gsutil')
 
 IS_WINDOWS = os.name == 'nt'
-
-VERSION = '4.61'
 
 
 class InvalidGsutilError(Exception):
@@ -130,8 +129,11 @@ def ensure_gsutil(version, target, clean):
   return gsutil_bin
 
 
-def run_gsutil(target, args, clean=False):
-  gsutil_bin = ensure_gsutil(VERSION, target, clean)
+def run_gsutil(force_version, fallback, target, args, clean=False):
+  if force_version:
+    gsutil_bin = ensure_gsutil(force_version, target, clean)
+  else:
+    gsutil_bin = fallback
   disable_update = ['-o', 'GSUtil:software_update_check_period=0']
 
   if sys.platform == 'cygwin':
@@ -145,8 +147,13 @@ def run_gsutil(target, args, clean=False):
     sys.exit(subprocess.call(cmd))
   assert sys.platform != 'cygwin'
 
+  # Run "gsutil" through "vpython". We need to do this because on GCE instances,
+  # expectations are made about Python having access to "google-compute-engine"
+  # and "boto" packages that are not met with non-system Python (e.g., bundles).
   cmd = [
-      sys.executable,
+      'vpython',
+      '-vpython-spec', os.path.join(THIS_DIR, 'gsutil.vpython'),
+      '--',
       gsutil_bin
   ] + disable_update + args
   return subprocess.call(cmd, shell=IS_WINDOWS)
@@ -156,19 +163,13 @@ def parse_args():
   bin_dir = os.environ.get('DEPOT_TOOLS_GSUTIL_BIN_DIR', DEFAULT_BIN_DIR)
 
   parser = argparse.ArgumentParser()
-
+  parser.add_argument('--force-version', default='4.30')
   parser.add_argument('--clean', action='store_true',
       help='Clear any existing gsutil package, forcing a new download.')
+  parser.add_argument('--fallback', default=DEFAULT_FALLBACK_GSUTIL)
   parser.add_argument('--target', default=bin_dir,
       help='The target directory to download/store a gsutil version in. '
            '(default is %(default)s).')
-
-  # These two args exist for backwards-compatibility but are no-ops.
-  parser.add_argument('--force-version', default=VERSION,
-                      help='(deprecated, this flag has no effect)')
-  parser.add_argument('--fallback',
-                      help='(deprecated, this flag has no effect)')
-
   parser.add_argument('args', nargs=argparse.REMAINDER)
 
   args, extras = parser.parse_known_args()
@@ -181,7 +182,8 @@ def parse_args():
 
 def main():
   args = parse_args()
-  return run_gsutil(args.target, args.args, clean=args.clean)
+  return run_gsutil(args.force_version, args.fallback, args.target, args.args,
+                    clean=args.clean)
 
 
 if __name__ == '__main__':
