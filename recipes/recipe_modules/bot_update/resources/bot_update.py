@@ -389,7 +389,7 @@ def gclient_sync(
   os.close(fd)
 
   args = ['sync', '--verbose', '--reset', '--force',
-          '--ignore_locks', '--output-json', gclient_output_file,
+          '--output-json', gclient_output_file,
           '--nohooks', '--noprehooks', '--delete_unversioned_trees']
   if with_branch_heads:
     args += ['--with_branch_heads']
@@ -647,8 +647,8 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
   branch, revision = get_target_branch_and_revision(name, url, revisions)
   pin = revision if COMMIT_HASH_RE.match(revision) else None
 
-  populate_cmd = (['cache', 'populate', '--ignore_locks', '-v',
-                   '--cache-dir', git_cache_dir, url, '--reset-fetch-config'])
+  populate_cmd = (['cache', 'populate', '-v', '--cache-dir', git_cache_dir, url,
+                   '--reset-fetch-config'])
   if no_fetch_tags:
     populate_cmd.extend(['--no-fetch-tags'])
   if pin:
