@@ -579,7 +579,7 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
   license_re = input_api.re.compile(license_re, input_api.re.MULTILINE)
   bad_files = []
   for f in input_api.AffectedSourceFiles(source_file_filter):
-    contents = input_api.ReadFile(f, 'rb')
+    contents = input_api.ReadFile(f, 'r')
     if accept_empty_files and not contents:
       continue
     if not license_re.search(contents):
