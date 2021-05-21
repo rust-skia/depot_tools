@@ -1678,8 +1678,11 @@ class PresubmitExecuter(object):
                                                            e_value),
                   e_tb)
 
+    elapsed_time = time_time() - start_time
+    if elapsed_time > 10.0:
+      sys.stdout.write(
+          '%s took %.1fs to run.\n' % (function_name, elapsed_time))
     if sink:
-      elapsed_time = time_time() - start_time
       status = rdb_wrapper.STATUS_PASS
       if any(r.fatal for r in result):
         status = rdb_wrapper.STATUS_FAIL
