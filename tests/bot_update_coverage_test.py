@@ -156,7 +156,6 @@ class BotUpdateUnittests(unittest.TestCase):
       'git_cache_dir': '',
       'cleanup_dir': None,
       'gerrit_reset': None,
-      'disable_syntax_validation': False,
       'enforce_fetch': False,
   }
 
@@ -267,16 +266,6 @@ class BotUpdateUnittests(unittest.TestCase):
     self.assertIn(self.params['patch_refs'][0], patch_refs)
     self.assertIn(self.params['patch_refs'][1], patch_refs)
 
-  def testBreakLocks(self):
-    self.overrideSetupForWindows()
-    bot_update.ensure_checkout(**self.params)
-    gclient_sync_cmd = None
-    for record in self.call.records:
-      args = record[0]
-      if args[:4] == (sys.executable, '-u', bot_update.GCLIENT_PATH, 'sync'):
-        gclient_sync_cmd = args
-    self.assertTrue('--break_repo_locks' in gclient_sync_cmd)
-
   def testGitCheckoutBreaksLocks(self):
     self.overrideSetupForWindows()
     path = '/b/build/foo/build/.git'
@@ -290,43 +279,6 @@ class BotUpdateUnittests(unittest.TestCase):
     setattr(os, 'walk', old_os_walk)
     setattr(os, 'remove', old_os_remove)
     self.assertTrue(os.path.join(path, lockfile) in removed)
-
-  def testGenerateManifestsBasic(self):
-    gclient_output = {
-        'solutions': {
-            'breakpad/': {
-                'revision': None,
-                'scm': None,
-                'url': ('https://chromium.googlesource.com/breakpad.git' +
-                        '@5f638d532312685548d5033618c8a36f73302d0a')
-            },
-            "src/": {
-                'revision': 'f671d3baeb64d9dba628ad582e867cf1aebc0207',
-                'scm': None,
-                'url': 'https://chromium.googlesource.com/a/chromium/src.git'
-            },
-            'src/overriden': {
-                'revision': None,
-                'scm': 'git',
-                'url': None,
-            },
-        }
-    }
-    out = bot_update.create_manifest(gclient_output, None)
-    self.assertEqual(len(out['directories']), 2)
-    self.assertEqual(
-        out['directories']['src']['git_checkout']['revision'],
-        'f671d3baeb64d9dba628ad582e867cf1aebc0207')
-    self.assertEqual(
-        out['directories']['src']['git_checkout']['repo_url'],
-        'https://chromium.googlesource.com/chromium/src')
-    self.assertEqual(
-        out['directories']['breakpad']['git_checkout']['revision'],
-        '5f638d532312685548d5033618c8a36f73302d0a')
-    self.assertEqual(
-        out['directories']['breakpad']['git_checkout']['repo_url'],
-        'https://chromium.googlesource.com/breakpad')
-    self.assertNotIn('src/overridden', out['directories'])
 
   def testParsesRevisions(self):
     revisions = [

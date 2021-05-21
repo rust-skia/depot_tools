@@ -381,8 +381,8 @@ def git_config_if_not_set(key, value):
 
 
 def gclient_sync(
-    with_branch_heads, with_tags, revisions, break_repo_locks,
-    disable_syntax_validation, patch_refs, gerrit_reset,
+    with_branch_heads, with_tags, revisions,
+    patch_refs, gerrit_reset,
     gerrit_rebase_patch_ref):
   # We just need to allocate a filename.
   fd, gclient_output_file = tempfile.mkstemp(suffix='.json')
@@ -395,10 +395,6 @@ def gclient_sync(
     args += ['--with_branch_heads']
   if with_tags:
     args += ['--with_tags']
-  if break_repo_locks:
-    args += ['--break_repo_locks']
-  if disable_syntax_validation:
-    args += ['--disable-syntax-validation']
   for name, revision in sorted(revisions.items()):
     if revision.upper() == 'HEAD':
       revision = 'refs/remotes/origin/master'
@@ -456,8 +452,7 @@ def normalize_git_url(url):
   return 'https://%s%s' % (p.netloc, upath)
 
 
-# TODO(hinoka): Remove this once all downstream recipes stop using this format.
-def create_manifest_old():
+def create_manifest():
   manifest = {}
   output = gclient_revinfo()
   for line in output.strip().splitlines():
@@ -469,49 +464,6 @@ def create_manifest_old():
       }
     else:
       print("WARNING: Couldn't match revinfo line:\n%s" % line)
-  return manifest
-
-
-# TODO(hinoka): Include patch revision.
-def create_manifest(gclient_output, patch_root):
-  """Return the JSONPB equivalent of the source manifest proto.
-
-  The source manifest proto is defined here:
-  https://chromium.googlesource.com/infra/luci/recipes-py/+/master/recipe_engine/source_manifest.proto
-
-  This is based off of:
-  * The gclient_output (from calling gclient.py --output-json) which contains
-    the directory -> repo:revision mapping.
-  * Gerrit Patch info which contains info about patched revisions.
-
-  We normalize the URLs using the normalize_git_url function.
-  """
-  manifest = {
-      'version': 0,  # Currently the only valid version is 0.
-  }
-  dirs = {}
-  if patch_root:
-    patch_root = patch_root.strip('/')  # Normalize directory names.
-  for directory, info in gclient_output.get('solutions', {}).items():
-    directory = directory.strip('/')  # Normalize the directory name.
-    # The format of the url is "https://repo.url/blah.git@abcdefabcdef" or
-    # just "https://repo.url/blah.git"
-    url = info.get('url') or ''
-    repo, _, url_revision = url.partition('@')
-    repo = normalize_git_url(repo)
-    # There are two places to get the revision from, we do it in this order:
-    # 1. In the "revision" field
-    # 2. At the end of the URL, after @
-    revision = info.get('revision') or url_revision
-    if repo and revision:
-      dirs[directory] = {
-        'git_checkout': {
-          'repo_url': repo,
-          'revision': revision,
-        }
-      }
-
-  manifest['directories'] = dirs
   return manifest
 
 
@@ -851,10 +803,9 @@ def parse_got_revision(gclient_output, got_revision_mapping):
   return properties
 
 
-def emit_json(out_file, did_run, gclient_output=None, **kwargs):
+def emit_json(out_file, did_run, **kwargs):
   """Write run information into a JSON file."""
   output = {}
-  output.update(gclient_output if gclient_output else {})
   output.update({'did_run': did_run})
   output.update(kwargs)
   with open(out_file, 'wb') as f:
@@ -865,7 +816,7 @@ def emit_json(out_file, did_run, gclient_output=None, **kwargs):
 def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
                     target_cpu, patch_root, patch_refs, gerrit_rebase_patch_ref,
                     no_fetch_tags, refs, git_cache_dir, cleanup_dir,
-                    gerrit_reset, disable_syntax_validation, enforce_fetch):
+                    gerrit_reset, enforce_fetch):
   # Get a checkout of each solution, without DEPS or hooks.
   # Calling git directly because there is no way to run Gclient without
   # invoking DEPS.
@@ -878,9 +829,6 @@ def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
   gclient_configure(solutions, target_os, target_os_only, target_cpu,
                     git_cache_dir)
 
-  # Windows sometimes has trouble deleting files. This can make git commands
-  # that rely on locks fail.
-  break_repo_locks = True if sys.platform.startswith('win') else False
   # We want to pass all non-solution revisions into the gclient sync call.
   solution_dirs = {sln['name'] for sln in solutions}
   gc_revisions = {
@@ -899,8 +847,6 @@ def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
       BRANCH_HEADS_REFSPEC in refs,
       TAGS_REFSPEC in refs,
       gc_revisions,
-      break_repo_locks,
-      disable_syntax_validation,
       patch_refs,
       gerrit_reset,
       gerrit_rebase_patch_ref)
@@ -1013,9 +959,6 @@ def parse_args():
   parse.add_option('--cleanup-dir',
                    help='Path to a cleanup directory that can be used for '
                         'deferred file cleanup.')
-  parse.add_option(
-      '--disable-syntax-validation', action='store_true',
-      help='Disable validation of .gclient and DEPS syntax.')
 
   options, args = parse.parse_args()
 
@@ -1142,8 +1085,7 @@ def checkout(options, git_slns, specs, revisions, step_text):
           refs=options.refs,
           git_cache_dir=options.git_cache_dir,
           cleanup_dir=options.cleanup_dir,
-          gerrit_reset=not options.gerrit_no_reset,
-          disable_syntax_validation=options.disable_syntax_validation)
+          gerrit_reset=not options.gerrit_no_reset)
       gclient_output = ensure_checkout(**checkout_parameters)
       should_delete_dirty_file = True
     except GclientSyncFailed:
@@ -1200,9 +1142,7 @@ def checkout(options, git_slns, specs, revisions, step_text):
             step_text=step_text,
             fixed_revisions=revisions,
             properties=got_revisions,
-            manifest=create_manifest_old(),
-            source_manifest=create_manifest(
-                gclient_output, options.patch_root))
+            manifest=create_manifest())
 
 
 def print_debug_info():
