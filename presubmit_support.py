@@ -1008,7 +1008,7 @@ class AffectedFile(object):
         pass  # File not found?  That's fine; maybe it was deleted.
     return self._cached_new_contents[:]
 
-  def ChangedContents(self):
+  def ChangedContents(self, keeplinebreaks=False):
     """Returns a list of tuples (line number, line text) of all new lines.
 
      This relies on the scm diff output describing each changed code section
@@ -1016,20 +1016,27 @@ class AffectedFile(object):
 
      ^@@ <old line num>,<old size> <new line num>,<new size> @@$
     """
-    if self._cached_changed_contents is not None:
+    # Don't return cached results when line breaks are requested.
+    if not keeplinebreaks and self._cached_changed_contents is not None:
       return self._cached_changed_contents[:]
-    self._cached_changed_contents = []
+    result = []
     line_num = 0
 
-    for line in self.GenerateScmDiff().splitlines():
+    # The keeplinebreaks parameter to splitlines must be True or else the
+    # CheckForWindowsLineEndings presubmit will be a NOP.
+    for line in self.GenerateScmDiff().splitlines(keeplinebreaks):
       m = re.match(r'^@@ [0-9\,\+\-]+ \+([0-9]+)\,[0-9]+ @@', line)
       if m:
         line_num = int(m.groups(1)[0])
         continue
       if line.startswith('+') and not line.startswith('++'):
-        self._cached_changed_contents.append((line_num, line[1:]))
+        result.append((line_num, line[1:]))
       if not line.startswith('-'):
         line_num += 1
+    # Don't cache results with line breaks.
+    if keeplinebreaks:
+      return result;
+    self._cached_changed_contents = result
     return self._cached_changed_contents[:]
 
   def __str__(self):
