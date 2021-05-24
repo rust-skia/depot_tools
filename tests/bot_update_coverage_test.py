@@ -5,7 +5,6 @@
 
 import codecs
 import copy
-import json
 import os
 import sys
 import unittest
@@ -87,21 +86,11 @@ class MockedCall(object):
 
 
 class MockedGclientSync():
-  """A class producing a callable instance of gclient sync.
-
-  Because for bot_update, gclient sync also emits an output json file, we need
-  a callable object that can understand where the output json file is going, and
-  emit a (albite) fake file for bot_update to consume.
-  """
+  """A class producing a callable instance of gclient sync."""
   def __init__(self, fake_filesystem):
-    self.output = {}
-    self.fake_filesystem = fake_filesystem
     self.records = []
 
   def __call__(self, *args, **_):
-    output_json_index = args.index('--output-json') + 1
-    with self.fake_filesystem.open(args[output_json_index], 'w') as f:
-      json.dump(self.output, f)
     self.records.append(args)
 
 

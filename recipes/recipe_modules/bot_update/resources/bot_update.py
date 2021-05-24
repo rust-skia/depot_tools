@@ -61,9 +61,6 @@ COMMIT_FOOTER_ENTRY_RE = re.compile(r'([^:]+):\s*(.*)')
 COMMIT_POSITION_FOOTER_KEY = 'Cr-Commit-Position'
 COMMIT_ORIGINAL_POSITION_FOOTER_KEY = 'Cr-Original-Commit-Position'
 
-# Regular expression to parse gclient's revinfo entries.
-REVINFO_RE = re.compile(r'^([^:]+):\s+([^@]+)@(.+)$')
-
 # Copied from scripts/recipes/chromium.py.
 GOT_REVISION_MAPPINGS = {
     CHROMIUM_SRC_URL: {
@@ -384,12 +381,7 @@ def gclient_sync(
     with_branch_heads, with_tags, revisions,
     patch_refs, gerrit_reset,
     gerrit_rebase_patch_ref):
-  # We just need to allocate a filename.
-  fd, gclient_output_file = tempfile.mkstemp(suffix='.json')
-  os.close(fd)
-
   args = ['sync', '--verbose', '--reset', '--force',
-          '--output-json', gclient_output_file,
           '--nohooks', '--noprehooks', '--delete_unversioned_trees']
   if with_branch_heads:
     args += ['--with_branch_heads']
@@ -417,15 +409,6 @@ def gclient_sync(
       raise PatchFailed(e.message, e.code, e.output)
     # Throw a GclientSyncFailed exception so we can catch this independently.
     raise GclientSyncFailed(e.message, e.code, e.output)
-  else:
-    with open(gclient_output_file) as f:
-      return json.load(f)
-  finally:
-    os.remove(gclient_output_file)
-
-
-def gclient_revinfo():
-  return call_gclient('revinfo', '-a') or ''
 
 
 def normalize_git_url(url):
@@ -453,18 +436,18 @@ def normalize_git_url(url):
 
 
 def create_manifest():
-  manifest = {}
-  output = gclient_revinfo()
-  for line in output.strip().splitlines():
-    match = REVINFO_RE.match(line.strip())
-    if match:
-      manifest[match.group(1)] = {
-        'repository': match.group(2),
-        'revision': match.group(3),
-      }
-    else:
-      print("WARNING: Couldn't match revinfo line:\n%s" % line)
-  return manifest
+  revinfo = call_gclient(
+      'revinfo', '-a', '--ignore-dep-type', 'cipd', '--output-json', '-')
+  if not revinfo:
+    return {}
+  return {
+    path: {
+      'repository': info['url'],
+      'revision': info['rev'],
+    }
+    for path, info in json.loads(revinfo).items()
+    if info['rev'] is not None
+  }
 
 
 def get_commit_message_footer_map(message):
@@ -773,28 +756,22 @@ def get_commit_position(git_path, revision='HEAD'):
   return None
 
 
-def parse_got_revision(gclient_output, got_revision_mapping):
+def parse_got_revision(manifest, got_revision_mapping):
   """Translate git gclient revision mapping to build properties."""
   properties = {}
-  solutions_output = {
+  manifest = {
       # Make sure path always ends with a single slash.
-      '%s/' % path.rstrip('/') : solution_output for path, solution_output
-      in gclient_output['solutions'].items()
+      '%s/' % path.rstrip('/'): info
+      for path, info in manifest.items()
   }
   for property_name, dir_name in got_revision_mapping.items():
     # Make sure dir_name always ends with a single slash.
     dir_name = '%s/' % dir_name.rstrip('/')
-    if dir_name not in solutions_output:
+    if dir_name not in manifest:
       continue
-    solution_output = solutions_output[dir_name]
-    if solution_output.get('scm') is None:
-      # This is an ignored DEPS, so the output got_revision should be 'None'.
-      revision = commit_position = None
-    else:
-      # Since we are using .DEPS.git, everything had better be git.
-      assert solution_output.get('scm') == 'git'
-      revision = git('rev-parse', 'HEAD', cwd=dir_name).strip()
-      commit_position = get_commit_position(dir_name)
+    info = manifest[dir_name]
+    revision = git('rev-parse', 'HEAD', cwd=dir_name).strip()
+    commit_position = get_commit_position(dir_name)
 
     properties[property_name] = revision
     if commit_position:
@@ -843,7 +820,7 @@ def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
   # Let gclient do the DEPS syncing.
   # The branch-head refspec is a special case because it's possible Chrome
   # src, which contains the branch-head refspecs, is DEPSed in.
-  gclient_output = gclient_sync(
+  gclient_sync(
       BRANCH_HEADS_REFSPEC in refs,
       TAGS_REFSPEC in refs,
       gc_revisions,
@@ -861,8 +838,6 @@ def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
     sln['deps_file'] = sln.get('deps_file', 'DEPS').replace('.DEPS.git', 'DEPS')
   gclient_configure(solutions, target_os, target_os_only, target_cpu,
                     git_cache_dir)
-
-  return gclient_output
 
 
 def parse_revisions(revisions, root):
@@ -1086,12 +1061,12 @@ def checkout(options, git_slns, specs, revisions, step_text):
           git_cache_dir=options.git_cache_dir,
           cleanup_dir=options.cleanup_dir,
           gerrit_reset=not options.gerrit_no_reset)
-      gclient_output = ensure_checkout(**checkout_parameters)
+      ensure_checkout(**checkout_parameters)
       should_delete_dirty_file = True
     except GclientSyncFailed:
       print('We failed gclient sync, lets delete the checkout and retry.')
       ensure_no_checkout(dir_names, options.cleanup_dir)
-      gclient_output = ensure_checkout(**checkout_parameters)
+      ensure_checkout(**checkout_parameters)
       should_delete_dirty_file = True
   except PatchFailed as e:
     # Tell recipes information such as root, got_revision, etc.
@@ -1125,7 +1100,8 @@ def checkout(options, git_slns, specs, revisions, step_text):
   if not revision_mapping:
     revision_mapping['got_revision'] = first_sln
 
-  got_revisions = parse_got_revision(gclient_output, revision_mapping)
+  manifest = create_manifest()
+  got_revisions = parse_got_revision(manifest, revision_mapping)
 
   if not got_revisions:
     # TODO(hinoka): We should probably bail out here, but in the interest
@@ -1142,7 +1118,7 @@ def checkout(options, git_slns, specs, revisions, step_text):
             step_text=step_text,
             fixed_revisions=revisions,
             properties=got_revisions,
-            manifest=create_manifest())
+            manifest=manifest)
 
 
 def print_debug_info():
