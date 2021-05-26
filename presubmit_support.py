@@ -1006,6 +1006,12 @@ class AffectedFile(object):
             self.AbsoluteLocalPath(), 'rU').splitlines()
       except IOError:
         pass  # File not found?  That's fine; maybe it was deleted.
+      except UnicodeDecodeError:
+        # log the filename since we're probably trying to read a binary
+        # file, and shouldn't be.
+        print('Error reading %s: %s' % (self.AbsoluteLocalPath(), e))
+        raise
+
     return self._cached_new_contents[:]
 
   def ChangedContents(self, keeplinebreaks=False):
@@ -1674,9 +1680,8 @@ class PresubmitExecuter(object):
       # TODO(crbug.com/953884): replace reraise with native py3:
       #   raise .. from e
       e_type, e_value, e_tb = sys.exc_info()
-      six.reraise(e_type, 'Evaluation of %s failed: %s' % (function_name,
-                                                           e_value),
-                  e_tb)
+      print('Evaluation of %s failed: %s' % (function_name, e_value))
+      six.reraise(e_type, e_value, e_tb)
 
     elapsed_time = time_time() - start_time
     if elapsed_time > 10.0:
@@ -1742,7 +1747,7 @@ def DoPresubmitChecks(change,
 
     python_version = 'Python %s' % sys.version_info.major
     if committing:
-      sys.stdout.write('Running %s presubmit commit checks ...\n' % 
+      sys.stdout.write('Running %s presubmit commit checks ...\n' %
                        python_version)
     else:
       sys.stdout.write('Running %s presubmit upload checks ...\n' %
