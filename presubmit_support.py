@@ -1006,7 +1006,7 @@ class AffectedFile(object):
             self.AbsoluteLocalPath(), 'rU').splitlines()
       except IOError:
         pass  # File not found?  That's fine; maybe it was deleted.
-      except UnicodeDecodeError:
+      except UnicodeDecodeError as e:
         # log the filename since we're probably trying to read a binary
         # file, and shouldn't be.
         print('Error reading %s: %s' % (self.AbsoluteLocalPath(), e))
