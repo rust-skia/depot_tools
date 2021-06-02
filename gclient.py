@@ -922,8 +922,25 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       options.revision = revision_override
       self._used_revision = options.revision
       self._used_scm = self.CreateSCM(out_cb=work_queue.out_cb)
-      self._got_revision = self._used_scm.RunCommand(command, options, args,
-                                                     file_list)
+      if command != 'update' or self.GetScmName() != 'git':
+        self._got_revision = self._used_scm.RunCommand(command, options, args,
+                                                       file_list)
+      else:
+        try:
+          start = time.time()
+          sync_status = metrics_utils.SYNC_STATUS_FAILURE
+          self._got_revision = self._used_scm.RunCommand(command, options, args,
+                                                         file_list)
+          sync_status = metrics_utils.SYNC_STATUS_SUCCESS
+        finally:
+          url, revision = gclient_utils.SplitUrlRevision(self.url)
+          metrics.collector.add_repeated('git_deps', {
+            'path': self.name,
+            'url': url,
+            'revision': revision,
+            'execution_time': time.time() - start,
+            'sync_status': sync_status,
+          })
 
       patch_repo = self.url.split('@')[0]
       patch_ref = patch_refs.pop(self.FuzzyMatchUrl(patch_refs), None)
