@@ -361,7 +361,7 @@ Module for interact with Gerrit endpoints
 
 Wrapper for easy calling of gerrit_utils steps.
 
-&mdash; **def [abandon\_change](/recipes/recipe_modules/gerrit/api.py#173)(self, host, change, message=None, name=None, step_test_data=None):**
+&mdash; **def [abandon\_change](/recipes/recipe_modules/gerrit/api.py#209)(self, host, change, message=None, name=None, step_test_data=None):**
 
 &mdash; **def [create\_gerrit\_branch](/recipes/recipe_modules/gerrit/api.py#32)(self, host, project, branch, commit, \*\*kwargs):**
 
@@ -408,6 +408,25 @@ Gets a branch from given project and commit
 Returns:
   The revision of the branch
 
+&mdash; **def [get\_related\_changes](/recipes/recipe_modules/gerrit/api.py#173)(self, host, change, revision='current', step_test_data=None):**
+
+Queries related changes for a given host, change, and revision.
+
+Args:
+  * host: URL of Gerrit host to query.
+  * change: The change-id of the change to get related changes for as
+      documented here:
+      https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#change-id
+  * revision: The revision-id of the revision to get related changes for as
+      documented here:
+      https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
+      This defaults to current, which names the most recent patch set.
+  * step_test_data: Optional mock test data for the underlying gerrit client.
+
+Returns:
+  A related changes dictionary as documented here:
+      https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#related-changes-info
+
 &mdash; **def [get\_revision\_info](/recipes/recipe_modules/gerrit/api.py#90)(self, host, change, patchset, timeout=None, step_test_data=None):**
 
 Returns the info for a given patchset of a given change.
@@ -421,7 +440,7 @@ Returns:
   A dict for the target revision as documented here:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
 
-&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#193)(self, host, project, from_branch, to_branch, step_test_data=None):**
+&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#229)(self, host, project, from_branch, to_branch, step_test_data=None):**
 ### *recipe_modules* / [git](/recipes/recipe_modules/git)
 
 [DEPS](/recipes/recipe_modules/git/__init__.py#1): [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]

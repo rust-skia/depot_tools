@@ -703,6 +703,12 @@ def GetChangeRobotComments(host, change):
   return ReadHttpJsonResponse(CreateHttpConn(host, path))
 
 
+def GetRelatedChanges(host, change, revision='current'):
+  """Gets the related changes for a given change and revision."""
+  path = 'changes/%s/revisions/%s/related' % (change, revision)
+  return ReadHttpJsonResponse(CreateHttpConn(host, path))
+
+
 def AbandonChange(host, change, msg=''):
   """Abandons a Gerrit change."""
   path = 'changes/%s/abandon' % change
