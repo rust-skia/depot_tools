@@ -146,6 +146,7 @@ class BotUpdateUnittests(unittest.TestCase):
       'cleanup_dir': None,
       'gerrit_reset': None,
       'enforce_fetch': False,
+      'experiments': [],
   }
 
   def setUp(self):

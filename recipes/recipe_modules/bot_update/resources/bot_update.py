@@ -74,6 +74,11 @@ GOT_REVISION_MAPPINGS = {
     }
 }
 
+# List of bot update experiments
+EXP_NO_SYNC = 'no_sync'  # Don't fetch/sync if current revision is recent enough
+
+# Don't sync if the checkout is less than 6 hours old.
+NO_SYNC_MAX_DELAY_S = 6 * 60 * 60
 
 GCLIENT_TEMPLATE = """solutions = %(solutions)s
 
@@ -612,28 +617,46 @@ def _set_git_config(fn):
 
 
 def git_checkouts(solutions, revisions, refs, no_fetch_tags, git_cache_dir,
-                  cleanup_dir, enforce_fetch):
+                  cleanup_dir, enforce_fetch, experiments):
   build_dir = os.getcwd()
-  first_solution = True
+  synced = []
   for sln in solutions:
     sln_dir = path.join(build_dir, sln['name'])
-    _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
-                  cleanup_dir, enforce_fetch)
-    if first_solution:
-      git_ref = git('log', '--format=%H', '--max-count=1',
-                    cwd=path.join(build_dir, sln['name'])
-                ).strip()
-    first_solution = False
-  return git_ref
+    did_sync = _git_checkout(
+        sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
+        cleanup_dir, enforce_fetch, experiments)
+    if did_sync:
+      synced.append(sln['name'])
+  return synced
+
+
+def _git_checkout_needs_sync(sln_url, sln_dir, refs):
+  if not path.exists(sln_dir):
+    return True
+  for ref in refs:
+    try:
+      remote_ref = ref_to_remote_ref(ref)
+      commit_time = git('show', '-s', '--format=%ct', remote_ref, cwd=sln_dir)
+      commit_time = int(commit_time)
+    except SubprocessError:
+      return True
+    if time.time() - commit_time >= NO_SYNC_MAX_DELAY_S:
+      return True
+  return False
 
 
 def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
-                  cleanup_dir, enforce_fetch):
+                  cleanup_dir, enforce_fetch, experiments):
   name = sln['name']
   url = sln['url']
 
   branch, revision = get_target_branch_and_revision(name, url, revisions)
   pin = revision if COMMIT_HASH_RE.match(revision) else None
+
+  if (EXP_NO_SYNC in experiments
+      and not _git_checkout_needs_sync(url, sln_dir, refs)):
+    git('checkout', '--force', pin or branch, '--', cwd=sln_dir)
+    return False
 
   populate_cmd = (['cache', 'populate', '-v', '--cache-dir', git_cache_dir, url,
                    '--reset-fetch-config'])
@@ -713,7 +736,7 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
       # happens to have the exact same name.
       git('checkout', '--force', pin or branch, '--', cwd=sln_dir)
       git('clean', '-dff', cwd=sln_dir)
-      return
+      return True
     except SubprocessFailed as e:
       # Exited abnormally, there's probably something wrong.
       print('Something failed: %s.' % str(e))
@@ -723,6 +746,8 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
         remove(sln_dir, cleanup_dir)
       else:
         raise
+
+  return True
 
 def _git_disable_gc(cwd):
   git('config', 'gc.auto', '0', cwd=cwd)
@@ -798,14 +823,15 @@ def emit_json(out_file, did_run, **kwargs):
 def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
                     target_cpu, patch_root, patch_refs, gerrit_rebase_patch_ref,
                     no_fetch_tags, refs, git_cache_dir, cleanup_dir,
-                    gerrit_reset, enforce_fetch):
+                    gerrit_reset, enforce_fetch, experiments):
   # Get a checkout of each solution, without DEPS or hooks.
   # Calling git directly because there is no way to run Gclient without
   # invoking DEPS.
   print('Fetching Git checkout')
 
-  git_checkouts(solutions, revisions, refs, no_fetch_tags, git_cache_dir,
-                cleanup_dir, enforce_fetch)
+  synced_solutions = git_checkouts(
+      solutions, revisions, refs, no_fetch_tags, git_cache_dir, cleanup_dir,
+      enforce_fetch, experiments)
 
   # Ensure our build/ directory is set up with the correct .gclient file.
   gclient_configure(solutions, target_os, target_os_only, target_cpu,
@@ -843,6 +869,8 @@ def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
     sln['deps_file'] = sln.get('deps_file', 'DEPS').replace('.DEPS.git', 'DEPS')
   gclient_configure(solutions, target_os, target_os_only, target_cpu,
                     git_cache_dir)
+
+  return synced_solutions
 
 
 def parse_revisions(revisions, root):
@@ -887,6 +915,8 @@ def parse_revisions(revisions, root):
 def parse_args():
   parse = optparse.OptionParser()
 
+  parse.add_option('--experiments',
+                   help='Comma separated list of experiments to enable')
   parse.add_option('--root', dest='patch_root',
                    help='DEPRECATED: Use --patch_root.')
   parse.add_option('--patch_root', help='Directory to patch on top of.')
@@ -1034,6 +1064,9 @@ def checkout(options, git_slns, specs, revisions, step_text):
     pass
 
   should_delete_dirty_file = False
+  experiments = []
+  if options.experiments:
+    experiments = options.experiments.split(',')
 
   try:
     # Outer try is for catching patch failures and exiting gracefully.
@@ -1065,13 +1098,15 @@ def checkout(options, git_slns, specs, revisions, step_text):
           refs=options.refs,
           git_cache_dir=options.git_cache_dir,
           cleanup_dir=options.cleanup_dir,
-          gerrit_reset=not options.gerrit_no_reset)
-      ensure_checkout(**checkout_parameters)
+          gerrit_reset=not options.gerrit_no_reset,
+
+          experiments=experiments)
+      synced_solutions = ensure_checkout(**checkout_parameters)
       should_delete_dirty_file = True
     except GclientSyncFailed:
       print('We failed gclient sync, lets delete the checkout and retry.')
       ensure_no_checkout(dir_names, options.cleanup_dir)
-      ensure_checkout(**checkout_parameters)
+      synced_solutions = ensure_checkout(**checkout_parameters)
       should_delete_dirty_file = True
   except PatchFailed as e:
     # Tell recipes information such as root, got_revision, etc.
@@ -1083,7 +1118,8 @@ def checkout(options, git_slns, specs, revisions, step_text):
               patch_failure=True,
               failed_patch_body=e.output,
               step_text='%s PATCH FAILED' % step_text,
-              fixed_revisions=revisions)
+              fixed_revisions=revisions,
+              synced_solutions=synced_solutions)
     should_delete_dirty_file = True
     raise
   finally:
@@ -1123,7 +1159,8 @@ def checkout(options, git_slns, specs, revisions, step_text):
             step_text=step_text,
             fixed_revisions=revisions,
             properties=got_revisions,
-            manifest=manifest)
+            manifest=manifest,
+            synced_solutions=synced_solutions)
 
 
 def print_debug_info():
