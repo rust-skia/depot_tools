@@ -296,6 +296,7 @@ def _RightHandSideLinesImpl(affected_files):
 
 def prompt_should_continue(prompt_string):
   sys.stdout.write(prompt_string)
+  sys.stdout.flush()
   response = sys.stdin.readline().strip().lower()
   return response in ('y', 'yes')
 
