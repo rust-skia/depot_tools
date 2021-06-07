@@ -1064,6 +1064,7 @@ def checkout(options, git_slns, specs, revisions, step_text):
     pass
 
   should_delete_dirty_file = False
+  synced_solutions = []
   experiments = []
   if options.experiments:
     experiments = options.experiments.split(',')
