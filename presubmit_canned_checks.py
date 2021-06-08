@@ -944,7 +944,6 @@ def GetPylint(input_api,
   input_api.logging.debug('  with extra PYTHONPATH: %r', extra_paths_list)
 
   def GetPylintCmd(flist, extra, parallel):
-    import sys
     # Windows needs help running python files so we explicitly specify
     # the interpreter to use. It also has limitations on the size of
     # the command-line, so we pass arguments via a pipe.
@@ -976,7 +975,7 @@ def GetPylint(input_api,
       description += ' on %d cores' % input_api.cpu_count
 
     kwargs['stdin'] = '\n'.join(args + flist)
-    if sys.version_info.major != 2:
+    if input_api.sys.version_info.major != 2:
       kwargs['stdin'] = kwargs['stdin'].encode('utf-8')
 
     return input_api.Command(
