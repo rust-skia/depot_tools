@@ -1309,7 +1309,7 @@ class GitChange(Change):
     root = root or self.RepositoryRoot()
     return subprocess.check_output(
         ['git', '-c', 'core.quotePath=false', 'ls-files', '--', '.'],
-        cwd=root).splitlines()
+        cwd=root).decode('utf-8', 'ignore').splitlines()
 
 
 def ListRelevantPresubmitFiles(files, root):
