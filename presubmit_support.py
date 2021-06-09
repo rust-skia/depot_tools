@@ -208,7 +208,7 @@ class ThreadPool(object):
       stdout, _ = sigint_handler.wait(p, stdin)
       if timer.completed:
         stdout = 'Process timed out after %ss\n%s' % (self.timeout, stdout)
-      return p.returncode, stdout
+      return p.returncode, stdout.decode('utf-8', 'ignore');
 
   def CallCommand(self, test):
     """Runs an external program.
