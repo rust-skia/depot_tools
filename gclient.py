@@ -245,19 +245,31 @@ class Hook(object):
     if cmd[0] == 'vpython' and _detect_host_os() == 'win':
       cmd[0] += '.bat'
 
+    exit_code = 2
     try:
       start_time = time.time()
       gclient_utils.CheckCallAndFilter(
           cmd, cwd=self.effective_cwd, print_stdout=True, show_header=True,
           always_show_header=self._verbose)
+      exit_code = 0
     except (gclient_utils.Error, subprocess2.CalledProcessError) as e:
       # Use a discrete exit status code of 2 to indicate that a hook action
       # failed.  Users of this script may wish to treat hook action failures
       # differently from VC failures.
       print('Error: %s' % str(e), file=sys.stderr)
-      sys.exit(2)
+      sys.exit(exit_code)
     finally:
       elapsed_time = time.time() - start_time
+      metrics.collector.add_repeated('hooks', {
+        'action': gclient_utils.CommandToStr(cmd),
+        'name': self._name,
+        'cwd': os.path.relpath(
+            os.path.normpath(self.effective_cwd),
+            self._cwd_base),
+        'condition': self._condition,
+        'execution_time': elapsed_time,
+        'exit_code': exit_code,
+      })
       if elapsed_time > 10:
         print("Hook '%s' took %.2f secs" % (
             gclient_utils.CommandToStr(cmd), elapsed_time))
