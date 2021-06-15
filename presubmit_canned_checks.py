@@ -567,10 +567,10 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
   # The (c) is deprecated, but tolerate it until it's removed from all files.
   license_re = license_re or (
       r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors\. '
-        r'All rights reserved\.\n'
+        r'All rights reserved\.\r?\n'
       r'.*? Use of this source code is governed by a BSD-style license that '
-        r'can be\n'
-      r'.*? found in the LICENSE file\.(?: \*/)?\n'
+        r'can be\r?\n'
+      r'.*? found in the LICENSE file\.(?: \*/)?\r?\n'
   ) % {
       'year': years_re,
       'project': project_name,
