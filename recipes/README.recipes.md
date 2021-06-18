@@ -152,7 +152,7 @@ Args:
     should use when installing this package. If None, defaults to the
     platform default ('copy' on windows, 'symlink' on everything else).
 
-&mdash; **def [create\_from\_pkg](/recipes/recipe_modules/cipd/api.py#332)(self, pkg_def, refs=None, tags=None):**
+&mdash; **def [create\_from\_pkg](/recipes/recipe_modules/cipd/api.py#340)(self, pkg_def, refs=None, tags=None):**
 
 Builds and uploads a package based on a PackageDefinition object.
 
@@ -170,7 +170,7 @@ Returns the JSON 'result' section, e.g.: {
   "instance_id": "433bfdf86c0bb82d1eee2d1a0473d3709c25d2c4"
 }
 
-&mdash; **def [create\_from\_yaml](/recipes/recipe_modules/cipd/api.py#312)(self, pkg_def, refs=None, tags=None):**
+&mdash; **def [create\_from\_yaml](/recipes/recipe_modules/cipd/api.py#314)(self, pkg_def, refs=None, tags=None, verification_timeout=None):**
 
 Builds and uploads a package based on on-disk YAML package definition
 file.
@@ -182,6 +182,10 @@ Args:
   refs (list(str)) - A list of ref names to set for the package instance.
   tags (dict(str, str)) - A map of tag name -> value to set for the package
                           instance.
+  verification_timeout (str) - Duration string that controls the time to
+                               wait for backend-side package hash
+                               verification. Valid time units are "ns",
+                               "us", "ms", "s", "m", "h".
 
 Returns the JSON 'result' section, e.g.: {
   "package": "infra/tools/cipd/android-amd64",
@@ -190,9 +194,9 @@ Returns the JSON 'result' section, e.g.: {
 
 &emsp; **@property**<br>&mdash; **def [default\_bot\_service\_account\_credentials](/recipes/recipe_modules/cipd/api.py#200)(self):**
 
-&mdash; **def [describe](/recipes/recipe_modules/cipd/api.py#439)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
+&mdash; **def [describe](/recipes/recipe_modules/cipd/api.py#447)(self, package_name, version, test_data_refs=None, test_data_tags=None):**
 
-&mdash; **def [ensure](/recipes/recipe_modules/cipd/api.py#354)(self, root, packages):**
+&mdash; **def [ensure](/recipes/recipe_modules/cipd/api.py#362)(self, root, packages):**
 
 Ensures that packages are installed in a given root dir.
 
@@ -221,13 +225,13 @@ parameters will be used.
 
 &mdash; **def [register](/recipes/recipe_modules/cipd/api.py#264)(self, package_name, package_path, refs=None, tags=None):**
 
-&mdash; **def [search](/recipes/recipe_modules/cipd/api.py#421)(self, package_name, tag):**
+&mdash; **def [search](/recipes/recipe_modules/cipd/api.py#429)(self, package_name, tag):**
 
-&mdash; **def [set\_ref](/recipes/recipe_modules/cipd/api.py#401)(self, package_name, version, refs):**
+&mdash; **def [set\_ref](/recipes/recipe_modules/cipd/api.py#409)(self, package_name, version, refs):**
 
 &mdash; **def [set\_service\_account\_credentials](/recipes/recipe_modules/cipd/api.py#193)(self, path):**
 
-&mdash; **def [set\_tag](/recipes/recipe_modules/cipd/api.py#381)(self, package_name, version, tags):**
+&mdash; **def [set\_tag](/recipes/recipe_modules/cipd/api.py#389)(self, package_name, version, tags):**
 ### *recipe_modules* / [depot\_tools](/recipes/recipe_modules/depot_tools)
 
 [DEPS](/recipes/recipe_modules/depot_tools/__init__.py#5): [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
