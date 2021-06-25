@@ -773,6 +773,9 @@ class Settings(object):
   def GetDefaultCCList(self):
     return self._GetConfig('rietveld.cc')
 
+  def GetUsePython3(self):
+    return self._GetConfig('rietveld.use-python3')
+
   def GetSquashGerritUploads(self):
     """Returns True if uploads to Gerrit should be squashed by default."""
     if self.squash_gerrit_uploads is None:
@@ -1179,6 +1182,9 @@ class Changelist(object):
       server = _KNOWN_GERRIT_TO_SHORT_URLS.get(server, server)
     return '%s/%s' % (server, issue)
 
+  def GetUsePython3(self):
+      return settings.GetUsePython3()
+
   def FetchDescription(self, pretty=False):
     assert self.GetIssue(), 'issue is required to query Gerrit'
 
@@ -1343,7 +1349,8 @@ class Changelist(object):
         gclient_utils.FileWrite(description_file, description)
         args.extend(['--json_output', json_output])
         args.extend(['--description_file', description_file])
-
+        if self.GetUsePython3():
+          args.append('--use-python3')
         start = time_time()
         cmd = [vpython, PRESUBMIT_SUPPORT] + args
         if resultdb and realm:
@@ -2953,6 +2960,7 @@ def LoadCodereviewSettingsFromFile(fileobj):
               unset_error_ok=True)
   SetProperty(
       'format-full-by-default', 'FORMAT_FULL_BY_DEFAULT', unset_error_ok=True)
+  SetProperty('use-python3', 'USE_PYTHON3', unset_error_ok=True)
 
   if 'GERRIT_HOST' in keyvals:
     RunGit(['config', 'gerrit.host', keyvals['GERRIT_HOST']])

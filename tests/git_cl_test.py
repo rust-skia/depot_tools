@@ -71,8 +71,9 @@ class ChangelistMock(object):
   # instance that's being set.
   desc = ''
 
-  def __init__(self, gerrit_change=None, **kwargs):
+  def __init__(self, gerrit_change=None, use_python3=False, **kwargs):
     self._gerrit_change = gerrit_change
+    self._use_python3 = use_python3
 
   def GetIssue(self):
     return 1
@@ -90,6 +91,8 @@ class ChangelistMock(object):
   def GetRemoteBranch(self):
     return ('origin', 'refs/remotes/origin/main')
 
+  def GetUsePython3(self):
+    return self._use_python3
 
 class GitMocks(object):
   def __init__(self, config=None, branchref=None):
@@ -762,6 +765,8 @@ class TestGitCl(unittest.TestCase):
       ((['git', 'config', '--unset-all', 'rietveld.run-post-upload-hook'],),
         CERR1),
       ((['git', 'config', '--unset-all', 'rietveld.format-full-by-default'],),
+        CERR1),
+      ((['git', 'config', '--unset-all', 'rietveld.use-python3'],),
         CERR1),
       ((['git', 'config', 'gerrit.host', 'true'],), ''),
     ]
@@ -3031,6 +3036,7 @@ class ChangelistTest(unittest.TestCase):
     mock.patch('git_cl.Changelist.GetAuthor', return_value='author').start()
     mock.patch('git_cl.Changelist.GetIssue', return_value=123456).start()
     mock.patch('git_cl.Changelist.GetPatchset', return_value=7).start()
+    mock.patch('git_cl.Changelist.GetUsePython3', return_value=False).start()
     mock.patch(
         'git_cl.Changelist.GetRemoteBranch',
         return_value=('origin', 'refs/remotes/origin/main')).start()

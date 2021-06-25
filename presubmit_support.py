@@ -1537,7 +1537,7 @@ def DoPostUploadExecuter(change,
 
 class PresubmitExecuter(object):
   def __init__(self, change, committing, verbose, gerrit_obj, dry_run=None,
-               thread_pool=None, parallel=False):
+               thread_pool=None, parallel=False, use_python3=False):
     """
     Args:
       change: The Change object.
@@ -1546,6 +1546,8 @@ class PresubmitExecuter(object):
       dry_run: if true, some Checks will be skipped.
       parallel: if true, all tests reported via input_api.RunTests for all
                 PRESUBMIT files will be run in parallel.
+      use_python3: if true, will use python3 instead of python2 by default
+                if USE_PYTHON3 is not specified.
     """
     self.change = change
     self.committing = committing
@@ -1555,6 +1557,7 @@ class PresubmitExecuter(object):
     self.more_cc = []
     self.thread_pool = thread_pool
     self.parallel = parallel
+    self.use_python3 = use_python3
 
   def ExecPresubmitScript(self, script_text, presubmit_path):
     """Executes a single presubmit script.
@@ -1585,8 +1588,12 @@ class PresubmitExecuter(object):
     # python2 or python3. We need to do this without actually trying to
     # compile the text, since the text might compile in one but not the
     # other.
-    m = re.search('^USE_PYTHON3 = True$', script_text, flags=re.MULTILINE)
-    use_python3 = m is not None
+    m = re.search('^USE_PYTHON3 = (True|False)$', script_text,
+                  flags=re.MULTILINE)
+    if m:
+        use_python3 = m.group(1) == 'True'
+    else:
+        use_python3 = self.use_python3
     if (((sys.version_info.major == 2) and use_python3) or
         ((sys.version_info.major == 3) and not use_python3)):
       return []
@@ -1715,7 +1722,8 @@ def DoPresubmitChecks(change,
                       gerrit_obj,
                       dry_run=None,
                       parallel=False,
-                      json_output=None):
+                      json_output=None,
+                      use_python3=False):
   """Runs all presubmit checks that apply to the files in the change.
 
   This finds all PRESUBMIT.py files in directories enclosing the files in the
@@ -1736,7 +1744,8 @@ def DoPresubmitChecks(change,
     dry_run: if true, some Checks will be skipped.
     parallel: if true, all tests specified by input_api.RunTests in all
               PRESUBMIT files will be run in parallel.
-
+    use_python3: if true, default to using Python3 for presubmit checks
+                 rather than Python2.
   Return:
     1 if presubmit checks failed or 0 otherwise.
   """
@@ -1761,7 +1770,7 @@ def DoPresubmitChecks(change,
     results = []
     thread_pool = ThreadPool()
     executer = PresubmitExecuter(change, committing, verbose, gerrit_obj,
-                                 dry_run, thread_pool, parallel)
+                                 dry_run, thread_pool, parallel, use_python3)
     if default_presubmit:
       if verbose:
         sys.stdout.write('Running default presubmit script.\n')
@@ -2012,6 +2021,8 @@ def main(argv=None):
                       help='List of files to be marked as modified when '
                       'executing presubmit or post-upload hooks. fnmatch '
                       'wildcards can also be used.')
+  parser.add_argument('--use-python3', action='store_true',
+                      help='Use python3 for presubmit checks by default')
   options = parser.parse_args(argv)
 
   log_level = logging.ERROR
@@ -2044,7 +2055,8 @@ def main(argv=None):
           gerrit_obj,
           options.dry_run,
           options.parallel,
-          options.json_output)
+          options.json_output,
+          options.use_python3)
   except PresubmitFailure as e:
     print(e, file=sys.stderr)
     print('Maybe your depot_tools is out of date?', file=sys.stderr)
