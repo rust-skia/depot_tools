@@ -331,7 +331,7 @@ class _PresubmitResult(object):
     if self._long_text:
       sys.stdout.write('\n***************\n')
       # Write separately in case it's unicode.
-      sys.stdout.write(self._long_text)
+      sys.stdout.write(str(self._long_text))
       sys.stdout.write('\n***************\n')
 
   def json_format(self):
