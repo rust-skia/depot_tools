@@ -1051,7 +1051,7 @@ begin a new CL:</p></div>
 <pre><code><strong><span class="white">$ git new-branch &lt;branch_name&gt;</span></strong></code></pre>
 </div></div>
 <div class="paragraph"><p>This will create and checkout a new branch named <code>branch_name</code> which will track
-the default upstream branch (<code>origin/master</code>). See
+the default upstream branch (<code>origin/main</code>). See
 <a href="git-new-branch.html">git-new-branch(1)</a> for more features.</p></div>
 <div class="paragraph"><p>Commit as many changes as you like to this branch. When you want to upload it
 for review, run:</p></div>
@@ -1060,7 +1060,7 @@ for review, run:</p></div>
 <pre><code><strong><span class="white">$ git cl upload</span></strong></code></pre>
 </div></div>
 <div class="paragraph"><p>This will take the diff of your branch against its upstream branch (in that
-case origin/master), and will post it to the
+case origin/main), and will post it to the
 <a href="https://chromium-review.googlesource.com">Chromium code review site</a>.</p></div>
 </div>
 </div>
@@ -1139,9 +1139,9 @@ bearings. Fortunately, <em>depot_tools</em> has two tools to help you out:</p></
 <span class="white blue-background">*</span>&#8203;<strong><span class="blue-background red"> 7dcfe47       </span></strong> <span class="green">(</span>&#8203;<strong><span class="aqua">frozen_changes</span></strong>&#8203;<span class="green">)</span> <span class="yellow">2014-03-12</span> ~ FREEZE.unindexed
 * <strong><span class="red">4b0c180</span></strong>        <span class="yellow">2014-03-12</span> ~ modfile
 * <strong><span class="red">59a7cca</span></strong>        <span class="yellow">2014-03-12</span> ~ a deleted file
-* <strong><span class="red">6bec695</span></strong>        <span class="green">(</span>&#8203;<span class="red">origin/master</span>&#8203;<span class="green">)</span> <span class="yellow">2014-03-11</span> ~ Add neat feature    <strong><span class="white">&lt;(frozen_changes)</span></strong>
+* <strong><span class="red">6bec695</span></strong>        <span class="green">(</span>&#8203;<span class="red">origin/main</span>&#8203;<span class="green">)</span> <span class="yellow">2014-03-11</span> ~ Add neat feature    <strong><span class="white">&lt;(frozen_changes)</span></strong>
 * <strong><span class="red">d15a38a</span></strong>        <span class="yellow">2014-03-11</span> ~ Epic README update
-* <strong><span class="red">d559894</span></strong>        <span class="green">(</span>&#8203;<strong><span class="lime">master</span></strong>&#8203;<span class="green">)</span> <span class="yellow">2014-03-11</span> ~ Important upstream change
+* <strong><span class="red">d559894</span></strong>        <span class="green">(</span>&#8203;<strong><span class="lime">main</span></strong>&#8203;<span class="green">)</span> <span class="yellow">2014-03-11</span> ~ Important upstream change
 <span class="red">|</span> * <strong><span class="red">9c311fd</span></strong>      <span class="green">(</span>&#8203;<strong><span class="lime">cool_feature</span></strong>&#8203;<span class="green">)</span> <span class="yellow">2014-03-11</span> ~ Respond to CL comments
 <span class="red">|</span> <span class="green">|</span> * <strong><span class="red">2a1eeb2</span></strong>    <span class="green">(</span>&#8203;<strong><span class="lime">subfeature</span></strong>&#8203;<span class="green">)</span> <span class="yellow">2014-03-11</span> ~ integrate with CoolService
 <span class="red">|</span> <span class="green">|</span> * <strong><span class="red">d777af6</span></strong>    <span class="yellow">2014-03-11</span> ~ slick commenting action
@@ -1156,11 +1156,11 @@ bearings. Fortunately, <em>depot_tools</em> has two tools to help you out:</p></
 <div class="listingblock">
 <div class="content">
 <pre><code><strong><span class="white">$ git map-branches</span></strong>
-<span class="red">origin/master</span>
+<span class="red">origin/main</span>
   <span class="green">cool_feature</span>
     <span class="green">subfeature</span>
   <span class="aqua">frozen_changes *</span>
-  <span class="green">master</span></code></pre>
+  <span class="green">main</span></code></pre>
 </div></div>
 <div class="dlist"><dl>
 <dt class="hdlist1">
@@ -1218,7 +1218,7 @@ you want to base the new one on (i.e. CL 1), and then run:</p></div>
 <pre><code><strong><span class="white">$ git new-branch --upstream_current &lt;branch_name&gt;</span></strong></code></pre>
 </div></div>
 <div class="paragraph"><p>This will make a new branch which tracks the <em>current</em> branch as its upstream
-(as opposed to <em>origin/master</em>). All changes you commit to this branch will be
+(as opposed to <em>origin/main</em>). All changes you commit to this branch will be
 in addition to the previous branch, but when you <code>git cl upload</code>, you will only
 upload the diff for the dependent (child) branch. You may have as many branches
 nested in this fashion as you like.</p></div>
@@ -1232,7 +1232,7 @@ it, or even based <em>another</em> branch off of that one. Or you discover that 
 have two independent CLs that would actually be much better off as dependent
 CLs. In instances like these, you can check out the offending branch and use
 <a href="git-reparent-branch.html">git-reparent-branch(1)</a> to move it to track a different parent. Note that
-this can also be used to move a branch from tracking <code>origin/master</code> to <code>lkgr</code>
+this can also be used to move a branch from tracking <code>origin/main</code> to <code>lkgr</code>
 or vice versa.</p></div>
 </div>
 </div>
@@ -1259,7 +1259,7 @@ It was a Domo-Kuun.
  1 file changed, 1 insertion(+), 1 deletion(-)
 <span style="font-weight: bold; color: #ffffff">$ git map</span>
 * <span style="font-weight: bold; color: #e42e16">615ffa7	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">HEAD -&gt; fix_typo</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Fix terrible typo.
-* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/master</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
+* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/main</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
 * <span style="font-weight: bold; color: #e42e16">41290e0	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ don't use glibc-specific execinfo.h on uclibc builds
 * <span style="font-weight: bold; color: #e42e16">a76fde7	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ [fsp] Add requestUnmount() method together with the request manager.
 * <span style="font-weight: bold; color: #e42e16">9de7a71	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ linux_aura: Use system configuration for middle clicking the titlebar.
@@ -1268,7 +1268,7 @@ It was a Domo-Kuun.
 * <span style="font-weight: bold; color: #e42e16">33a7a74	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Always output seccomp error messages to stderr
 <span style="font-weight: bold; color: #ffffff">$ git status</span>
 On branch fix_typo
-Your branch is ahead of 'origin/master' by 1 commit.
+Your branch is ahead of 'origin/main' by 1 commit.
   (use "git push" to publish your local commits)
 
 nothing to commit, working tree clean
@@ -1276,7 +1276,7 @@ nothing to commit, working tree clean
 ... truncated output ...
 </code></pre></div></div><p><div class="paragraph"> While we wait for feedback, let's do something else.</p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git new-branch chap2</span>
 <span style="font-weight: bold; color: #ffffff">$ git map-branches</span>
-<span style="color: #e42e16"></span><span style="font-weight: bold; color: #e42e16">origin/master
+<span style="color: #e42e16"></span><span style="font-weight: bold; color: #e42e16">origin/main
 </span><span style="font-weight: bold; color: #33d6e5"></span><span style="font-weight: bold; color: #33d6e5">  chap2 *
 </span><span style="font-weight: bold; color: #19c518"></span><span style="color: #19c518">  fix_typo
 </span><span style="font-weight: bold; color: #ffffff">$ cat &gt;&gt; build/whitespace_file.txt &lt;&lt;EOF</span>
@@ -1287,7 +1287,7 @@ when the fan was last cleaned.
 EOF
 <span style="font-weight: bold; color: #ffffff">$ git status</span>
 On branch chap2
-Your branch is up to date with 'origin/master'.
+Your branch is up to date with 'origin/main'.
 
 Changes not staged for commit:
   (use "git add &lt;file&gt;..." to update what will be committed)
@@ -1299,7 +1299,7 @@ no changes added to commit (use "git add" and/or "git commit -a")
 </code></pre></div></div><p><div class="paragraph"> Someone on the code review pointed out that our typo-fix has a typo :( We're still working on 'chap2' but we really want to land 'fix_typo', so let's switch over and fix it.</p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git freeze</span>
 <span style="font-weight: bold; color: #ffffff">$ git checkout fix_typo</span>
 Switched to branch 'fix_typo'
-Your branch is ahead of 'origin/master' by 1 commit.
+Your branch is ahead of 'origin/main' by 1 commit.
   (use "git push" to publish your local commits)
 <span style="font-weight: bold; color: #ffffff">$ echo -e '/Kuun\ns/Kuun/Kun\nwq' | ed build/whitespace_file.txt</span>
 1501
@@ -1330,7 +1330,7 @@ It was a Domo-<span style="color: #e42e16">Banana</span><span style="color: #19c
 <span style="color: #e42e16">|</span> * <span style="font-weight: bold; color: #e42e16">2c0ad9c	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">HEAD -&gt; fix_typo</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Fix typo for good!
 <span style="color: #e42e16">|</span> * <span style="font-weight: bold; color: #e42e16">615ffa7	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Fix terrible typo.
 <span style="color: #e42e16">|</span><span style="color: #e42e16">/</span>
-* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/master</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap2, fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
+* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/main</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap2, fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
 * <span style="font-weight: bold; color: #e42e16">41290e0	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ don't use glibc-specific execinfo.h on uclibc builds
 * <span style="font-weight: bold; color: #e42e16">a76fde7	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ [fsp] Add requestUnmount() method together with the request manager.
 * <span style="font-weight: bold; color: #e42e16">9de7a71	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ linux_aura: Use system configuration for middle clicking the titlebar.
@@ -1338,11 +1338,11 @@ It was a Domo-<span style="color: #e42e16">Banana</span><span style="color: #19c
 * <span style="font-weight: bold; color: #e42e16">2250f53	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ ozone: evdev: Filter devices by path
 * <span style="font-weight: bold; color: #e42e16">33a7a74	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Always output seccomp error messages to stderr
 </code></pre></div></div><p><div class="paragraph"> Switch back to where we were using the nav* commands (for fun... git checkout would work here too)</p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git map-branches</span>
-<span style="color: #e42e16"></span><span style="color: #e42e16">origin/master
+<span style="color: #e42e16"></span><span style="color: #e42e16">origin/main
 </span><span style="color: #19c518"></span><span style="color: #19c518">  chap2
 </span><span style="color: #33d6e5"></span><span style="font-weight: bold; color: #33d6e5">  fix_typo *
 </span><span style="font-weight: bold; color: #ffffff">$ git nav-upstream</span>
-Note: switching to 'origin/master'.
+Note: switching to 'origin/main'.
 
 You are in 'detached HEAD' state. You can look around, make experimental
 changes and commit them, and you can discard any commits you make in this
@@ -1363,14 +1363,14 @@ HEAD is now at beec6f4 Make ReflectorImpl use mailboxes
 <span style="font-weight: bold; color: #ffffff">$ git nav-downstream</span>
 Previous HEAD position was beec6f4 Make ReflectorImpl use mailboxes
 Switched to branch 'chap2'
-Your branch is ahead of 'origin/master' by 1 commit.
+Your branch is ahead of 'origin/main' by 1 commit.
   (use "git push" to publish your local commits)
 Please select a downstream branch
   0. chap2
   1. fix_typo
 Selection (0-1)[0]: 0
 <span style="font-weight: bold; color: #ffffff">$ git map-branches</span>
-<span style="color: #e42e16"></span><span style="color: #e42e16">origin/master
+<span style="color: #e42e16"></span><span style="color: #e42e16">origin/main
 </span><span style="color: #33d6e5"></span><span style="font-weight: bold; color: #33d6e5">  chap2 *
 </span><span style="font-weight: bold; color: #19c518"></span><span style="color: #19c518">  fix_typo
 </code></pre></div></div><p><div class="paragraph"> Now we can pick up on chapter2 where we left off.</p></div><div class="listingblock"><div class="content"><pre><code></span><span style="font-weight: bold; color: #ffffff">$ git thaw</span>
@@ -1414,7 +1414,7 @@ EOF
 <span style="color: #e42e16">|</span> * <span style="font-weight: bold; color: #e42e16">2c0ad9c	</span><span style="color: #19c518"> (</span><span style="color: #19c518"></span><span style="font-weight: bold; color: #19c518">fix_typo</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Fix typo for good!
 <span style="color: #e42e16">|</span> * <span style="font-weight: bold; color: #e42e16">615ffa7	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Fix terrible typo.
 <span style="color: #e42e16">|</span><span style="color: #e42e16">/</span>
-* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/master</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap2, fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
+* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/main</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap2, fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
 * <span style="font-weight: bold; color: #e42e16">41290e0	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ don't use glibc-specific execinfo.h on uclibc builds
 * <span style="font-weight: bold; color: #e42e16">a76fde7	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ [fsp] Add requestUnmount() method together with the request manager.
 * <span style="font-weight: bold; color: #e42e16">9de7a71	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ linux_aura: Use system configuration for middle clicking the titlebar.
@@ -1440,7 +1440,7 @@ EOF
 <span style="color: #e42e16">|</span> * <span style="font-weight: bold; color: #e42e16">2c0ad9c	</span><span style="color: #19c518"> (</span><span style="color: #19c518"></span><span style="font-weight: bold; color: #19c518">fix_typo</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Fix typo for good!
 <span style="color: #e42e16">|</span> * <span style="font-weight: bold; color: #e42e16">615ffa7	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Fix terrible typo.
 <span style="color: #e42e16">|</span><span style="color: #e42e16">/</span>
-* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/master</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap2, fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
+* <span style="font-weight: bold; color: #e42e16">beec6f4	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/main</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Make ReflectorImpl use mailboxes<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap2, fix_typo)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
 * <span style="font-weight: bold; color: #e42e16">41290e0	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ don't use glibc-specific execinfo.h on uclibc builds
 * <span style="font-weight: bold; color: #e42e16">a76fde7	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ [fsp] Add requestUnmount() method together with the request manager.
 * <span style="font-weight: bold; color: #e42e16">9de7a71	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ linux_aura: Use system configuration for middle clicking the titlebar.
@@ -1450,19 +1450,19 @@ EOF
 </code></pre></div></div><p><div class="paragraph"> We haven't updated the code in a while, so let's do that now.</p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git rebase-update</span>
 Fetching origin
 From https://upstream
-   beec6f4..59cdb73  master     -&gt; origin/master
+   beec6f4..59cdb73  main     -&gt; origin/main
 Rebasing: chap2
 Rebasing: fix_typo
 Failed! Attempting to squash fix_typo ... Success!
 Rebasing: chap3
-Reparented chap3 to track origin/master (was tracking chap2)
+Reparented chap3 to track origin/main (was tracking chap2)
 Deleted branch fix_typo (was 5d26fec).
 Deleted branch chap2 (was 5d26fec).
 </code></pre></div></div><p><div class="paragraph"> Well look at that. The CQ landed our typo and chapter2 branches  already and git rebase-update cleaned them up for us.</p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ gclient sync</span>
 ... truncated output ...
 <span style="font-weight: bold; color: #ffffff">$ git map</span>
 * <span style="font-weight: bold; color: #e42e16">93fe917	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">HEAD -&gt; chap3</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ beginning of chapter 3
-* <span style="font-weight: bold; color: #e42e16">5d26fec	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/master</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Finish chapter 2<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap3)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
+* <span style="font-weight: bold; color: #e42e16">5d26fec	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/main</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Finish chapter 2<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap3)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
 * <span style="font-weight: bold; color: #e42e16">df7fefb	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Revert 255617, due to it not tracking use of the link doctor page properly.
 * <span style="font-weight: bold; color: #e42e16">4b39cda	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Fix terrible typo.
 * <span style="font-weight: bold; color: #e42e16">248c5b6	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Temporarily CHECK(trial) in ChromeRenderProcessObserver::OnSetFieldTrialGroup.
@@ -1478,7 +1478,7 @@ Deleted branch chap2 (was 5d26fec).
 </code></pre></div></div><p><div class="paragraph"> Someone on IRC mentions that they actually landed a chapter 3 already! We should pull their changes before continuing. Brace for a code conflict!</p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git rebase-update</span>
 Fetching origin
 From https://upstream
-   5d26fec..59cdb73  master     -&gt; origin/master
+   5d26fec..59cdb73  main     -&gt; origin/main
 Rebasing: chap2
 ... lots of output, it's a conflict alright :(...
 <span style="font-weight: bold; color: #ffffff">$ git diff</span>
@@ -1520,7 +1520,7 @@ chap3 up-to-date
 ... truncated output ...
 <span style="font-weight: bold; color: #ffffff">$ git map</span>
 * <span style="font-weight: bold; color: #e42e16">1cb4f5b	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">HEAD -&gt; chap3</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ beginning of chapter 3
-* <span style="font-weight: bold; color: #e42e16">59cdb73	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/master</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Refactor data interchange format.<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap3)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
+* <span style="font-weight: bold; color: #e42e16">59cdb73	</span><span style="color: #19c518"> (</span><span style="color: #e42e16">origin/main</span><span style="color: #19c518">, </span><span style="color: #e42e16">origin/HEAD</span><span style="color: #19c518">) </span><span style="color: #e7e71c">2014-04-10</span> ~ Refactor data interchange format.<span style="font-weight: bold"></span><span style="font-weight: bold; color: #ffffff">    &lt;(chap3)</span><span style="font-weight: bold"></span><span style="font-weight: bold"></span>
 * <span style="font-weight: bold; color: #e42e16">34676a3	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Ensure FS is exited for all not-in-same-page navigations.
 * <span style="font-weight: bold; color: #e42e16">7d4784e	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Add best chapter2 ever!
 * <span style="font-weight: bold; color: #e42e16">5d26fec	</span><span style="color: #19c518"></span> <span style="color: #e7e71c">2014-04-10</span> ~ Finish chapter 2
@@ -1581,7 +1581,7 @@ LKGR
 <dd>
 <p>
   Last Known Good Revision. This is a <a href="git-tag.html">git-tag(1)</a> which tracks the last
-  version of <code>origin/master</code> which has passed the full set of testing on the
+  version of <code>origin/main</code> which has passed the full set of testing on the
   <a href="http://build.chromium.org">main Chromium waterfall</a>.
 </p>
 </dd>

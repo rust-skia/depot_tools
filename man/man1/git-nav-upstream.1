@@ -47,23 +47,23 @@ git-nav-upstream \- Checkout the upstream branch of the currently checked out br
 .\}
 .nf
 \fB$ git map\-branches\fR
-origin/master
+origin/main
   cool_feature
 \fB    subfeature *
 \fR  fixit
     frozen_branch
 \fB$ git nav\-upstream\fR
 Switched to branch \*(Aqcool_feature\*(Aq
-Your branch is ahead of \*(Aqorigin/master\*(Aq by 4 commits\&.
+Your branch is ahead of \*(Aqorigin/main\*(Aq by 4 commits\&.
   (use "git push" to publish your local commits)
 \fB$ git map\-branches\fR
-origin/master
+origin/main
 \fB  cool_feature *
 \fR    subfeature
   fixit
     frozen_branch
 \fB$ git nav\-upstream\fR
-Note: switching to \*(Aqorigin/master\*(Aq\&.
+Note: switching to \*(Aqorigin/main\*(Aq\&.
 
 You are in \*(Aqdetached HEAD\*(Aq state\&. You can look around, make experimental  \fB(1)\fR
 changes and commit them, and you can discard any commits you make in this
@@ -82,7 +82,7 @@ Turn off this advice by setting config variable advice\&.detachedHead to false
 
 HEAD is now at beec6f4 Make ReflectorImpl use mailboxes
 \fB$ git map\-branches\fR
-\fBorigin/master
+\fBorigin/main
 \fR  cool_feature
     subfeature
   fixit

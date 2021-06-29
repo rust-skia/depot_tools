@@ -369,7 +369,7 @@ Each CL corresponds exactly with a single branch in git\&. Any time you want to 
 .\}
 .sp
 .sp
-This will create and checkout a new branch named branch_name which will track the default upstream branch (origin/master)\&. See \fBgit-new-branch\fR(1) for more features\&.
+This will create and checkout a new branch named branch_name which will track the default upstream branch (origin/main)\&. See \fBgit-new-branch\fR(1) for more features\&.
 .sp
 Commit as many changes as you like to this branch\&. When you want to upload it for review, run:
 .sp
@@ -384,7 +384,7 @@ Commit as many changes as you like to this branch\&. When you want to upload it 
 .\}
 .sp
 .sp
-This will take the diff of your branch against its upstream branch (in that case origin/master), and will post it to the \m[blue]\fBChromium code review site\fR\m[]\&\s-2\u[5]\d\s+2\&.
+This will take the diff of your branch against its upstream branch (in that case origin/main), and will post it to the \m[blue]\fBChromium code review site\fR\m[]\&\s-2\u[5]\d\s+2\&.
 .SH "UPDATING THE CODE"
 .sp
 Inevitably, you\(cqll want to pull in changes from the main Chromium repo\&. This is pretty easy with \fIdepot_tools\fR:
@@ -437,9 +437,9 @@ Once you start to have more than one CL at a time, it can be easy to lose your b
 *\:\fB 7dcfe47       \fR (\:\fBfrozen_changes\fR\:) 2014\-03\-12 ~ FREEZE\&.unindexed
 * \fB4b0c180\fR        2014\-03\-12 ~ modfile
 * \fB59a7cca\fR        2014\-03\-12 ~ a deleted file
-* \fB6bec695\fR        (\:origin/master\:) 2014\-03\-11 ~ Add neat feature    \fB<(frozen_changes)\fR
+* \fB6bec695\fR        (\:origin/main\:) 2014\-03\-11 ~ Add neat feature    \fB<(frozen_changes)\fR
 * \fBd15a38a\fR        2014\-03\-11 ~ Epic README update
-* \fBd559894\fR        (\:\fBmaster\fR\:) 2014\-03\-11 ~ Important upstream change
+* \fBd559894\fR        (\:\fBmain\fR\:) 2014\-03\-11 ~ Important upstream change
 | * \fB9c311fd\fR      (\:\fBcool_feature\fR\:) 2014\-03\-11 ~ Respond to CL comments
 | | * \fB2a1eeb2\fR    (\:\fBsubfeature\fR\:) 2014\-03\-11 ~ integrate with CoolService
 | | * \fBd777af6\fR    2014\-03\-11 ~ slick commenting action
@@ -462,11 +462,11 @@ Note that this example repo is in dire need of a \fBgit-rebase-update\fR(1)!
 .\}
 .nf
 \fB$ git map\-branches\fR
-origin/master
+origin/main
   cool_feature
     subfeature
   frozen_changes *
-  master
+  main
 .fi
 .if n \{\
 .RE
@@ -508,11 +508,11 @@ Like all of the other CLs we\(cqve created, we use \fBgit-new-branch\fR(1), but 
 .\}
 .sp
 .sp
-This will make a new branch which tracks the \fIcurrent\fR branch as its upstream (as opposed to \fIorigin/master\fR)\&. All changes you commit to this branch will be in addition to the previous branch, but when you git cl upload, you will only upload the diff for the dependent (child) branch\&. You may have as many branches nested in this fashion as you like\&.
+This will make a new branch which tracks the \fIcurrent\fR branch as its upstream (as opposed to \fIorigin/main\fR)\&. All changes you commit to this branch will be in addition to the previous branch, but when you git cl upload, you will only upload the diff for the dependent (child) branch\&. You may have as many branches nested in this fashion as you like\&.
 .sp
 \fBgit-map\fR(1) and \fBgit-map-branches\fR(1) are particularly helpful when you have dependent branches\&. In addition, there are two helper commands which let you traverse your working copy up and down this tree of branches: \fBgit-nav-upstream\fR(1) and \fBgit-nav-downstream\fR(1)\&.
 .sp
-Sometimes when dealing with dependent CLs, it turns out that you accidentally based a branch on the wrong upstream, but since then you\(cqve committed changes to it, or even based \fIanother\fR branch off of that one\&. Or you discover that you have two independent CLs that would actually be much better off as dependent CLs\&. In instances like these, you can check out the offending branch and use \fBgit-reparent-branch\fR(1) to move it to track a different parent\&. Note that this can also be used to move a branch from tracking origin/master to lkgr or vice versa\&.
+Sometimes when dealing with dependent CLs, it turns out that you accidentally based a branch on the wrong upstream, but since then you\(cqve committed changes to it, or even based \fIanother\fR branch off of that one\&. Or you discover that you have two independent CLs that would actually be much better off as dependent CLs\&. In instances like these, you can check out the offending branch and use \fBgit-reparent-branch\fR(1) to move it to track a different parent\&. Note that this can also be used to move a branch from tracking origin/main to lkgr or vice versa\&.
 .SH "EXAMPLE WALKTHROUGH"
 .sp
 This section will demo what a typical workflow looks like when writing, updating, and committing multiple CLs\&.
@@ -574,7 +574,7 @@ It was a Domo\-Kuun\&.
  1 file changed, 1 insertion(+), 1 deletion(\-)
 \fB$ git map\fR
 * \fB615ffa7	\fR (HEAD \-> fix_typo) 2014\-04\-10 ~ Fix terrible typo\&.
-* \fBbeec6f4	\fR (origin/master, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(fix_typo)\fR
+* \fBbeec6f4	\fR (origin/main, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(fix_typo)\fR
 * \fB41290e0	\fR 2014\-04\-10 ~ don\*(Aqt use glibc\-specific execinfo\&.h on uclibc builds
 * \fBa76fde7	\fR 2014\-04\-10 ~ [fsp] Add requestUnmount() method together with the request manager\&.
 * \fB9de7a71	\fR 2014\-04\-10 ~ linux_aura: Use system configuration for middle clicking the titlebar\&.
@@ -583,7 +583,7 @@ It was a Domo\-Kuun\&.
 * \fB33a7a74	\fR 2014\-04\-10 ~ Always output seccomp error messages to stderr
 \fB$ git status\fR
 On branch fix_typo
-Your branch is ahead of \*(Aqorigin/master\*(Aq by 1 commit\&.
+Your branch is ahead of \*(Aqorigin/main\*(Aq by 1 commit\&.
   (use "git push" to publish your local commits)
 
 nothing to commit, working tree clean
@@ -602,7 +602,7 @@ While we wait for feedback, let\*(Aqs do something else\&.
 .nf
 \fB$ git new\-branch chap2\fR
 \fB$ git map\-branches\fR
-\fBorigin/master
+\fBorigin/main
   chap2 *
 \fR  fix_typo
 \fB$ cat >> build/whitespace_file\&.txt <<EOF\fR
@@ -613,7 +613,7 @@ when the fan was last cleaned\&.
 EOF
 \fB$ git status\fR
 On branch chap2
-Your branch is up to date with \*(Aqorigin/master\*(Aq\&.
+Your branch is up to date with \*(Aqorigin/main\*(Aq\&.
 
 Changes not staged for commit:
   (use "git add <file>\&.\&.\&." to update what will be committed)
@@ -636,7 +636,7 @@ Someone on the code review pointed out that our typo\-fix has a typo :( We\*(Aqr
 \fB$ git freeze\fR
 \fB$ git checkout fix_typo\fR
 Switched to branch \*(Aqfix_typo\*(Aq
-Your branch is ahead of \*(Aqorigin/master\*(Aq by 1 commit\&.
+Your branch is ahead of \*(Aqorigin/main\*(Aq by 1 commit\&.
   (use "git push" to publish your local commits)
 \fB$ echo \-e \*(Aq/Kuun\ens/Kuun/Kun\enwq\*(Aq | ed build/whitespace_file\&.txt\fR
 1501
@@ -678,7 +678,7 @@ Since we got lgtm, let the CQ land it\&.
 | * \fB2c0ad9c	\fR (HEAD \-> fix_typo) 2014\-04\-10 ~ Fix typo for good!
 | * \fB615ffa7	\fR 2014\-04\-10 ~ Fix terrible typo\&.
 |/
-* \fBbeec6f4	\fR (origin/master, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(chap2, fix_typo)\fR
+* \fBbeec6f4	\fR (origin/main, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(chap2, fix_typo)\fR
 * \fB41290e0	\fR 2014\-04\-10 ~ don\*(Aqt use glibc\-specific execinfo\&.h on uclibc builds
 * \fBa76fde7	\fR 2014\-04\-10 ~ [fsp] Add requestUnmount() method together with the request manager\&.
 * \fB9de7a71	\fR 2014\-04\-10 ~ linux_aura: Use system configuration for middle clicking the titlebar\&.
@@ -697,11 +697,11 @@ Switch back to where we were using the nav* commands (for fun\&.\&.\&. git check
 .\}
 .nf
 \fB$ git map\-branches\fR
-origin/master
+origin/main
   chap2
 \fB  fix_typo *
 $ git nav\-upstream\fR
-Note: switching to \*(Aqorigin/master\*(Aq\&.
+Note: switching to \*(Aqorigin/main\*(Aq\&.
 
 You are in \*(Aqdetached HEAD\*(Aq state\&. You can look around, make experimental
 changes and commit them, and you can discard any commits you make in this
@@ -722,14 +722,14 @@ HEAD is now at beec6f4 Make ReflectorImpl use mailboxes
 \fB$ git nav\-downstream\fR
 Previous HEAD position was beec6f4 Make ReflectorImpl use mailboxes
 Switched to branch \*(Aqchap2\*(Aq
-Your branch is ahead of \*(Aqorigin/master\*(Aq by 1 commit\&.
+Your branch is ahead of \*(Aqorigin/main\*(Aq by 1 commit\&.
   (use "git push" to publish your local commits)
 Please select a downstream branch
   0\&. chap2
   1\&. fix_typo
 Selection (0\-1)[0]: 0
 \fB$ git map\-branches\fR
-origin/master
+origin/main
 \fB  chap2 *
 \fR  fix_typo
 .fi
@@ -784,7 +784,7 @@ EOF
 | * \fB2c0ad9c	\fR (\fBfix_typo\fR) 2014\-04\-10 ~ Fix typo for good!
 | * \fB615ffa7	\fR 2014\-04\-10 ~ Fix terrible typo\&.
 |/
-* \fBbeec6f4	\fR (origin/master, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(chap2, fix_typo)\fR
+* \fBbeec6f4	\fR (origin/main, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(chap2, fix_typo)\fR
 * \fB41290e0	\fR 2014\-04\-10 ~ don\*(Aqt use glibc\-specific execinfo\&.h on uclibc builds
 * \fBa76fde7	\fR 2014\-04\-10 ~ [fsp] Add requestUnmount() method together with the request manager\&.
 * \fB9de7a71	\fR 2014\-04\-10 ~ linux_aura: Use system configuration for middle clicking the titlebar\&.
@@ -832,7 +832,7 @@ EOF
 | * \fB2c0ad9c	\fR (\fBfix_typo\fR) 2014\-04\-10 ~ Fix typo for good!
 | * \fB615ffa7	\fR 2014\-04\-10 ~ Fix terrible typo\&.
 |/
-* \fBbeec6f4	\fR (origin/master, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(chap2, fix_typo)\fR
+* \fBbeec6f4	\fR (origin/main, origin/HEAD) 2014\-04\-10 ~ Make ReflectorImpl use mailboxes\fB    <(chap2, fix_typo)\fR
 * \fB41290e0	\fR 2014\-04\-10 ~ don\*(Aqt use glibc\-specific execinfo\&.h on uclibc builds
 * \fBa76fde7	\fR 2014\-04\-10 ~ [fsp] Add requestUnmount() method together with the request manager\&.
 * \fB9de7a71	\fR 2014\-04\-10 ~ linux_aura: Use system configuration for middle clicking the titlebar\&.
@@ -853,12 +853,12 @@ We haven\*(Aqt updated the code in a while, so let\*(Aqs do that now\&.
 \fB$ git rebase\-update\fR
 Fetching origin
 From https://upstream
-   beec6f4\&.\&.59cdb73  master     \-> origin/master
+   beec6f4\&.\&.59cdb73  main     \-> origin/main
 Rebasing: chap2
 Rebasing: fix_typo
 Failed! Attempting to squash fix_typo \&.\&.\&. Success!
 Rebasing: chap3
-Reparented chap3 to track origin/master (was tracking chap2)
+Reparented chap3 to track origin/main (was tracking chap2)
 Deleted branch fix_typo (was 5d26fec)\&.
 Deleted branch chap2 (was 5d26fec)\&.
 .fi
@@ -876,7 +876,7 @@ Well look at that\&. The CQ landed our typo and chapter2 branches already and gi
 \&.\&.\&. truncated output \&.\&.\&.
 \fB$ git map\fR
 * \fB93fe917	\fR (HEAD \-> chap3) 2014\-04\-10 ~ beginning of chapter 3
-* \fB5d26fec	\fR (origin/master, origin/HEAD) 2014\-04\-10 ~ Finish chapter 2\fB    <(chap3)\fR
+* \fB5d26fec	\fR (origin/main, origin/HEAD) 2014\-04\-10 ~ Finish chapter 2\fB    <(chap3)\fR
 * \fBdf7fefb	\fR 2014\-04\-10 ~ Revert 255617, due to it not tracking use of the link doctor page properly\&.
 * \fB4b39cda	\fR 2014\-04\-10 ~ Fix terrible typo\&.
 * \fB248c5b6	\fR 2014\-04\-10 ~ Temporarily CHECK(trial) in ChromeRenderProcessObserver::OnSetFieldTrialGroup\&.
@@ -903,7 +903,7 @@ Someone on IRC mentions that they actually landed a chapter 3 already! We should
 \fB$ git rebase\-update\fR
 Fetching origin
 From https://upstream
-   5d26fec\&.\&.59cdb73  master     \-> origin/master
+   5d26fec\&.\&.59cdb73  main     \-> origin/main
 Rebasing: chap2
 \&.\&.\&. lots of output, it\*(Aqs a conflict alright :(\&.\&.\&.
 \fB$ git diff\fR
@@ -967,7 +967,7 @@ chap3 up\-to\-date
 \&.\&.\&. truncated output \&.\&.\&.
 \fB$ git map\fR
 * \fB1cb4f5b	\fR (HEAD \-> chap3) 2014\-04\-10 ~ beginning of chapter 3
-* \fB59cdb73	\fR (origin/master, origin/HEAD) 2014\-04\-10 ~ Refactor data interchange format\&.\fB    <(chap3)\fR
+* \fB59cdb73	\fR (origin/main, origin/HEAD) 2014\-04\-10 ~ Refactor data interchange format\&.\fB    <(chap3)\fR
 * \fB34676a3	\fR 2014\-04\-10 ~ Ensure FS is exited for all not\-in\-same\-page navigations\&.
 * \fB7d4784e	\fR 2014\-04\-10 ~ Add best chapter2 ever!
 * \fB5d26fec	\fR 2014\-04\-10 ~ Finish chapter 2
@@ -1016,7 +1016,7 @@ LKGR
 Last Known Good Revision\&. This is a
 \fBgit-tag\fR(1)
 which tracks the last version of
-origin/master
+origin/main
 which has passed the full set of testing on the
 \m[blue]\fBmain Chromium waterfall\fR\m[]\&\s-2\u[6]\d\s+2\&.
 .RE
