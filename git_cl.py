@@ -721,6 +721,7 @@ class Settings(object):
     self.gerrit_skip_ensure_authenticated = None
     self.git_editor = None
     self.format_full_by_default = None
+    self.is_status_commit_order_by_date = None
 
   def _LazyUpdateIfNeeded(self):
     """Updates the settings from a codereview.settings file, if available."""
@@ -830,6 +831,13 @@ class Settings(object):
                  error_ok=True).strip())
       self.format_full_by_default = (result == 'true')
     return self.format_full_by_default
+
+  def IsStatusCommitOrderByDate(self):
+    if self.is_status_commit_order_by_date is None:
+      result = (RunGit(['config', '--bool', 'cl.date-order'],
+                       error_ok=True).strip())
+      self.is_status_commit_order_by_date = (result == 'true')
+    return self.is_status_commit_order_by_date
 
   def _GetConfig(self, key, default=''):
     self._LazyUpdateIfNeeded()
@@ -3697,7 +3705,8 @@ def CMDstatus(parser, args):
   branch_statuses = {}
 
   alignment = max(5, max(len(FormatBranchName(c.GetBranch())) for c in changes))
-  if options.date_order:
+
+  if options.date_order or settings.IsStatusCommitOrderByDate():
     sorted_changes = sorted(changes,
                             key=lambda c: c.GetCommitDate(),
                             reverse=True)

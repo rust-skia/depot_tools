@@ -4201,6 +4201,7 @@ class CMDStatusTestCase(CMDTestCaseBase):
   @mock.patch('git_cl.RunGit', _mock_run_git)
   @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
   @mock.patch('git_cl.Settings.GetRoot', return_value='')
+  @mock.patch('git_cl.Settings.IsStatusCommitOrderByDate', return_value=False)
   @mock.patch('scm.GIT.GetBranch', return_value='a')
   def testStatus(self, *_mocks):
     self.assertEqual(0, git_cl.main(['status', '--no-branch-color']))
@@ -4224,6 +4225,7 @@ class CMDStatusTestCase(CMDTestCaseBase):
   @mock.patch('git_cl.RunGit', _mock_run_git)
   @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
   @mock.patch('git_cl.Settings.GetRoot', return_value='')
+  @mock.patch('git_cl.Settings.IsStatusCommitOrderByDate', return_value=False)
   @mock.patch('scm.GIT.GetBranch', return_value='a')
   def testStatusByDate(self, *_mocks):
     self.assertEqual(
@@ -4242,6 +4244,30 @@ class CMDStatusTestCase(CMDTestCaseBase):
         'Issue description:\n'
         'x\n')
 
+  @mock.patch('git_cl.Changelist.EnsureAuthenticated')
+  @mock.patch('git_cl.Changelist.FetchDescription', lambda cl, pretty: 'x')
+  @mock.patch('git_cl.Changelist.GetIssue', lambda cl: cl.issue)
+  @mock.patch('git_cl.RunGit', _mock_run_git)
+  @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
+  @mock.patch('git_cl.Settings.GetRoot', return_value='')
+  @mock.patch('git_cl.Settings.IsStatusCommitOrderByDate', return_value=True)
+  @mock.patch('scm.GIT.GetBranch', return_value='a')
+  def testStatusByDate(self, *_mocks):
+    self.assertEqual(
+        0, git_cl.main(['status', '--no-branch-color']))
+    self.maxDiff = None
+    self.assertEqual(
+        sys.stdout.getvalue(), 'Branches associated with reviews:\n'
+        '      f : https://crrev.com/c/106 (open)\n'
+        '      e : https://crrev.com/c/105 (open)\n'
+        '      d : https://crrev.com/c/104 (open)\n'
+        '      c : https://crrev.com/c/103 (open)\n'
+        '      b : https://crrev.com/c/102 (open)\n'
+        '    * a : https://crrev.com/c/101 (open)\n\n'
+        'Current branch: a\n'
+        'Issue number: 101 (https://chromium-review.googlesource.com/101)\n'
+        'Issue description:\n'
+        'x\n')
 
 class CMDOwnersTestCase(CMDTestCaseBase):
   def setUp(self):
