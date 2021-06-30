@@ -1736,12 +1736,15 @@ def CheckLucicfgGenOutput(input_api, output_api, entry_script):
         output_api.PresubmitError)
   ]
 
-def CheckJsonParses(input_api, output_api):
-  """Verifies that all JSON files at least parse as valid JSON."""
+def CheckJsonParses(input_api, output_api, file_filter=None):
+  """Verifies that all JSON files at least parse as valid JSON. By default,
+  file_filter will look for all files that end with .json"""
   import json
+  if file_filter is None:
+    file_filter = lambda x: x.LocalPath().endswith('.json')
   affected_files = input_api.AffectedFiles(
       include_deletes=False,
-      file_filter=lambda x: x.LocalPath().endswith('.json'))
+      file_filter=file_filter)
   warnings = []
   for f in affected_files:
     with open(f.AbsoluteLocalPath()) as j:
