@@ -2519,7 +2519,7 @@ the current line as well!
     subprocess.Popen.return_value = process
     presubmit.sigint_handler.wait.return_value = ('', None)
 
-    pylint = os.path.join(_ROOT, 'pylint')
+    pylint = os.path.join(_ROOT, 'pylint-1.5')
     pylintrc = os.path.join(_ROOT, 'pylintrc')
     env = {str('PYTHONPATH'): str('')}
     if sys.platform == 'win32':
