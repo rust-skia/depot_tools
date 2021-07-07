@@ -826,6 +826,7 @@ class Settings(object):
 
   def GetFormatFullByDefault(self):
     if self.format_full_by_default is None:
+      self._LazyUpdateIfNeeded()
       result = (
           RunGit(['config', '--bool', 'rietveld.format-full-by-default'],
                  error_ok=True).strip())
