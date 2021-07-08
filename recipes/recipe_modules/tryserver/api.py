@@ -321,7 +321,8 @@ class TryserverApi(recipe_api.RecipeApi):
       self._ensure_gerrit_commit_message()
       self._change_footers = self._get_footer_step(self._gerrit_commit_message)
       return self._change_footers
-    raise "No patch text or associated changelist, cannot get footers"  #pragma: nocover
+    raise Exception(
+        'No patch text or associated changelist, cannot get footers')  #pragma: nocover
 
   def _get_footer_step(self, patch_text):
     result = self.m.python(
