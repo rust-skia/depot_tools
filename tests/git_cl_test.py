@@ -1585,15 +1585,15 @@ class TestGitCl(unittest.TestCase):
     }
 
     cl = git_cl.Changelist(issue=1234)
-    actual = cl._GetDescriptionForUpload(
-        options=mock.Mock(
-            bug=bug,
-            fixed=fixed,
-            reviewers=reviewers,
-            tbrs=tbrs,
-            add_owners_to=add_owners_to),
-        git_diff_args=None,
-        files=list(owners_by_path))
+    actual = cl._GetDescriptionForUpload(options=mock.Mock(
+        bug=bug,
+        fixed=fixed,
+        reviewers=reviewers,
+        tbrs=tbrs,
+        add_owners_to=add_owners_to,
+        message=initial_description),
+                                         git_diff_args=None,
+                                         files=list(owners_by_path))
     self.assertEqual(expected_description, actual.description)
 
   def testGetDescriptionForUpload(self):
@@ -1617,8 +1617,9 @@ class TestGitCl(unittest.TestCase):
           'Fixed: prefix:1234',
         ]))
 
-
-  def testGetDescriptionForUpload_BugFromBranch(self):
+  @mock.patch('git_cl.Changelist.GetIssue')
+  def testGetDescriptionForUpload_BugFromBranch(self, mockGetIssue):
+    mockGetIssue.return_value = None
     self.getDescriptionForUploadTest(
         branch='bug-1234',
         expected_description='\n'.join([
@@ -1627,7 +1628,9 @@ class TestGitCl(unittest.TestCase):
           'Bug: prefix:1234',
         ]))
 
-  def testGetDescriptionForUpload_FixedFromBranch(self):
+  @mock.patch('git_cl.Changelist.GetIssue')
+  def testGetDescriptionForUpload_FixedFromBranch(self, mockGetIssue):
+    mockGetIssue.return_value = None
     self.getDescriptionForUploadTest(
         branch='fix-1234',
         expected_description='\n'.join([
@@ -1635,6 +1638,12 @@ class TestGitCl(unittest.TestCase):
           '',
           'Fixed: prefix:1234',
         ]))
+
+  def testGetDescriptionForUpload_SkipBugFromBranchIfAlreadyUploaded(self):
+    self.getDescriptionForUploadTest(
+        branch='bug-1234',
+        expected_description='desc',
+    )
 
   def testGetDescriptionForUpload_AddOwnersToR(self):
     self.getDescriptionForUploadTest(

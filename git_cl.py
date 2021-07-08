@@ -1192,7 +1192,7 @@ class Changelist(object):
     return '%s/%s' % (server, issue)
 
   def GetUsePython3(self):
-      return settings.GetUsePython3()
+    return settings.GetUsePython3()
 
   def FetchDescription(self, pretty=False):
     assert self.GetIssue(), 'issue is required to query Gerrit'
@@ -1414,16 +1414,25 @@ class Changelist(object):
       if options.title and options.squash:
         description = options.title + '\n\n' + description
 
-    # Extract bug number from branch name.
     bug = options.bug
     fixed = options.fixed
-    match = re.match(r'(?P<type>bug|fix(?:e[sd])?)[_-]?(?P<bugnum>\d+)',
-                     self.GetBranch())
-    if not bug and not fixed and match:
-      if match.group('type') == 'bug':
-        bug = match.group('bugnum')
-      else:
-        fixed = match.group('bugnum')
+    if not self.GetIssue():
+      # Extract bug number from branch name, but only if issue is being created.
+      # It must start with bug or fix, followed by _ or - and number.
+      # Optionally, it may contain _ or - after number with arbitrary text.
+      # Examples:
+      #   bug-123
+      #   bug_123
+      #   fix-123
+      #   fix-123-some-description
+      match = re.match(
+          r'^(?P<type>bug|fix(?:e[sd])?)[_-]?(?P<bugnum>\d+)([-_]|$)',
+          self.GetBranch())
+      if not bug and not fixed and match:
+        if match.group('type') == 'bug':
+          bug = match.group('bugnum')
+        else:
+          fixed = match.group('bugnum')
 
     change_description = ChangeDescription(description, bug, fixed)
 
