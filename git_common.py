@@ -707,7 +707,7 @@ def upstream_default():
         pass
     return ret
   except subprocess2.CalledProcessError:
-    return 'origin/master'
+    return 'origin/main'
 
 
 def root():

@@ -28,7 +28,7 @@ import gclient_utils
 import scm
 import subprocess2
 
-DEFAULT_BRANCH = 'master'
+DEFAULT_BRANCH = 'main'
 
 
 def write(path, content):

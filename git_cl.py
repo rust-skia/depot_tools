@@ -104,8 +104,8 @@ TRACES_README_FORMAT = (
 POSTUPSTREAM_HOOK = '.git/hooks/post-cl-land'
 DESCRIPTION_BACKUP_FILE = '.git_cl_description_backup'
 REFS_THAT_ALIAS_TO_OTHER_REFS = {
-    'refs/remotes/origin/lkgr': 'refs/remotes/origin/master',
-    'refs/remotes/origin/lkcr': 'refs/remotes/origin/master',
+    'refs/remotes/origin/lkgr': 'refs/remotes/origin/main',
+    'refs/remotes/origin/lkcr': 'refs/remotes/origin/main',
 }
 
 DEFAULT_OLD_BRANCH = 'refs/remotes/origin/master'
