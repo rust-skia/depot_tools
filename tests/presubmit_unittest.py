@@ -1993,9 +1993,13 @@ class CannedChecksUnittest(PresubmitTestsBase):
 
   def testCannedCheckChangeHasBugField(self):
     self.DescriptionTest(presubmit_canned_checks.CheckChangeHasBugField,
-                         'Foo\nBUG=1234', 'Foo\n',
-                         presubmit.OutputApi.PresubmitNotifyResult,
-                         False)
+                         'Foo\nBUG=b:1234', 'Foo\n',
+                         presubmit.OutputApi.PresubmitNotifyResult, False)
+
+  def testCannedCheckChangeHasBugFieldWithBuganizerSlash(self):
+    self.DescriptionTest(presubmit_canned_checks.CheckChangeHasBugField,
+                         'Foo\nBUG=b:1234', 'Foo\nBUG=b/1234',
+                         presubmit.OutputApi.PresubmitNotifyResult, False)
 
   def testCannedCheckChangeHasNoUnwantedTags(self):
     self.DescriptionTest(presubmit_canned_checks.CheckChangeHasNoUnwantedTags,

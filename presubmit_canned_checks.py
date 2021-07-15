@@ -50,7 +50,13 @@ OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS = [
 
 def CheckChangeHasBugField(input_api, output_api):
   """Requires that the changelist have a Bug: field."""
-  if input_api.change.BugsFromDescription():
+  bugs = input_api.change.BugsFromDescription()
+  if bugs:
+    if any(b.startswith('b/') for b in bugs):
+      return [
+          output_api.PresubmitNotifyResult(
+              'Buganizer bugs should be prefixed with b:, not b/.')
+      ]
     return []
   else:
     return [output_api.PresubmitNotifyResult(
