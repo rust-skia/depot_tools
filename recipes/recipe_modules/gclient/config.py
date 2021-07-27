@@ -387,6 +387,13 @@ def infradata_config(c):
   c.got_revision_mapping['infra-data-config'] = 'got_revision'
 
 @config_ctx()
+def infradata_rbe(c):
+  soln = c.solutions.add()
+  soln.name = 'infradata-rbe'
+  soln.url = 'https://chrome-internal.googlesource.com/infradata/rbe.git'
+  c.got_revision_mapping['infradata-rbe'] = 'got_revision'
+
+@config_ctx()
 def with_branch_heads(c):
   c.with_branch_heads = True
 
