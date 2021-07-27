@@ -15,7 +15,7 @@ DEPS = [
   'recipe_engine/runtime',
 ]
 
-from recipe_engine import types
+from recipe_engine import engine_types
 
 from RECIPE_MODULES.depot_tools import gclient
 from PB.go.chromium.org.luci.buildbucket.proto.build import Build
@@ -64,7 +64,7 @@ def RunSteps(api):
   set_output_commit = api.properties.get('set_output_commit', True)
 
   step_test_data = None
-  bot_update_output = types.thaw(api.properties.get('bot_update_output'))
+  bot_update_output = engine_types.thaw(api.properties.get('bot_update_output'))
   if bot_update_output:
     step_test_data = lambda: api.json.test_api.output(bot_update_output)
   bot_update_step = api.bot_update.ensure_checkout(
