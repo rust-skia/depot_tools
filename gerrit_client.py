@@ -254,6 +254,17 @@ def CMDsubmitchange(parser, args):
   write_result(result, opt)
 
 
+@subcommand.usage('[args ...]')
+def CMDgetcommitincludedin(parser, args):
+  """Retrieves the branches and tags for a given commit."""
+  parser.add_option('--commit', dest='commit', help='commit hash')
+  (opt, args) = parser.parse_args(args)
+  result = gerrit_util.GetCommitIncludedIn(
+      urlparse.urlparse(opt.host).netloc, opt.project, opt.commit)
+  logging.info(result)
+  write_result(result, opt)
+
+
 @subcommand.usage('')
 def CMDabandon(parser, args):
   """Abandons a Gerrit change."""

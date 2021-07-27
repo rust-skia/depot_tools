@@ -797,6 +797,19 @@ def SetCommitMessage(host, change, description, notify='ALL'):
         'in change %s' % change)
 
 
+def GetCommitIncludedIn(host, project, commit):
+  """Retrieves the branches and tags for a given commit.
+
+  https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#get-included-in
+
+  Returns:
+    A JSON object with keys of 'branches' and 'tags'.
+  """
+  path = 'projects/%s/commits/%s/in' % (urllib.parse.quote(project, ''), commit)
+  conn = CreateHttpConn(host, path, reqtype='GET')
+  return ReadHttpJsonResponse(conn, accept_statuses=[200])
+
+
 def IsCodeOwnersEnabledOnHost(host):
   """Check if the code-owners plugin is enabled for the host."""
   path = 'config/server/capabilities'
