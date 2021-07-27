@@ -921,7 +921,7 @@ def SetReview(host, change, msg=None, labels=None, notify=None, ready=None):
           int(response['labels'][key] != int(val))):
         raise GerritError(200, 'Unable to set "%s" label on change %s.' % (
             key, change))
-
+  return response
 
 def ResetReviewLabels(host, change, label, value='0', message=None,
                       notify=None):
