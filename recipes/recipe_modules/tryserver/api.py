@@ -29,6 +29,8 @@ class TryserverApi(recipe_api.RecipeApi):
     super(TryserverApi, self).__init__(*args, **kwargs)
     self._gerrit_change = None  # self.m.buildbucket.common_pb2.GerritChange
     self._gerrit_change_repo_url = None
+    self._gerrit_change_repo_host = None
+    self._gerrit_change_repo_project = None
 
     self._gerrit_info_initialized = False
     self._gerrit_change_target_ref = None
@@ -66,6 +68,22 @@ class TryserverApi(recipe_api.RecipeApi):
     Populated iff gerrit_change is populated.
     """
     return self._gerrit_change_repo_url
+
+  @property
+  def gerrit_change_repo_host(self):
+    """Returns the host of the gitiles repo of the current Gerrit CL.
+
+    Populated iff gerrit_change is populated.
+    """
+    return self._gerrit_change_repo_host
+
+  @property
+  def gerrit_change_repo_project(self):
+    """Returns the project of the gitiles repo of the current Gerrit CL.
+
+    Populated iff gerrit_change is populated.
+    """
+    return self._gerrit_change_repo_project
 
   @property
   def gerrit_change_owner(self):
@@ -355,3 +373,5 @@ class TryserverApi(recipe_api.RecipeApi):
     if host.endswith(gs_suffix):
       host = '%s.googlesource.com' % host[:-len(gs_suffix)]
     self._gerrit_change_repo_url = 'https://%s/%s' % (host, change.project)
+    self._gerrit_change_repo_host = host
+    self._gerrit_change_repo_project = change.project

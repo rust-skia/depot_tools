@@ -31,6 +31,10 @@ def RunSteps(api):
   if api.tryserver.gerrit_change:
     assert (api.tryserver.gerrit_change_repo_url ==
             'https://chromium.googlesource.com/chromium/src')
+    assert (api.tryserver.gerrit_change_repo_host ==
+            'chromium.googlesource.com')
+    assert (api.tryserver.gerrit_change_repo_project ==
+            'chromium/src')
     assert api.tryserver.gerrit_change_fetch_ref == 'refs/changes/27/91827/1'
     expected_target_ref = api.properties.get(
         'expected_target_ref', 'refs/heads/master')
