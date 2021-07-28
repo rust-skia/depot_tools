@@ -241,15 +241,9 @@ def CMDpublishchangeedit(parser, args):
 def CMDsubmitchange(parser, args):
   """Submit a Gerrit change."""
   parser.add_option('-c', '--change', type=int, help='change number')
-  parser.add_option('--wait-for-merge',
-                    action="store_true",
-                    default=False,
-                    help='whether to wait for the merge')
-
   (opt, args) = parser.parse_args(args)
-  result = gerrit_util.SubmitChange(urlparse.urlparse(opt.host).netloc,
-                                    opt.change,
-                                    wait_for_merge=opt.wait_for_merge)
+  result = gerrit_util.SubmitChange(
+      urlparse.urlparse(opt.host).netloc, opt.change)
   logging.info(result)
   write_result(result, opt)
 

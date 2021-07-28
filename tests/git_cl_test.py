@@ -2444,7 +2444,7 @@ class TestGitCl(unittest.TestCase):
       'web_links': [{'name': 'gitiles',
                      'url': 'https://git.googlesource.com/test/+/deadbeef'}],
     }
-    cl.SubmitIssue = lambda wait_for_merge: None
+    cl.SubmitIssue = lambda: None
     self.assertEqual(0, cl.CMDLand(force=True,
                                    bypass_hooks=True,
                                    verbose=True,

@@ -736,11 +736,10 @@ def RestoreChange(host, change, msg=''):
   return ReadHttpJsonResponse(conn)
 
 
-def SubmitChange(host, change, wait_for_merge=True):
+def SubmitChange(host, change):
   """Submits a Gerrit change via Gerrit."""
   path = 'changes/%s/submit' % change
-  body = {'wait_for_merge': wait_for_merge}
-  conn = CreateHttpConn(host, path, reqtype='POST', body=body)
+  conn = CreateHttpConn(host, path, reqtype='POST')
   return ReadHttpJsonResponse(conn)
 
 

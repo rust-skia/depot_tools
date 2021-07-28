@@ -1963,10 +1963,9 @@ class Changelist(object):
     gerrit_util.AbandonChange(
         self.GetGerritHost(), self._GerritChangeIdentifier(), msg='')
 
-  def SubmitIssue(self, wait_for_merge=True):
+  def SubmitIssue(self):
     gerrit_util.SubmitChange(
-        self.GetGerritHost(), self._GerritChangeIdentifier(),
-        wait_for_merge=wait_for_merge)
+        self.GetGerritHost(), self._GerritChangeIdentifier())
 
   def _GetChangeDetail(self, options=None):
     """Returns details of associated Gerrit change and caching results."""
@@ -2061,7 +2060,7 @@ class Changelist(object):
           resultdb=resultdb,
           realm=realm)
 
-    self.SubmitIssue(wait_for_merge=True)
+    self.SubmitIssue()
     print('Issue %s has been submitted.' % self.GetIssueURL())
     links = self._GetChangeCommit().get('web_links', [])
     for link in links:
