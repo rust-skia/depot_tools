@@ -5292,7 +5292,7 @@ def CMDformat(parser, args):
       #   $ python pretty_print.py
       # But in tools/metrics/histogrmas, pretty-print should be run with an
       # additional relative path argument, like:
-      #   $ python pretty_print.py histograms_xml/UMA/histograms.xml
+      #   $ python pretty_print.py metadata/UMA/histograms.xml
       #   $ python pretty_print.py enums.xml
 
       # TODO (crbug/1116488): Remove this check after ensuring that the updated
