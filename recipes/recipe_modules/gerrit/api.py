@@ -256,6 +256,7 @@ class GerritApi(recipe_api.RecipeApi):
                    branch,
                    new_contents_by_file_path,
                    commit_msg,
+                   params=frozenset(['status=NEW']),
                    submit=False):
     """Update a set of files by creating and submitting a Gerrit CL.
 
@@ -266,6 +267,8 @@ class GerritApi(recipe_api.RecipeApi):
       * new_contents_by_file_path: Dict of the new contents with file path as
           the key.
       * commit_msg: Description to add to the CL.
+      * params: A list of additional ChangeInput specifiers, with format
+          'key=value'.
       * submit: Should land this CL instantly.
 
     Returns:
@@ -273,7 +276,7 @@ class GerritApi(recipe_api.RecipeApi):
     """
     assert len(new_contents_by_file_path
                ) > 0, 'The dict of file paths should not be empty.'
-    step_result = self('create change at (%s %s)' % (project, branch), [
+    command = [
         'createchange',
         '--host',
         host,
@@ -285,7 +288,10 @@ class GerritApi(recipe_api.RecipeApi):
         commit_msg,
         '--json_file',
         self.m.json.output(),
-    ])
+    ]
+    for p in params:
+      command.extend(['-p', p])
+    step_result = self('create change at (%s %s)' % (project, branch), command)
     change = int(step_result.json.output.get('_number'))
     step_result.presentation.links['change %d' %
                                    change] = '%s/#/q/%d' % (host, change)

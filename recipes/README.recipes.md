@@ -446,7 +446,7 @@ Returns:
 
 &mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#229)(self, host, project, from_branch, to_branch, step_test_data=None):**
 
-&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#253)(self, host, project, branch, new_contents_by_file_path, commit_msg, submit=False):**
+&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#253)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), submit=False):**
 
 Update a set of files by creating and submitting a Gerrit CL.
 
@@ -457,6 +457,8 @@ Args:
   * new_contents_by_file_path: Dict of the new contents with file path as
       the key.
   * commit_msg: Description to add to the CL.
+  * params: A list of additional ChangeInput specifiers, with format
+      'key=value'.
   * submit: Should land this CL instantly.
 
 Returns:

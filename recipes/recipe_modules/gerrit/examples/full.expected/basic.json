@@ -121,7 +121,9 @@
       "--subject",
       "Dummy CL.",
       "--json_file",
-      "/path/to/tmp/json"
+      "/path/to/tmp/json",
+      "-p",
+      "status=NEW"
     ],
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
