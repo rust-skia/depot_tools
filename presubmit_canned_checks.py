@@ -932,6 +932,7 @@ def GetPylint(input_api,
   extra_paths_list = extra_paths_list or []
 
   assert version in ('1.5', '2.6'), 'Unsupported pylint version: ' + version
+  python3 = (version == '2.6')
 
   if input_api.is_committing:
     error_type = output_api.PresubmitError
@@ -1018,7 +1019,8 @@ def GetPylint(input_api,
         name='Pylint (%s)' % description,
         cmd=cmd,
         kwargs=kwargs,
-        message=error_type)
+        message=error_type,
+        python3=python3)
 
   # Always run pylint and pass it all the py files at once.
   # Passing py files one at time is slower and can produce
