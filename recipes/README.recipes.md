@@ -575,7 +575,7 @@ upload.
 Args:
   * branch (str): new branch name, which must not yet exist.
   * name (str): step name.
-  * upstream (str): to origin/master.
+  * upstream (str): to origin/main.
   * kwargs: Forwarded to '__call__'.
 
 &mdash; **def [rebase](/recipes/recipe_modules/git/api.py#337)(self, name_prefix, branch, dir_path, remote_name=None, \*\*kwargs):**
@@ -625,7 +625,7 @@ Args:
   * step_name (str): If not None, override the step name.
   * attempts (int): Number of times to try the request before failing.
 
-&mdash; **def [download\_archive](/recipes/recipe_modules/gitiles/api.py#162)(self, repository_url, destination, revision='refs/heads/master'):**
+&mdash; **def [download\_archive](/recipes/recipe_modules/gitiles/api.py#162)(self, repository_url, destination, revision='refs/heads/main'):**
 
 Downloads an archive of the repo and extracts it to `destination`.
 
@@ -639,9 +639,9 @@ Args:
   * destination (Path): Local path to extract the archive to. Must not exist
     prior to this call.
   * revision (str): The ref or revision in the repo to download. Defaults to
-    'refs/heads/master'.
+    'refs/heads/main'.
 
-&mdash; **def [download\_file](/recipes/recipe_modules/gitiles/api.py#136)(self, repository_url, file_path, branch='master', step_name=None, attempts=None, \*\*kwargs):**
+&mdash; **def [download\_file](/recipes/recipe_modules/gitiles/api.py#136)(self, repository_url, file_path, branch='main', step_name=None, attempts=None, \*\*kwargs):**
 
 Downloads raw file content from a Gitiles repository.
 
@@ -886,7 +886,7 @@ Populated iff gerrit_change is populated.
 
 &emsp; **@property**<br>&mdash; **def [gerrit\_change\_target\_ref](/recipes/recipe_modules/tryserver/api.py#158)(self):**
 
-Returns gerrit change destination ref, e.g. "refs/heads/master".
+Returns gerrit change destination ref, e.g. "refs/heads/main".
 
 Populated iff gerrit_change is populated.
 

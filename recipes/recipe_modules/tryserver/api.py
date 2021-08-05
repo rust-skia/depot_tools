@@ -110,7 +110,7 @@ class TryserverApi(recipe_api.RecipeApi):
 
     td = self._test_data if self._test_data.enabled else {}
     mock_res = [{
-      'branch': td.get('gerrit_change_target_ref', 'master'),
+      'branch': td.get('gerrit_change_target_ref', 'main'),
       'revisions': {
         '184ebe53805e102605d11f6b143486d15c23a09c': {
           '_number': str(cl.patchset),
@@ -157,7 +157,7 @@ class TryserverApi(recipe_api.RecipeApi):
 
   @property
   def gerrit_change_target_ref(self):
-    """Returns gerrit change destination ref, e.g. "refs/heads/master".
+    """Returns gerrit change destination ref, e.g. "refs/heads/main".
 
     Populated iff gerrit_change is populated.
     """

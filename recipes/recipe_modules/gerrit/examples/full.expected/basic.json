@@ -41,7 +41,7 @@
       "--project",
       "v8/v8",
       "--branch",
-      "master",
+      "main",
       "--json_file",
       "/path/to/tmp/json"
     ],
@@ -49,7 +49,7 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "gerrit get_gerrit_branch (v8/v8 master)",
+    "name": "gerrit get_gerrit_branch (v8/v8 main)",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"ref\": \"refs/heads/main\", @@@",

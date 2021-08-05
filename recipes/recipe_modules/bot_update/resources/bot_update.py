@@ -406,7 +406,7 @@ def gclient_sync(
     args += ['--with_tags']
   for name, revision in sorted(revisions.items()):
     if revision.upper() == 'HEAD':
-      revision = 'refs/remotes/origin/master'
+      revision = 'refs/remotes/origin/main'
     args.extend(['--revision', '%s@%s' % (name, revision)])
 
   if patch_refs:
@@ -554,8 +554,8 @@ def get_target_branch_and_revision(solution_name, git_url, revisions):
 
   if configured is None or COMMIT_HASH_RE.match(configured):
     # TODO(crbug.com/1104182): Get the default branch instead of assuming
-    # 'master'.
-    branch = 'refs/remotes/origin/master'
+    # 'main'.
+    branch = 'refs/remotes/origin/main'
     revision = configured or 'HEAD'
     return branch, revision
   elif ':' in configured:
@@ -773,11 +773,7 @@ def _set_remote_head(cwd):
   try:
     git('remote', 'set-head', 'origin', '--auto', cwd=cwd)
   except SubprocessFailed:
-    # If remote HEAD cannot be set automatically, prefer main over master.
-    try:
-      git('remote', 'set-head', 'origin', 'main', cwd=cwd)
-    except SubprocessFailed:
-      git('remote', 'set-head', 'origin', 'master', cwd=cwd)
+    git('remote', 'set-head', 'origin', 'main', cwd=cwd)
 
 
 def get_commit_position(git_path, revision='HEAD'):

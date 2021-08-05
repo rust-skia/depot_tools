@@ -242,8 +242,8 @@ def GenTests(api):
       )
   )
   yield (
-      api.test('origin_master') +
-      ci_build(revision='origin/master')
+      api.test('origin_main') +
+      ci_build(revision='origin/main')
   )
 
   yield (
@@ -298,7 +298,7 @@ def GenTests(api):
   )
 
   yield (
-      api.test('no_cp_checkout_master') +
+      api.test('no_cp_checkout_main') +
       ci_build(revision='') +
       api.properties(
           bot_update_output={

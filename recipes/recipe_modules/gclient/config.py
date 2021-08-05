@@ -86,7 +86,7 @@ def BaseConfig(USE_MIRROR=True, CACHE_DIR=None,
     #     'https://chromium.googlesource.com/angle/angle': (
     #       'src/third_party/angle', 'HEAD')
     # then a patch to Angle project can be applied to a chromium src's
-    # checkout after first updating Angle's repo to its master's HEAD.
+    # checkout after first updating Angle's repo to its main's HEAD.
     repo_path_map = Dict(value_type=tuple, hidden=True),
 
     # Check out refs/branch-heads.
@@ -317,11 +317,11 @@ def infra_internal(c):  # pragma: no cover
 @config_ctx(includes=['infra'])
 def luci_gae(c):
   # luci/gae is checked out as a part of infra.git solution at HEAD.
-  c.revisions['infra'] = 'refs/heads/master'
+  c.revisions['infra'] = 'refs/heads/main'
   # luci/gae is developed together with luci-go, which should be at HEAD.
-  c.revisions['infra/go/src/go.chromium.org/luci'] = 'refs/heads/master'
+  c.revisions['infra/go/src/go.chromium.org/luci'] = 'refs/heads/main'
   c.revisions['infra/go/src/go.chromium.org/gae'] = (
-      gclient_api.RevisionFallbackChain('refs/heads/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/main'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/go/src/go.chromium.org/gae'] = 'got_revision'
@@ -329,9 +329,9 @@ def luci_gae(c):
 @config_ctx(includes=['infra'])
 def luci_go(c):
   # luci-go is checked out as a part of infra.git solution at HEAD.
-  c.revisions['infra'] = 'refs/heads/master'
+  c.revisions['infra'] = 'refs/heads/main'
   c.revisions['infra/go/src/go.chromium.org/luci'] = (
-      gclient_api.RevisionFallbackChain('refs/heads/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/main'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/go/src/go.chromium.org/luci'] = 'got_revision'
@@ -340,18 +340,18 @@ def luci_go(c):
 def luci_py(c):
   # luci-py is checked out as part of infra just to have appengine
   # pre-installed, as that's what luci-py PRESUBMIT relies on.
-  c.revisions['infra'] = 'refs/heads/master'
+  c.revisions['infra'] = 'refs/heads/main'
   c.revisions['infra/luci'] = (
-      gclient_api.RevisionFallbackChain('refs/heads/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/main'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/luci'] = 'got_revision'
 
 @config_ctx(includes=['infra'])
 def recipes_py(c):
-  c.revisions['infra'] = 'refs/heads/master'
+  c.revisions['infra'] = 'refs/heads/main'
   c.revisions['infra/recipes-py'] = (
-      gclient_api.RevisionFallbackChain('refs/heads/master'))
+      gclient_api.RevisionFallbackChain('refs/heads/main'))
   m = c.got_revision_mapping
   del m['infra']
   m['infra/recipes-py'] = 'got_revision'
