@@ -1042,20 +1042,17 @@ def UpdateHead(host, project, branch):
 
 
 def GetGerritBranch(host, project, branch):
-  """Gets a branch from given project and commit.
+  """Gets a branch info from given project and branch name.
 
   See:
   https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#get-branch
 
   Returns:
-    A JSON object with 'revision' key.
+    A JSON object with 'revision' key if the branch exists, otherwise None.
   """
   path = 'projects/%s/branches/%s' % (project, branch)
   conn = CreateHttpConn(host, path, reqtype='GET')
-  response = ReadHttpJsonResponse(conn)
-  if response:
-    return response
-  raise GerritError(200, 'Unable to get gerrit branch')
+  return ReadHttpJsonResponse(conn, accept_statuses=[200, 404])
 
 
 def GetProjectHead(host, project):
