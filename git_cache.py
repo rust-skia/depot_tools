@@ -302,7 +302,7 @@ class Mirror(object):
     try:
       # create new temporary directory locally
       tempdir = tempfile.mkdtemp(prefix='_cache_tmp', dir=self.GetCachePath())
-      self.RunGit(['init', '--bare'], cwd=tempdir)
+      self.RunGit(['init', '--bare', '-b', 'main'], cwd=tempdir)
       self.print('Downloading files in %s/* into %s.' %
                  (latest_dir, tempdir))
       with self.print_duration_of('download'):
@@ -410,7 +410,7 @@ class Mirror(object):
         # 1. No previous cache.
         # 2. Project doesn't have a bootstrap folder.
         # Start with a bare git dir.
-        self.RunGit(['init', '--bare'], cwd=self.mirror_path)
+        self.RunGit(['init', '--bare', '-b', 'main'], cwd=self.mirror_path)
       else:
         # Bootstrap failed, previous cache exists; warn and continue.
         logging.warning(
