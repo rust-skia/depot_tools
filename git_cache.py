@@ -487,7 +487,7 @@ class Mirror(object):
         self._fetch(self.mirror_path, verbose, depth, no_fetch_tags,
                     reset_fetch_config)
 
-  def update_bootstrap(self, prune=False, gc_aggressive=False, branch='master'):
+  def update_bootstrap(self, prune=False, gc_aggressive=False, branch='main'):
     # The folder is <git number>
     gen_number = subprocess.check_output(
         [self.git_exe, 'number', branch],
@@ -612,8 +612,8 @@ def CMDupdate_bootstrap(parser, args):
                     help='Run aggressive repacking of the repo.')
   parser.add_option('--prune', action='store_true',
                     help='Prune all other cached bundles of the same repo.')
-  parser.add_option('--branch', default='master',
-                    help='Branch to use for bootstrap. (Default \'master\')')
+  parser.add_option('--branch', default='main',
+                    help='Branch to use for bootstrap. (Default \'main\')')
 
   populate_args = args[:]
   options, args = parser.parse_args(args)
