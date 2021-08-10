@@ -806,7 +806,7 @@ Raises:
 
 Returns a presubmit step.
 
-&mdash; **def [execute](/recipes/recipe_modules/presubmit/api.py#100)(self, bot_update_step, skip_owners=False):**
+&mdash; **def [execute](/recipes/recipe_modules/presubmit/api.py#110)(self, bot_update_step, skip_owners=False):**
 
 Runs presubmit and sets summary markdown if applicable.
 
@@ -817,7 +817,7 @@ Args:
 Returns:
   a RawResult object, suitable for being returned from RunSteps.
 
-&mdash; **def [prepare](/recipes/recipe_modules/presubmit/api.py#65)(self):**
+&mdash; **def [prepare](/recipes/recipe_modules/presubmit/api.py#65)(self, root_solution_revision=None):**
 
 Sets up a presubmit run.
 
@@ -827,6 +827,9 @@ This includes:
   - running hooks, if requested
 
 This expects the gclient configuration to already have been set.
+
+Args:
+  root_solution_revision: revision of the root solution
 
 Returns:
   the StepResult from the bot_update step.
