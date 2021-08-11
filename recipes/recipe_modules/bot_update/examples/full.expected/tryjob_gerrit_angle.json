@@ -64,7 +64,7 @@
       "--revision",
       "src@HEAD",
       "--revision",
-      "src/third_party/angle@HEAD",
+      "src/third_party/angle@refs/heads/main",
       "--disable-syntax-validation"
     ],
     "env": {

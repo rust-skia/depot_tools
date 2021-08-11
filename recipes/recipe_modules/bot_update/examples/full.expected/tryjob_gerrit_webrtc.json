@@ -64,7 +64,7 @@
       "--revision",
       "src@HEAD",
       "--revision",
-      "src/third_party/webrtc@HEAD",
+      "src/third_party/webrtc@refs/heads/main",
       "--disable-syntax-validation"
     ],
     "env": {

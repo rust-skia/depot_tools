@@ -62,7 +62,9 @@
       "--patch_ref",
       "https://chromium.googlesource.com/chromium/src@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
-      "src@HEAD",
+      "src@refs/heads/main",
+      "--refs",
+      "refs/heads/main",
       "--disable-syntax-validation"
     ],
     "env": {

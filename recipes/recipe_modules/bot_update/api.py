@@ -450,11 +450,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
     if not patch_path or path != patch_path:
       return 'HEAD'
 
-    target_ref = self.m.tryserver.gerrit_change_target_ref
-    if target_ref == 'refs/heads/main':
-      return 'HEAD'
-
-    return target_ref
+    return self.m.tryserver.gerrit_change_target_ref
 
   def resolve_fixed_revision(self, bot_update_json, name):
     """Sets a fixed revision for a single dependency using project revision
