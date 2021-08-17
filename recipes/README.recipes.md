@@ -567,7 +567,7 @@ Returns: (str) The URL of the remote Git repository, or None.
 
 Find and return the timestamp of the given commit.
 
-&mdash; **def [new\_branch](/recipes/recipe_modules/git/api.py#401)(self, branch, name=None, upstream=None, \*\*kwargs):**
+&mdash; **def [new\_branch](/recipes/recipe_modules/git/api.py#401)(self, branch, name=None, upstream=None, upstream_current=False, \*\*kwargs):**
 
 Runs git new-branch on a Git repository, to be used before git cl
 upload.
@@ -576,6 +576,7 @@ Args:
   * branch (str): new branch name, which must not yet exist.
   * name (str): step name.
   * upstream (str): to origin/main.
+  * upstream_current (bool): whether to use '--upstream_current'.
   * kwargs: Forwarded to '__call__'.
 
 &mdash; **def [rebase](/recipes/recipe_modules/git/api.py#337)(self, name_prefix, branch, dir_path, remote_name=None, \*\*kwargs):**

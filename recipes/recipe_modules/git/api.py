@@ -398,7 +398,12 @@ class GitApi(recipe_api.RecipeApi):
       rev_list_args = ['--all']
     self('bundle', 'create', bundle_path, *rev_list_args, **kwargs)
 
-  def new_branch(self, branch, name=None, upstream=None, **kwargs):
+  def new_branch(self,
+                 branch,
+                 name=None,
+                 upstream=None,
+                 upstream_current=False,
+                 **kwargs):
     """Runs git new-branch on a Git repository, to be used before git cl
     upload.
 
@@ -406,14 +411,19 @@ class GitApi(recipe_api.RecipeApi):
       * branch (str): new branch name, which must not yet exist.
       * name (str): step name.
       * upstream (str): to origin/main.
+      * upstream_current (bool): whether to use '--upstream_current'.
       * kwargs: Forwarded to '__call__'.
     """
+    if upstream and upstream_current:
+      raise ValueError('Can not define both upstream and upstream_current')
     env = self.m.context.env
     env['PATH'] = self.m.path.pathsep.join([
         str(self.repo_resource()), '%(PATH)s'])
     args = ['new-branch', branch]
     if upstream:
       args.extend(['--upstream', upstream])
+    if upstream_current:
+      args.append('--upstream_current')
     if not name:
       name = 'git new-branch %s' % branch
     with self.m.context(env=env):

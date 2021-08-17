@@ -76,9 +76,15 @@ def RunSteps(api):
 
   # You should run git new-branch before you upload something with git cl.
   api.git.new_branch('refactor')  # Upstream is origin/main by default.
+
+  if api.properties.get('set_both_upstream_and_upstream_current'):
+    api.git.new_branch('failed_new_branch',
+                       upstream='will_fail',
+                       upstream_current=True)
   # And use upstream kwarg to set up different upstream for tracking.
   api.git.new_branch('feature', upstream='refactor')
-
+  # A new branching tracking the current branch, which is 'feature'.
+  api.git.new_branch('track_current', upstream_current=True)
   # You can use api.git.rebase to rebase the current branch onto another one
   api.git.rebase(name_prefix='my repo', branch='origin/main',
                  dir_path=api.path['checkout'],
@@ -168,3 +174,7 @@ def GenTests(api):
   yield (
       api.test('git-cache-checkout') +
       api.properties(use_git_cache=True))
+
+  yield (api.test('new_branch_failed') +
+         api.properties(set_both_upstream_and_upstream_current=True) +
+         api.expect_exception('ValueError'))
