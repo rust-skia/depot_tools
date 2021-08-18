@@ -164,8 +164,8 @@ def DieWithError(message, change_desc=None):
 def SaveDescriptionBackup(change_desc):
   backup_path = os.path.join(DEPOT_TOOLS, DESCRIPTION_BACKUP_FILE)
   print('\nsaving CL description to %s\n' % backup_path)
-  with open(backup_path, 'w') as backup_file:
-    backup_file.write(change_desc.description)
+  with open(backup_path, 'wb') as backup_file:
+    backup_file.write(change_desc.description.encode('utf-8'))
 
 
 def GetNoGitPagerEnv():
