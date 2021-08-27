@@ -13,7 +13,7 @@
   * [gitiles](#recipe_modules-gitiles) (Python3 ✅)
   * [gsutil](#recipe_modules-gsutil)
   * [osx_sdk](#recipe_modules-osx_sdk) &mdash; The `osx_sdk` module provides safe functions to access a semi-hermetic XCode installation.
-  * [presubmit](#recipe_modules-presubmit)
+  * [presubmit](#recipe_modules-presubmit) (Python3 ✅)
   * [tryserver](#recipe_modules-tryserver)
   * [windows_sdk](#recipe_modules-windows_sdk) (Python3 ✅) &mdash; The `windows_sdk` module provides safe functions to access a hermetic Microsoft Visual Studio installation.
 
@@ -36,9 +36,9 @@
   * [gitiles:tests/parse_repo_url](#recipes-gitiles_tests_parse_repo_url) (Python3 ✅)
   * [gsutil:examples/full](#recipes-gsutil_examples_full)
   * [osx_sdk:examples/full](#recipes-osx_sdk_examples_full)
-  * [presubmit:examples/full](#recipes-presubmit_examples_full)
-  * [presubmit:tests/execute](#recipes-presubmit_tests_execute)
-  * [presubmit:tests/prepare](#recipes-presubmit_tests_prepare)
+  * [presubmit:examples/full](#recipes-presubmit_examples_full) (Python3 ✅)
+  * [presubmit:tests/execute](#recipes-presubmit_tests_execute) (Python3 ✅)
+  * [presubmit:tests/prepare](#recipes-presubmit_tests_prepare) (Python3 ✅)
   * [tryserver:examples/full](#recipes-tryserver_examples_full)
   * [tryserver:tests/gerrit_change_fetch_ref_timeout](#recipes-tryserver_tests_gerrit_change_fetch_ref_timeout)
   * [tryserver:tests/gerrit_change_owner](#recipes-tryserver_tests_gerrit_change_owner)
@@ -822,9 +822,9 @@ Raises:
 &mdash; **def [initialize](/recipes/recipe_modules/osx_sdk/api.py#47)(self):**
 ### *recipe_modules* / [presubmit](/recipes/recipe_modules/presubmit)
 
-[DEPS](/recipes/recipe_modules/presubmit/__init__.py#11): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [PresubmitApi](/recipes/recipe_modules/presubmit/api.py#16)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1185,25 +1185,25 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipe_modules/osx_sdk/examples/full.py#13)(api):**
 ### *recipes* / [presubmit:examples/full](/recipes/recipe_modules/presubmit/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/presubmit/examples/full.py#5): [presubmit](#recipe_modules-presubmit), [recipe\_engine/json][recipe_engine/recipe_modules/json]
+[DEPS](/recipes/recipe_modules/presubmit/examples/full.py#7): [presubmit](#recipe_modules-presubmit), [recipe\_engine/json][recipe_engine/recipe_modules/json]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/examples/full.py#13)(api):**
 ### *recipes* / [presubmit:tests/execute](/recipes/recipe_modules/presubmit/tests/execute.py)
 
-[DEPS](/recipes/recipe_modules/presubmit/tests/execute.py#10): [gclient](#recipe_modules-gclient), [presubmit](#recipe_modules-presubmit), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
+[DEPS](/recipes/recipe_modules/presubmit/tests/execute.py#12): [gclient](#recipe_modules-gclient), [presubmit](#recipe_modules-presubmit), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/tests/execute.py#23)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/tests/execute.py#25)(api):**
 ### *recipes* / [presubmit:tests/prepare](/recipes/recipe_modules/presubmit/tests/prepare.py)
 
-[DEPS](/recipes/recipe_modules/presubmit/tests/prepare.py#9): [gclient](#recipe_modules-gclient), [presubmit](#recipe_modules-presubmit), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
+[DEPS](/recipes/recipe_modules/presubmit/tests/prepare.py#11): [gclient](#recipe_modules-gclient), [presubmit](#recipe_modules-presubmit), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/tests/prepare.py#26)(api, patch_project, patch_repository_url):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/tests/prepare.py#28)(api, patch_project, patch_repository_url):**
 ### *recipes* / [tryserver:examples/full](/recipes/recipe_modules/tryserver/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/tryserver/examples/full.py#5): [gerrit](#recipe_modules-gerrit), [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
