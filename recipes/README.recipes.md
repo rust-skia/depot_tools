@@ -9,7 +9,7 @@
   * [gclient](#recipe_modules-gclient)
   * [gerrit](#recipe_modules-gerrit)
   * [git](#recipe_modules-git)
-  * [git_cl](#recipe_modules-git_cl)
+  * [git_cl](#recipe_modules-git_cl) (Python3 ✅)
   * [gitiles](#recipe_modules-gitiles) (Python3 ✅)
   * [gsutil](#recipe_modules-gsutil)
   * [osx_sdk](#recipe_modules-osx_sdk) &mdash; The `osx_sdk` module provides safe functions to access a semi-hermetic XCode installation.
@@ -31,7 +31,7 @@
   * [gclient:tests/sync_failure](#recipes-gclient_tests_sync_failure)
   * [gerrit:examples/full](#recipes-gerrit_examples_full)
   * [git:examples/full](#recipes-git_examples_full)
-  * [git_cl:examples/full](#recipes-git_cl_examples_full)
+  * [git_cl:examples/full](#recipes-git_cl_examples_full) (Python3 ✅)
   * [gitiles:examples/full](#recipes-gitiles_examples_full) (Python3 ✅)
   * [gitiles:tests/parse_repo_url](#recipes-gitiles_tests_parse_repo_url) (Python3 ✅)
   * [gsutil:examples/full](#recipes-gsutil_examples_full)
@@ -605,9 +605,9 @@ Args:
   * remote_name (str): the remote name to rebase from if not origin
 ### *recipe_modules* / [git\_cl](/recipes/recipe_modules/git_cl)
 
-[DEPS](/recipes/recipe_modules/git_cl/__init__.py#1): [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
+[DEPS](/recipes/recipe_modules/git_cl/__init__.py#3): [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [GitClApi](/recipes/recipe_modules/git_cl/api.py#9)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1148,11 +1148,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2
 &mdash; **def [RunSteps](/recipes/recipe_modules/git/examples/full.py#18)(api):**
 ### *recipes* / [git\_cl:examples/full](/recipes/recipe_modules/git_cl/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/git_cl/examples/full.py#9): [git\_cl](#recipe_modules-git_cl), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/git_cl/examples/full.py#11): [git\_cl](#recipe_modules-git_cl), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/git_cl/examples/full.py#17)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/git_cl/examples/full.py#19)(api):**
 ### *recipes* / [gitiles:examples/full](/recipes/recipe_modules/gitiles/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/gitiles/examples/full.py#7): [gitiles](#recipe_modules-gitiles), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]

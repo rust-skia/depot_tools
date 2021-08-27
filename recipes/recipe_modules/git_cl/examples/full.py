@@ -6,6 +6,8 @@
 from recipe_engine.config_types import Path
 
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'git_cl',
   'recipe_engine/path',
