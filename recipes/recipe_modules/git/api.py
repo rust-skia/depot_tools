@@ -83,6 +83,7 @@ class GitApi(recipe_api.RecipeApi):
 
       result = {}
       for line in step_result.stdout.splitlines():
+        line = line.decode('utf-8')
         name, value = line.split(':', 1)
         result[name] = int(value.strip())
 
@@ -297,7 +298,7 @@ class GitApi(recipe_api.RecipeApi):
                               self.m.raw_io.test_api.stream_output('deadbeef'))
 
       if rev_parse_step.presentation.status == 'SUCCESS':
-        sha = rev_parse_step.stdout.strip()
+        sha = rev_parse_step.stdout.strip().decode('utf-8')
         retVal = sha
         rev_parse_step.presentation.step_text = "<br/>checked out %r<br/>" % sha
         if set_got_revision:
@@ -370,7 +371,7 @@ class GitApi(recipe_api.RecipeApi):
     value = result.stdout
     if value:
       value = value.strip()
-      result.presentation.step_text = value
+      result.presentation.step_text = value.decode('utf-8')
     return value
 
   def get_remote_url(self, remote_name=None, **kwargs):

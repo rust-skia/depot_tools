@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
+
 DEPS = [
   'recipe_engine/buildbucket',
   'recipe_engine/context',
@@ -94,7 +96,7 @@ def RunSteps(api):
     step_result = api.git.cat_file_at_commit(api.properties['cat_file'],
                                              revision,
                                              stdout=api.raw_io.output())
-    if 'TestOutput' in step_result.stdout:
+    if 'TestOutput' in step_result.stdout.decode('utf-8'):
       pass  # Success!
 
   # Bundle the repository.
