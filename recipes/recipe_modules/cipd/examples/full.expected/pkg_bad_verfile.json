@@ -289,7 +289,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/examples/full.py\", line 76, in RunSteps",
+      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/examples/full.py\", line 78, in RunSteps",
       "    pkg.add_version_file(pth)",
       "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/api.py\", line 144, in add_version_file",
       "    raise ValueError('add_version_file() may only be used once.')",
