@@ -215,7 +215,7 @@ class GitApi(recipe_api.RecipeApi):
               stdout=self.m.raw_io.output(),
               step_test_data=lambda:
                   self.m.raw_io.test_api.stream_output('mirror_dir'))
-          mirror_dir = dir_cmd.stdout.strip()
+          mirror_dir = dir_cmd.stdout.strip().decode('utf-8')
           self('remote', 'set-url', 'origin', mirror_dir,
                can_fail_build=can_fail_build)
 

@@ -24,16 +24,18 @@ def RunSteps(api):
       suffix='build')
   api.git_cl.set_description(
       'bammmm', patch_url='https://code.review/123')
-  api.step('echo', ['echo', result.stdout])
+  api.step('echo', ['echo', result.stdout.decode('utf-8')])
 
   api.git_cl.set_config('basic')
   api.git_cl.c.repo_location = api.path.mkdtemp('fakerepo')
 
-  api.step('echo', ['echo', api.git_cl.get_description().stdout])
+  api.step(
+      'echo', ['echo', api.git_cl.get_description().stdout.decode('utf-8')])
 
   api.git_cl.set_description('new description woo')
 
-  api.step('echo', ['echo', api.git_cl.get_description().stdout])
+  api.step(
+      'echo', ['echo', api.git_cl.get_description().stdout.decode('utf-8')])
 
 def GenTests(api):
   yield (
