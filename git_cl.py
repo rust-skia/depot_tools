@@ -5088,6 +5088,7 @@ def CMDformat(parser, args):
   GN_EXTS = ['.gn', '.gni', '.typemap']
   parser.add_option('--full', action='store_true',
                     help='Reformat the full content of all touched files')
+  parser.add_option('--upstream', help='Branch to check against')
   parser.add_option('--dry-run', action='store_true',
                     help='Don\'t modify any file on disk.')
   parser.add_option(
@@ -5140,8 +5141,10 @@ def CMDformat(parser, args):
   # to cover the case where the user may have called "git fetch origin",
   # moving the origin branch to a newer commit, but hasn't rebased yet.
   upstream_commit = None
-  cl = Changelist()
-  upstream_branch = cl.GetUpstreamBranch()
+  upstream_branch = opts.upstream
+  if not upstream_branch:
+    cl = Changelist()
+    upstream_branch = cl.GetUpstreamBranch()
   if upstream_branch:
     upstream_commit = RunGit(['merge-base', 'HEAD', upstream_branch])
     upstream_commit = upstream_commit.strip()
