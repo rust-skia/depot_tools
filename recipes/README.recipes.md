@@ -11,7 +11,7 @@
   * [git](#recipe_modules-git)
   * [git_cl](#recipe_modules-git_cl) (Python3 ✅)
   * [gitiles](#recipe_modules-gitiles) (Python3 ✅)
-  * [gsutil](#recipe_modules-gsutil)
+  * [gsutil](#recipe_modules-gsutil) (Python3 ✅)
   * [osx_sdk](#recipe_modules-osx_sdk) (Python3 ✅) &mdash; The `osx_sdk` module provides safe functions to access a semi-hermetic XCode installation.
   * [presubmit](#recipe_modules-presubmit) (Python3 ✅)
   * [tryserver](#recipe_modules-tryserver)
@@ -34,7 +34,7 @@
   * [git_cl:examples/full](#recipes-git_cl_examples_full) (Python3 ✅)
   * [gitiles:examples/full](#recipes-gitiles_examples_full) (Python3 ✅)
   * [gitiles:tests/parse_repo_url](#recipes-gitiles_tests_parse_repo_url) (Python3 ✅)
-  * [gsutil:examples/full](#recipes-gsutil_examples_full)
+  * [gsutil:examples/full](#recipes-gsutil_examples_full) (Python3 ✅)
   * [osx_sdk:examples/full](#recipes-osx_sdk_examples_full) (Python3 ✅)
   * [presubmit:examples/full](#recipes-presubmit_examples_full) (Python3 ✅)
   * [presubmit:tests/execute](#recipes-presubmit_tests_execute) (Python3 ✅)
@@ -713,9 +713,9 @@ Returns a list of refs in the remote repository.
 Generates a Gitiles repo URL. See also parse_repo_url.
 ### *recipe_modules* / [gsutil](/recipes/recipe_modules/gsutil)
 
-[DEPS](/recipes/recipe_modules/gsutil/__init__.py#1): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python]
+[DEPS](/recipes/recipe_modules/gsutil/__init__.py#3): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 #### **class [GSUtilApi](/recipes/recipe_modules/gsutil/api.py#9)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1169,11 +1169,11 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 &mdash; **def [RunSteps](/recipes/recipe_modules/gitiles/tests/parse_repo_url.py#14)(api):**
 ### *recipes* / [gsutil:examples/full](/recipes/recipe_modules/gsutil/examples/full.py)
 
-[DEPS](/recipes/recipe_modules/gsutil/examples/full.py#5): [gsutil](#recipe_modules-gsutil), [recipe\_engine/path][recipe_engine/recipe_modules/path]
+[DEPS](/recipes/recipe_modules/gsutil/examples/full.py#7): [gsutil](#recipe_modules-gsutil), [recipe\_engine/path][recipe_engine/recipe_modules/path]
 
-PYTHON_VERSION_COMPATIBILITY: PY2
+PYTHON_VERSION_COMPATIBILITY: PY2+3
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/gsutil/examples/full.py#11)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/gsutil/examples/full.py#13)(api):**
 
 Move things around in a loop!
 ### *recipes* / [osx\_sdk:examples/full](/recipes/recipe_modules/osx_sdk/examples/full.py)
