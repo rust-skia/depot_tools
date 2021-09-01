@@ -4139,16 +4139,6 @@ def GetTargetRef(remote, remote_branch, target_branch):
     # Handle the refs that need to land in different refs.
     remote_branch = REFS_THAT_ALIAS_TO_OTHER_REFS[remote_branch]
 
-  # Migration to new default branch, only if available on remote.
-  allow_push_on_master = bool(os.environ.get("ALLOW_PUSH_TO_MASTER", None))
-  if remote_branch == DEFAULT_OLD_BRANCH and not allow_push_on_master:
-    if RunGit(['show-branch', DEFAULT_NEW_BRANCH], error_ok=True,
-              stderr=subprocess2.PIPE):
-      # TODO(crbug.com/ID): Print location to local git migration script.
-      print("WARNING: Using new branch name %s instead of %s" % (
-          DEFAULT_NEW_BRANCH, DEFAULT_OLD_BRANCH))
-      remote_branch = DEFAULT_NEW_BRANCH
-
   # Create the true path to the remote branch.
   # Does the following translation:
   # * refs/remotes/origin/refs/diff/test -> refs/diff/test
