@@ -289,7 +289,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/examples/full.py\", line 72, in RunSteps",
+      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/examples/full.py\", line 70, in RunSteps",
       "    pkg.add_file(api.path.abs_to_path(fullpath))",
       "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/api.py\", line 118, in add_file",
       "    self.files.append(self._rel_path(file_path))",

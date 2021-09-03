@@ -289,7 +289,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/examples/full.py\", line 70, in RunSteps",
+      "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/examples/full.py\", line 68, in RunSteps",
       "    pkg = api.cipd.PackageDefinition('infra/fake-package', root, install_mode)",
       "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/cipd/api.py\", line 64, in __init__",
       "    raise ValueError('invalid value for install_mode: %r' % install_mode)",
