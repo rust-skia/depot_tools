@@ -71,7 +71,7 @@
   },
   {
     "failure": {
-      "humanReason": "Uncaught Exception: DepsDiffException(u\"Couldn't checkout previous ref: fatal: bad object abcdef1234567890\",)"
+      "humanReason": "Uncaught Exception: DepsDiffException('Couldn't checkout previous ref: fatal: bad object abcdef1234567890')"
     },
     "name": "$result"
   }

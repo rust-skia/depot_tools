@@ -191,7 +191,7 @@
   },
   {
     "failure": {
-      "humanReason": "Uncaught Exception: ValueError('Can not define both upstream and upstream_current',)"
+      "humanReason": "Uncaught Exception: ValueError('Can not define both upstream and upstream_current')"
     },
     "name": "$result"
   }

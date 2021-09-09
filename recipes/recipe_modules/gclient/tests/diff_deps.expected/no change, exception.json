@@ -70,7 +70,7 @@
   },
   {
     "failure": {
-      "humanReason": "Uncaught Exception: DepsDiffException('Unexpected result: autoroll diff found 0 files changed',)"
+      "humanReason": "Uncaught Exception: DepsDiffException('Unexpected result: autoroll diff found 0 files changed')"
     },
     "name": "$result"
   }
