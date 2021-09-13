@@ -66,7 +66,7 @@
       "    affected_files = api.gclient.diff_deps(api.path['cache'])",
       "  File \"RECIPE_REPO[depot_tools]/recipes/recipe_modules/gclient/api.py\", line 413, in diff_deps",
       "    raise self.DepsDiffException(msg)",
-      "DepsDiffException: Couldn't checkout previous ref: fatal: bad object abcdef1234567890"
+      "DepsDiffException('Couldn't checkout previous ref: fatal: bad object abcdef1234567890')"
     ]
   },
   {
