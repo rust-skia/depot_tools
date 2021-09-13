@@ -63,8 +63,8 @@ infra/tools/rdb/${platform} git_revision:2be056d01d3f8bab07915a1c2eca04f1937ad83
 chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d39d34907050d2949121d6ae8
 
 # goma client
-infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:c8d88478606720be5c478af45fce770d54c261e9
-infra/goma/client/${os=mac}-${arch} git_revision:c8d88478606720be5c478af45fce770d54c261e9
+infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:a69265a51f91d73d571ac54f5ab9e86a0e1030c0
+infra/goma/client/${os=mac}-${arch} git_revision:a69265a51f91d73d571ac54f5ab9e86a0e1030c0
 
 # dirmd, a tool to work with DIR_METADATA files
 infra/tools/dirmd/${platform} git_revision:5b2249265e0797e4982a464eee175c437e0422f8
