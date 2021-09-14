@@ -1,6 +1,9 @@
 [
   {
     "cmd": [
+      "rdb",
+      "stream",
+      "--",
       "vpython",
       "-u",
       "RECIPE_REPO[depot_tools]/presubmit_support.py",
@@ -23,6 +26,9 @@
   },
   {
     "cmd": [
+      "rdb",
+      "stream",
+      "--",
       "vpython3",
       "RECIPE_REPO[depot_tools]/presubmit_support.py",
       "--json_output",
