@@ -177,7 +177,8 @@ def run_gsutil(target, args, clean=False):
 def parse_args():
   bin_dir = os.environ.get('DEPOT_TOOLS_GSUTIL_BIN_DIR', DEFAULT_BIN_DIR)
 
-  parser = argparse.ArgumentParser()
+  # Help is disabled as it conflicts with gsutil -h, which controls headers.
+  parser = argparse.ArgumentParser(add_help=False)
 
   parser.add_argument('--clean', action='store_true',
       help='Clear any existing gsutil package, forcing a new download.')
