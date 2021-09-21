@@ -727,6 +727,11 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
         git('remote', 'set-url', 'origin', mirror_dir, cwd=sln_dir)
         git('fetch', 'origin', cwd=sln_dir)
       git('remote', 'set-url', '--push', 'origin', url, cwd=sln_dir)
+
+      if revision == 'HEAD':
+        # Update HEAD since cache may point to a different rev
+        git('remote', 'set-head', 'origin', '-a', cwd=sln_dir)
+
       if pin:
         git('fetch', 'origin', pin, cwd=sln_dir)
       for ref in refs:
