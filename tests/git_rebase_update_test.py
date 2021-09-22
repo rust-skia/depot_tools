@@ -105,6 +105,10 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
     self.repo.git('reset', '--hard', self.repo['A'])
     with self.repo.open('old_file', 'w') as f:
       f.write('old_files we want to keep around')
+
+    output, _ = self.repo.capture_stdio(self.reup.main)
+    self.assertIn('Cannot rebase-update', output)
+
     self.repo.git('add', 'old_file')
     self.repo.git_commit('old_file')
     self.repo.git('config', 'branch.old_branch.dormant', 'true')
@@ -120,12 +124,6 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
     """)
     self.assertEqual(self.repo['A'], self.origin['A'])
     self.assertEqual(self.repo['E'], self.origin['E'])
-
-    with self.repo.open('bob', 'wb') as f:
-      f.write(b'testing auto-freeze/thaw')
-
-    output, _ = self.repo.capture_stdio(self.reup.main)
-    self.assertIn('Cannot rebase-update', output)
 
     self.repo.run(self.nb.main, ['empty_branch'])
     self.repo.run(self.nb.main, ['--upstream-current', 'empty_branch2'])
@@ -160,11 +158,6 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
     self.assertIn('foobar up-to-date', output)
     self.assertIn('sub_K up-to-date', output)
 
-    with self.repo.open('bob') as f:
-      self.assertEqual(b'testing auto-freeze/thaw', f.read())
-
-    self.assertEqual(self.repo.git('status', '--porcelain').stdout, '?? bob\n')
-
     self.repo.git('checkout', 'origin/main')
     _, err = self.repo.capture_stdio(self.rp.main, [])
     self.assertIn('Must specify new parent somehow', err)
@@ -193,7 +186,6 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
     self.assertTrue(self.repo.run(self.gc.in_rebase))
 
     self.repo.git('rebase', '--abort')
-    self.assertIsNone(self.repo.run(self.gc.thaw))
 
     self.assertSchema("""
     A B C D E F G M N O foobar1 foobar2 H I J K L
@@ -201,8 +193,6 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
     A old_file
                                               K sub_K
     """)
-
-    self.assertEqual(self.repo.git('status', '--porcelain').stdout, '?? bob\n')
 
     branches = self.repo.run(set, self.gc.branches())
     self.assertEqual(branches, {'branch_K', 'main', 'sub_K', 'root_A',
@@ -313,7 +303,6 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
     self.assertIn('--keep-going set, continuing with next branch.', output)
     self.assertIn('could not be cleanly rebased:', output)
     self.assertIn('  branch_K', output)
-
 
   def testTrackTag(self):
     self.origin.git('tag', 'lkgr', self.origin['M'])

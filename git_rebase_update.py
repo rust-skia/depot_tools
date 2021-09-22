@@ -256,12 +256,9 @@ def main(args=None):
   return_branch, return_workdir = find_return_branch_workdir()
   os.chdir(git.run('rev-parse', '--show-toplevel'))
 
-  if git.current_branch() == 'HEAD':
-    if git.run('status', '--porcelain'):
-      print('Cannot rebase-update with detached head + uncommitted changes.')
-      return 1
-  else:
-    git.freeze()  # just in case there are any local changes.
+  if git.run('status', '--porcelain'):
+    print('Cannot rebase-update with uncommitted changes.')
+    return 1
 
   branches_to_rebase = set(opts.branches)
   if opts.current:
@@ -322,7 +319,6 @@ def main(args=None):
     # return_branch may not be there any more.
     if return_branch in git.branches():
       git.run('checkout', return_branch)
-      git.thaw()
     else:
       root_branch = git.root()
       if return_branch != 'HEAD':
