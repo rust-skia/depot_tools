@@ -2064,7 +2064,7 @@ class Changelist(object):
     print('Issue %s has been submitted.' % self.GetIssueURL())
     links = self._GetChangeCommit().get('web_links', [])
     for link in links:
-      if link.get('name') == 'gitiles' and link.get('url'):
+      if link.get('name') in ['gitiles', 'browse'] and link.get('url'):
         print('Landed as: %s' % link.get('url'))
         break
     return 0
