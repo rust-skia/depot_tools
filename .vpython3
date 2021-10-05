@@ -42,3 +42,10 @@ wheel: <
   name: "infra/python/wheels/six-py2_py3"
   version: "version:1.10.0"
 >
+
+# May be required to talk to 3P servers.
+# Fixes https://crbug.com/1255921
+wheel: <
+  name: "infra/python/wheels/certifi-py2_py3"
+  version: "version:2021.5.30"
+>
