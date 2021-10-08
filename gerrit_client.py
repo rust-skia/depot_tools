@@ -371,7 +371,7 @@ def CMDmass_abandon(parser, args):
     logging.warn("[ID: %d] %s" % (change['_number'], change['subject']))
 
   if not opt.force:
-    q = raw_input(
+    q = input(
         'Do you want to move forward with abandoning? [y to confirm] ').strip()
     if q not in ['y', 'Y']:
       logging.warn("Aborting...")
