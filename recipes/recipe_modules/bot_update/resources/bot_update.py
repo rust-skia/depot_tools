@@ -134,6 +134,7 @@ class RepeatingTimer(threading.Thread):
     self.kwargs = kwargs if kwargs is not None else {}
     self.cond = threading.Condition()
     self.is_shutdown = False
+    self.is_reset = False
 
   def reset(self):
     """Resets timer interval."""
@@ -191,6 +192,8 @@ def call(*args, **kwargs):  # pragma: no cover
   env = os.environ.copy()
   env.update(new_env)
   kwargs['env'] = env
+  stale_process_duration = env.get('STALE_PROCESS_DURATION',
+                                   STALE_PROCESS_DURATION)
 
   if new_env:
     print('===Injecting Environment Variables===')
@@ -200,40 +203,46 @@ def call(*args, **kwargs):  # pragma: no cover
   print('In directory: %s' % cwd)
   start_time = time.time()
   proc = subprocess.Popen(args, **kwargs)
-  if stdin_data:
-    proc.stdin.write(stdin_data)
-    proc.stdin.close()
-  stale_process_duration = env.get('STALE_PROCESS_DURATION',
-                                   STALE_PROCESS_DURATION)
   observers = [
       RepeatingTimer(300, _print_pstree),
       RepeatingTimer(int(stale_process_duration), _terminate_process, [proc])]
+
   for observer in observers:
     observer.start()
-  # This is here because passing 'sys.stdout' into stdout for proc will
-  # produce out of order output.
-  hanging_cr = False
-  while True:
-    for observer in observers:
-      observer.reset()
-    buf = proc.stdout.read(BUF_SIZE)
-    if not buf:
-      break
-    if hanging_cr:
-      buf = '\r' + buf
-    hanging_cr = buf.endswith('\r')
-    if hanging_cr:
-      buf = buf[:-1]
-    buf = buf.replace('\r\n', '\n').replace('\r', '\n')
-    _stdout_write(buf)
-    out.write(buf)
-  if hanging_cr:
-    _stdout_write('\n')
-    out.write('\n')
-  for observer in observers:
-    observer.shutdown()
 
-  code = proc.wait()
+  try:
+    # If there's an exception in this block, we need to stop all observers.
+    # Otherwise, observers will be spinning and main process won't exit while
+    # the main thread will be doing nothing.
+    if stdin_data:
+      proc.stdin.write(stdin_data)
+      proc.stdin.close()
+    # This is here because passing 'sys.stdout' into stdout for proc will
+    # produce out of order output.
+    hanging_cr = False
+    while True:
+      for observer in observers:
+        observer.reset()
+      buf = proc.stdout.read(BUF_SIZE)
+      if not buf:
+        break
+      if hanging_cr:
+        buf = '\r' + buf
+      hanging_cr = buf.endswith(b'\r')
+      if hanging_cr:
+        buf = buf[:-1]
+      buf = buf.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+      _stdout_write(buf)
+      out.write(buf)
+    if hanging_cr:
+      _stdout_write(b'\n')
+      out.write(b'\n')
+
+    code = proc.wait()
+  finally:
+    for observer in observers:
+      observer.shutdown()
+
   elapsed_time = ((time.time() - start_time) / 60.0)
   outval = out.getvalue().decode('utf-8')
   if code:
