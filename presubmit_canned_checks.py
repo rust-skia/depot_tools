@@ -940,15 +940,16 @@ def GetPylint(input_api,
 
   The default files_to_check enforces looking only at *.py files.
 
-  Currently only pylint version '1.5' and '2.6' are supported.
+  Currently only pylint version '1.5', '2.6' and '2.7' are supported.
   """
 
   files_to_check = tuple(files_to_check or (r'.*\.py$', ))
   files_to_skip = tuple(files_to_skip or input_api.DEFAULT_FILES_TO_SKIP)
   extra_paths_list = extra_paths_list or []
 
-  assert version in ('1.5', '2.6'), 'Unsupported pylint version: ' + version
-  python3 = (version == '2.6')
+  assert version in ('1.5', '2.6', '2.7'), \
+      'Unsupported pylint version: ' + version
+  python2 = (version == '1.5')
 
   if input_api.is_committing:
     error_type = output_api.PresubmitError
@@ -1036,7 +1037,7 @@ def GetPylint(input_api,
         cmd=cmd,
         kwargs=kwargs,
         message=error_type,
-        python3=python3)
+        python3=not python2)
 
   # Always run pylint and pass it all the py files at once.
   # Passing py files one at time is slower and can produce
