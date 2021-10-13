@@ -35,6 +35,12 @@ GC_AUTOPACKLIMIT = 50
 
 GIT_CACHE_CORRUPT_MESSAGE = 'WARNING: The Git cache is corrupt.'
 
+# gsutil creates many processes and threads. Creating too many gsutil cp
+# processes may result in running out of resources, and may perform worse due to
+# contextr switching. This limits how many concurrent gsutil cp processes
+# git_cache runs.
+GSUTIL_CP_SEMAPHORE = threading.Semaphore(2)
+
 try:
   # pylint: disable=undefined-variable
   WinErr = WindowsError
@@ -306,8 +312,9 @@ class Mirror(object):
       self.print('Downloading files in %s/* into %s.' %
                  (latest_dir, tempdir))
       with self.print_duration_of('download'):
-        code = gsutil.call('-m', 'cp', '-r', latest_dir + "/*",
-                           tempdir)
+        with self.GSUTIL_CP_SEMAPHORE():
+          code = gsutil.call('-m', 'cp', '-r', latest_dir + "/*",
+                             tempdir)
       if code:
         return False
       # Set HEAD to main.
