@@ -390,6 +390,10 @@ class Mirror(object):
       if depth and os.path.exists(os.path.join(self.mirror_path, 'shallow')):
         logging.warning(
             'Shallow fetch requested, but repo cache already exists.')
+      # Old boostraps may have old default HEAD, so this ensures main is always
+      # used.
+      self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/main'],
+                  cwd=self.mirror_path)
       return
 
     if not self.exists():
