@@ -692,28 +692,15 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
   for ref in refs:
     populate_cmd.extend(['--ref', ref])
 
-  env = {}
-  if url == CHROMIUM_SRC_URL or url + '.git' == CHROMIUM_SRC_URL:
-    # This is for performance investigation of `git fetch` in chromium/src.
-    env = {
-        'GIT_TRACE': 'true',
-        'GIT_TRACE_PERFORMANCE': 'true',
-        'GIT_TRACE_CURL': 'true',
-        'GIT_TRACE_CURL_NO_DATA': 'true',
-        'GIT_REDACT_COOKIES': 'o,SSO,GSSO_UberProxy,__Secure-GSSO_UberProxy',
-    }
-
   # Step 1: populate/refresh cache, if necessary.
   if enforce_fetch or not pin:
-    git(*populate_cmd, env=env)
+    git(*populate_cmd)
 
   # If cache still doesn't have required pin/refs, try again and fetch pin/refs
   # directly.
   if not _has_in_git_cache(pin, refs, git_cache_dir, url):
     for attempt in range(3):
-      with git_config_if_not_set(
-          'http.extraheader', 'X-Return-Encrypted-Headers: all'):
-        git(*populate_cmd, env=env)
+      git(*populate_cmd)
       if _has_in_git_cache(pin, refs, git_cache_dir, url):
         break
       print('Some required refs/commits are still not present.')
