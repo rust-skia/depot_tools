@@ -231,11 +231,12 @@ class Mirror(object):
         name='rename [%s] => [%s]' % (src, dst),
         printerr=self.print)
 
-  def RunGit(self, cmd, **kwargs):
+  def RunGit(self, cmd, print_stdout=True, **kwargs):
     """Run git in a subprocess."""
     cwd = kwargs.setdefault('cwd', self.mirror_path)
     kwargs.setdefault('print_stdout', False)
-    kwargs.setdefault('filter_fn', self.print)
+    if print_stdout:
+      kwargs.setdefault('filter_fn', self.print)
     env = kwargs.get('env') or kwargs.setdefault('env', os.environ.copy())
     env.setdefault('GIT_ASKPASS', 'true')
     env.setdefault('SSH_ASKPASS', 'true')
@@ -320,7 +321,7 @@ class Mirror(object):
       # Set HEAD to main.
       self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/main'], cwd=tempdir)
       # A quick validation that all references are valid.
-      self.RunGit(['for-each-ref'], cwd=tempdir)
+      self.RunGit(['for-each-ref'], print_stdout=False, cwd=tempdir)
     except Exception as e:
       self.print('Encountered error: %s' % str(e), file=sys.stderr)
       gclient_utils.rmtree(tempdir)
