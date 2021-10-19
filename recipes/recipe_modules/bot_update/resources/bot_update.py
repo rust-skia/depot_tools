@@ -165,9 +165,9 @@ def _print_pstree():
     subprocess.call(['ps', 'auxwwf'])
 
 
-def _terminate_process(proc):
-  print('Terminating stale process...')
-  proc.terminate()
+def _kill_process(proc):
+  print('Killing stale process...')
+  proc.kill()
 
 
 # TODO(crbug.com/1227140): Clean up when py2 is no longer supported.
@@ -205,7 +205,7 @@ def call(*args, **kwargs):  # pragma: no cover
   proc = subprocess.Popen(args, **kwargs)
   observers = [
       RepeatingTimer(300, _print_pstree),
-      RepeatingTimer(int(stale_process_duration), _terminate_process, [proc])]
+      RepeatingTimer(int(stale_process_duration), _kill_process, [proc])]
 
   for observer in observers:
     observer.start()
