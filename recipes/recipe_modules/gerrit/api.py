@@ -294,7 +294,8 @@ class GerritApi(recipe_api.RecipeApi):
                    new_contents_by_file_path,
                    commit_msg,
                    params=frozenset(['status=NEW']),
-                   submit=False):
+                   submit=False,
+                   submit_later=False):
     """Update a set of files by creating and submitting a Gerrit CL.
 
     Args:
@@ -307,6 +308,9 @@ class GerritApi(recipe_api.RecipeApi):
       * params: A list of additional ChangeInput specifiers, with format
           'key=value'.
       * submit: Should land this CL instantly.
+      * submit_later: If this change has related CLs, we may want to commit
+           them in a chain. So only set Bot-Commit+1, making it ready for
+           submit together. Ignored if submit is True.
 
     Returns:
       A ChangeInfo dictionary as documented here:
@@ -361,7 +365,7 @@ class GerritApi(recipe_api.RecipeApi):
         change,
     ])
 
-    if submit:
+    if submit or submit_later:
       self('set Bot-Commit+1 for change %d' % change, [
           'setbotcommit',
           '--host',
@@ -369,6 +373,7 @@ class GerritApi(recipe_api.RecipeApi):
           '--change',
           change,
       ])
+    if submit:
       submit_cmd = [
           'submitchange',
           '--host',

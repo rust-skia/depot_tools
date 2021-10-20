@@ -343,7 +343,7 @@ Returns:
 
 &mdash; **def [set\_change\_label](/recipes/recipe_modules/gerrit/api.py#248)(self, host, change, label_name, label_value, name=None, step_test_data=None):**
 
-&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#290)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), submit=False):**
+&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#290)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), submit=False, submit_later=False):**
 
 Update a set of files by creating and submitting a Gerrit CL.
 
@@ -357,6 +357,9 @@ Args:
   * params: A list of additional ChangeInput specifiers, with format
       'key=value'.
   * submit: Should land this CL instantly.
+  * submit_later: If this change has related CLs, we may want to commit
+       them in a chain. So only set Bot-Commit+1, making it ready for
+       submit together. Ignored if submit is True.
 
 Returns:
   A ChangeInfo dictionary as documented here:
