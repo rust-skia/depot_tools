@@ -23,6 +23,9 @@ def RunSteps(api):
   data = api.gerrit.get_gerrit_branch(host, project, 'main')
   assert data == '67ebf73496383c6777035e374d2d664009e2aa5c'
 
+  data = api.gerrit.create_gerrit_tag(host, project, '1.0', commit)
+  assert data == 'refs/tags/1.0'
+
   api.gerrit.move_changes(host, project, 'master', 'main')
 
   change_info = api.gerrit.update_files(host,
@@ -82,6 +85,8 @@ def GenTests(api):
   yield (api.test('basic') +
          api.step_data('gerrit create_gerrit_branch (v8/v8 test)',
                        api.gerrit.make_gerrit_create_branch_response_data()) +
+         api.step_data('gerrit create_gerrit_tag (v8/v8 1.0)',
+                       api.gerrit.make_gerrit_create_tag_response_data()) +
          api.step_data('gerrit create change at (v8/v8 main)',
                        api.gerrit.update_files_response_data()) +
          api.step_data('gerrit submit change 91827',

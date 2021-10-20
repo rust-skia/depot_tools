@@ -253,7 +253,7 @@ Module for interact with Gerrit endpoints
 
 Wrapper for easy calling of gerrit_utils steps.
 
-&mdash; **def [abandon\_change](/recipes/recipe_modules/gerrit/api.py#209)(self, host, change, message=None, name=None, step_test_data=None):**
+&mdash; **def [abandon\_change](/recipes/recipe_modules/gerrit/api.py#228)(self, host, change, message=None, name=None, step_test_data=None):**
 
 &mdash; **def [create\_gerrit\_branch](/recipes/recipe_modules/gerrit/api.py#32)(self, host, project, branch, commit, \*\*kwargs):**
 
@@ -262,7 +262,14 @@ Creates a new branch from given project and commit
 Returns:
   The ref of the branch created
 
-&mdash; **def [get\_change\_description](/recipes/recipe_modules/gerrit/api.py#71)(self, host, change, patchset, timeout=None, step_test_data=None):**
+&mdash; **def [create\_gerrit\_tag](/recipes/recipe_modules/gerrit/api.py#51)(self, host, project, tag, commit, \*\*kwargs):**
+
+Creates a new tag at the given commit.
+
+Returns:
+  The ref of the tag created.
+
+&mdash; **def [get\_change\_description](/recipes/recipe_modules/gerrit/api.py#90)(self, host, change, patchset, timeout=None, step_test_data=None):**
 
 Gets the description for a given CL and patchset.
 
@@ -274,7 +281,7 @@ Args:
 Returns:
   The description corresponding to given CL and patchset.
 
-&mdash; **def [get\_changes](/recipes/recipe_modules/gerrit/api.py#131)(self, host, query_params, start=None, limit=None, o_params=None, step_test_data=None, \*\*kwargs):**
+&mdash; **def [get\_changes](/recipes/recipe_modules/gerrit/api.py#150)(self, host, query_params, start=None, limit=None, o_params=None, step_test_data=None, \*\*kwargs):**
 
 Queries changes for the given host.
 
@@ -293,14 +300,14 @@ Returns:
   A list of change dicts as documented here:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
 
-&mdash; **def [get\_gerrit\_branch](/recipes/recipe_modules/gerrit/api.py#53)(self, host, project, branch, \*\*kwargs):**
+&mdash; **def [get\_gerrit\_branch](/recipes/recipe_modules/gerrit/api.py#72)(self, host, project, branch, \*\*kwargs):**
 
 Gets a branch from given project and commit
 
 Returns:
   The revision of the branch
 
-&mdash; **def [get\_related\_changes](/recipes/recipe_modules/gerrit/api.py#173)(self, host, change, revision='current', step_test_data=None):**
+&mdash; **def [get\_related\_changes](/recipes/recipe_modules/gerrit/api.py#192)(self, host, change, revision='current', step_test_data=None):**
 
 Queries related changes for a given host, change, and revision.
 
@@ -319,7 +326,7 @@ Returns:
   A related changes dictionary as documented here:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#related-changes-info
 
-&mdash; **def [get\_revision\_info](/recipes/recipe_modules/gerrit/api.py#90)(self, host, change, patchset, timeout=None, step_test_data=None):**
+&mdash; **def [get\_revision\_info](/recipes/recipe_modules/gerrit/api.py#109)(self, host, change, patchset, timeout=None, step_test_data=None):**
 
 Returns the info for a given patchset of a given change.
 
@@ -332,11 +339,11 @@ Returns:
   A dict for the target revision as documented here:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
 
-&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#247)(self, host, project, from_branch, to_branch, step_test_data=None):**
+&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#266)(self, host, project, from_branch, to_branch, step_test_data=None):**
 
-&mdash; **def [set\_change\_label](/recipes/recipe_modules/gerrit/api.py#229)(self, host, change, label_name, label_value, name=None, step_test_data=None):**
+&mdash; **def [set\_change\_label](/recipes/recipe_modules/gerrit/api.py#248)(self, host, change, label_name, label_value, name=None, step_test_data=None):**
 
-&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#271)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), submit=False):**
+&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#290)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), submit=False):**
 
 Update a set of files by creating and submitting a Gerrit CL.
 

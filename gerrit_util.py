@@ -1015,6 +1015,23 @@ def CreateGerritBranch(host, project, branch, commit):
   raise GerritError(200, 'Unable to create gerrit branch')
 
 
+def CreateGerritTag(host, project, tag, commit):
+  """Creates a new tag at the given commit.
+
+  https://gerrit-review.googlesource.com/Documentation/rest-api-projects.html#create-tag
+
+  Returns:
+    A JSON object with 'ref' key.
+  """
+  path = 'projects/%s/tags/%s' % (project, tag)
+  body = {'revision': commit}
+  conn = CreateHttpConn(host, path, reqtype='PUT', body=body)
+  response = ReadHttpJsonResponse(conn, accept_statuses=[201])
+  if response:
+    return response
+  raise GerritError(200, 'Unable to create gerrit tag')
+
+
 def GetHead(host, project):
   """Retrieves current HEAD of Gerrit project
 

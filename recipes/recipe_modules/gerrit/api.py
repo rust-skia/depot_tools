@@ -48,6 +48,25 @@ class GerritApi(recipe_api.RecipeApi):
     ref = step_result.json.output.get('ref')
     return ref
 
+  def create_gerrit_tag(self, host, project, tag, commit, **kwargs):
+    """Creates a new tag at the given commit.
+
+    Returns:
+      The ref of the tag created.
+    """
+    args = [
+        'tag',
+        '--host', host,
+        '--project', project,
+        '--tag', tag,
+        '--commit', commit,
+        '--json_file', self.m.json.output()
+    ]
+    step_name = 'create_gerrit_tag (%s %s)' % (project, tag)
+    step_result = self(step_name, args, **kwargs)
+    ref = step_result.json.output.get('ref')
+    return ref
+
   # TODO(machenbach): Rename to get_revision? And maybe above to
   # create_ref?
   def get_gerrit_branch(self, host, project, branch, **kwargs):

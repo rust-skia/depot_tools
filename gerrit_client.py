@@ -101,6 +101,26 @@ def CMDbranch(parser, args):
 
 
 @subcommand.usage('[args ...]')
+def CMDtag(parser, args):
+  """Create a tag in a gerrit project."""
+  parser.add_option('--tag', dest='tag', help='tag name')
+  parser.add_option('--commit', dest='commit', help='commit hash')
+
+  (opt, args) = parser.parse_args(args)
+  assert opt.project, "--project not defined"
+  assert opt.tag, "--tag not defined"
+  assert opt.commit, "--commit not defined"
+
+  project = quote_plus(opt.project)
+  host = urlparse.urlparse(opt.host).netloc
+  tag = quote_plus(opt.tag)
+  commit = quote_plus(opt.commit)
+  result = gerrit_util.CreateGerritTag(host, project, tag, commit)
+  logging.info(result)
+  write_result(result, opt)
+
+
+@subcommand.usage('[args ...]')
 def CMDhead(parser, args):
   """Update which branch the project HEAD points to."""
   parser.add_option('--branch', dest='branch', help='branch name')
