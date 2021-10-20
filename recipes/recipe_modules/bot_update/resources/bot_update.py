@@ -592,7 +592,11 @@ def _has_in_git_cache(revision_sha1, refs, git_cache_dir, url):
         'cache', 'exists', '--quiet', '--cache-dir', git_cache_dir, url).strip()
     if revision_sha1:
       git('cat-file', '-e', revision_sha1, cwd=mirror_dir)
-    for ref in refs:
+    # Don't check refspecs.
+    filtered_refs = [
+        r for r in refs if r not in [BRANCH_HEADS_REFSPEC, TAGS_REFSPEC]
+    ]
+    for ref in filtered_refs:
       git('cat-file', '-e', ref, cwd=mirror_dir)
     return True
   except SubprocessFailed:
@@ -637,7 +641,7 @@ def _set_git_config(fn):
     with git_config_if_not_set('user.name', 'chrome-bot'), \
          git_config_if_not_set('user.email', 'chrome-bot@chromium.org'), \
          git_config_if_not_set('fetch.uriprotocols', 'https'):
-        return fn(*args, **kwargs)
+      return fn(*args, **kwargs)
   return wrapper
 
 
