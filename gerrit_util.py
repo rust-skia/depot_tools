@@ -502,6 +502,17 @@ def ReadHttpJsonResponse(conn, accept_statuses=frozenset([200])):
   return json.loads(s)
 
 
+def CallGerritApi(host, path, **kwargs):
+  """Helper for calling a Gerrit API that returns a JSON response."""
+  conn_kwargs = {}
+  conn_kwargs.update(
+      (k, kwargs[k]) for k in ['reqtype', 'headers', 'body'] if k in kwargs)
+  conn = CreateHttpConn(host, path, **conn_kwargs)
+  read_kwargs = {}
+  read_kwargs.update((k, kwargs[k]) for k in ['accept_statuses'] if k in kwargs)
+  return ReadHttpJsonResponse(conn, **read_kwargs)
+
+
 def QueryChanges(host, params, first_param=None, limit=None, o_params=None,
                  start=None):
   """

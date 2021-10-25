@@ -29,6 +29,35 @@ class GerritApi(recipe_api.RecipeApi):
                            venv=True,
                            **kwargs)
 
+  def call_raw_api(self,
+                   host,
+                   path,
+                   method=None,
+                   body=None,
+                   accept_statuses=None,
+                   name=None,
+                   **kwargs):
+    """Call an arbitrary Gerrit API that returns a JSON response.
+
+    Returns:
+      The JSON response data.
+    """
+    args = [
+        'rawapi', '--host', host, '--path', path, '--json_file',
+        self.m.json.output()
+    ]
+    if method:
+      args.extend(['--method', method])
+    if body:
+      args.extend(['--body', self.m.json.dumps(body)])
+    if accept_statuses:
+      args.extend(
+          ['--accept_status', ','.join(str(i) for i in accept_statuses)])
+
+    step_name = name or 'call_raw_api (%s)' % path
+    step_result = self(step_name, args, **kwargs)
+    return step_result.json.output
+
   def create_gerrit_branch(self, host, project, branch, commit, **kwargs):
     """Creates a new branch from given project and commit
 
