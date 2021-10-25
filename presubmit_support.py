@@ -1175,7 +1175,14 @@ class Change(object):
 
   def BugsFromDescription(self):
     """Returns all bugs referenced in the commit description."""
-    tags = [b.strip() for b in self.tags.get('BUG', '').split(',') if b.strip()]
+    bug_tags = ['BUG', 'FIXED']
+
+    tags = []
+    for tag in bug_tags:
+      values = self.tags.get(tag)
+      if values:
+        tags += [value.strip() for value in values.split(',')]
+
     footers = []
     parsed = self.GitFootersFromDescription()
     unsplit_footers = parsed.get('Bug', []) + parsed.get('Fixed', [])
