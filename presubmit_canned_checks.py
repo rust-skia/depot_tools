@@ -41,9 +41,21 @@ OFF_BY_DEFAULT_LINT_FILTERS = [
 # - build/c++11         : Include file and feature blocklists are
 #                         google3-specific
 # - runtime/references  : No longer banned by Google style guide
+# - whitespace/...      : Most whitespace issues handled by clang-format
 OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS = [
-  '-build/c++11',
-  '-runtime/references',
+    '-build/c++11',
+    '-runtime/references',
+    '-whitespace/braces',
+    '-whitespace/comma',
+    '-whitespace/end_of_line',
+    '-whitespace/forcolon',
+    '-whitespace/indent',
+    '-whitespace/line_length',
+    '-whitespace/newline',
+    '-whitespace/operators',
+    '-whitespace/parens',
+    '-whitespace/semicolon',
+    '-whitespace/tab',
 ]
 
 ### Description checks
