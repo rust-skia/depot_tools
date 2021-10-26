@@ -121,8 +121,7 @@ def CMDbranch(parser, args):
   project = quote_plus(opt.project)
   host = urlparse.urlparse(opt.host).netloc
   branch = quote_plus(opt.branch)
-  commit = quote_plus(opt.commit)
-  result = gerrit_util.CreateGerritBranch(host, project, branch, commit)
+  result = gerrit_util.CreateGerritBranch(host, project, branch, opt.commit)
   logging.info(result)
   write_result(result, opt)
 
@@ -141,8 +140,7 @@ def CMDtag(parser, args):
   project = quote_plus(opt.project)
   host = urlparse.urlparse(opt.host).netloc
   tag = quote_plus(opt.tag)
-  commit = quote_plus(opt.commit)
-  result = gerrit_util.CreateGerritTag(host, project, tag, commit)
+  result = gerrit_util.CreateGerritTag(host, project, tag, opt.commit)
   logging.info(result)
   write_result(result, opt)
 
