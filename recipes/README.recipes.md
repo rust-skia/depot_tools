@@ -21,7 +21,6 @@
   * [bot_update:tests/do_not_retry_patch_failures_in_cq](#recipes-bot_update_tests_do_not_retry_patch_failures_in_cq) (Python3 ✅)
   * [bot_update:tests/ensure_checkout](#recipes-bot_update_tests_ensure_checkout) (Python3 ✅)
   * [depot_tools:examples/full](#recipes-depot_tools_examples_full) (Python3 ✅)
-  * [fetch_end_to_end_test](#recipes-fetch_end_to_end_test)
   * [gclient:examples/full](#recipes-gclient_examples_full) (Python3 ✅)
   * [gclient:tests/diff_deps](#recipes-gclient_tests_diff_deps) (Python3 ✅)
   * [gclient:tests/patch_project](#recipes-gclient_tests_patch_project) (Python3 ✅)
@@ -980,13 +979,6 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/depot_tools/examples/full.py#16)(api):**
-### *recipes* / [fetch\_end\_to\_end\_test](/recipes/recipes/fetch_end_to_end_test.py)
-
-[DEPS](/recipes/recipes/fetch_end_to_end_test.py#5): [bot\_update](#recipe_modules-bot_update), [gclient](#recipe_modules-gclient), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-PYTHON_VERSION_COMPATIBILITY: PY2
-
-&mdash; **def [RunSteps](/recipes/recipes/fetch_end_to_end_test.py#16)(api):**
 ### *recipes* / [gclient:examples/full](/recipes/recipe_modules/gclient/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/gclient/examples/full.py#7): [gclient](#recipe_modules-gclient), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
