@@ -86,6 +86,8 @@ def _upload_worker(
       _, out, _ = gsutil.check_call_with_retries('ls', '-L', file_url)
       etag_match = re.search(r'ETag:\s+([a-z0-9]{32})', out)
       if etag_match:
+        stdout_queue.put(
+            '%d> File with url %s already exists' % (thread_num, file_url))
         remote_md5 = etag_match.group(1)
         # Calculate the MD5 checksum to match it to Google Storage's ETag.
         with md5_lock:
