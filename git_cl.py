@@ -3012,7 +3012,7 @@ def urlretrieve(source, destination):
 
   This is necessary because urllib is broken for SSL connections via a proxy.
   """
-  with open(destination, 'w') as f:
+  with open(destination, 'wb') as f:
     f.write(urllib.request.urlopen(source).read())
 
 
