@@ -5263,10 +5263,10 @@ def CMDformat(parser, args):
         yapf_style = 'pep8'
 
       with open(f, 'r') as py_f:
-        if 'python3' in py_f.readline():
-          vpython_script = 'vpython3'
-        else:
+        if 'python2' in py_f.readline():
           vpython_script = 'vpython'
+        else:
+          vpython_script = 'vpython3'
 
       cmd = [vpython_script, yapf_tool, '--style', yapf_style, f]
 
