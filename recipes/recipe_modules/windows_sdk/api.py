@@ -3,9 +3,14 @@
 # found in the LICENSE file.
 
 """The `windows_sdk` module provides safe functions to access a hermetic
-Microsoft Visual Studio installation.
+Microsoft Visual Studio installation which is derived from Chromium's MSVC
+toolchain.
 
-Available only to Google-run bots.
+See (internal):
+  * go/chromium-msvc-toolchain
+  * go/windows-sdk-cipd-update
+
+Available only on Google-run bots.
 """
 
 import collections
@@ -94,27 +99,21 @@ class WindowsSDKApi(recipe_api.RecipeApi):
     env = {}
     env_prefixes = {}
 
-    # Load .../win_sdk/bin/SetEnv.${arch}.json to extract the required
-    # environment. It contains a dict that looks like this:
-    # {
-    #   "env": {
-    #     "VAR": [["..", "..", "x"], ["..", "..", "y"]],
-    #     ...
-    #   }
-    # }
-    # All these environment variables need to be added to the environment
-    # for the compiler and linker to work.
-    assert target_arch in ('x86', 'x64')
-    filename = 'SetEnv.%s.json' % target_arch
-    step_result = self.m.json.read(
-        'read %s' % filename, sdk_dir.join('win_sdk', 'bin', filename),
-        step_test_data=lambda: self.m.json.test_api.output({
-            'env': {
-                'PATH': [['..', '..', 'win_sdk', 'bin', 'x64']],
-                'VSINSTALLDIR': [['..', '..\\']],
-            },
-        }))
-    data = step_result.json.output.get('env')
+    if target_arch not in ('x86', 'x64', 'arm64'):
+      raise ValueError('unknown architecture {!r}'.format(target_arch))
+
+    data = self.m.step('read SetEnv json', [
+        'python3',
+        self.resource('find_env_json.py'), '--sdk_root', sdk_dir,
+        '--target_arch', target_arch,
+        self.m.json.output()
+    ],
+                       step_test_data=lambda: self.m.json.test_api.output({
+                           'env': {
+                               'PATH': [['..', '..', 'win_sdk', 'bin', 'x64']],
+                               'VSINSTALLDIR': [['..', '..\\']],
+                           },
+                       })).json.output.get('env')
     for key in data:
       # recipes' Path() does not like .., ., \, or /, so this is cumbersome.
       # What we want to do is:

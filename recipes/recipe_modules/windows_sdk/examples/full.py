@@ -17,6 +17,13 @@ def RunSteps(api):
     api.step('gn', ['gn', 'gen', 'out/Release'])
     api.step('ninja', ['ninja', '-C', 'out/Release'])
 
+  # bad arch
+  try:
+    with api.windows_sdk(target_arch='lolnope'):
+      assert False, "never here"  # pragma: no cover
+  except ValueError:
+    pass
+
 
 def GenTests(api):
   for platform in ('linux', 'mac', 'win'):

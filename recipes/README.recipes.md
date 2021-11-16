@@ -14,7 +14,7 @@
   * [osx_sdk](#recipe_modules-osx_sdk) (Python3 ✅) &mdash; The `osx_sdk` module provides safe functions to access a semi-hermetic XCode installation.
   * [presubmit](#recipe_modules-presubmit) (Python3 ✅)
   * [tryserver](#recipe_modules-tryserver) (Python3 ✅)
-  * [windows_sdk](#recipe_modules-windows_sdk) (Python3 ✅) &mdash; The `windows_sdk` module provides safe functions to access a hermetic Microsoft Visual Studio installation.
+  * [windows_sdk](#recipe_modules-windows_sdk) (Python3 ✅) &mdash; The `windows_sdk` module provides safe functions to access a hermetic Microsoft Visual Studio installation which is derived from Chromium's MSVC toolchain.
 
 **[Recipes](#Recipes)**
   * [bot_update:examples/full](#recipes-bot_update_examples_full) (Python3 ✅)
@@ -920,15 +920,20 @@ timeout.
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 The `windows_sdk` module provides safe functions to access a hermetic
-Microsoft Visual Studio installation.
+Microsoft Visual Studio installation which is derived from Chromium's MSVC
+toolchain.
 
-Available only to Google-run bots.
+See (internal):
+  * go/chromium-msvc-toolchain
+  * go/windows-sdk-cipd-update
 
-#### **class [WindowsSDKApi](/recipes/recipe_modules/windows_sdk/api.py#17)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+Available only on Google-run bots.
+
+#### **class [WindowsSDKApi](/recipes/recipe_modules/windows_sdk/api.py#22)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using Windows SDK distributed via CIPD.
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/windows_sdk/api.py#27)(self, path=None, version=None, enabled=True, target_arch='x64'):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/windows_sdk/api.py#32)(self, path=None, version=None, enabled=True, target_arch='x64'):**
 
 Sets up the SDK environment when enabled.
 
