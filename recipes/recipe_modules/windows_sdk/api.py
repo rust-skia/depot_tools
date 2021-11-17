@@ -104,9 +104,13 @@ class WindowsSDKApi(recipe_api.RecipeApi):
 
     data = self.m.step('read SetEnv json', [
         'python3',
-        self.resource('find_env_json.py'), '--sdk_root', sdk_dir,
-        '--target_arch', target_arch,
-        self.m.json.output()
+        self.resource('find_env_json.py'),
+        '--sdk_root',
+        sdk_dir,
+        '--target_arch',
+        target_arch,
+        '--output_json',
+        self.m.json.output(),
     ],
                        step_test_data=lambda: self.m.json.test_api.output({
                            'env': {
