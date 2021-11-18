@@ -15,7 +15,7 @@ POSSIBLE_BASE_LOCATIONS = [
     os.path.join("win_sdk", "bin"),
 
     # SDK versions after 19041
-    os.path.join("win_sdk", "Windows Kits", "10", "bin"),
+    os.path.join("Windows Kits", "10", "bin"),
 ]
 
 SDK_ARCHITECTURES = frozenset([
