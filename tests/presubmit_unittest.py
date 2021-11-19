@@ -160,6 +160,10 @@ index fe3de7b..54ae6e1 100755
 
   def setUp(self):
     super(PresubmitTestsBase, self).setUp()
+    # Disable string diff max. It's hard to parse assertion error if there's
+    # limit set.
+    self.maxDiff = None
+
     class FakeChange(object):
       def __init__(self, obj):
         self._root = obj.fake_root_dir
@@ -2361,7 +2365,7 @@ the current line as well!
   def testRunPythonUnitTestsNonExistentUpload(self):
     input_api = self.MockInputApi(None, False)
     subprocess.Popen().returncode = 1  # pylint: disable=no-value-for-parameter
-    presubmit.sigint_handler.wait.return_value = ('foo', None)
+    presubmit.sigint_handler.wait.return_value = (b'foo', None)
 
     results = presubmit_canned_checks.RunPythonUnitTests(
         input_api, presubmit.OutputApi, ['_non_existent_module'])
@@ -2372,7 +2376,7 @@ the current line as well!
   def testRunPythonUnitTestsNonExistentCommitting(self):
     input_api = self.MockInputApi(None, True)
     subprocess.Popen().returncode = 1  # pylint: disable=no-value-for-parameter
-    presubmit.sigint_handler.wait.return_value = ('foo', None)
+    presubmit.sigint_handler.wait.return_value = (b'foo', None)
 
     results = presubmit_canned_checks.RunPythonUnitTests(
         input_api, presubmit.OutputApi, ['_non_existent_module'])
@@ -2383,7 +2387,7 @@ the current line as well!
     input_api = self.MockInputApi(None, False)
     input_api.unittest = mock.MagicMock(unittest)
     subprocess.Popen().returncode = 1  # pylint: disable=no-value-for-parameter
-    presubmit.sigint_handler.wait.return_value = ('foo', None)
+    presubmit.sigint_handler.wait.return_value = (b'foo', None)
 
     results = presubmit_canned_checks.RunPythonUnitTests(
         input_api, presubmit.OutputApi, ['test_module'])
@@ -2397,7 +2401,7 @@ the current line as well!
   def testRunPythonUnitTestsFailureCommitting(self):
     input_api = self.MockInputApi(None, True)
     subprocess.Popen().returncode = 1  # pylint: disable=no-value-for-parameter
-    presubmit.sigint_handler.wait.return_value = ('foo', None)
+    presubmit.sigint_handler.wait.return_value = (b'foo', None)
 
     results = presubmit_canned_checks.RunPythonUnitTests(
         input_api, presubmit.OutputApi, ['test_module'])
@@ -2411,7 +2415,7 @@ the current line as well!
     input_api = self.MockInputApi(None, False)
     input_api.unittest = mock.MagicMock(unittest)
     subprocess.Popen().returncode = 0  # pylint: disable=no-value-for-parameter
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
 
     presubmit_canned_checks.RunPythonUnitTests(
         input_api, presubmit.OutputApi, ['test_module'])
@@ -2431,7 +2435,7 @@ the current line as well!
     process = mock.Mock()
     process.returncode = 0
     subprocess.Popen.return_value = process
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
 
     pylint = os.path.join(_ROOT, 'pylint-1.5')
     pylintrc = os.path.join(_ROOT, 'pylintrc')
@@ -2456,12 +2460,11 @@ the current line as well!
     self.assertEqual(presubmit.sigint_handler.wait.mock_calls, [
         mock.call(
             process,
-            '--rcfile=%s\n--disable=all\n--enable=cyclic-import\nfile1.py'
-                % pylintrc),
-        mock.call(
-            process,
-            '--rcfile=%s\n--disable=cyclic-import\n--jobs=2\nfile1.py'
-                % pylintrc),
+            ('--rcfile=%s\n--disable=all\n--enable=cyclic-import\nfile1.py' %
+             pylintrc).encode('utf-8')),
+        mock.call(process,
+                  ('--rcfile=%s\n--disable=cyclic-import\n--jobs=2\nfile1.py' %
+                   pylintrc).encode('utf-8')),
     ])
 
     self.checkstdout('')
@@ -2988,7 +2991,7 @@ the current line as well!
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
 
     process1 = mock.Mock()
     process1.returncode = 1
@@ -3035,7 +3038,7 @@ the current line as well!
     input_api.verbose = True
     input_api.thread_pool.timeout = 100
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
     subprocess.Popen.return_value = mock.Mock(returncode=0)
 
     results = presubmit_canned_checks.RunUnitTests(
@@ -3061,7 +3064,7 @@ the current line as well!
     input_api.verbose = True
     input_api.thread_pool.timeout = 100
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
     subprocess.Popen.return_value = mock.Mock(returncode=1)
 
     timer_instance = mock.Mock()
@@ -3094,7 +3097,7 @@ the current line as well!
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
 
     subprocesses = [
         mock.Mock(returncode=1),
@@ -3150,7 +3153,7 @@ the current line as well!
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
 
     subprocess.Popen.side_effect = [
         mock.Mock(returncode=1),
@@ -3194,7 +3197,7 @@ the current line as well!
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
 
     subprocess.Popen.side_effect = [
         mock.Mock(returncode=1),
@@ -3243,7 +3246,7 @@ the current line as well!
     process = mock.Mock()
     process.returncode = 0
     subprocess.Popen.return_value = process
-    presubmit.sigint_handler.wait.return_value = ('', None)
+    presubmit.sigint_handler.wait.return_value = (b'', None)
 
     results = presubmit_canned_checks.RunUnitTestsInDirectory(
         input_api,
@@ -3397,7 +3400,7 @@ class ThreadPoolTest(unittest.TestCase):
     mock.patch('subprocess2.Popen').start()
     mock.patch('presubmit_support.sigint_handler').start()
     mock.patch('presubmit_support.time_time', return_value=0).start()
-    presubmit.sigint_handler.wait.return_value = ('stdout', '')
+    presubmit.sigint_handler.wait.return_value = (b'stdout', '')
     self.addCleanup(mock.patch.stopall)
 
   def testSurfaceExceptions(self):
