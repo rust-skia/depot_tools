@@ -55,6 +55,8 @@ import subprocess2 as subprocess
 # Shortcut.
 presubmit_canned_checks = presubmit.presubmit_canned_checks
 
+RUNNING_PY_CHECKS_TEXT = ('Running Python ' + str(sys.version_info.major) +
+                          ' presubmit upload checks ...\n')
 
 # Access to a protected member XXX of a client class
 # pylint: disable=protected-access
@@ -163,6 +165,11 @@ index fe3de7b..54ae6e1 100755
     # Disable string diff max. It's hard to parse assertion error if there's
     # limit set.
     self.maxDiff = None
+
+    # TODO: remove once py2 no longer supported
+    self.presubmit_text_prefix = ('USE_PYTHON3 = ' +
+                                  str(sys.version_info.major == 3) + '\n')
+    self.presubmit_text = self.presubmit_text_prefix + self.presubmit_text
 
     class FakeChange(object):
       def __init__(self, obj):
@@ -509,53 +516,56 @@ class PresubmitUnittest(PresubmitTestsBase):
         change, False, None, presubmit.GerritAccessor())
     self.assertFalse(executer.ExecPresubmitScript('', fake_presubmit))
     # No error if no on-upload entry point
-    self.assertFalse(executer.ExecPresubmitScript(
-      ('def CheckChangeOnCommit(input_api, output_api):\n'
-       '  return (output_api.PresubmitError("!!"))\n'),
-      fake_presubmit
-    ))
+    self.assertFalse(
+        executer.ExecPresubmitScript(
+            self.presubmit_text_prefix +
+            ('def CheckChangeOnCommit(input_api, output_api):\n'
+             '  return (output_api.PresubmitError("!!"))\n'), fake_presubmit))
 
     executer = presubmit.PresubmitExecuter(
         change, True, None, presubmit.GerritAccessor())
     # No error if no on-commit entry point
-    self.assertFalse(executer.ExecPresubmitScript(
-      ('def CheckChangeOnUpload(input_api, output_api):\n'
-       '  return (output_api.PresubmitError("!!"))\n'),
-      fake_presubmit
-    ))
+    self.assertFalse(
+        executer.ExecPresubmitScript(
+            self.presubmit_text_prefix +
+            ('def CheckChangeOnUpload(input_api, output_api):\n'
+             '  return (output_api.PresubmitError("!!"))\n'), fake_presubmit))
 
-    self.assertFalse(executer.ExecPresubmitScript(
-      ('def CheckChangeOnUpload(input_api, output_api):\n'
-       '  if not input_api.change.BugsFromDescription():\n'
-       '    return (output_api.PresubmitError("!!"))\n'
-       '  else:\n'
-       '    return ()'),
-      fake_presubmit
-    ))
+    self.assertFalse(
+        executer.ExecPresubmitScript(
+            self.presubmit_text_prefix +
+            ('def CheckChangeOnUpload(input_api, output_api):\n'
+             '  if not input_api.change.BugsFromDescription():\n'
+             '    return (output_api.PresubmitError("!!"))\n'
+             '  else:\n'
+             '    return ()'), fake_presubmit))
 
-    self.assertRaises(presubmit.PresubmitFailure,
-      executer.ExecPresubmitScript,
-      'def CheckChangeOnCommit(input_api, output_api):\n'
-      '  return "foo"',
-      fake_presubmit)
+    self.assertRaises(
+        presubmit.PresubmitFailure, executer.ExecPresubmitScript,
+        self.presubmit_text_prefix +
+        'def CheckChangeOnCommit(input_api, output_api):\n'
+        '  return "foo"', fake_presubmit)
 
-    self.assertFalse(executer.ExecPresubmitScript(
-      'def CheckChangeOnCommit(input_api, output_api):\n'
-      '  results = []\n'
-      '  results.extend(input_api.canned_checks.CheckChangeHasBugField(\n'
-      '    input_api, output_api))\n'
-      '  results.extend(input_api.canned_checks.CheckChangeHasNoUnwantedTags(\n'
-      '    input_api, output_api))\n'
-      '  results.extend(input_api.canned_checks.CheckChangeHasDescription(\n'
-      '    input_api, output_api))\n'
-      '  return results\n',
-    fake_presubmit))
+    self.assertFalse(
+        executer.ExecPresubmitScript(
+            self.presubmit_text_prefix +
+            'def CheckChangeOnCommit(input_api, output_api):\n'
+            '  results = []\n'
+            '  results.extend(input_api.canned_checks.CheckChangeHasBugField(\n'
+            '    input_api, output_api))\n'
+            '  results.extend(input_api.canned_checks.'
+            'CheckChangeHasNoUnwantedTags(\n'
+            '    input_api, output_api))\n'
+            '  results.extend(input_api.canned_checks.'
+            'CheckChangeHasDescription(\n'
+            '    input_api, output_api))\n'
+            '  return results\n', fake_presubmit))
 
-    self.assertRaises(presubmit.PresubmitFailure,
-      executer.ExecPresubmitScript,
-      'def CheckChangeOnCommit(input_api, output_api):\n'
-      '  return ["foo"]',
-      fake_presubmit)
+    self.assertRaises(
+        presubmit.PresubmitFailure, executer.ExecPresubmitScript,
+        self.presubmit_text_prefix +
+        'def CheckChangeOnCommit(input_api, output_api):\n'
+        '  return ["foo"]', fake_presubmit)
 
   def testExecPresubmitScriptWithResultDB(self):
     description_lines = ('Hello there', 'this is a change', 'BUG=123')
@@ -569,6 +579,7 @@ class PresubmitUnittest(PresubmitTestsBase):
 
     # STATUS_PASS on success
     executer.ExecPresubmitScript(
+        self.presubmit_text_prefix +
         'def CheckChangeOnCommit(input_api, output_api):\n'
         '  return [output_api.PresubmitResult("test")]\n', fake_presubmit)
     sink.report.assert_called_with('CheckChangeOnCommit',
@@ -577,7 +588,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     # STATUS_FAIL on exception
     sink.reset_mock()
     self.assertRaises(
-        Exception, executer.ExecPresubmitScript,
+        Exception, executer.ExecPresubmitScript, self.presubmit_text_prefix +
         'def CheckChangeOnCommit(input_api, output_api):\n'
         '  raise Exception("boom")', fake_presubmit)
     sink.report.assert_called_with('CheckChangeOnCommit',
@@ -586,6 +597,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     # STATUS_FAIL on fatal error
     sink.reset_mock()
     executer.ExecPresubmitScript(
+        self.presubmit_text_prefix +
         'def CheckChangeOnCommit(input_api, output_api):\n'
         '  return [output_api.PresubmitError("error")]\n', fake_presubmit)
     sink.report.assert_called_with('CheckChangeOnCommit',
@@ -601,24 +613,24 @@ class PresubmitUnittest(PresubmitTestsBase):
     executer = presubmit.PresubmitExecuter(
         self.fake_change, False, None, presubmit.GerritAccessor())
 
-    self.assertEqual([], executer.ExecPresubmitScript(
-      ('def CheckChangeOnUpload(input_api, output_api):\n'
-       '  if len(input_api._named_temporary_files):\n'
-       '    return (output_api.PresubmitError("!!"),)\n'
-       '  return ()\n'),
-      fake_presubmit
-    ))
+    self.assertEqual([],
+                     executer.ExecPresubmitScript(
+                         self.presubmit_text_prefix +
+                         ('def CheckChangeOnUpload(input_api, output_api):\n'
+                          '  if len(input_api._named_temporary_files):\n'
+                          '    return (output_api.PresubmitError("!!"),)\n'
+                          '  return ()\n'), fake_presubmit))
 
     result = executer.ExecPresubmitScript(
-      ('def CheckChangeOnUpload(input_api, output_api):\n'
-       '  with input_api.CreateTemporaryFile():\n'
-       '    pass\n'
-       '  with input_api.CreateTemporaryFile():\n'
-       '    pass\n'
-       '  return [output_api.PresubmitResult(None, f)\n'
-       '          for f in input_api._named_temporary_files]\n'),
-      fake_presubmit
-    )
+        self.presubmit_text_prefix +
+        ('def CheckChangeOnUpload(input_api, output_api):\n'
+         '  with input_api.CreateTemporaryFile():\n'
+         '    pass\n'
+         '  with input_api.CreateTemporaryFile():\n'
+         '    pass\n'
+         '  return [output_api.PresubmitResult(None, f)\n'
+         '          for f in input_api._named_temporary_files]\n'),
+        fake_presubmit)
     self.assertEqual(['baz', 'quux'], [r._items for r in result])
 
     self.assertEqual(
@@ -690,8 +702,7 @@ class PresubmitUnittest(PresubmitTestsBase):
             gerrit_obj=None, json_output=None))
     self.assertEqual(sys.stdout.getvalue().count('!!'), 0)
     self.assertEqual(sys.stdout.getvalue().count('??'), 0)
-    self.assertEqual(sys.stdout.getvalue().count(
-        'Running Python 2 presubmit upload checks ...\n'), 1)
+    self.assertEqual(sys.stdout.getvalue().count(RUNNING_PY_CHECKS_TEXT), 1)
 
   def testDoPresubmitChecksJsonOutput(self):
     fake_error = 'Missing LGTM'
@@ -706,7 +717,8 @@ class PresubmitUnittest(PresubmitTestsBase):
     fake_notify = 'This is a dry run'
     fake_notify_items = '["N"]'
     fake_notify_long_text = 'Notification long text...'
-    always_fail_presubmit_script = """
+    always_fail_presubmit_script = ('USE_PYTHON3 = ' +
+                                    str(sys.version_info.major == 3) + """\n
 def CheckChangeOnUpload(input_api, output_api):
   output_api.more_cc = ['me@example.com']
   return [
@@ -717,11 +729,10 @@ def CheckChangeOnUpload(input_api, output_api):
   ]
 def CheckChangeOnCommit(input_api, output_api):
   raise Exception("Test error")
-""" % (fake_error, fake_error_items, fake_error_long_text,
-       fake_error2, fake_error2_items, fake_error2_long_text,
-       fake_warning, fake_warning_items, fake_warning_long_text,
-       fake_notify, fake_notify_items, fake_notify_long_text
-       )
+""" % (fake_error, fake_error_items, fake_error_long_text, fake_error2,
+       fake_error2_items, fake_error2_long_text, fake_warning,
+       fake_warning_items, fake_warning_long_text, fake_notify,
+       fake_notify_items, fake_notify_long_text))
 
     os.path.isfile.return_value = False
     os.listdir.side_effect = [[], ['PRESUBMIT.py']]
@@ -811,8 +822,7 @@ def CheckChangeOnCommit(input_api, output_api):
               default_presubmit=None, may_prompt=True,
               gerrit_obj=None, json_output=None))
       self.assertEqual(sys.stdout.getvalue().count('??'), 2)
-      self.assertEqual(sys.stdout.getvalue().count(
-          'Running Python 2 presubmit upload checks ...\n'), 1)
+    self.assertEqual(sys.stdout.getvalue().count(RUNNING_PY_CHECKS_TEXT), 1)
 
   def testDoPresubmitChecksWithWarningsAndNoPrompt(self):
     presubmit_path = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
@@ -837,8 +847,7 @@ def CheckChangeOnCommit(input_api, output_api):
     # A warning is printed, and should_continue is True.
     self.assertEqual(sys.stdout.getvalue().count('??'), 2)
     self.assertEqual(sys.stdout.getvalue().count('(y/N)'), 0)
-    self.assertEqual(sys.stdout.getvalue().count(
-        'Running Python 2 presubmit upload checks ...\n'), 1)
+    self.assertEqual(sys.stdout.getvalue().count(RUNNING_PY_CHECKS_TEXT), 1)
 
   def testDoPresubmitChecksNoWarningPromptIfErrors(self):
     presubmit_path = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
@@ -861,16 +870,16 @@ def CheckChangeOnCommit(input_api, output_api):
     self.assertEqual(sys.stdout.getvalue().count('??'), 0)
     self.assertEqual(sys.stdout.getvalue().count('!!'), 2)
     self.assertEqual(sys.stdout.getvalue().count('(y/N)'), 0)
-    self.assertEqual(sys.stdout.getvalue().count(
-        'Running Python 2 presubmit upload checks ...\n'), 1)
+    self.assertEqual(sys.stdout.getvalue().count(RUNNING_PY_CHECKS_TEXT), 1)
 
   def testDoDefaultPresubmitChecksAndFeedback(self):
-    always_fail_presubmit_script = """
+    always_fail_presubmit_script = ('USE_PYTHON3 = ' +
+                                    str(sys.version_info.major == 3) + """\n
 def CheckChangeOnUpload(input_api, output_api):
   return [output_api.PresubmitError("!!")]
 def CheckChangeOnCommit(input_api, output_api):
   raise Exception("Test error")
-"""
+""")
 
     os.path.isfile.return_value = False
     os.listdir.side_effect = (
@@ -887,8 +896,7 @@ def CheckChangeOnCommit(input_api, output_api):
               default_presubmit=always_fail_presubmit_script,
               may_prompt=False, gerrit_obj=None, json_output=None))
       text = (
-          'Running Python 2 presubmit upload checks ...\n'
-          'Warning, no PRESUBMIT.py found.\n'
+          RUNNING_PY_CHECKS_TEXT + 'Warning, no PRESUBMIT.py found.\n'
           'Running default presubmit script.\n'
           '\n'
           '** Presubmit ERRORS **\n!!\n\n'
@@ -942,6 +950,7 @@ def CheckChangeOnCommit(input_api, output_api):
     os.path.isfile.side_effect = lambda f: 'PRESUBMIT.py' in f
     os.listdir.return_value = ['PRESUBMIT.py']
     gclient_utils.FileRead.return_value = (
+        'USE_PYTHON3 = ' + str(sys.version_info.major == 3) + '\n'
         'def PostUploadHook(gerrit, change, output_api):\n'
         '  return ()\n')
     scm.determine_scm.return_value = None
@@ -966,6 +975,7 @@ def CheckChangeOnCommit(input_api, output_api):
   @mock.patch('presubmit_support.ListRelevantPresubmitFiles')
   def testMainUnversionedChecksFail(self, *_mocks):
     gclient_utils.FileRead.return_value = (
+        'USE_PYTHON3 = ' + str(sys.version_info.major == 3) + '\n'
         'def CheckChangeOnUpload(input_api, output_api):\n'
         '  return [output_api.PresubmitError("!!")]\n')
     scm.determine_scm.return_value = None

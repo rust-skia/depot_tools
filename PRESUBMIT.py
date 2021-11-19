@@ -110,7 +110,6 @@ def CheckUnitTestsOnCommit(input_api, output_api):
     ])
   py2_only_tests = [
       'fix_encoding_test.py',
-      'presubmit_unittest.py',
       'recipes_test.py',
   ]
 
