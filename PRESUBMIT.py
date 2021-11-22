@@ -109,7 +109,6 @@ def CheckUnitTestsOnCommit(input_api, output_api):
         r'.*recipes_test\.py$',
     ])
   py2_only_tests = [
-      'fix_encoding_test.py',
       'recipes_test.py',
   ]
 
