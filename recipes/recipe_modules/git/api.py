@@ -423,3 +423,35 @@ class GitApi(recipe_api.RecipeApi):
       name = 'git new-branch %s' % branch
     with self.m.context(env=env):
       return self(*args, name=name, **kwargs)
+
+  def number(self, commitrefs=None, test_values=None):
+    """Computes the generation number of some commits.
+
+    Args:
+      * commitrefs (list[str]): A list of commit references. If none are
+        provided, the generation number for HEAD will be retrieved.
+      * test_values (list[str]): A list of numbers to use as the return
+        value during tests. It is an error if the length of the list
+        does not match the number of commitrefs (1 if commitrefs is not
+        provided).
+
+    Returns:
+    A list of strings containing the generation numbers of the commits.
+    If non-empty commitrefs was provided, the order of the returned
+    numbers will correspond to the order of the provided commitrefs.
+    """
+
+    def step_test_data():
+      refs = commitrefs or ['HEAD']
+      if test_values:
+        assert len(test_values) == len(refs)
+      values = test_values or range(3000, 3000 + len(refs))
+      output = '\n'.join(str(v) for v in values)
+      return self.m.raw_io.test_api.stream_output_text(output)
+
+    args = ['number']
+    args.extend(commitrefs or [])
+    step_result = self(*args,
+                       stdout=self.m.raw_io.output_text(add_output_log=True),
+                       step_test_data=step_test_data)
+    return [l.strip() for l in step_result.stdout.strip().splitlines()]

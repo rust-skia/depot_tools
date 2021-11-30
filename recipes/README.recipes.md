@@ -27,6 +27,7 @@
   * [gclient:tests/sync_failure](#recipes-gclient_tests_sync_failure) (Python3 ✅)
   * [gerrit:examples/full](#recipes-gerrit_examples_full) (Python3 ✅)
   * [git:examples/full](#recipes-git_examples_full) (Python3 ✅)
+  * [git:tests/number](#recipes-git_tests_number) (Python3 ✅)
   * [git_cl:examples/full](#recipes-git_cl_examples_full) (Python3 ✅)
   * [gitiles:examples/full](#recipes-gitiles_examples_full) (Python3 ✅)
   * [gitiles:tests/parse_repo_url](#recipes-gitiles_tests_parse_repo_url) (Python3 ✅)
@@ -489,6 +490,23 @@ Args:
   * upstream (str): to origin/main.
   * upstream_current (bool): whether to use '--upstream_current'.
   * kwargs: Forwarded to '__call__'.
+
+&mdash; **def [number](/recipes/recipe_modules/git/api.py#427)(self, commitrefs=None, test_values=None):**
+
+Computes the generation number of some commits.
+
+Args:
+  * commitrefs (list[str]): A list of commit references. If none are
+    provided, the generation number for HEAD will be retrieved.
+  * test_values (list[str]): A list of numbers to use as the return
+    value during tests. It is an error if the length of the list
+    does not match the number of commitrefs (1 if commitrefs is not
+    provided).
+
+Returns:
+A list of strings containing the generation numbers of the commits.
+If non-empty commitrefs was provided, the order of the returned
+numbers will correspond to the order of the provided commitrefs.
 
 &mdash; **def [rebase](/recipes/recipe_modules/git/api.py#332)(self, name_prefix, branch, dir_path, remote_name=None, \*\*kwargs):**
 
@@ -1026,6 +1044,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/git/examples/full.py#20)(api):**
+### *recipes* / [git:tests/number](/recipes/recipe_modules/git/tests/number.py)
+
+[DEPS](/recipes/recipe_modules/git/tests/number.py#9): [git](#recipe_modules-git), [recipe\_engine/assertions][recipe_engine/recipe_modules/assertions], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/git/tests/number.py#16)(api):**
 ### *recipes* / [git\_cl:examples/full](/recipes/recipe_modules/git_cl/examples/full.py)
 
 [DEPS](/recipes/recipe_modules/git_cl/examples/full.py#11): [git\_cl](#recipe_modules-git_cl), [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
