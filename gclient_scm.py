@@ -432,7 +432,7 @@ class GitWrapper(SCMWrapper):
           # in the tree.
           # We pass '--keep-redundant-commits' to ignore those changes.
           self._Capture(['cherry-pick', target_rev + '..' + patch_rev,
-                         '--keep-redundant-commits', '--strategy=ort'])
+                         '--keep-redundant-commits'])
 
       except subprocess2.CalledProcessError as e:
         self.Print('Failed to apply patch.')
