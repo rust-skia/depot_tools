@@ -451,7 +451,12 @@ class GitApi(recipe_api.RecipeApi):
 
     args = ['number']
     args.extend(commitrefs or [])
-    step_result = self(*args,
-                       stdout=self.m.raw_io.output_text(add_output_log=True),
-                       step_test_data=step_test_data)
+    # Put depot_tools on the path so that git-number can be found
+    with self.m.depot_tools.on_path():
+      # git-number is only meant for use on bots, so it prints an error message
+      # if CHROME_HEADLESS is not set
+      with self.m.context(env={'CHROME_HEADLESS': '1'}):
+        step_result = self(*args,
+                          stdout=self.m.raw_io.output_text(add_output_log=True),
+                          step_test_data=step_test_data)
     return [l.strip() for l in step_result.stdout.strip().splitlines()]
