@@ -119,16 +119,24 @@ class WindowsSDKApi(recipe_api.RecipeApi):
                            },
                        })).json.output.get('env')
     for key in data:
+      # SDK cipd packages prior to 10.0.19041.0 contain entries like:
+      #  "INCLUDE": [["..","..","win_sdk","Include","10.0.17134.0","um"], and
       # recipes' Path() does not like .., ., \, or /, so this is cumbersome.
       # What we want to do is:
       #   [sdk_bin_dir.join(*e) for e in env[k]]
       # Instead do that badly, and rely (but verify) on the fact that the paths
       # are all specified relative to the root, but specified relative to
       # win_sdk/bin (i.e. everything starts with "../../".)
+      #
+      # For 10.0.19041.0 and later, the cipd SDK package json is like:
+      #  "INCLUDE": [["Windows Kits","10","Include","10.0.19041.0","um"], so
+      # we simply join paths there.
       results = []
       for value in data[key]:
-        assert value[0] == '..' and (value[1] == '..' or value[1] == '..\\')
-        results.append('%s' % sdk_dir.join(*value[2:]))
+        if value[0] == '..' and (value[1] == '..' or value[1] == '..\\'):
+          results.append('%s' % sdk_dir.join(*value[2:]))
+        else:
+          results.append('%s' % sdk_dir.join(*value))
 
       # PATH is special-cased because we don't want to overwrite other things
       # like C:\Windows\System32. Others are replacements because prepending

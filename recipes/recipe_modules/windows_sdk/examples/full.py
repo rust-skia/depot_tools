@@ -5,10 +5,11 @@
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
-  'windows_sdk',
-  'recipe_engine/platform',
-  'recipe_engine/properties',
-  'recipe_engine/step',
+    'windows_sdk',
+    'recipe_engine/json',
+    'recipe_engine/platform',
+    'recipe_engine/properties',
+    'recipe_engine/step',
 ]
 
 
@@ -28,3 +29,12 @@ def RunSteps(api):
 def GenTests(api):
   for platform in ('linux', 'mac', 'win'):
     yield api.test(platform) + api.platform.name(platform)
+  yield api.test('new_sdk') + api.platform.name('win') + api.override_step_data(
+      "read SetEnv json",
+      api.json.output({
+          'env': {
+              'PATH': [['Windows Kits', '10', 'bin', 'x64']],
+              'INCLUDE':
+              [['Windows Kits', '10', 'Include', '10.0.19041.0', 'um']],
+          },
+      }))
