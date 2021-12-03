@@ -2019,6 +2019,8 @@ class CannedChecksUnittest(PresubmitTestsBase):
     results = presubmit_canned_checks.CheckChangedLUCIConfigs(
         input_api, presubmit.OutputApi)
     self.assertEqual(len(results), 1)
+    self.assertEqual(results[0].json_format()['message'],
+                     "Config validation for ['foo.cfg', 'bar.cfg']: deadbeef")
 
   def testCannedCheckChangeHasNoTabs(self):
     self.ContentTest(presubmit_canned_checks.CheckChangeHasNoTabs,
