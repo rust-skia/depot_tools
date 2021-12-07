@@ -26,14 +26,13 @@
 $ResolvedVersions cipd_manifest.versions
 
 # Fully supported platforms.
-$VerifiedPlatform linux-amd64 mac-amd64 mac-arm64 windows-amd64
+$VerifiedPlatform linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64
 
 # Platform with best-effort support: we have some binaries cross-compiled for
 # them, but we do not test they work. They also may not have all necessary
 # vpython packages.
 $VerifiedPlatform linux-386 linux-ppc64 linux-ppc64le linux-s390x
-$VerifiedPlatform linux-arm64 linux-armv6l
-$VerifiedPlatform linux-mips64 linux-mips64le linux-mipsle
+$VerifiedPlatform linux-armv6l linux-mips64 linux-mips64le linux-mipsle
 
 # vpython.
 infra/tools/luci/vpython/${platform} git_revision:a058ec28ee4f76d255fdc3e1676a8eb2e39479b6
