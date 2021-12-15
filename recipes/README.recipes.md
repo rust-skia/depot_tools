@@ -683,11 +683,11 @@ XCode installation.
 
 Available only to Google-run bots.
 
-#### **class [OSXSDKApi](/recipes/recipe_modules/osx_sdk/api.py#36)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [OSXSDKApi](/recipes/recipe_modules/osx_sdk/api.py#37)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
 API for using OS X SDK distributed via CIPD.
 
-&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/osx_sdk/api.py#62)(self, kind):**
+&emsp; **@contextmanager**<br>&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/osx_sdk/api.py#63)(self, kind):**
 
 Sets up the XCode SDK environment.
 
@@ -735,7 +735,7 @@ Args:
 Raises:
     StepFailure or InfraFailure.
 
-&mdash; **def [initialize](/recipes/recipe_modules/osx_sdk/api.py#47)(self):**
+&mdash; **def [initialize](/recipes/recipe_modules/osx_sdk/api.py#48)(self):**
 ### *recipe_modules* / [presubmit](/recipes/recipe_modules/presubmit)
 
 [DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
