@@ -42,7 +42,9 @@ class BotUpdateApi(recipe_api.RecipeApi):
           self.m.buildbucket.build.id)
     with self.m.context(env=env):
       with self.m.depot_tools.on_path():
-        return self.m.python(name, bot_update_path, cmd, **kwargs)
+        return self.m.step(name,
+                           ['python3', '-u', bot_update_path] + cmd,
+                           **kwargs)
 
   @property
   def last_returned_properties(self):
