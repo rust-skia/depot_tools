@@ -25,7 +25,11 @@ class NinjalogUploaderTest(unittest.TestCase):
 
     with unittest.mock.patch('subprocess.run') as run_mock:
       run_mock.return_value.returncode = 1
-      run_mock.return_value.stdout = 'Not logged in\n'
+      self.assertFalse(ninjalog_uploader.IsGoogler())
+
+    with unittest.mock.patch('subprocess.run') as run_mock:
+      run_mock.return_value.returncode = 0
+      run_mock.return_value.stdout = ''
       self.assertFalse(ninjalog_uploader.IsGoogler())
 
     with unittest.mock.patch('subprocess.run') as run_mock:

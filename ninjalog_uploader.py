@@ -45,7 +45,10 @@ def IsGoogler():
                      shell=True)
   if p.returncode != 0:
     return False
-  l = p.stdout.splitlines()[0]
+  lines = p.stdout.splitlines()
+  if len(lines) == 0:
+    return False
+  l = lines[0]
   # |l| will be like 'Login as <user>@google.com' for googler using goma.
   return l.startswith('Login as ') and l.endswith('@google.com')
 
