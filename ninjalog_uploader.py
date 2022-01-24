@@ -40,8 +40,8 @@ ALLOWLISTED_CONFIGS = ('symbol_level', 'use_goma', 'is_debug',
 def IsGoogler():
   """Check whether this user is Googler or not."""
   p = subprocess.run('goma_auth info',
-                     capture_output=True,
-                     text=True,
+                     stdout=subprocess.PIPE,
+                     universal_newlines=True,
                      shell=True)
   if p.returncode != 0:
     return False
