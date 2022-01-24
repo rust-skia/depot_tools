@@ -209,6 +209,19 @@ class TryserverApi(recipe_api.RecipeApi):
             self.m.properties.get('patch_repo_url') and
             self.m.properties.get('patch_ref'))
 
+  def require_is_tryserver(self):
+    if self.m.tryserver.is_tryserver:
+      return
+
+    status = self.m.step.EXCEPTION
+    step_text = 'This recipe requires a gerrit CL for the source under test'
+    if self.m.led.launched_by_led:
+      status = self.m.step.FAILURE
+      step_text += (
+          "\n run 'led edit-cr-cl <source CL URL>' to attach a CL to test"
+      )
+    self.m.step.empty('not a tryjob', status=status, step_text=step_text)
+
   def get_files_affected_by_patch(self, patch_root,
                                   report_files_via_property=None,
                                   **kwargs):
