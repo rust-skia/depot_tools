@@ -58,11 +58,11 @@ The following information will be uploaded with ninjalog.
 Uploading ninjalog will be started after you run autoninja another %d time.
 
 If you don't want to upload ninjalog, please run following command.
-$ %s opt-out
+$ python3 %s opt-out
 
 If you want to allow upload ninjalog from next autoninja run, please run the
 following command.
-$ %s opt-in
+$ python3 %s opt-in
 
 If you have questions about this, please send mail to infra-dev@chromium.org
 
