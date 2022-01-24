@@ -254,8 +254,8 @@ class CookiesAuthenticator(Authenticator):
       if a[0]:
         secret = base64.b64encode(('%s:%s' % (a[0], a[2])).encode('utf-8'))
         return 'Basic %s' % secret.decode('utf-8')
-
-      return 'Bearer %s' % a[2]
+      else:
+        return 'Bearer %s' % a[2]
     return None
 
   def get_auth_email(self, host):
@@ -696,8 +696,7 @@ def GetChangeReview(host, change, revision=None):
     jmsg = GetChangeRevisions(host, change)
     if not jmsg:
       return None
-
-    if len(jmsg) > 1:
+    elif len(jmsg) > 1:
       raise GerritError(200, 'Multiple changes found for ChangeId %s.' % change)
     revision = jmsg[0]['current_revision']
   path = 'changes/%s/revisions/%s/review'
@@ -982,8 +981,7 @@ def ResetReviewLabels(host, change, label, value='0', message=None,
   if not jmsg:
     raise GerritError(
         200, 'Could not get review information for change "%s"' % change)
-
-  if jmsg[0]['current_revision'] != revision:
+  elif jmsg[0]['current_revision'] != revision:
     raise GerritError(200, 'While resetting labels on change "%s", '
                    'a new patchset was uploaded.' % change)
 
@@ -1002,7 +1000,7 @@ def CreateChange(host, project, branch='main', subject='', params=()):
   """
   path = 'changes/'
   body = {'project': project, 'branch': branch, 'subject': subject}
-  body.update(dict(params))
+  body.update({k: v for k, v in params})
   for key in 'project', 'branch', 'subject':
     if not body[key]:
       raise GerritError(200, '%s is required' % key.title())

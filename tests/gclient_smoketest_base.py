@@ -143,3 +143,5 @@ class GClientSmokeBase(fake_repos.FakeReposTestBase):
         self.checkString(results[i][0][2], path, (i, results[i][0][2], path))
     self.assertEqual(len(results), len(items), (stdout, items, len(results)))
     return results
+
+

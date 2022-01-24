@@ -165,10 +165,10 @@ class SCMWrapper(object):
     if actual_remote_url:
       return (gclient_utils.SplitUrlRevision(actual_remote_url)[0].rstrip('/')
               == gclient_utils.SplitUrlRevision(self.url)[0].rstrip('/'))
-
-    # This may occur if the self.checkout_path exists but does not contain a
-    # valid git checkout.
-    return False
+    else:
+      # This may occur if the self.checkout_path exists but does not contain a
+      # valid git checkout.
+      return False
 
   def _DeleteOrMove(self, force):
     """Delete the checkout directory or move it out of the way.
@@ -381,8 +381,7 @@ class GitWrapper(SCMWrapper):
 
     if not target_rev:
       raise gclient_utils.Error('A target revision for the patch must be given')
-
-    if target_rev.startswith(('refs/heads/', 'refs/branch-heads')):
+    elif target_rev.startswith(('refs/heads/', 'refs/branch-heads')):
       # If |target_rev| is in refs/heads/** or refs/branch-heads/**, try first
       # to find the corresponding remote ref for it, since |target_rev| might
       # point to a local ref which is not up to date with the corresponding
@@ -782,18 +781,16 @@ class GitWrapper(SCMWrapper):
                                   printed_path=printed_path, merge=False)
               printed_path = True
               break
-
-            if re.match(r'quit|q', action, re.I):
+            elif re.match(r'quit|q', action, re.I):
               raise gclient_utils.Error("Can't fast-forward, please merge or "
                                         "rebase manually.\n"
                                         "cd %s && git " % self.checkout_path
                                         + "rebase %s" % upstream_branch)
-
-            if re.match(r'skip|s', action, re.I):
+            elif re.match(r'skip|s', action, re.I):
               self.Print('Skipping %s' % self.relpath)
               return
-
-            self.Print('Input not recognized')
+            else:
+              self.Print('Input not recognized')
         elif re.match(b"error: Your local changes to '.*' would be "
                       b"overwritten by merge.  Aborting.\nPlease, commit your "
                       b"changes or stash them before you can merge.\n",
@@ -1140,18 +1137,16 @@ class GitWrapper(SCMWrapper):
             # Should this be recursive?
             rebase_output = scm.GIT.Capture(rebase_cmd, cwd=self.checkout_path)
             break
-
-          if re.match(r'quit|q', rebase_action, re.I):
+          elif re.match(r'quit|q', rebase_action, re.I):
             raise gclient_utils.Error("Please merge or rebase manually\n"
                                       "cd %s && git " % self.checkout_path
                                       + "%s" % ' '.join(rebase_cmd))
-
-          if re.match(r'show|s', rebase_action, re.I):
+          elif re.match(r'show|s', rebase_action, re.I):
             self.Print('%s' % e.stderr.decode('utf-8').strip())
             continue
-
-          gclient_utils.Error("Input not recognized")
-          continue
+          else:
+            gclient_utils.Error("Input not recognized")
+            continue
       elif re.search(br'^CONFLICT', e.stdout, re.M):
         raise gclient_utils.Error("Conflict while rebasing this branch.\n"
                                   "Fix the conflict and run gclient again.\n"
@@ -1564,12 +1559,15 @@ class CipdWrapper(SCMWrapper):
     CIPD packages should be reverted at the root by running
     `CipdRoot.run('revert')`.
     """
+    pass
 
   def diff(self, options, args, file_list):
     """CIPD has no notion of diffing."""
+    pass
 
   def pack(self, options, args, file_list):
     """CIPD has no notion of diffing."""
+    pass
 
   def revinfo(self, options, args, file_list):
     """Grab the instance ID."""
@@ -1599,3 +1597,4 @@ class CipdWrapper(SCMWrapper):
     CIPD packages should be updated at the root by running
     `CipdRoot.run('update')`.
     """
+    pass

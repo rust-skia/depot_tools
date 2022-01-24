@@ -141,7 +141,6 @@ class SmokeTests(unittest.TestCase):
   def test_check_output_no_stdout(self):
     for subp in (subprocess, subprocess2):
       with self.assertRaises(ValueError):
-        # pylint: disable=unexpected-keyword-arg
         subp.check_output(TEST_COMMAND, stdout=subp.PIPE)
 
   def test_print_exception(self):

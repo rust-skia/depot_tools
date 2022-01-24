@@ -147,11 +147,11 @@ class CommandDispatcher(object):
         reverse=True)
     if (hamming_commands[0][0] - hamming_commands[1][0]) < 0.3:
       # Too ambiguous.
-      return None
+      return
 
     if hamming_commands[0][0] < 0.8:
       # Not similar enough. Don't be a fool and run a random command.
-      return None
+      return
 
     return commands[hamming_commands[0][1]]
 

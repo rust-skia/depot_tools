@@ -95,39 +95,31 @@ class OwnersFinder(object):
 
       while True:
         inp = self.input_command(owner)
-        if inp in ('y', 'yes'):
+        if inp == 'y' or inp == 'yes':
           self.select_owner(owner)
           break
-
-        if inp in ('n', 'no'):
+        elif inp == 'n' or inp == 'no':
           self.deselect_owner(owner)
           break
-
-        if inp in ('', 'd', 'defer'):
+        elif inp == '' or inp == 'd' or inp == 'defer':
           self.owners_queue.append(self.owners_queue.pop(0))
           break
-
-        if inp in ('f', 'files'):
+        elif inp == 'f' or inp == 'files':
           self.list_files()
           break
-
-        if inp in ('o', 'owners'):
+        elif inp == 'o' or inp == 'owners':
           self.list_owners(self.owners_queue)
           break
-
-        if inp in ('p', 'pick'):
+        elif inp == 'p' or inp == 'pick':
           self.pick_owner(gclient_utils.AskForData('Pick an owner: '))
           break
-
-        if inp.startswith('p ') or inp.startswith('pick '):
+        elif inp.startswith('p ') or inp.startswith('pick '):
           self.pick_owner(inp.split(' ', 2)[1].strip())
           break
-
-        if inp in ('r', 'restart'):
+        elif inp == 'r' or inp == 'restart':
           self.reset()
           break
-
-        if inp in ('q', 'quit'):
+        elif inp == 'q' or inp == 'quit':
           # Exit with error
           return 1
 
@@ -276,13 +268,11 @@ class OwnersFinder(object):
       self.writeln('You cannot pick ' + self.bold_name(ow) + ' manually. ' +
                    'It\'s an invalid name or not related to the change list.')
       return False
-
-    if ow in self.selected_owners:
+    elif ow in self.selected_owners:
       self.writeln('You cannot pick ' + self.bold_name(ow) + ' manually. ' +
                    'It\'s already selected.')
       return False
-
-    if ow in self.deselected_owners:
+    elif ow in self.deselected_owners:
       self.writeln('You cannot pick ' + self.bold_name(ow) + ' manually.' +
                    'It\'s already unselected.')
       return False

@@ -38,8 +38,8 @@ class ConstantString(object):
   def __eq__(self, other):
     if isinstance(other, ConstantString):
       return self.value == other.value
-
-    return self.value == other
+    else:
+      return self.value == other
 
   def __hash__(self):
       return self.value.__hash__()
@@ -304,14 +304,13 @@ def _gclient_eval(node_or_string, filename='<unknown>', vars_dict=None):
         raise ValueError(
             '%s takes exactly one argument (file %r, line %s)' % (
                 node.func.id, filename, getattr(node, 'lineno', '<unknown>')))
-
       if node.func.id == 'Str':
         if isinstance(node.args[0], ast.Str):
           return ConstantString(node.args[0].s)
         raise ValueError('Passed a non-string to Str() (file %r, line%s)' % (
             filename, getattr(node, 'lineno', '<unknown>')))
-
-      arg = _convert(node.args[0])
+      else:
+        arg = _convert(node.args[0])
       if not isinstance(arg, basestring):
         raise ValueError(
             'Var\'s argument must be a variable name (file %r, line %s)' % (
@@ -541,20 +540,16 @@ def EvaluateCondition(condition, variables, referenced_variables=None):
   def _convert(node, allow_tuple=False):
     if isinstance(node, ast.Str):
       return node.s
-
-    if isinstance(node, ast.Tuple) and allow_tuple:
+    elif isinstance(node, ast.Tuple) and allow_tuple:
       return tuple(map(_convert, node.elts))
-
-    if isinstance(node, ast.Name):
+    elif isinstance(node, ast.Name):
       if node.id in referenced_variables:
         raise ValueError(
             'invalid cyclic reference to %r (inside %r)' % (
                 node.id, condition))
-
-      if node.id in _allowed_names:
+      elif node.id in _allowed_names:
         return _allowed_names[node.id]
-
-      if node.id in variables:
+      elif node.id in variables:
         value = variables[node.id]
 
         # Allow using "native" types, without wrapping everything in strings.
@@ -567,18 +562,16 @@ def EvaluateCondition(condition, variables, referenced_variables=None):
             variables[node.id],
             variables,
             referenced_variables.union([node.id]))
-
-      # Implicitly convert unrecognized names to strings.
-      # If we want to change this, we'll need to explicitly distinguish
-      # between arguments for GN to be passed verbatim, and ones to
-      # be evaluated.
-      return node.id
-
-    if not sys.version_info[:2] < (3, 4) and isinstance(
+      else:
+        # Implicitly convert unrecognized names to strings.
+        # If we want to change this, we'll need to explicitly distinguish
+        # between arguments for GN to be passed verbatim, and ones to
+        # be evaluated.
+        return node.id
+    elif not sys.version_info[:2] < (3, 4) and isinstance(
         node, ast.NameConstant):  # Since Python 3.4
       return node.value
-
-    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
+    elif isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
       bool_values = []
       for value in node.values:
         bool_values.append(_convert(value))
@@ -587,8 +580,7 @@ def EvaluateCondition(condition, variables, referenced_variables=None):
               'invalid "or" operand %r (inside %r)' % (
                   bool_values[-1], condition))
       return any(bool_values)
-
-    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And):
+    elif isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And):
       bool_values = []
       for value in node.values:
         bool_values.append(_convert(value))
@@ -597,15 +589,13 @@ def EvaluateCondition(condition, variables, referenced_variables=None):
               'invalid "and" operand %r (inside %r)' % (
                   bool_values[-1], condition))
       return all(bool_values)
-
-    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+    elif isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
       value = _convert(node.operand)
       if not isinstance(value, bool):
         raise ValueError(
             'invalid "not" operand %r (inside %r)' % (value, condition))
       return not value
-
-    if isinstance(node, ast.Compare):
+    elif isinstance(node, ast.Compare):
       if len(node.ops) != 1:
         raise ValueError(
             'invalid compare: exactly 1 operator required (inside %r)' % (
@@ -629,10 +619,10 @@ def EvaluateCondition(condition, variables, referenced_variables=None):
       raise ValueError(
           'unexpected operator: %s %s (inside %r)' % (
               node.ops[0], ast.dump(node), condition))
-
-    raise ValueError(
-        'unexpected AST node: %s %s (inside %r)' % (
-            node, ast.dump(node), condition))
+    else:
+      raise ValueError(
+          'unexpected AST node: %s %s (inside %r)' % (
+              node, ast.dump(node), condition))
   return _convert(main_node)
 
 
@@ -748,8 +738,7 @@ def SetVar(gclient_dict, var_name, value):
 def _GetVarName(node):
   if isinstance(node, ast.Call):
     return node.args[0].s
-
-  if node.s.endswith('}'):
+  elif node.s.endswith('}'):
     last_brace = node.s.rfind('{')
     return node.s[last_brace+1:-1]
   return None
@@ -891,14 +880,12 @@ def GetRevision(gclient_dict, dep_name):
   dep = gclient_dict['deps'][dep_name]
   if dep is None:
     return None
-
-  if isinstance(dep, basestring):
+  elif isinstance(dep, basestring):
     _, _, revision = dep.partition('@')
     return revision or None
-
-  if isinstance(dep, collections_abc.Mapping) and 'url' in dep:
+  elif isinstance(dep, collections_abc.Mapping) and 'url' in dep:
     _, _, revision = dep['url'].partition('@')
     return revision or None
-
-  raise ValueError(
-      '%s is not a valid git dependency.' % dep_name)
+  else:
+    raise ValueError(
+        '%s is not a valid git dependency.' % dep_name)

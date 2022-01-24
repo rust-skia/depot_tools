@@ -46,7 +46,6 @@ from io import BytesIO
 
 if sys.version_info.major == 2:
   # On Python 3, BrokenPipeError is raised instead.
-  # pylint:disable=redefined-builtin
   BrokenPipeError = IOError
 
 
@@ -875,7 +874,7 @@ def status():
     while c != b'':
       c = stream.read(1)
       if c in (None, b'', b'\0'):
-        if len(acc.getvalue()) > 0:
+        if len(acc.getvalue()):
           yield acc.getvalue()
           acc = BytesIO()
       else:

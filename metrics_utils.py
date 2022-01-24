@@ -54,8 +54,7 @@ def get_notice_footer():
 def get_change_notice(version):
   if version == 0:
     return [] # No changes for version 0
-
-  if version == 1:
+  elif version == 1:
     return [
       'We want to collect the Git version.',
       'We want to collect information about the HTTP',
@@ -65,8 +64,7 @@ def get_change_notice(version):
       'We only collect known strings to make sure we',
       'don\'t record PII.',
     ]
-
-  if version == 2:
+  elif version == 2:
     return [
       'We will start collecting metrics from bots.',
       'There are no changes for developers.',

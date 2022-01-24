@@ -42,11 +42,9 @@ class TestGitFindReleases(unittest.TestCase):
       assert len(args) > 1
       if args[0] == 'name-rev' and args[1] == '--tags':
         return 'undefined'
-
-      if args[0] == 'name-rev' and args[1] == '--refs':
+      elif args[0] == 'name-rev' and args[1] == '--refs':
         return '1.0.0'
-
-      if args[0] == 'log':
+      elif args[0] == 'log':
         return ''
       assert False, "Unexpected arguments for git.run"
 

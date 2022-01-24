@@ -41,8 +41,7 @@ def main(args):
   if not downstreams:
     print("No downstream branches")
     return 1
-
-  if len(downstreams) == 1:
+  elif len(downstreams) == 1:
     run('checkout', downstreams[0], stdout=sys.stdout, stderr=sys.stderr)
   else:
     high = len(downstreams) - 1

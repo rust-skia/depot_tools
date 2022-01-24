@@ -44,10 +44,9 @@ PLATFORM_MAPPING = {
     'aix7': 'aix',
 }
 
-if sys.version_info.major == 2:
-  # pylint: disable=redefined-builtin
-  class FileNotFoundError(IOError):
-    pass
+
+class FileNotFoundError(IOError):
+  pass
 
 
 class InvalidFileError(IOError):

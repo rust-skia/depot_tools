@@ -1261,7 +1261,7 @@ class InputApiUnittest(PresubmitTestsBase):
     # Ignores weird because of check_list, third_party because of skip_list,
     # binary isn't a text file and being deleted doesn't exist. The rest is
     # outside foo/.
-    rhs_lines = list(input_api.RightHandSideLines(None))
+    rhs_lines = [x for x in input_api.RightHandSideLines(None)]
     self.assertEqual(len(rhs_lines), 14)
     self.assertEqual(rhs_lines[0][0].LocalPath(),
                      presubmit.normpath(files[0][1]))
@@ -2282,8 +2282,8 @@ the current line as well!
         "print('foo')\n"
     )
     license_text = (
-        r".*? Copyright \(c\) 2037 Nobody.\n"
-        r".*? All Rights Reserved\.\n"
+        r".*? Copyright \(c\) 2037 Nobody." "\n"
+        r".*? All Rights Reserved\." "\n"
     )
     self._LicenseCheck(text, license_text, True, None)
 
@@ -2295,8 +2295,8 @@ the current line as well!
         "print('foo')\n"
     )
     license_text = (
-        r".*? Copyright \(c\) 0007 Nobody.\n"
-        r".*? All Rights Reserved\.\n"
+        r".*? Copyright \(c\) 0007 Nobody." "\n"
+        r".*? All Rights Reserved\." "\n"
     )
     self._LicenseCheck(text, license_text, True,
                        presubmit.OutputApi.PresubmitPromptWarning)
@@ -2309,8 +2309,8 @@ the current line as well!
         "print('foo')\n"
     )
     license_text = (
-        r".*? Copyright \(c\) 0007 Nobody.\n"
-        r".*? All Rights Reserved\.\n"
+        r".*? Copyright \(c\) 0007 Nobody." "\n"
+        r".*? All Rights Reserved\." "\n"
     )
     self._LicenseCheck(text, license_text, False,
                        presubmit.OutputApi.PresubmitPromptWarning)
@@ -2318,8 +2318,8 @@ the current line as well!
   def testCheckLicenseEmptySuccess(self):
     text = ''
     license_text = (
-        r".*? Copyright \(c\) 2037 Nobody.\n"
-        r".*? All Rights Reserved\.\n"
+        r".*? Copyright \(c\) 2037 Nobody." "\n"
+        r".*? All Rights Reserved\." "\n"
     )
     self._LicenseCheck(text, license_text, True, None, accept_empty_files=True)
 
@@ -2449,14 +2449,14 @@ the current line as well!
     subprocess.Popen.return_value = process
     presubmit.sigint_handler.wait.return_value = (b'', None)
 
-    pylint = os.path.join(_ROOT, 'pylint-2.7')
+    pylint = os.path.join(_ROOT, 'pylint-1.5')
     pylintrc = os.path.join(_ROOT, 'pylintrc')
     env = {str('PYTHONPATH'): str('')}
     if sys.platform == 'win32':
       pylint += '.bat'
 
     results = presubmit_canned_checks.RunPylint(
-        input_api, presubmit.OutputApi, version='2.7')
+        input_api, presubmit.OutputApi)
 
     self.assertEqual([], results)
     self.assertEqual(subprocess.Popen.mock_calls, [

@@ -53,14 +53,11 @@ class CMDFormatTestCase(unittest.TestCase):
     def RunMock(*args):
       if args[0] == 'remote':
         return 'origin\ngerrit'
-
-      if args[0] == 'fetch':
+      elif args[0] == 'fetch':
         return
-
-      if args[0] == 'branch':
+      elif args[0] == 'branch':
         return
-
-      if args[0] == 'config':
+      elif args[0] == 'config':
         return
       raise Exception('Did not expect such run git command: %s' % args[0])
 
