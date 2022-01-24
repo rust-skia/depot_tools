@@ -126,56 +126,56 @@ infra/tools/bb/windows-amd64
 	_hrpGUOTDT7dmw2xRhs-XzCIHeCB8jS3TCa63Q5kAQUC
 
 infra/tools/dirmd/linux-386
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	nax9jbdWIBujTifdWmU0juFen2IpIMg8JvK6jpnI-T0C
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	t7BZLWVhS6-ha11SRON2R02d3Q8w036G_MUMGVqKeWYC
 
 infra/tools/dirmd/linux-amd64
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	vhOUATHupnpNWDxCO-KnGXbnd7BQcQOgzfBw9GMXcDMC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	ryPnf5T-9nYM7XqImWtIWMAXztJdVbJvoT2S5TRXI_0C
 
 infra/tools/dirmd/linux-arm64
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	x7TBEpsXTTvo7mHxCXdnq2QEZWGcXr4t1Md8SfN_df8C
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	rzX8UPoV2cRfiBEFY9ysBTjP1iAbKne1DZO8q6gwrrUC
 
 infra/tools/dirmd/linux-armv6l
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	iAKjZ3USWP35fxTfIyJ59TzlOiLfutX6DpOH1B_27kQC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	dw13hta8cGz-js0YbWm4D5itVHJavZmS52-bhkfkW8oC
 
 infra/tools/dirmd/linux-mips64
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	ZC863vR147-KZxL6wmzoXyTkQm_v-dQulZqfD2PTj1EC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	rhSJ3dXKKO7AEelAuRlSovvnDHn8l53OLu9NC_wcx4IC
 
 infra/tools/dirmd/linux-mips64le
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	wA3d5LMTgsnfmhg656IUsqcUX1DbvN1j1XHAr_Pg5XAC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	j6xAPANY27629qu9loJ7lx9_LY0gNUlwW7dOB6_qUt4C
 
 infra/tools/dirmd/linux-mipsle
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	xO0fifz05omxMMW07DQeUUvMg1jds-SUJPifQ0MovgAC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	MixDXTEOE3FvLs7xLt1xeZ48Fp2quOFYMwbI_NdvVd8C
 
 infra/tools/dirmd/linux-ppc64
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	fayMG6ngM8URXVYTLKSv8-lu5CmCW0AFHaXLX5Su8ZYC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	oPjQvWEhIoS0hKoPcZOlW6_IJRiKBbKFCfDJ5zYsh7QC
 
 infra/tools/dirmd/linux-ppc64le
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	qAJxau3m9DZnh_7EhcbA-oUs0GF3CJWhk5IoBV6XHBQC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	jjqwgRBvnGU9-nTUx9yJqWlm6d_iXDta1VcplnqmJGoC
 
 infra/tools/dirmd/linux-s390x
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	Pdd9gyO_iWfNr4YNP8t-nc95PeC7J0W2PhHl7YxaZqQC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	KkXynAv2mPDGRtBFWdPNGBwhwJTmNaP0jqbMtxX-cwMC
 
 infra/tools/dirmd/mac-amd64
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	8PUAR4JvhNqZTo5dQFB3diF3mWMkezVBxIaUn7WKnkQC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	Q0PlTlJmQKYYfc-R5L_axfKKSxwoYrNqbVvpdr7uIHkC
 
 infra/tools/dirmd/mac-arm64
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	tJV6CnIUm6n8CmBbq9Xa0nheJaZj-COFUrBxAeSxARQC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	oaZkHTNVlG1SJUpALRDlubF-bDQM3pL9y_TqoyoZOeoC
 
 infra/tools/dirmd/windows-amd64
-	git_revision:01089e44c7beb1c1f47c79b17b87972ab01be311
-	yGvDt2Bwge3XY2xS2s4O9AOBjJsvukz4da1cjCIeqGcC
+	git_revision:94b7072314e9add48e9ee0b861d387a8972805ef
+	-FuCHOpigYnD9_i2hqeZIWjeDkaFqOwH-xEqUVAXOHMC
 
 infra/tools/luci-auth/linux-386
 	git_revision:297491c0babda68d84d8240c9d4504be671bc804
