@@ -330,9 +330,11 @@ class _PresubmitResult(object):
     """
     if isinstance(val, str):
       return val
+
     if six.PY2 and isinstance(val, unicode):
       return val.encode()
-    elif six.PY3 and isinstance(val, bytes):
+
+    if six.PY3 and isinstance(val, bytes):
       return val.decode()
     raise ValueError("Unknown string type %s" % type(val))
 
@@ -379,7 +381,6 @@ class _PresubmitPromptWarning(_PresubmitResult):
 # Public access through OutputApi object.
 class _PresubmitNotifyResult(_PresubmitResult):
   """Just print something to the screen -- but it's not even a warning."""
-  pass
 
 
 # Top level object so multiprocessing can pickle
@@ -1282,7 +1283,7 @@ class Change(object):
     def owners_file_filter(f):
       return 'OWNERS' in os.path.split(f.LocalPath())[1]
     files = self.AffectedFiles(file_filter=owners_file_filter)
-    return dict([(f.LocalPath(), f.OldContents()) for f in files])
+    return {f.LocalPath(): f.OldContents() for f in files}
 
 
 class GitChange(Change):
@@ -1313,7 +1314,7 @@ def ListRelevantPresubmitFiles(files, root):
   files = [normpath(os.path.join(root, f)) for f in files]
 
   # List all the individual directories containing files.
-  directories = set([os.path.dirname(f) for f in files])
+  directories = {os.path.dirname(f) for f in files}
 
   # Ignore root if inherit-review-settings-ok is present.
   if os.path.isfile(os.path.join(root, 'inherit-review-settings-ok')):
@@ -1746,7 +1747,7 @@ def DoPresubmitChecks(change,
 
     global _ASKED_FOR_FEEDBACK
     # Ask for feedback one time out of 5.
-    if (len(results) and random.randint(0, 4) == 0 and not _ASKED_FOR_FEEDBACK):
+    if (results and random.randint(0, 4) == 0 and not _ASKED_FOR_FEEDBACK):
       sys.stdout.write(
           'Was the presubmit check useful? If not, run "git cl presubmit -v"\n'
           'to figure out which PRESUBMIT.py was run, then run git blame\n'
