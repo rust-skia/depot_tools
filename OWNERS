@@ -1,9 +1,10 @@
 set noparent
 
 apolito@google.com
+aravindvasudev@google.com
 dpranke@google.com
-jochen@chromium.org
 gavinmak@google.com
+jochen@chromium.org
 sokcevic@google.com
 
 per-file ninja*=thakis@chromium.org
