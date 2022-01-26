@@ -88,14 +88,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       with_tags=False,
                       no_fetch_tags=False,
                       refs=None,
-                      patch_oauth2=None,
-                      oauth2_json=None,
-                      use_site_config_creds=None,
                       clobber=False,
                       root_solution_revision=None,
-                      rietveld=None,
-                      issue=None,
-                      patchset=None,
                       gerrit_no_reset=False,
                       gerrit_no_rebase_patch_ref=False,
                       assert_one_gerrit_change=True,
@@ -138,12 +132,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
         bot_update module ONLY supports one change. Users may specify a change
         via tryserver.set_change() and explicitly set this flag False.
     """
-    assert use_site_config_creds is None, "use_site_config_creds is deprecated"
-    assert rietveld is None, "rietveld is deprecated"
-    assert issue is None, "issue is deprecated"
-    assert patchset is None, "patchset is deprecated"
-    assert patch_oauth2 is None, "patch_oauth2 is deprecated"
-    assert oauth2_json is None, "oauth2_json is deprecated"
     assert not (ignore_input_commit and set_output_commit)
     if assert_one_gerrit_change:
       assert len(self.m.buildbucket.build.input.gerrit_changes) <= 1, (
