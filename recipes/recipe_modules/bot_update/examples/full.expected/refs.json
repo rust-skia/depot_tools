@@ -17,8 +17,7 @@
       "--revision",
       "src@HEAD",
       "--refs",
-      "+refs/change/1/2/333",
-      "--disable-syntax-validation"
+      "+refs/change/1/2/333"
     ],
     "env": {
       "DEPOT_TOOLS_COLLECT_METRICS": "0",

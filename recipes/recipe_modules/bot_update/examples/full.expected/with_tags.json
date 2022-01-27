@@ -16,8 +16,7 @@
       "/path/to/tmp/json",
       "--revision",
       "src@HEAD",
-      "--with_tags",
-      "--disable-syntax-validation"
+      "--with_tags"
     ],
     "env": {
       "DEPOT_TOOLS_COLLECT_METRICS": "0",

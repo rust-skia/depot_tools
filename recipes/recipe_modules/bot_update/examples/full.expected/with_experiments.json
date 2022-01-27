@@ -16,7 +16,6 @@
       "/path/to/tmp/json",
       "--revision",
       "src@HEAD",
-      "--disable-syntax-validation",
       "--experiments=no_sync,cool_experiment"
     ],
     "env": {

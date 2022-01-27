@@ -16,8 +16,7 @@
       "/path/to/tmp/json",
       "--revision",
       "src@HEAD",
-      "--gerrit_no_rebase_patch_ref",
-      "--disable-syntax-validation"
+      "--gerrit_no_rebase_patch_ref"
     ],
     "env": {
       "DEPOT_TOOLS_COLLECT_METRICS": "0",

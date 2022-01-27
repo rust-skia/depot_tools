@@ -93,7 +93,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       gerrit_no_reset=False,
                       gerrit_no_rebase_patch_ref=False,
                       assert_one_gerrit_change=True,
-                      disable_syntax_validation=False,
                       patch_refs=None,
                       ignore_input_commit=False,
                       add_blamelists=False,
@@ -109,9 +108,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
         fetch any tags referenced from the references being fetched. When a repo
         has many references, it can become a performance bottleneck, so avoid
         tags if the checkout will not need them present.
-      * disable_syntax_validation: (legacy) Disables syntax validation for DEPS.
-        Needed as migration paths for recipes dealing with older revisions,
-        such as bisect.
       * ignore_input_commit: if True, ignore api.buildbucket.gitiles_commit.
         Exists for historical reasons. Please do not use.
       * add_blamelists: if True, add blamelist pins for all of the repos that had
@@ -284,8 +280,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
       cmd.append('--no_fetch_tags')
     if gerrit_no_rebase_patch_ref:
       cmd.append('--gerrit_no_rebase_patch_ref')
-    if disable_syntax_validation or cfg.disable_syntax_validation:
-      cmd.append('--disable-syntax-validation')
     if self.m.properties.get('bot_update_experiments'):
       cmd.append('--experiments=%s' %
           ','.join(self.m.properties['bot_update_experiments']))

@@ -15,8 +15,7 @@
       "--output_json",
       "/path/to/tmp/json",
       "--revision",
-      "src@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "--disable-syntax-validation"
+      "src@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     ],
     "env": {
       "DEPOT_TOOLS_COLLECT_METRICS": "0",

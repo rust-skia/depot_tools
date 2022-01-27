@@ -76,8 +76,7 @@
       "--revision",
       "src@refs/heads/experimental/feature",
       "--refs",
-      "refs/heads/experimental/feature",
-      "--disable-syntax-validation"
+      "refs/heads/experimental/feature"
     ],
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "chromium/src/try/linux/8945511751514863184",
