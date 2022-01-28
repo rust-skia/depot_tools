@@ -233,7 +233,7 @@ class TryserverApi(recipe_api.RecipeApi):
       * report_files_via_property: name of the output property to report the
         list of the files. If None (default), do not report.
 
-    Returned paths will be relative to to patch_root.
+    Returned paths will be relative to to api.path['root'].
     """
     cwd = self.m.context.cwd or self.m.path['start_dir'].join(patch_root)
     with self.m.context(cwd=cwd):

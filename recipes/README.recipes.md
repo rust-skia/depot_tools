@@ -40,6 +40,7 @@
   * [tryserver:tests/gerrit_change_fetch_ref_timeout](#recipes-tryserver_tests_gerrit_change_fetch_ref_timeout) (Python3 ✅)
   * [tryserver:tests/gerrit_change_owner](#recipes-tryserver_tests_gerrit_change_owner) (Python3 ✅)
   * [tryserver:tests/gerrit_change_target_ref](#recipes-tryserver_tests_gerrit_change_target_ref) (Python3 ✅)
+  * [tryserver:tests/get_files_affected_by_patch](#recipes-tryserver_tests_get_files_affected_by_patch) (Python3 ✅)
   * [tryserver:tests/require_is_tryserver](#recipes-tryserver_tests_require_is_tryserver) (Python3 ✅)
   * [windows_sdk:examples/full](#recipes-windows_sdk_examples_full) (Python3 ✅)
 ## Recipe Modules
@@ -852,7 +853,7 @@ Args:
   * report_files_via_property: name of the output property to report the
     list of the files. If None (default), do not report.
 
-Returned paths will be relative to to patch_root.
+Returned paths will be relative to to api.path['root'].
 
 &mdash; **def [get\_footer](/recipes/recipe_modules/tryserver/api.py#365)(self, tag, patch_text=None):**
 
@@ -1139,6 +1140,13 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/tryserver/tests/gerrit_change_target_ref.py#18)(api):**
+### *recipes* / [tryserver:tests/get\_files\_affected\_by\_patch](/recipes/recipe_modules/tryserver/tests/get_files_affected_by_patch.py)
+
+[DEPS](/recipes/recipe_modules/tryserver/tests/get_files_affected_by_patch.py#9): [tryserver](#recipe_modules-tryserver), [recipe\_engine/assertions][recipe_engine/recipe_modules/assertions], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
+
+PYTHON_VERSION_COMPATIBILITY: PY2+3
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/tryserver/tests/get_files_affected_by_patch.py#18)(api):**
 ### *recipes* / [tryserver:tests/require\_is\_tryserver](/recipes/recipe_modules/tryserver/tests/require_is_tryserver.py)
 
 [DEPS](/recipes/recipe_modules/tryserver/tests/require_is_tryserver.py#12): [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
