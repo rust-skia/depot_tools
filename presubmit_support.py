@@ -1535,7 +1535,10 @@ class PresubmitExecuter(object):
 
       with rdb_wrapper.client(prefix) as sink:
         if version >= [2, 0, 0]:
-          for function_name in context:
+          # Copy the keys to prevent "dictionary changed size during iteration"
+          # exception if checks add globals to context. E.g. sometimes the
+          # Python runtime will add __warningregistry__.
+          for function_name in list(context.keys()):
             if not function_name.startswith('Check'):
               continue
             if function_name.endswith('Commit') and not self.committing:
@@ -1553,7 +1556,7 @@ class PresubmitExecuter(object):
             function_name = 'CheckChangeOnCommit'
           else:
             function_name = 'CheckChangeOnUpload'
-          if function_name in context:
+          if function_name in list(context.keys()):
             logging.debug('Running %s in %s', function_name, presubmit_path)
             results.extend(
                 self._run_check_function(function_name, context, sink))
