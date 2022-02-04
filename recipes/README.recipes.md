@@ -349,7 +349,7 @@ Returns:
 
 &mdash; **def [set\_change\_label](/recipes/recipe_modules/gerrit/api.py#277)(self, host, change, label_name, label_value, name=None, step_test_data=None):**
 
-&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#319)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), submit=False, submit_later=False):**
+&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#319)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), cc_list=frozenset([]), submit=False, submit_later=False):**
 
 Update a set of files by creating and submitting a Gerrit CL.
 
@@ -362,6 +362,7 @@ Args:
   * commit_msg: Description to add to the CL.
   * params: A list of additional ChangeInput specifiers, with format
       'key=value'.
+  * cc_list: A list of addresses to notify.
   * submit: Should land this CL instantly.
   * submit_later: If this change has related CLs, we may want to commit
        them in a chain. So only set Bot-Commit+1, making it ready for
