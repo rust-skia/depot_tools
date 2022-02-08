@@ -719,9 +719,6 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
   mirror_dir = git(
       'cache', 'exists', '--quiet', '--cache-dir', git_cache_dir, url).strip()
   first_try = True
-
-  # This loop breaks on second run and raises an exception (see first_try
-  # usage).
   while True:
     try:
       # If repo deletion was aborted midway, it may have left .git in broken
@@ -867,6 +864,11 @@ def ensure_checkout(solutions, revisions, first_sln, target_os, target_os_only,
       patch_refs,
       gerrit_reset,
       gerrit_rebase_patch_ref)
+
+  # Now that gclient_sync has finished, we should revert any .DEPS.git so that
+  # presubmit doesn't complain about it being modified.
+  if git('ls-files', '.DEPS.git', cwd=first_sln).strip():
+    git('checkout', 'HEAD', '--', '.DEPS.git', cwd=first_sln)
 
   # Reset the deps_file point in the solutions so that hooks get run properly.
   for sln in solutions:
