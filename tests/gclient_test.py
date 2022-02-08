@@ -990,21 +990,21 @@ class GclientTest(trial_dir.TestCase):
         self._get_processed())
 
   def testGitDeps(self):
-    """Verifies gclient respects a .DEPS.git deps file.
+    """Verifies gclient respects a custom deps file.
 
-    Along the way, we also test that if both DEPS and .DEPS.git are present,
-    that gclient does not read the DEPS file.  This will reliably catch bugs
-    where gclient is always hitting the wrong file (DEPS).
+    Along the way, we also test that if both DEPS and custom DEPS file are
+    present, that gclient does not read the DEPS file.  This will reliably catch
+    bugs where gclient is always hitting the wrong file (DEPS).
     """
     write(
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
-        os.path.join('foo', '.DEPS.git'),
+        os.path.join('foo', 'CUSTOM_DEPS'),
         'deps = {\n'
         '  "bar": "/bar",\n'
         '}')
@@ -1030,7 +1030,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1055,7 +1055,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "https://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1096,7 +1096,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1118,11 +1118,11 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
-        os.path.join('foo', '.DEPS.git'),
+        os.path.join('foo', 'CUSTOM_DEPS'),
         'allowed_hosts = ["example.com"]\n'
         'deps = {\n'
         '  "bar": "svn://example.com/bar",\n'
@@ -1141,11 +1141,11 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
-        os.path.join('foo', '.DEPS.git'),
+        os.path.join('foo', 'CUSTOM_DEPS'),
         'allowed_hosts = ["other.com"]\n'
         'deps = {\n'
         '  "bar": "svn://example.com/bar",\n'
@@ -1164,7 +1164,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1189,7 +1189,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1214,7 +1214,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "svn://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1253,7 +1253,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "https://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1375,7 +1375,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "https://example.com/foo.git",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1396,7 +1396,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "https://example.com/foo.git",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(
@@ -1417,7 +1417,7 @@ class GclientTest(trial_dir.TestCase):
         '.gclient',
         'solutions = [\n'
         '  { "name": "foo", "url": "https://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
+        '    "deps_file" : "CUSTOM_DEPS",\n'
         '  },\n'
           ']')
     write(

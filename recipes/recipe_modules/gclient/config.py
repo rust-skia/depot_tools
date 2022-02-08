@@ -14,7 +14,7 @@ from . import api as gclient_api
 
 
 def BaseConfig(USE_MIRROR=True, CACHE_DIR=None,
-               BUILDSPEC_VERSION=None, deps_file='.DEPS.git', **_kwargs):
+               BUILDSPEC_VERSION=None, deps_file='DEPS', **_kwargs):
   cache_dir = str(CACHE_DIR) if CACHE_DIR else None
   return ConfigGroup(
     solutions = ConfigList(
@@ -274,7 +274,6 @@ def dart(c):
   soln = c.solutions.add()
   soln.name = 'sdk'
   soln.url = ('https://dart.googlesource.com/sdk.git')
-  soln.deps_file = 'DEPS'
   soln.managed = False
 
 @config_ctx()
