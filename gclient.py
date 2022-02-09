@@ -618,7 +618,13 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     # this line to the solution.
     for dep_name, dep_info in self.custom_deps.items():
       if dep_name not in deps:
-        deps[dep_name] = {'url': dep_info, 'dep_type': 'git'}
+        # Don't add it to the solution for the values of "None" and "unmanaged"
+        # in order to force these kinds of custom_deps to act as revision
+        # overrides (via revision_overrides). Having them function as revision
+        # overrides allows them to be applied to recursive dependencies.
+        # https://crbug.com/1031185
+        if dep_info and not dep_info.endswith('@unmanaged'):
+          deps[dep_name] = {'url': dep_info, 'dep_type': 'git'}
 
     # Make child deps conditional on any parent conditions. This ensures that,
     # when flattened, recursed entries have the correct restrictions, even if
