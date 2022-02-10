@@ -2289,6 +2289,17 @@ class Changelist(object):
             'git cl upload -o uploadvalidator~skip\n\n'
             'If git-cl is not working correctly, file a bug under the '
             'Infra>SDK component.')
+      if 'git push -o nokeycheck' in str(e.stdout):
+        raise GitPushError(
+            'Failed to create a change, very likely due to a private key being '
+            'detected. Please examine output above for the reason of the '
+            'failure.\n'
+            'If this is a false positive, you can try to bypass private key '
+            'detection by using push option '
+            '-o nokeycheck, e.g.:\n'
+            'git cl upload -o nokeycheck\n\n'
+            'If git-cl is not working correctly, file a bug under the '
+            'Infra>SDK component.')
 
       raise GitPushError(
           'Failed to create a change. Please examine output above for the '
