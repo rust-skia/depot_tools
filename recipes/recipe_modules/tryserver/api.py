@@ -94,6 +94,14 @@ class TryserverApi(recipe_api.RecipeApi):
     """
     return self._gerrit_change_owner
 
+  @property
+  def gerrit_change_review_url(self):
+    """Returns the review URL for the active patchset."""
+    # Gerrit redirects to insert the project into the URL.
+    gerrit_change = self._gerrit_change
+    return 'https://%s/c/%s/%s' % (
+          gerrit_change.host, gerrit_change.change, gerrit_change.patchset)
+
   def _ensure_gerrit_change_info(self):
     """Initializes extra info about gerrit_change, fetched from Gerrit server.
 

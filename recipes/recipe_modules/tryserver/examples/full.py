@@ -41,6 +41,8 @@ def RunSteps(api):
     expected_target_ref = api.properties.get(
         'expected_target_ref', 'refs/heads/main')
     assert api.tryserver.gerrit_change_target_ref == expected_target_ref
+    assert (api.tryserver.gerrit_change_review_url ==
+            'https://chromium-review.googlesource.com/c/91827/1')
 
   if api.tryserver.is_gerrit_issue:
     api.tryserver.get_footers()
