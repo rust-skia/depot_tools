@@ -93,7 +93,7 @@ class GclientCheckout(Checkout):
     try:
       gclient_root = self.run_gclient('root', return_stdout=True).strip()
       return (os.path.exists(os.path.join(gclient_root, '.gclient')) or
-              os.path.exists(os.path.join(os.getcwd(), self.root)))
+              os.path.exists(os.path.join(os.getcwd(), self.root, '.git')))
     except subprocess.CalledProcessError:
       pass
     return os.path.exists(os.path.join(os.getcwd(), self.root))
