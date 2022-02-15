@@ -35,7 +35,7 @@ $VerifiedPlatform linux-386 linux-ppc64 linux-ppc64le linux-s390x
 $VerifiedPlatform linux-armv6l linux-mips64 linux-mips64le linux-mipsle
 
 # vpython.
-infra/tools/luci/vpython/${platform} git_revision:fa83de432d2cad5b196b51ad8fd9a0592e9bdd52
+infra/tools/luci/vpython/${platform} git_revision:989cbdae535864ca81ea3c6a74a982a3ebc7ccf1
 
 # LUCI editor
 infra/tools/luci/led/${platform} git_revision:11b63b9b226613e76ca20c48942c327a5b2b45f3
