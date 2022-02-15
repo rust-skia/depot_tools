@@ -90,3 +90,14 @@ def GenTests(api):
       api.post_check(post_process.StatusSuccess),
       api.post_process(post_process.DropExpectation),
   )
+
+  yield api.test(
+      'file-with-spaces',
+      api.tryserver.get_files_affected_by_patch(['file with spaces.txt']),
+      api.properties(
+          patch_root='',
+          expected_files=['file with spaces.txt'],
+      ),
+      api.post_check(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation),
+  )

@@ -253,7 +253,7 @@ class TryserverApi(recipe_api.RecipeApi):
             self.m.raw_io.test_api.stream_output('foo.cc'),
           **kwargs)
     paths = [self.m.path.join(patch_root, p.decode('utf-8')) for p in
-             step_result.stdout.split()]
+             step_result.stdout.splitlines()]
     paths.sort()
     if self.m.platform.is_win:
       # Looks like "analyze" wants POSIX slashes even on Windows (since git
