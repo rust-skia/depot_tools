@@ -1409,8 +1409,11 @@ class Changelist(object):
     with gclient_utils.temporary_file() as description_file:
       gclient_utils.FileWrite(description_file, description)
       args.extend(['--description_file', description_file])
-      p = subprocess2.Popen(['vpython', PRESUBMIT_SUPPORT] + args)
-      p.wait()
+      p_py2 = subprocess2.Popen(['vpython', PRESUBMIT_SUPPORT] + args)
+      p_py3 = subprocess2.Popen(['vpython3', PRESUBMIT_SUPPORT] + args +
+                                ['--use-python3'])
+      p_py2.wait()
+      p_py3.wait()
 
   def _GetDescriptionForUpload(self, options, git_diff_args, files):
     # Get description message for upload.

@@ -302,6 +302,27 @@ def prompt_should_continue(prompt_string):
   return response in ('y', 'yes')
 
 
+def _ShouldRunPresubmit(script_text, use_python3):
+  """Try to figure out whether these presubmit checks should be run under
+    python2 or python3. We need to do this without actually trying to
+    compile the text, since the text might compile in one but not the
+    other.
+
+    Args:
+      script_text: The text of the presubmit script.
+      use_python3: if true, will use python3 instead of python2 by default
+                if USE_PYTHON3 is not specified.
+
+    Return:
+      A boolean if presubmit should be executed
+  """
+  m = re.search('^USE_PYTHON3 = (True|False)$', script_text, flags=re.MULTILINE)
+  if m:
+    use_python3 = m.group(1) == 'True'
+
+  return ((sys.version_info.major == 2) and not use_python3) or \
+      ((sys.version_info.major == 3) and use_python3)
+
 # Top level object so multiprocessing can pickle
 # Public access through OutputApi object.
 class _PresubmitResult(object):
@@ -1352,8 +1373,16 @@ def ListRelevantPresubmitFiles(files, root):
 
 
 class GetPostUploadExecuter(object):
-  @staticmethod
-  def ExecPresubmitScript(script_text, presubmit_path, gerrit_obj, change):
+  def __init__(self, use_python3):
+    """
+    Args:
+      use_python3: if true, will use python3 instead of python2 by default
+                if USE_PYTHON3 is not specified.
+    """
+    self.use_python3 = use_python3
+
+  def ExecPresubmitScript(self, script_text, presubmit_path, gerrit_obj,
+                          change):
     """Executes PostUploadHook() from a single presubmit script.
 
     Args:
@@ -1365,6 +1394,9 @@ class GetPostUploadExecuter(object):
     Return:
       A list of results objects.
     """
+    if not _ShouldRunPresubmit(script_text, self.use_python3):
+      return {}
+
     context = {}
     try:
       exec(compile(script_text, 'PRESUBMIT.py', 'exec', dont_inherit=True),
@@ -1394,22 +1426,24 @@ def _MergeMasters(masters1, masters2):
   return result
 
 
-def DoPostUploadExecuter(change,
-                         gerrit_obj,
-                         verbose):
+def DoPostUploadExecuter(change, gerrit_obj, verbose, use_python3=False):
   """Execute the post upload hook.
 
   Args:
     change: The Change object.
     gerrit_obj: The GerritAccessor object.
     verbose: Prints debug info.
+    use_python3: if true, default to using Python3 for presubmit checks
+                 rather than Python2.
   """
+  python_version = 'Python %s' % sys.version_info.major
+  sys.stdout.write('Running %s post upload checks ...\n' % python_version)
   presubmit_files = ListRelevantPresubmitFiles(
       change.LocalPaths(), change.RepositoryRoot())
   if not presubmit_files and verbose:
     sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
   results = []
-  executer = GetPostUploadExecuter()
+  executer = GetPostUploadExecuter(use_python3)
   # The root presubmit file should be executed after the ones in subdirectories.
   # i.e. the specific post upload hooks should run before the general ones.
   # Thus, reverse the order provided by ListRelevantPresubmitFiles.
@@ -1474,6 +1508,8 @@ class PresubmitExecuter(object):
     Return:
       A list of result objects, empty if no problems.
     """
+    if not _ShouldRunPresubmit(script_text, self.use_python3):
+      return []
 
     # Change to the presubmit file's directory to support local imports.
     main_path = os.getcwd()
@@ -1487,20 +1523,6 @@ class PresubmitExecuter(object):
                          parallel=self.parallel)
     output_api = OutputApi(self.committing)
     context = {}
-
-    # Try to figure out whether these presubmit checks should be run under
-    # python2 or python3. We need to do this without actually trying to
-    # compile the text, since the text might compile in one but not the
-    # other.
-    m = re.search('^USE_PYTHON3 = (True|False)$', script_text,
-                  flags=re.MULTILINE)
-    if m:
-      use_python3 = m.group(1) == 'True'
-    else:
-      use_python3 = self.use_python3
-    if (((sys.version_info.major == 2) and use_python3) or
-        ((sys.version_info.major == 3) and not use_python3)):
-      return []
 
     try:
       exec(compile(script_text, 'PRESUBMIT.py', 'exec', dont_inherit=True),
@@ -1948,10 +1970,8 @@ def main(argv=None):
 
   try:
     if options.post_upload:
-      return DoPostUploadExecuter(
-          change,
-          gerrit_obj,
-          options.verbose)
+      return DoPostUploadExecuter(change, gerrit_obj, options.verbose,
+                                  options.use_python3)
     with canned_check_filter(options.skip_canned):
       return DoPresubmitChecks(
           change,
