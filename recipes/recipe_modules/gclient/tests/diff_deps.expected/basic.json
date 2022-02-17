@@ -31,7 +31,7 @@
       "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "recurse",
-      "python",
+      "python3",
       "RECIPE_MODULE[depot_tools::gclient]/resources/diff_deps.py"
     ],
     "cwd": "[CACHE]",
