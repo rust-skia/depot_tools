@@ -188,7 +188,7 @@ def BuildFileList(override_dir, include_arm):
 
   # Strip off a trailing slash if present
   if sdk_path.endswith(os.path.sep):
-    sdk_path = sdk_path[:len(os.path.sep)]
+    sdk_path = sdk_path[:-len(os.path.sep)]
 
   debuggers_path = os.path.join(sdk_path, 'Debuggers')
   if not os.path.exists(debuggers_path):
