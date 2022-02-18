@@ -26,7 +26,6 @@ except ImportError:  # For Py3 compatibility
   import urllib.parse as urlparse
 
 import gclient_utils
-import gerrit_util
 import git_cache
 import scm
 import shutil
@@ -405,101 +404,57 @@ class GitWrapper(SCMWrapper):
         self._UpdateMirrorIfNotContains(mirror, options, rev_type, target_rev)
       self._Fetch(options, refspec=target_rev)
 
-    patch_revs_to_process = [patch_rev]
-
-    if hasattr(options, 'download_topics') and options.download_topics:
-      # We will now:
-      # 1. Find the topic of the Gerrit change specified in the patch_rev.
-      # 2. Find all changes with that topic.
-      # 3. Append patch_rev of the changes with the same topic to the patch_revs
-      #    to process.
-
-      # Parse the patch_Rev to extract the CL and patchset.
-      patch_rev_tokens = patch_rev.split('/')
-      change = patch_rev_tokens[-2]
-      # Parse the gerrit host out of self.url.
-      host = self.url.split(os.path.sep)[-1].rstrip('.git')
-      gerrit_host_url = '%s-review.googlesource.com' % host
-
-      # 1. Find the topic of the Gerrit change specified in the patch_rev.
-      change_object = gerrit_util.GetChange(gerrit_host_url, change)
-      topic = change_object.get('topic')
-      if topic:
-        # 2. Find all changes with that topic.
-        changes_with_same_topic = gerrit_util.QueryChanges(
-            gerrit_host_url,
-            [('topic', topic), ('status', 'open'), ('repo', host)],
-            o_params=['ALL_REVISIONS'])
-        for c in changes_with_same_topic:
-          if str(c['_number']) == change:
-            # This change is already in the patch_rev.
-            continue
-          self.Print('Found CL %d with the topic name %s' % (
-              c['_number'], topic))
-          # 3. Append patch_rev of the changes with the same topic to the
-          #    patch_revs to process.
-          curr_rev = c['current_revision']
-          new_patch_rev = c['revisions'][curr_rev]['ref']
-          patch_revs_to_process.append(new_patch_rev)
-
+    self.Print('===Applying patch===')
+    self.Print('Revision to patch is %r @ %r.' % (patch_repo, patch_rev))
+    self.Print('Current dir is %r' % self.checkout_path)
     self._Capture(['reset', '--hard'])
-    for pr in patch_revs_to_process:
-      self.Print('===Applying patch===')
-      self.Print('Revision to patch is %r @ %r.' % (patch_repo, pr))
-      self.Print('Current dir is %r' % self.checkout_path)
-      self._Capture(['fetch', '--no-tags', patch_repo, pr])
-      pr = self._Capture(['rev-parse', 'FETCH_HEAD'])
+    self._Capture(['fetch', '--no-tags', patch_repo, patch_rev])
+    patch_rev = self._Capture(['rev-parse', 'FETCH_HEAD'])
 
-      if not options.rebase_patch_ref:
-        self._Capture(['checkout', pr])
-        # Adjust base_rev to be the first parent of our checked out patch ref;
-        # This will allow us to correctly extend `file_list`, and will show the
-        # correct file-list to programs which do `git diff --cached` expecting
-        # to see the patch diff.
-        base_rev = self._Capture(['rev-parse', pr+'~'])
-      else:
-        self.Print('Will cherrypick %r .. %r on top of %r.' % (
-            target_rev, pr, base_rev))
+    if not options.rebase_patch_ref:
+      self._Capture(['checkout', patch_rev])
+      # Adjust base_rev to be the first parent of our checked out patch ref;
+      # This will allow us to correctly extend `file_list`, and will show the
+      # correct file-list to programs which do `git diff --cached` expecting to
+      # see the patch diff.
+      base_rev = self._Capture(['rev-parse', patch_rev+'~'])
+
+    else:
+      self.Print('Will cherrypick %r .. %r on top of %r.' % (
+          target_rev, patch_rev, base_rev))
+      try:
+        if scm.GIT.IsAncestor(self.checkout_path, patch_rev, target_rev):
+          # If |patch_rev| is an ancestor of |target_rev|, check it out.
+          self._Capture(['checkout', patch_rev])
+        else:
+          # If a change was uploaded on top of another change, which has already
+          # landed, one of the commits in the cherry-pick range will be
+          # redundant, since it has already landed and its changes incorporated
+          # in the tree.
+          # We pass '--keep-redundant-commits' to ignore those changes.
+          self._Capture(['cherry-pick', target_rev + '..' + patch_rev,
+                         '--keep-redundant-commits'])
+
+      except subprocess2.CalledProcessError as e:
+        self.Print('Failed to apply patch.')
+        self.Print('Revision to patch was %r @ %r.' % (patch_repo, patch_rev))
+        self.Print('Tried to cherrypick %r .. %r on top of %r.' % (
+            target_rev, patch_rev, base_rev))
+        self.Print('Current dir is %r' % self.checkout_path)
+        self.Print('git returned non-zero exit status %s:\n%s' % (
+            e.returncode, e.stderr.decode('utf-8')))
+        # Print the current status so that developers know what changes caused
+        # the patch failure, since git cherry-pick doesn't show that
+        # information.
+        self.Print(self._Capture(['status']))
         try:
-          if scm.GIT.IsAncestor(self.checkout_path, pr, target_rev):
-            if len(patch_revs_to_process) > 1:
-              # If there are multiple patch_revs_to_process then we do not want
-              # want to invalidate a previous patch so throw an error.
-              raise gclient_utils.Error(
-                  'patch_rev %s is an ancestor of target_rev %s. This '
-                  'situation is unsupported when we need to apply multiple '
-                  'patch_revs: %s' % (pr, target_rev, patch_revs_to_process))
-            # If |patch_rev| is an ancestor of |target_rev|, check it out.
-            self._Capture(['checkout', pr])
-          else:
-            # If a change was uploaded on top of another change, which has
-            # already landed, one of the commits in the cherry-pick range will
-            # be redundant, since it has already landed and its changes
-            # incorporated in the tree.
-            # We pass '--keep-redundant-commits' to ignore those changes.
-            self._Capture(['cherry-pick', target_rev + '..' + pr,
-                           '--keep-redundant-commits'])
+          self._Capture(['cherry-pick', '--abort'])
+        except subprocess2.CalledProcessError:
+          pass
+        raise
 
-        except subprocess2.CalledProcessError as e:
-          self.Print('Failed to apply patch.')
-          self.Print('Revision to patch was %r @ %r.' % (patch_repo, pr))
-          self.Print('Tried to cherrypick %r .. %r on top of %r.' % (
-              target_rev, pr, base_rev))
-          self.Print('Current dir is %r' % self.checkout_path)
-          self.Print('git returned non-zero exit status %s:\n%s' % (
-              e.returncode, e.stderr.decode('utf-8')))
-          # Print the current status so that developers know what changes caused
-          # the patch failure, since git cherry-pick doesn't show that
-          # information.
-          self.Print(self._Capture(['status']))
-          try:
-            self._Capture(['cherry-pick', '--abort'])
-          except subprocess2.CalledProcessError:
-            pass
-          raise
-
-      if file_list is not None:
-        file_list.extend(self._GetDiffFilenames(base_rev))
+    if file_list is not None:
+      file_list.extend(self._GetDiffFilenames(base_rev))
 
     if options.reset_patch_ref:
       self._Capture(['reset', '--soft', base_rev])
