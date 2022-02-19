@@ -78,9 +78,9 @@ def ExpandWildcards(root, sub_dir):
 
 
 def BuildRepackageFileList(src_dir):
-  # Strip off a trailing slash if present
-  if src_dir.endswith('\\'):
-    src_dir = src_dir[:-1]
+  # Strip off a trailing separator if present
+  if src_dir.endswith(os.path.sep):
+    src_dir = src_dir[:-len(os.path.sep)]
 
   # Ensure .\Windows Kits\10\Debuggers exists and fail to repackage if it
   # doesn't.
@@ -311,8 +311,8 @@ def GenerateSetEnvCmd(target_dir):
   ])
   # x86. Always use amd64_x86 cross, not x86 on x86.
   env['VCToolsInstallDir'] = [vc_tools_parts[:]]
-  # Yuck: This one ends in a slash as well.
-  env['VCToolsInstallDir'][0][-1] += '\\'
+  # Yuck: This one ends in a path separator as well.
+  env['VCToolsInstallDir'][0][-1] += os.path.sep
   env_x86 = collections.OrderedDict([
       (
           'PATH',
