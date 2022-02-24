@@ -925,8 +925,12 @@ class _GitDiffCache(_DiffCache):
         (normpath(path), ''.join(diff)) for path, diff in diffs.items())
 
     if path not in self._diffs_by_file:
-      raise PresubmitFailure(
-          'Unified diff did not contain entry for file %s' % path)
+      # SCM didn't have any diff on this file. It could be that the file was not
+      # modified at all (e.g. user used --all flag in git cl presubmit).
+      # Intead of failing, return empty string.
+      # See: https://crbug.com/808346.
+      logging.warning('No diff found for %s' % path)
+      return ''
 
     return self._diffs_by_file[path]
 
