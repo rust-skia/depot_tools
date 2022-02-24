@@ -43,7 +43,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
     with self.m.context(env=env):
       with self.m.depot_tools.on_path():
         return self.m.step(name,
-                           ['python3', '-u', bot_update_path] + cmd,
+                           ['vpython3', '-u', bot_update_path] + cmd,
                            **kwargs)
 
   @property
