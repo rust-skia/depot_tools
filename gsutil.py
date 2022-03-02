@@ -34,7 +34,7 @@ DEFAULT_BIN_DIR = os.path.join(THIS_DIR, 'external_bin', 'gsutil')
 
 IS_WINDOWS = os.name == 'nt'
 
-VERSION = '4.28'
+VERSION = '5.6'
 
 
 class InvalidGsutilError(Exception):
@@ -166,9 +166,7 @@ def run_gsutil(target, args, clean=False):
   assert sys.platform != 'cygwin'
 
   cmd = [
-      'vpython',
-      '-vpython-spec', os.path.join(THIS_DIR, 'gsutil.vpython'),
-      '--',
+      sys.executable,
       gsutil_bin
   ] + args_opt + args
   return subprocess.call(cmd, shell=IS_WINDOWS)
