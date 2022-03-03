@@ -629,7 +629,7 @@ Returns a list of refs in the remote repository.
 Generates a Gitiles repo URL. See also parse_repo_url.
 ### *recipe_modules* / [gsutil](/recipes/recipe_modules/gsutil)
 
-[DEPS](/recipes/recipe_modules/gsutil/__init__.py#3): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python]
+[DEPS](/recipes/recipe_modules/gsutil/__init__.py#3): [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
