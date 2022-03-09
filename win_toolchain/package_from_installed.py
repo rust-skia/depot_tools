@@ -97,7 +97,7 @@ def BuildRepackageFileList(src_dir):
   return result
 
 
-def BuildFileList(override_dir, include_arm):
+def BuildFileList(override_dir, include_arm, vs_path):
   result = []
 
   # Subset of VS corresponding roughly to VC.
@@ -148,8 +148,6 @@ def BuildFileList(override_dir, include_arm):
         ('VC/redist/MSVC/14.*.*/debug_nonredist/arm64/Microsoft.VC*.DebugCRT',
          'sysarm64'),
     ]
-
-  vs_path = GetVSPath()
 
   for path in paths:
     src = path[0] if isinstance(path, tuple) else path
@@ -505,7 +503,7 @@ def main():
     _vc_tools = temp_tools_path[len(vs_path) + 1:].replace('\\', '/')
 
     print('Building file list for VS %s Windows %s...' % (_vs_version, _win_version))
-    files = BuildFileList(options.override_dir, options.arm)
+    files = BuildFileList(options.override_dir, options.arm, vs_path)
 
     AddEnvSetup(files, options.arm)
 
