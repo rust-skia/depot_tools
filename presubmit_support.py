@@ -1731,7 +1731,6 @@ def DoPresubmitChecks(change,
       else:
         messages.setdefault('Messages', []).append(result)
 
-    sys.stdout.write('\n')
     for name, items in messages.items():
       sys.stdout.write('** Presubmit %s **\n' % name)
       for item in items:
@@ -1741,10 +1740,10 @@ def DoPresubmitChecks(change,
     total_time = time_time() - start_time
     if total_time > 1.0:
       sys.stdout.write(
-          'Presubmit checks took %.1fs to calculate.\n\n' % total_time)
+          'Presubmit checks took %.1fs to calculate.\n' % total_time)
 
     if not should_prompt and not presubmits_failed:
-      sys.stdout.write('%s presubmit checks passed.\n' % python_version)
+      sys.stdout.write('%s presubmit checks passed.\n\n' % python_version)
     elif should_prompt and not presubmits_failed:
       sys.stdout.write('There were %s presubmit warnings. ' % python_version)
       if may_prompt:
