@@ -1373,6 +1373,7 @@ class GerritChangesTest(fake_repos.FakeReposTestBase):
 
     # pylint: disable=attribute-defined-outside-init
     self.options.download_topics = True
+    scm.url = 'https://test-repo.googlesource.com/repo_1.git'
     scm.apply_patch_ref(
         self.url, 'refs/changes/34/1234/1', 'refs/heads/main', self.options,
         file_list)

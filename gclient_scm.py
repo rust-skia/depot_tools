@@ -335,6 +335,58 @@ class GitWrapper(SCMWrapper):
               self.Print('FAILED to break lock: %s: %s' % (to_break, ex))
               raise
 
+  def _download_topics(self, patch_rev, googlesource_url):
+    """This method returns new patch_revs to process that have the same topic.
+
+    It does the following:
+    1. Finds the topic of the Gerrit change specified in the patch_rev.
+    2. Find all changes with that topic.
+    3. Append patch_rev of the changes with the same topic to the patch_revs
+       to process.
+    4. Returns the new patch_revs to process.
+    """
+    patch_revs_to_process = []
+    # Parse the patch_rev to extract the CL and patchset.
+    patch_rev_tokens = patch_rev.split('/')
+    change = patch_rev_tokens[-2]
+    # Parse the googlesource_url.
+    tokens = re.search(
+        '//(.+).googlesource.com/(.+?)(?:\.git)?$', googlesource_url)
+    if not tokens or len(tokens.groups()) != 2:
+      # googlesource_url is not in the expected format.
+      return patch_revs_to_process
+
+    # parse the gerrit host and repo out of googlesource_url.
+    host, repo = tokens.groups()[:2]
+    gerrit_host_url = '%s-review.googlesource.com' % host
+
+    # 1. Find the topic of the Gerrit change specified in the patch_rev.
+    change_object = gerrit_util.GetChange(gerrit_host_url, change)
+    topic = change_object.get('topic')
+    if not topic:
+      # This change has no topic set.
+      return patch_revs_to_process
+
+    # 2. Find all changes with that topic.
+    changes_with_same_topic = gerrit_util.QueryChanges(
+        gerrit_host_url,
+        [('topic', topic), ('status', 'open'), ('repo', repo)],
+        o_params=['ALL_REVISIONS'])
+    for c in changes_with_same_topic:
+      if str(c['_number']) == change:
+        # This change is already in the patch_rev.
+        continue
+      self.Print('Found CL %d with the topic name %s' % (
+          c['_number'], topic))
+      # 3. Append patch_rev of the changes with the same topic to the
+      #    patch_revs to process.
+      curr_rev = c['current_revision']
+      new_patch_rev = c['revisions'][curr_rev]['ref']
+      patch_revs_to_process.append(new_patch_rev)
+
+     # 4. Return the new patch_revs to process.
+    return patch_revs_to_process
+
   def apply_patch_ref(self, patch_repo, patch_rev, target_rev, options,
                       file_list):
     """Apply a patch on top of the revision we're synced at.
@@ -408,39 +460,9 @@ class GitWrapper(SCMWrapper):
     patch_revs_to_process = [patch_rev]
 
     if hasattr(options, 'download_topics') and options.download_topics:
-      # We will now:
-      # 1. Find the topic of the Gerrit change specified in the patch_rev.
-      # 2. Find all changes with that topic.
-      # 3. Append patch_rev of the changes with the same topic to the patch_revs
-      #    to process.
-
-      # Parse the patch_Rev to extract the CL and patchset.
-      patch_rev_tokens = patch_rev.split('/')
-      change = patch_rev_tokens[-2]
-      # Parse the gerrit host out of self.url.
-      host = self.url.split(os.path.sep)[-1].rstrip('.git')
-      gerrit_host_url = '%s-review.googlesource.com' % host
-
-      # 1. Find the topic of the Gerrit change specified in the patch_rev.
-      change_object = gerrit_util.GetChange(gerrit_host_url, change)
-      topic = change_object.get('topic')
-      if topic:
-        # 2. Find all changes with that topic.
-        changes_with_same_topic = gerrit_util.QueryChanges(
-            gerrit_host_url,
-            [('topic', topic), ('status', 'open'), ('repo', host)],
-            o_params=['ALL_REVISIONS'])
-        for c in changes_with_same_topic:
-          if str(c['_number']) == change:
-            # This change is already in the patch_rev.
-            continue
-          self.Print('Found CL %d with the topic name %s' % (
-              c['_number'], topic))
-          # 3. Append patch_rev of the changes with the same topic to the
-          #    patch_revs to process.
-          curr_rev = c['current_revision']
-          new_patch_rev = c['revisions'][curr_rev]['ref']
-          patch_revs_to_process.append(new_patch_rev)
+      patch_revs_to_process_from_topics = self._download_topics(
+          patch_rev, self.url)
+      patch_revs_to_process.extend(patch_revs_to_process_from_topics)
 
     self._Capture(['reset', '--hard'])
     for pr in patch_revs_to_process:
