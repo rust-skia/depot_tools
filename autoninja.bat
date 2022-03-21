@@ -44,7 +44,7 @@ FOR /f "usebackq tokens=*" %%a in (`%scriptdir%python-bin\python3.bat %scriptdir
 @if "%NINJA_SUMMARIZE_BUILD%" == "1" call %scriptdir%python-bin\python3.bat %scriptdir%post_build_ninja_summary.py %*
 @call %scriptdir%python-bin\python3.bat %scriptdir%ninjalog_uploader_wrapper.py --cmdline %*
 
-exit /b
+exit /b %ERRORLEVEL%
 :buildfailure
 
 @call %scriptdir%python-bin\python3.bat %scriptdir%ninjalog_uploader_wrapper.py --cmdline %*
