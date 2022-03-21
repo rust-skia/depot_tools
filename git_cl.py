@@ -5471,6 +5471,11 @@ def CMDlol(parser, args):
   return 0
 
 
+def CMDversion(parser, args):
+  import utils
+  print(utils.depot_tools_version())
+
+
 class OptionParser(optparse.OptionParser):
   """Creates the option parse and add --verbose support."""
 
