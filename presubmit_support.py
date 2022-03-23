@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) 2012 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -734,9 +734,11 @@ class InputApi(object):
                ' is deprecated and ignored' % str(include_deletes),
            category=DeprecationWarning,
            stacklevel=2)
-    return list(filter(
-        lambda x: x.IsTestableFile(),
-        self.AffectedFiles(include_deletes=False, **kwargs)))
+    # pylint: disable=consider-using-generator
+    return [
+        x for x in self.AffectedFiles(include_deletes=False, **kwargs)
+        if x.IsTestableFile()
+    ]
 
   def AffectedTextFiles(self, include_deletes=None):
     """An alias to AffectedTestableFiles for backwards compatibility."""
