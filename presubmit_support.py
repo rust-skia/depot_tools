@@ -931,7 +931,6 @@ class _GitDiffCache(_DiffCache):
       # modified at all (e.g. user used --all flag in git cl presubmit).
       # Intead of failing, return empty string.
       # See: https://crbug.com/808346.
-      logging.warning('No diff found for %s' % path)
       return ''
 
     return self._diffs_by_file[path]
@@ -1575,7 +1574,8 @@ class PresubmitExecuter(object):
               continue
             logging.debug('Running %s in %s', function_name, presubmit_path)
             results.extend(
-                self._run_check_function(function_name, context, sink))
+                self._run_check_function(function_name, context, sink,
+                                         presubmit_path))
             logging.debug('Running %s done.', function_name)
             self.more_cc.extend(output_api.more_cc)
 
@@ -1587,7 +1587,8 @@ class PresubmitExecuter(object):
           if function_name in list(context.keys()):
             logging.debug('Running %s in %s', function_name, presubmit_path)
             results.extend(
-                self._run_check_function(function_name, context, sink))
+                self._run_check_function(function_name, context, sink,
+                                         presubmit_path))
             logging.debug('Running %s done.', function_name)
             self.more_cc.extend(output_api.more_cc)
 
@@ -1599,7 +1600,7 @@ class PresubmitExecuter(object):
     os.chdir(main_path)
     return results
 
-  def _run_check_function(self, function_name, context, sink=None):
+  def _run_check_function(self, function_name, context, sink, presubmit_path):
     """Evaluates and returns the result of a given presubmit function.
 
     If sink is given, the result of the presubmit function will be reported
@@ -1628,8 +1629,8 @@ class PresubmitExecuter(object):
 
     elapsed_time = time_time() - start_time
     if elapsed_time > 10.0:
-      sys.stdout.write(
-          '%s took %.1fs to run.\n' % (function_name, elapsed_time))
+      sys.stdout.write('%s from %s took %.1fs to run.\n' %
+                       (function_name, presubmit_path, elapsed_time))
     if sink:
       status = rdb_wrapper.STATUS_PASS
       if any(r.fatal for r in result):
