@@ -1101,14 +1101,32 @@ def CheckDirMetadataFormat(input_api, output_api, dirmd_bin=None):
     return []
 
   name = 'Validate metadata in OWNERS and DIR_METADATA files'
-  kwargs = {}
 
   if dirmd_bin is None:
     dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
-  cmd = [dirmd_bin, 'validate'] + sorted(affected_files)
 
-  return [input_api.Command(
-      name, cmd, kwargs, output_api.PresubmitError)]
+  # When running git cl presubmit --all this presubmit may be asked to check
+  # ~7,500 files, leading to a command line that is about 500,000 characters.
+  # This goes past the Windows 8191 character cmd.exe limit and causes cryptic
+  # failures. To avoid these we break the command up into smaller pieces. The
+  # non-Windows limit is chosen so that the code that splits up commands will
+  # get some exercise on other platforms.
+  # Depending on how long the command is on Windows the error may be:
+  #     The command line is too long.
+  # Or it may be:
+  #     OSError: Execution failed with error: [WinError 206] The filename or
+  #     extension is too long.
+  # I suspect that the latter error comes from CreateProcess hitting its 32768
+  # character limit.
+  files_per_command = 50 if input_api.is_windows else 1000
+  affected_files = sorted(affected_files)
+  results = []
+  for i in range(0, len(affected_files), files_per_command):
+    kwargs = {}
+    cmd = [dirmd_bin, 'validate'] + affected_files[i : i + files_per_command]
+    results.extend([input_api.Command(
+        name, cmd, kwargs, output_api.PresubmitError)])
+  return results
 
 
 def CheckNoNewMetadataInOwners(input_api, output_api):
