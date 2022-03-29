@@ -66,7 +66,7 @@ infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:8a4362219ec5a70
 infra/goma/client/${os=mac}-${arch} git_revision:8a4362219ec5a70063d54c589d6925964402fd67
 
 # dirmd, a tool to work with DIR_METADATA files
-infra/tools/dirmd/${platform} git_revision:3e982b686970095906058ab7f25483058752e58f
+infra/tools/dirmd/${platform} git_revision:9ae83cf95f396f93ff5002c4159746937cf93ce9
 
 # Pinpoint CLI
 infra/chromeperf/pinpoint/${platform} git_revision:e92eb7168a9b780cc59ac7174c7d9526b19811fa
