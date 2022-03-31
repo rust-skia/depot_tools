@@ -1333,8 +1333,17 @@ class Changelist(object):
 
     return args
 
-  def RunHook(self, committing, may_prompt, verbose, parallel, upstream,
-              description, all_files, resultdb=False, realm=None):
+  def RunHook(self,
+              committing,
+              may_prompt,
+              verbose,
+              parallel,
+              upstream,
+              description,
+              all_files,
+              files=None,
+              resultdb=False,
+              realm=None):
     """Calls sys.exit() if the hook fails; returns a HookResults otherwise."""
     args = self._GetCommonPresubmitArgs(verbose, upstream)
     args.append('--commit' if committing else '--upload')
@@ -1344,6 +1353,9 @@ class Changelist(object):
       args.append('--parallel')
     if all_files:
       args.append('--all_files')
+    if files:
+      args.extend(files.split(';'))
+      args.append('--source_controlled_only')
 
     if resultdb and not realm:
       # TODO (crbug.com/1113463): store realm somewhere and look it up so
@@ -4064,6 +4076,11 @@ def CMDpresubmit(parser, args):
                     help='Run checks even if tree is dirty')
   parser.add_option('--all', action='store_true',
                     help='Run checks against all files, not just modified ones')
+  parser.add_option('--files',
+                    nargs=1,
+                    help='Semicolon-separated list of files to be marked as '
+                    'modified when executing presubmit or post-upload hooks. '
+                    'fnmatch wildcards can also be used.')
   parser.add_option('--parallel', action='store_true',
                     help='Run all tests specified by input_api.RunTests in all '
                          'PRESUBMIT files in parallel.')
@@ -4089,16 +4106,16 @@ def CMDpresubmit(parser, args):
   else:
     description = _create_description_from_log([base_branch])
 
-  cl.RunHook(
-      committing=not options.upload,
-      may_prompt=False,
-      verbose=options.verbose,
-      parallel=options.parallel,
-      upstream=base_branch,
-      description=description,
-      all_files=options.all,
-      resultdb=options.resultdb,
-      realm=options.realm)
+  cl.RunHook(committing=not options.upload,
+             may_prompt=False,
+             verbose=options.verbose,
+             parallel=options.parallel,
+             upstream=base_branch,
+             description=description,
+             all_files=options.all,
+             files=options.files,
+             resultdb=options.resultdb,
+             realm=options.realm)
   return 0
 
 

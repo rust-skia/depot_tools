@@ -1831,7 +1831,17 @@ def _parse_change(parser, options):
     parser.error('<files> is not optional for unversioned directories.')
 
   if options.files:
-    change_files = _parse_files(options.files, options.recursive)
+    if options.source_controlled_only:
+      # Get the filtered set of files from SCM.
+      change_files = []
+      for name in scm.GIT.GetAllFiles(options.root):
+        for mask in options.files:
+          if fnmatch.fnmatch(name, mask):
+            change_files.append(('M', name))
+            break
+    else:
+      # Get the filtered set of files from a directory scan.
+      change_files = _parse_files(options.files, options.recursive)
   elif options.all_files:
     change_files = [('M', f) for f in scm.GIT.GetAllFiles(options.root)]
   else:
@@ -1956,6 +1966,8 @@ def main(argv=None):
                       help='List of files to be marked as modified when '
                       'executing presubmit or post-upload hooks. fnmatch '
                       'wildcards can also be used.')
+  parser.add_argument('--source_controlled_only', action='store_true',
+                      help='Constrain \'files\' to those in source control.')
   parser.add_argument('--use-python3', action='store_true',
                       help='Use python3 for presubmit checks by default')
   options = parser.parse_args(argv)

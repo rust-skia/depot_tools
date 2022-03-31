@@ -1007,7 +1007,7 @@ def CheckChangeOnCommit(input_api, output_api):
   def testParseChange_Files(self):
     presubmit._parse_files.return_value=[('M', 'random_file.txt')]
     scm.determine_scm.return_value = None
-    options = mock.Mock(all_files=False)
+    options = mock.Mock(all_files=False, source_controlled_only = False)
 
     change = presubmit._parse_change(None, options)
     self.assertEqual(presubmit.Change.return_value, change)
@@ -1049,7 +1049,7 @@ def CheckChangeOnCommit(input_api, output_api):
   def testParseChange_FilesAndGit(self):
     scm.determine_scm.return_value = 'git'
     presubmit._parse_files.return_value = [('M', 'random_file.txt')]
-    options = mock.Mock(all_files=False)
+    options = mock.Mock(all_files=False, source_controlled_only = False)
 
     change = presubmit._parse_change(None, options)
     self.assertEqual(presubmit.GitChange.return_value, change)
