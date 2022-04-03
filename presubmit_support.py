@@ -336,7 +336,7 @@ class _PresubmitResult(object):
     items: A list of short strings to indicate where errors occurred.
     long_text: multi-line text output, e.g. from another tool
     """
-    self._message = message
+    self._message = _PresubmitResult._ensure_str(message)
     self._items = items or []
     self._long_text = _PresubmitResult._ensure_str(long_text.rstrip())
 

@@ -628,7 +628,7 @@ class PresubmitUnittest(PresubmitTestsBase):
          '    pass\n'
          '  with input_api.CreateTemporaryFile():\n'
          '    pass\n'
-         '  return [output_api.PresubmitResult(None, f)\n'
+         '  return [output_api.PresubmitResult(\'\', f)\n'
          '          for f in input_api._named_temporary_files]\n'),
         fake_presubmit)
     self.assertEqual(['baz', 'quux'], [r._items for r in result])
