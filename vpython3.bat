@@ -5,6 +5,7 @@
 
 :: TODO(crbug.com/1003139): Remove.
 :: Add Python 3 to PATH to work around crbug.com/1003139.
+setlocal
 for /f %%i in (%~dp0python3_bin_reldir.txt) do set PYTHON3_BIN_RELDIR=%%i
 set PATH=%~dp0%PYTHON3_BIN_RELDIR%;%~dp0%PYTHON3_BIN_RELDIR%\Scripts;%~dp0%PYTHON3_BIN_RELDIR%\DLLs;%PATH%
 
