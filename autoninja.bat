@@ -7,8 +7,10 @@ setlocal
 
 set scriptdir=%~dp0
 
-:: Set unique build ID.
-FOR /f "usebackq tokens=*" %%a in (`%scriptdir%python-bin\python3.bat -c "import uuid; print(uuid.uuid4())"`) do set AUTONINJA_BUILD_ID=%%a
+if not defined AUTONINJA_BUILD_ID (
+  :: Set unique build ID.
+  FOR /f "usebackq tokens=*" %%a in (`%scriptdir%python-bin\python3.bat -c "import uuid; print(uuid.uuid4())"`) do set AUTONINJA_BUILD_ID=%%a
+)
 
 :: If a build performance summary has been requested then also set NINJA_STATUS
 :: to trigger more verbose status updates. In particular this makes it possible
