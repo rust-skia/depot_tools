@@ -64,7 +64,7 @@ Wrapper for easy calling of bot_update.
 Deapplies a patch, taking care of DEPS and solution revisions properly.
     
 
-&mdash; **def [ensure\_checkout](/recipes/recipe_modules/bot_update/api.py#81)(self, gclient_config=None, suffix=None, patch=True, update_presentation=True, patch_root=None, with_branch_heads=False, with_tags=False, no_fetch_tags=False, refs=None, clobber=False, root_solution_revision=None, gerrit_no_reset=False, gerrit_no_rebase_patch_ref=False, assert_one_gerrit_change=True, patch_refs=None, ignore_input_commit=False, add_blamelists=False, set_output_commit=True, step_test_data=None, enforce_fetch=False, \*\*kwargs):**
+&mdash; **def [ensure\_checkout](/recipes/recipe_modules/bot_update/api.py#81)(self, gclient_config=None, suffix=None, patch=True, update_presentation=True, patch_root=None, with_branch_heads=False, with_tags=False, no_fetch_tags=False, refs=None, clobber=False, root_solution_revision=None, gerrit_no_reset=False, gerrit_no_rebase_patch_ref=False, assert_one_gerrit_change=True, patch_refs=None, ignore_input_commit=False, add_blamelists=False, set_output_commit=False, step_test_data=None, enforce_fetch=False, \*\*kwargs):**
 
 Args:
   * gclient_config: The gclient configuration to use when running bot_update.

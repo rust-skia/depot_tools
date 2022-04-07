@@ -96,7 +96,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       patch_refs=None,
                       ignore_input_commit=False,
                       add_blamelists=False,
-                      set_output_commit=True,
+                      set_output_commit=False,
                       step_test_data=None,
                       enforce_fetch=False,
                       **kwargs):
