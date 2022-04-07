@@ -52,6 +52,7 @@ import setup_color
 import split_cl
 import subcommand
 import subprocess2
+import swift_format
 import watchlists
 
 from third_party import six
@@ -5143,6 +5144,33 @@ def _RunRustFmt(opts, rust_diff_files, top_dir, upstream_commit):
   return 0
 
 
+def _RunSwiftFormat(opts, swift_diff_files, top_dir, upstream_commit):
+  """Runs swift-format.  Just like _RunClangFormatDiff returns 2 to indicate
+  that presubmit checks have failed (and returns 0 otherwise)."""
+
+  if not swift_diff_files:
+    return 0
+
+  # Locate the swift-format binary.
+  try:
+    swift_format_tool = swift_format.FindSwiftFormatToolInChromiumTree()
+  except swift_format.NotFoundError as e:
+    DieWithError(e)
+
+  cmd = [swift_format_tool]
+  if opts.dry_run:
+    cmd.append('lint')
+  else:
+    cmd += ['format', '-i']
+  cmd += swift_diff_files
+  swift_format_exitcode = subprocess2.call(cmd)
+
+  if opts.presubmit and swift_format_exitcode != 0:
+    return 2
+
+  return 0
+
+
 def MatchingFileType(file_name, extensions):
   """Returns True if the file name ends with one of the given extensions."""
   return bool([ext for ext in extensions if file_name.lower().endswith(ext)])
@@ -5155,6 +5183,7 @@ def CMDformat(parser, args):
   CLANG_EXTS = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto', '.java']
   GN_EXTS = ['.gn', '.gni', '.typemap']
   RUST_EXTS = ['.rs']
+  SWIFT_EXTS = ['.swift']
   parser.add_option('--full', action='store_true',
                     help='Reformat the full content of all touched files')
   parser.add_option('--upstream', help='Branch to check against')
@@ -5199,6 +5228,19 @@ def CMDformat(parser, args):
       dest='use_rust_fmt',
       action='store_false',
       help='Disables formatting of Rust file types using rustfmt.')
+
+  parser.add_option(
+      '--swift-format',
+      dest='use_swift_format',
+      action='store_true',
+      default=False,
+      help='Enables formatting of Swift file types using swift-format '
+      '(macOS host only).')
+  parser.add_option(
+      '--no-swift-format',
+      dest='use_swift_format',
+      action='store_false',
+      help='Disables formatting of Swift file types using swift-format.')
 
   opts, args = parser.parse_args(args)
 
@@ -5250,6 +5292,7 @@ def CMDformat(parser, args):
     ]
   python_diff_files = [x for x in diff_files if MatchingFileType(x, ['.py'])]
   rust_diff_files = [x for x in diff_files if MatchingFileType(x, RUST_EXTS)]
+  swift_diff_files = [x for x in diff_files if MatchingFileType(x, SWIFT_EXTS)]
   gn_diff_files = [x for x in diff_files if MatchingFileType(x, GN_EXTS)]
 
   top_dir = settings.GetRoot()
@@ -5261,6 +5304,14 @@ def CMDformat(parser, args):
     rust_fmt_return_value = _RunRustFmt(opts, rust_diff_files, top_dir,
                                         upstream_commit)
     if rust_fmt_return_value == 2:
+      return_value = 2
+
+  if opts.use_swift_format:
+    if sys.platform != 'darwin':
+      DieWithError('swift-format is only supported on macOS.')
+    swift_format_return_value = _RunSwiftFormat(opts, swift_diff_files, top_dir,
+                                                upstream_commit)
+    if swift_format_return_value == 2:
       return_value = 2
 
   # Similar code to above, but using yapf on .py files rather than clang-format
