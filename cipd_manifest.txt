@@ -69,4 +69,4 @@ infra/goma/client/${os=mac}-${arch} git_revision:c6e7993317c4f6071bb300265f86df2
 infra/tools/dirmd/${platform} git_revision:9ae83cf95f396f93ff5002c4159746937cf93ce9
 
 # Pinpoint CLI
-infra/chromeperf/pinpoint/${platform} git_revision:e92eb7168a9b780cc59ac7174c7d9526b19811fa
+infra/chromeperf/pinpoint/${platform} git_revision:af1fb79f2dac80bb46bfd88fed08542a11022541
