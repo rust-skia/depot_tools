@@ -584,7 +584,8 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
     errors += check_python_long_lines(
         py_file_list, error_formatter=format_error)
   if errors:
-    msg = 'Found lines longer than %s characters (first 5 shown).' % maxlen
+    msg = 'Found %d lines longer than %s characters (first 5 shown).' % (
+           len(errors), maxlen)
     return [output_api.PresubmitPromptWarning(msg, items=errors[:5])]
 
   return []
@@ -1377,14 +1378,11 @@ def PanProjectChecks(input_api, output_api,
   snapshot_memory = []
   def snapshot(msg):
     """Measures & prints performance warning if a rule is running slow."""
-    if input_api.sys.version_info.major == 2:
-      dt2 = input_api.time.clock()
-    else:
-      dt2 = input_api.time.process_time()
+    dt2 = input_api.time.time()
     if snapshot_memory:
-      delta_ms = int(1000*(dt2 - snapshot_memory[0]))
-      if delta_ms > 500:
-        print("  %s took a long time: %dms" % (snapshot_memory[1], delta_ms))
+      delta_s = dt2 - snapshot_memory[0]
+      if delta_s > 0.5:
+        print("  %s took a long time: %.1fs" % (snapshot_memory[1], delta_s))
     snapshot_memory[:] = (dt2, msg)
 
   snapshot("checking owners files format")
