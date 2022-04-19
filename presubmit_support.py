@@ -898,7 +898,9 @@ class _GitDiffCache(_DiffCache):
     self._diffs_by_file = None
 
   def GetDiff(self, path, local_root):
-    if not self._diffs_by_file:
+    # Compare against None to distinguish between None and an initialized but
+    # empty dictionary.
+    if self._diffs_by_file == None:
       # Compute a single diff for all files and parse the output; should
       # with git this is much faster than computing one diff for each file.
       diffs = {}
