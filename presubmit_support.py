@@ -773,6 +773,11 @@ class InputApi(object):
       for item in items:
         if self.re.match(item, local_path):
           return True
+        # Handle the cases where the files regex only handles /, but the local
+        # path uses \.
+        if self.is_windows and self.re.match(item, local_path.replace(
+            '\\', '/')):
+          return True
       return False
     return (Find(affected_file, files_to_check) and
             not Find(affected_file, files_to_skip))
