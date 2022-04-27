@@ -163,16 +163,20 @@ num_cores = multiprocessing.cpu_count()
 if not j_specified and not t_specified:
   if use_goma or use_remoteexec:
     args.append('-j')
-    core_multiplier = int(os.environ.get('NINJA_CORE_MULTIPLIER', '40'))
+    default_core_multiplier = 80
+    if platform.machine() in ('x86_64', 'AMD64'):
+      # Assume simultaneous multithreading and therefore half as many cores as
+      # logical processors.
+      num_cores //= 2
+
+    core_multiplier = int(
+        os.environ.get('NINJA_CORE_MULTIPLIER', default_core_multiplier))
+
     j_value = num_cores * core_multiplier
 
     if sys.platform.startswith('win'):
       # On windows, j value higher than 1000 does not improve build performance.
       j_value = min(j_value, 1000)
-    elif sys.platform == 'darwin':
-      # On Mac, j value higher than 500 causes 'Too many open files' error
-      # (crbug.com/936864).
-      j_value = min(j_value, 500)
 
     args.append('%d' % j_value)
   else:
