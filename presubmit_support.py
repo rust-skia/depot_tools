@@ -665,12 +665,15 @@ class InputApi(object):
 
     self.owners_client = None
     if self.gerrit:
-      self.owners_client = owners_client.GetCodeOwnersClient(
-          root=change.RepositoryRoot(),
-          upstream=change.UpstreamBranch(),
-          host=self.gerrit.host,
-          project=self.gerrit.project,
-          branch=self.gerrit.branch)
+      try:
+        self.owners_client = owners_client.GetCodeOwnersClient(
+            root=change.RepositoryRoot(),
+            upstream=change.UpstreamBranch(),
+            host=self.gerrit.host,
+            project=self.gerrit.project,
+            branch=self.gerrit.branch)
+      except Exception as e:
+        print('Failed to set owners_client - %s' % str(e))
     self.owners_db = owners_db.Database(
         change.RepositoryRoot(), fopen=open, os_path=self.os_path)
     self.owners_finder = owners_finder.OwnersFinder
