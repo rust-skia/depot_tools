@@ -5168,7 +5168,7 @@ def _RunSwiftFormat(opts, swift_diff_files, top_dir, upstream_commit):
 
   cmd = [swift_format_tool]
   if opts.dry_run:
-    cmd.append('lint')
+    cmd += ['lint', '-s']
   else:
     cmd += ['format', '-i']
   cmd += swift_diff_files
@@ -5242,7 +5242,7 @@ def CMDformat(parser, args):
       '--swift-format',
       dest='use_swift_format',
       action='store_true',
-      default=False,
+      default=swift_format.IsSwiftFormatSupported(),
       help='Enables formatting of Swift file types using swift-format '
       '(macOS host only).')
   parser.add_option(
