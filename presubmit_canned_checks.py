@@ -1342,7 +1342,7 @@ def CheckSingletonInHeaders(input_api, output_api, source_file_filter=None):
 def PanProjectChecks(input_api, output_api,
                      excluded_paths=None, text_files=None,
                      license_header=None, project_name=None,
-                     owners_check=True, maxlen=80):
+                     owners_check=True, maxlen=80, global_checks=True):
   """Checks that ALL chromium orbit projects should use.
 
   These are checks to be run on all Chromium orbit project, including:
@@ -1357,6 +1357,11 @@ def PanProjectChecks(input_api, output_api,
     text_files: Which file are to be treated as documentation text files.
     license_header: What license header should be on files.
     project_name: What is the name of the project as it appears in the license.
+    global_checks: If True run checks that are unaffected by other options or by
+      the PRESUBMIT script's location, such as CheckChangeHasDescription.
+      global_checks should be passed as False when this function is called from
+      locations other than the project's root PRESUBMIT.py, to avoid redundant
+      checking.
   Returns:
     A list of warning or error objects.
   """
@@ -1414,21 +1419,26 @@ def PanProjectChecks(input_api, output_api,
       source_file_filter=sources))
 
   if input_api.is_committing:
-    snapshot("checking was uploaded")
-    results.extend(input_api.canned_checks.CheckChangeWasUploaded(
-        input_api, output_api))
-    snapshot("checking description")
-    results.extend(input_api.canned_checks.CheckChangeHasDescription(
-        input_api, output_api))
-    results.extend(input_api.canned_checks.CheckDoNotSubmitInDescription(
-        input_api, output_api))
+    if global_checks:
+      # These changes verify state that is global to the tree and can therefore
+      # be skipped when run from PRESUBMIT.py scripts deeper in the tree.
+      # Skipping these saves a bit of time and avoids having redundant output.
+      # This was initially designed for use by third_party/blink/PRESUBMIT.py.
+      snapshot("checking was uploaded")
+      results.extend(input_api.canned_checks.CheckChangeWasUploaded(
+          input_api, output_api))
+      snapshot("checking description")
+      results.extend(input_api.canned_checks.CheckChangeHasDescription(
+          input_api, output_api))
+      results.extend(input_api.canned_checks.CheckDoNotSubmitInDescription(
+          input_api, output_api))
+      if input_api.change.scm == 'git':
+        snapshot("checking for commit objects in tree")
+        results.extend(input_api.canned_checks.CheckForCommitObjects(
+            input_api, output_api))
     snapshot("checking do not submit in files")
     results.extend(input_api.canned_checks.CheckDoNotSubmitInFiles(
         input_api, output_api))
-    if input_api.change.scm == 'git':
-      snapshot("checking for commit objects in tree")
-      results.extend(input_api.canned_checks.CheckForCommitObjects(
-          input_api, output_api))
   snapshot("done")
   return results
 
