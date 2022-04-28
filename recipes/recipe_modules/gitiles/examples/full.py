@@ -23,10 +23,6 @@ def RunSteps(api):
 
   data = api.gitiles.download_file(url, 'OWNERS', attempts=5)
   assert data == 'foobar'
-
-  data = api.gitiles.download_file(url, 'BYTES', attempts=5)
-  assert data == b'\xab'
-
   data = api.gitiles.download_file(url, 'NONEXISTENT', attempts=1,
                                    accept_statuses=[404])
 
@@ -76,10 +72,6 @@ def GenTests(api):
       + api.step_data(
           'fetch main:OWNERS',
           api.gitiles.make_encoded_file('foobar')
-      )
-      + api.step_data(
-          'fetch main:BYTES',
-          api.gitiles.make_encoded_file_from_bytes(b'\xab')
       )
       + api.step_data(
           'fetch main:NONEXISTENT',
