@@ -926,6 +926,9 @@ def ParseIssueNumberArgument(arg):
 def _create_description_from_log(args):
   """Pulls out the commit log to use as a base for the CL description."""
   log_args = []
+  if len(args) == 1 and args[0] == None:
+    # Handle the case where None is passed as the branch.
+    return ''
   if len(args) == 1 and not args[0].endswith('.'):
     log_args = [args[0] + '..']
   elif len(args) == 1 and args[0].endswith('...'):
@@ -1185,7 +1188,8 @@ class Changelist(object):
   def GetIssue(self):
     """Returns the issue number as a int or None if not set."""
     if self.issue is None and not self.lookedup_issue:
-      self.issue = self._GitGetBranchConfigValue(ISSUE_CONFIG_KEY)
+      if self.GetBranch():
+        self.issue = self._GitGetBranchConfigValue(ISSUE_CONFIG_KEY)
       if self.issue is not None:
         self.issue = int(self.issue)
       self.lookedup_issue = True
@@ -1224,7 +1228,8 @@ class Changelist(object):
   def GetPatchset(self):
     """Returns the patchset number as a int or None if not set."""
     if self.patchset is None and not self.lookedup_patchset:
-      self.patchset = self._GitGetBranchConfigValue(PATCHSET_CONFIG_KEY)
+      if self.GetBranch():
+        self.patchset = self._GitGetBranchConfigValue(PATCHSET_CONFIG_KEY)
       if self.patchset is not None:
         self.patchset = int(self.patchset)
       self.lookedup_patchset = True
@@ -4115,6 +4120,12 @@ def CMDpresubmit(parser, args):
     description = cl.FetchDescription()
   else:
     description = _create_description_from_log([base_branch])
+
+  if not base_branch:
+    if not options.force:
+      print('use --force to check even when not on a branch.')
+      return 1
+    base_branch = 'HEAD'
 
   cl.RunHook(committing=not options.upload,
              may_prompt=False,
