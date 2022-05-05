@@ -1409,7 +1409,7 @@ class InputApiUnittest(PresubmitTestsBase):
   def testDefaultOverrides(self):
     input_api = presubmit.InputApi(
         self.fake_change, './PRESUBMIT.py', False, None, False)
-    self.assertEqual(len(input_api.DEFAULT_FILES_TO_CHECK), 24)
+    self.assertEqual(len(input_api.DEFAULT_FILES_TO_CHECK), 25)
     self.assertEqual(len(input_api.DEFAULT_FILES_TO_SKIP), 12)
 
     input_api.DEFAULT_FILES_TO_CHECK = (r'.+\.c$',)

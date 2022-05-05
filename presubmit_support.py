@@ -559,7 +559,8 @@ class InputApi(object):
       r'.+\.c$', r'.+\.cc$', r'.+\.cpp$', r'.+\.h$', r'.+\.m$', r'.+\.mm$',
       r'.+\.inl$', r'.+\.asm$', r'.+\.hxx$', r'.+\.hpp$', r'.+\.s$', r'.+\.S$',
       # Scripts
-      r'.+\.js$', r'.+\.py$', r'.+\.sh$', r'.+\.rb$', r'.+\.pl$', r'.+\.pm$',
+      r'.+\.js$', r'.+\.ts$', r'.+\.py$', r'.+\.sh$', r'.+\.rb$', r'.+\.pl$',
+      r'.+\.pm$',
       # Other
       r'.+\.java$', r'.+\.mk$', r'.+\.am$', r'.+\.css$', r'.+\.mojom$',
       r'.+\.fidl$'
