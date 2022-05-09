@@ -176,8 +176,10 @@ def main(args):
 
       core_multiplier = int(
           os.environ.get('NINJA_CORE_MULTIPLIER', default_core_multiplier))
-
       j_value = num_cores * core_multiplier
+
+      core_limit = int(os.environ.get('NINJA_CORE_LIMIT', j_value))
+      j_value = min(j_value, core_limit)
 
       if sys.platform.startswith('win'):
         # On windows, j value higher than 1000 does not improve build
