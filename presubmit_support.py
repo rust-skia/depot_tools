@@ -710,9 +710,11 @@ class InputApi(object):
     script, or subdirectories thereof. Note that files are listed using the OS
     path separator, so backslashes are used as separators on Windows.
     """
-    dir_with_slash = normpath('%s/' % self.PresubmitLocalPath())
-    if len(dir_with_slash) == 1:
-      dir_with_slash = ''
+    dir_with_slash = normpath(self.PresubmitLocalPath())
+    # normpath strips trailing path separators, so the trailing separator has to
+    # be added after the normpath call.
+    if len(dir_with_slash) > 0:
+      dir_with_slash += os.path.sep
 
     return list(filter(
         lambda x: normpath(x.AbsoluteLocalPath()).startswith(dir_with_slash),
