@@ -185,6 +185,10 @@ def main(args):
         # On windows, j value higher than 1000 does not improve build
         # performance.
         j_value = min(j_value, 1000)
+      elif sys.platform == 'darwin':
+        # On macOS, j value higher than 800 causes 'Too many open files' error
+        # (crbug.com/936864).
+        j_value = min(j_value, 800)
 
       args.append('%d' % j_value)
     else:
