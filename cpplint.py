@@ -2832,7 +2832,7 @@ def CheckSpacingForFunctionCall(filename, clean_lines, linenum, error):
   # first see if we should be looking inside such an expression for a
   # function call, to which we can apply more strict standards.
   fncall = line    # if there's no control flow construct, look at whole line
-  for pattern in (r'\bif\s*\((.*)\)\s*{',
+  for pattern in (r'\bif\s*(?:constexpr\s*)?\((.*)\)\s*{',
                   r'\bfor\s*\((.*)\)\s*{',
                   r'\bwhile\s*\((.*)\)\s*[{;]',
                   r'\bswitch\s*\((.*)\)\s*{'):
@@ -3653,8 +3653,8 @@ def CheckBraces(filename, clean_lines, linenum, error):
 
   # If braces come on one side of an else, they should be on both.
   # However, we have to worry about "else if" that spans multiple lines!
-  if Search(r'else if\s*\(', line):       # could be multi-line if
-    brace_on_left = bool(Search(r'}\s*else if\s*\(', line))
+  if Search(r'else if\s*(?:constexpr\s*)?\(', line):  # could be multi-line if
+    brace_on_left = bool(Search(r'}\s*else if\s*(?:constexpr\s*)?\(', line))
     # find the ( after the if
     pos = line.find('else if')
     pos = line.find('(', pos)
@@ -3685,11 +3685,11 @@ def CheckBraces(filename, clean_lines, linenum, error):
   # its line, and the line after that should have an indent level equal to or
   # lower than the if. We also check for ambiguous if/else nesting without
   # braces.
-  if_else_match = Search(r'\b(if\s*\(|else\b)', line)
+  if_else_match = Search(r'\b(if\s*(?:constexpr\s*)?\(|else\b)', line)
   if if_else_match and not Match(r'\s*#', line):
     if_indent = GetIndentLevel(line)
     endline, endlinenum, endpos = line, linenum, if_else_match.end()
-    if_match = Search(r'\bif\s*\(', line)
+    if_match = Search(r'\bif\s*(?:constexpr\s*)?\(', line)
     if if_match:
       # This could be a multiline if condition, so find the end first.
       pos = if_match.end() - 1
@@ -4620,7 +4620,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
 
   # Check for suspicious usage of "if" like
   # } if (a == b) {
-  if Search(r'\}\s*if\s*\(', line):
+  if Search(r'\}\s*if\s*(?:constexpr\s*)?\(', line):
     error(filename, linenum, 'readability/braces', 4,
           'Did you mean "else if"? If not, start a new line for "if".')
 
