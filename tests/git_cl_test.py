@@ -3095,7 +3095,7 @@ class ChangelistTest(unittest.TestCase):
 
     self.assertEqual(expected_results, results)
     subprocess2.Popen.assert_any_call([
-        'vpython', 'PRESUBMIT_SUPPORT',
+        'vpython3', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
         '--verbose', '--verbose',
@@ -3113,7 +3113,7 @@ class ChangelistTest(unittest.TestCase):
         '--description_file', '/tmp/fake-temp1',
     ])
     subprocess2.Popen.assert_any_call([
-        'vpython3', 'PRESUBMIT_SUPPORT',
+        'vpython', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
         '--verbose', '--verbose',
@@ -3168,7 +3168,7 @@ class ChangelistTest(unittest.TestCase):
 
     self.assertEqual(expected_results, results)
     subprocess2.Popen.assert_any_call([
-        'vpython', 'PRESUBMIT_SUPPORT',
+        'vpython3', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
         '--gerrit_url', 'https://chromium-review.googlesource.com',
@@ -3218,7 +3218,7 @@ class ChangelistTest(unittest.TestCase):
     self.assertEqual(expected_results, results)
     subprocess2.Popen.assert_any_call([
         'rdb', 'stream', '-new', '-realm', 'chromium:public', '--',
-        'vpython', 'PRESUBMIT_SUPPORT',
+        'vpython3', 'PRESUBMIT_SUPPORT',
         '--root', 'root',
         '--upstream', 'upstream',
         '--gerrit_url', 'https://chromium-review.googlesource.com',

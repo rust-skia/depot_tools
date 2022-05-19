@@ -778,6 +778,7 @@ def CheckChangeOnCommit(input_api, output_api):
           }
         ],
         'more_cc': ['me@example.com'],
+        'skipped_presubmits': 0,
     }
 
     fake_result_json = json.dumps(fake_result, sort_keys=True)
