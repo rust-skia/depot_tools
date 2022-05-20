@@ -3,7 +3,6 @@ set noparent
 ajp@google.com
 aravindvasudev@google.com
 gavinmak@google.com
-iannucci@chromium.org
 sokcevic@google.com
 
 per-file ninja*=thakis@chromium.org
