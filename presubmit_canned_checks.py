@@ -41,11 +41,13 @@ OFF_BY_DEFAULT_LINT_FILTERS = [
 # - build/c++11         : Include file and feature blocklists are
 #                         google3-specific
 # - build/header_guard  : Checked by CheckForIncludeGuards
+# - readability/todo    : Chromium puts bug links, not usernames, in TODOs
 # - runtime/references  : No longer banned by Google style guide
 # - whitespace/...      : Most whitespace issues handled by clang-format
 OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS = [
     '-build/c++11',
     '-build/header_guard',
+    '-readability/todo',
     '-runtime/references',
     '-whitespace/braces',
     '-whitespace/comma',
@@ -228,6 +230,20 @@ def CheckChangeLintsClean(input_api, output_api, source_file_filter=None,
   cpplint._cpplint_state.ResetErrorCounts()
 
   cpplint._SetFilters(','.join(GetCppLintFilters(lint_filters)))
+
+  # Use VS error format on Windows to make it easier to step through the
+  # results.
+  if input_api.platform == 'win32':
+    cpplint._SetOutputFormat('vs7')
+
+  if source_file_filter == None:
+    # The only valid extensions for cpplint are .cc, .h, .cpp, .cu, and .ch.
+    # Only process those extensions which are used in Chromium.
+    INCLUDE_CPP_FILES_ONLY = (r'.*\.(cc|h|cpp)$', )
+    source_file_filter = lambda x: input_api.FilterSourceFile(
+        x,
+        files_to_check=INCLUDE_CPP_FILES_ONLY,
+        files_to_skip=input_api.DEFAULT_FILES_TO_SKIP)
 
   # We currently are more strict with normal code than unit tests; 4 and 5 are
   # the verbosity level that would normally be passed to cpplint.py through
@@ -1240,7 +1256,7 @@ def CheckOwners(
   if input_api.gerrit and input_api.gerrit.IsCodeOwnersEnabledOnRepo():
     return []
 
-  affected_files = {f.LocalPath() for f in 
+  affected_files = {f.LocalPath() for f in
                     input_api.change.AffectedFiles(
                         file_filter=source_file_filter)}
   owner_email, reviewers = GetCodereviewOwnerAndReviewers(
