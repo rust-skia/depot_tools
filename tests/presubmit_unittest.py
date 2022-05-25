@@ -904,9 +904,11 @@ def CheckChangeOnCommit(input_api, output_api):
           RUNNING_PY_CHECKS_TEXT + 'Warning, no PRESUBMIT.py found.\n'
           'Running default presubmit script.\n'
           '** Presubmit ERRORS **\n!!\n\n'
+          'There were Python %d presubmit errors.\n'
           'Was the presubmit check useful? If not, run "git cl presubmit -v"\n'
           'to figure out which PRESUBMIT.py was run, then run git blame\n'
-          'on the file to figure out who to ask for help.\n')
+          'on the file to figure out who to ask for help.\n' %
+          sys.version_info.major)
       self.assertEqual(sys.stdout.getvalue(), text)
 
   def ExampleChange(self, extra_lines=None):

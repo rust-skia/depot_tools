@@ -1738,7 +1738,7 @@ def DoPresubmitChecks(change,
         results += executer.ExecPresubmitScript(presubmit_script, filename)
       else:
         skipped_count += 1
-        
+
     results += thread_pool.RunAsync()
 
     messages = {}
@@ -1754,11 +1754,15 @@ def DoPresubmitChecks(change,
       else:
         messages.setdefault('Messages', []).append(result)
 
-    for name, items in messages.items():
-      sys.stdout.write('** Presubmit %s **\n' % name)
-      for item in items:
-        item.handle()
-        sys.stdout.write('\n')
+    # Print the different message types in a consistent order. ERRORS go last
+    # so that they will be most visible in the local-presubmit output.
+    for name in ['Messages', 'Warnings', 'ERRORS']:
+      if name in messages:
+        items = messages[name]
+        sys.stdout.write('** Presubmit %s **\n' % name)
+        for item in items:
+          item.handle()
+          sys.stdout.write('\n')
 
     total_time = time_time() - start_time
     if total_time > 1.0:
@@ -1774,6 +1778,8 @@ def DoPresubmitChecks(change,
             'Are you sure you wish to continue? (y/N): ')
       else:
         sys.stdout.write('\n')
+    else:
+      sys.stdout.write('There were %s presubmit errors.\n' % python_version)
 
     if json_output:
       # Write the presubmit results to json output
