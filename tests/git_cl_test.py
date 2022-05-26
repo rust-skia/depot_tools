@@ -3109,6 +3109,7 @@ class ChangelistTest(unittest.TestCase):
         '--may_prompt',
         '--parallel',
         '--all_files',
+        '--no_diffs',
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
     ])
@@ -3127,6 +3128,7 @@ class ChangelistTest(unittest.TestCase):
         '--may_prompt',
         '--parallel',
         '--all_files',
+        '--no_diffs',
         '--json_output', '/tmp/fake-temp4',
         '--description_file', '/tmp/fake-temp3',
     ])

@@ -1362,6 +1362,8 @@ class Changelist(object):
     if files:
       args.extend(files.split(';'))
       args.append('--source_controlled_only')
+    if files or all_files:
+      args.append('--no_diffs')
 
     if resultdb and not realm:
       # TODO (crbug.com/1113463): store realm somewhere and look it up so
