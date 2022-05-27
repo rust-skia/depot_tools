@@ -540,12 +540,6 @@ class PresubmitUnittest(PresubmitTestsBase):
              '  else:\n'
              '    return ()'), fake_presubmit))
 
-    self.assertRaises(
-        presubmit.PresubmitFailure, executer.ExecPresubmitScript,
-        self.presubmit_text_prefix +
-        'def CheckChangeOnCommit(input_api, output_api):\n'
-        '  return "foo"', fake_presubmit)
-
     self.assertFalse(
         executer.ExecPresubmitScript(
             self.presubmit_text_prefix +
@@ -560,12 +554,6 @@ class PresubmitUnittest(PresubmitTestsBase):
             'CheckChangeHasDescription(\n'
             '    input_api, output_api))\n'
             '  return results\n', fake_presubmit))
-
-    self.assertRaises(
-        presubmit.PresubmitFailure, executer.ExecPresubmitScript,
-        self.presubmit_text_prefix +
-        'def CheckChangeOnCommit(input_api, output_api):\n'
-        '  return ["foo"]', fake_presubmit)
 
   def testExecPresubmitScriptWithResultDB(self):
     description_lines = ('Hello there', 'this is a change', 'BUG=123')
@@ -584,15 +572,6 @@ class PresubmitUnittest(PresubmitTestsBase):
         '  return [output_api.PresubmitResult("test")]\n', fake_presubmit)
     sink.report.assert_called_with('CheckChangeOnCommit',
                                    rdb_wrapper.STATUS_PASS, 0)
-
-    # STATUS_FAIL on exception
-    sink.reset_mock()
-    self.assertRaises(
-        Exception, executer.ExecPresubmitScript, self.presubmit_text_prefix +
-        'def CheckChangeOnCommit(input_api, output_api):\n'
-        '  raise Exception("boom")', fake_presubmit)
-    sink.report.assert_called_with('CheckChangeOnCommit',
-                                   rdb_wrapper.STATUS_FAIL, 0)
 
     # STATUS_FAIL on fatal error
     sink.reset_mock()
