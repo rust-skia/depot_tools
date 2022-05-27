@@ -267,7 +267,10 @@ def CheckChangeLintsClean(input_api, output_api, source_file_filter=None,
       res_type = output_api.PresubmitError
     else:
       res_type = output_api.PresubmitPromptWarning
-    result = [res_type('Changelist failed cpplint.py check.')]
+    result = [
+        res_type('Changelist failed cpplint.py check. '
+                 'Search the output for "(cpplint)"')
+    ]
 
   return result
 
