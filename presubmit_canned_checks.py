@@ -882,7 +882,7 @@ def GetUnitTestsRecursively(input_api,
                       skip_shebang_check=skip_shebang_check)
 
 
-def GetPythonUnitTests(input_api, output_api, unit_tests):
+def GetPythonUnitTests(input_api, output_api, unit_tests, python3=False):
   """Run the unit tests out of process, capture the output and use the result
   code to determine success.
 
@@ -921,7 +921,10 @@ def GetPythonUnitTests(input_api, output_api, unit_tests):
         backpath.append(env.get('PYTHONPATH'))
       env['PYTHONPATH'] = input_api.os_path.pathsep.join((backpath))
       env.pop('VPYTHON_CLEAR_PYTHONPATH', None)
-    cmd = [input_api.python_executable, '-m', '%s' % unit_test]
+    if python3:
+      cmd = [input_api.python3_executable, '-m', '%s' % unit_test]
+    else:
+      cmd = [input_api.python_executable, '-m', '%s' % unit_test]
     results.append(input_api.Command(
         name=unit_test_name,
         cmd=cmd,
