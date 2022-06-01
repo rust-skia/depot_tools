@@ -236,7 +236,6 @@ class GclientTest(trial_dir.TestCase):
         should_recurse=False,
         relative=False,
         condition=None,
-        protocol='https',
         print_outbuf=True)
     self.assertEqual('proto://host/path@revision', d.url)
 
@@ -259,7 +258,6 @@ class GclientTest(trial_dir.TestCase):
             should_recurse=True,
             relative=False,
             condition=None,
-            protocol='https',
             print_outbuf=True),
         gclient.Dependency(
             parent=obj,
@@ -274,7 +272,6 @@ class GclientTest(trial_dir.TestCase):
             should_recurse=False,
             relative=False,
             condition=None,
-            protocol='https',
             print_outbuf=True),
       ],
       [])
@@ -293,7 +290,6 @@ class GclientTest(trial_dir.TestCase):
             should_recurse=False,
             relative=False,
             condition=None,
-            protocol='https',
             print_outbuf=True),
       ],
       [])
@@ -1312,7 +1308,6 @@ class GclientTest(trial_dir.TestCase):
             should_recurse=True,
             relative=False,
             condition=None,
-            protocol='https',
             print_outbuf=True),
       ],
       [])

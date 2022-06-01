@@ -24,7 +24,6 @@ import json
 import argparse
 import os
 import pipes
-import re
 import subprocess
 import sys
 import textwrap
@@ -35,6 +34,7 @@ from distutils import spawn
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_PROTOCOL = 'https'
 
 #################################################
 # Checkout class definitions.
@@ -204,7 +204,7 @@ def handle_args(argv):
     '-p',
     '--protocol-override',
     type=str,
-    default=None,
+    default=DEFAULT_PROTOCOL,
     help='Protocol to use to fetch dependencies, defaults to https.')
 
   parser.add_argument('config', type=str,
@@ -259,13 +259,6 @@ def run(options, spec, root):
   assert 'type' in spec
   checkout_type = spec['type']
   checkout_spec = spec['%s_spec' % checkout_type]
-
-  # Replace https using the protocol specified in --protocol-override
-  if options.protocol_override is not None:
-    for solution in checkout_spec['solutions']:
-      solution['url'] = re.sub(
-        '^([a-z]+):', options.protocol_override + ':', solution['url'])
-
   try:
     checkout = CheckoutFactory(checkout_type, options, checkout_spec, root)
   except KeyError:
