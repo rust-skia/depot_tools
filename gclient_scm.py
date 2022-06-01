@@ -1542,7 +1542,10 @@ class CipdRoot(object):
   @contextlib.contextmanager
   def _create_ensure_file(self):
     try:
-      contents = '$ParanoidMode CheckPresence\n\n'
+      contents = '$ParanoidMode CheckPresence\n'
+      # TODO(crbug/1329641): Remove once cipd packages have been updated
+      # to always be created in copy mode.
+      contents += '$OverrideInstallMode copy\n\n'
       for subdir, packages in sorted(self._packages_by_subdir.items()):
         contents += '@Subdir %s\n' % subdir
         for package in sorted(packages, key=lambda p: p.name):
