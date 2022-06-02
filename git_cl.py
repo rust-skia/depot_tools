@@ -3003,14 +3003,18 @@ def FindCodereviewSettingsFile(filename='codereview.settings'):
   cwd = os.getcwd()
   root = settings.GetRoot()
   if os.path.isfile(os.path.join(root, inherit_ok_file)):
-    root = '/'
+    root = None
   while True:
-    if filename in os.listdir(cwd):
-      if os.path.isfile(os.path.join(cwd, filename)):
-        return open(os.path.join(cwd, filename))
+    if os.path.isfile(os.path.join(cwd, filename)):
+      return open(os.path.join(cwd, filename))
     if cwd == root:
       break
-    cwd = os.path.dirname(cwd)
+    parent_dir = os.path.dirname(cwd)
+    if parent_dir == cwd:
+      # We hit the system root directory.
+      break
+    cwd = parent_dir
+  return None
 
 
 def LoadCodereviewSettingsFromFile(fileobj):
