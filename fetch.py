@@ -260,6 +260,11 @@ def run(options, spec, root):
   checkout_type = spec['type']
   checkout_spec = spec['%s_spec' % checkout_type]
 
+  # Use sso:// by default if the env is cog
+  if not options.protocol_override and \
+    os.getcwd().startswith('/google/src/cloud'):
+    options.protocol_override = 'sso'
+
   # Replace https using the protocol specified in --protocol-override
   if options.protocol_override is not None:
     for solution in checkout_spec['solutions']:

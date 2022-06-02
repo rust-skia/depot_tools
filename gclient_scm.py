@@ -208,6 +208,16 @@ class GitWrapper(SCMWrapper):
   name = 'git'
   remote = 'origin'
 
+  _is_env_cog = None
+
+  @staticmethod
+  def _IsCog():
+    """Returns true if the env is cog"""
+    if not GitWrapper._is_env_cog:
+      GitWrapper._is_env_cog = os.getcwd().startswith('/google/src/cloud')
+
+    return GitWrapper._is_env_cog
+
   @property
   def cache_dir(self):
     try:
