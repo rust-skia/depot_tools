@@ -805,6 +805,12 @@ class Settings(object):
       return False
     return None
 
+  def GetIsGerrit(self):
+    """Return True if gerrit.host is set."""
+    if self.is_gerrit is None:
+      self.is_gerrit = bool(self._GetConfig('gerrit.host', False))
+    return self.is_gerrit
+
   def GetGerritSkipEnsureAuthenticated(self):
     """Return True if EnsureAuthenticated should not be done for Gerrit
     uploads."""
@@ -1323,9 +1329,10 @@ class Changelist(object):
 
     remote, remote_branch = self.GetRemoteBranch()
     target_ref = GetTargetRef(remote, remote_branch, None)
-    args.extend(['--gerrit_url', self.GetCodereviewServer()])
-    args.extend(['--gerrit_project', self.GetGerritProject()])
-    args.extend(['--gerrit_branch', target_ref])
+    if settings.GetIsGerrit():
+      args.extend(['--gerrit_url', self.GetCodereviewServer()])
+      args.extend(['--gerrit_project', self.GetGerritProject()])
+      args.extend(['--gerrit_branch', target_ref])
 
     author = self.GetAuthor()
     issue = self.GetIssue()
