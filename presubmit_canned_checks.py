@@ -1505,6 +1505,11 @@ def CheckPatchFormatted(input_api,
 
   cmd = ['-C', input_api.change.RepositoryRoot(),
          'cl', 'format', '--dry-run', '--presubmit'] + display_args
+
+  # Make sure the passed --upstream branch is applied to a dry run.
+  if input_api.change.UpstreamBranch():
+    cmd.extend(['--upstream', input_api.change.UpstreamBranch()])
+
   presubmit_subdir = input_api.os_path.relpath(
       input_api.PresubmitLocalPath(), input_api.change.RepositoryRoot())
   if presubmit_subdir.startswith('..') or presubmit_subdir == '.':
@@ -1514,6 +1519,7 @@ def CheckPatchFormatted(input_api,
   # contains the PRESUBMIT.py.
   if presubmit_subdir:
     cmd.append(input_api.PresubmitLocalPath())
+
   code, _ = git_cl.RunGitWithCode(cmd, suppress_stderr=bypass_warnings)
   # bypass_warnings? Only fail with code 2.
   # As this is just a warning, ignore all other errors if the user
