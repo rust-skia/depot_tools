@@ -1103,28 +1103,24 @@ def GetPylint(input_api,
         message=error_type,
         python3=not python2)
 
-  # Always run pylint and pass it all the py files at once.
-  # Passing py files one at time is slower and can produce
-  # different results.  input_api.verbose used to be used
-  # to enable this behaviour but differing behaviour in
-  # verbose mode is not desirable.
-  # Leave this unreachable code in here so users can make
-  # a quick local edit to diagnose pylint issues more
-  # easily.
-  if True:
-    # pylint's cycle detection doesn't work in parallel, so spawn a second,
-    # single-threaded job for just that check.
+  # pylint's cycle detection doesn't work in parallel, so spawn a second,
+  # single-threaded job for just that check.
+  # Some PRESUBMITs explicitly mention cycle detection.
+  if not any('R0401' in a or 'cyclic-import' in a for a in extra_args):
+    tests = [
+      GetPylintCmd(files, ["--disable=cyclic-import"], True),
+      GetPylintCmd(files, ["--disable=all", "--enable=cyclic-import"], False),
+    ]
+  else:
+    tests = [
+        GetPylintCmd(files, [], True),
+    ]
+  if version == '1.5':
+    # Warn users about pylint-1.5 deprecation
+    tests.append(output_api.PresubmitPromptWarning(
+        'pylint-1.5 is deprecated, please switch to 2.7 before 2022-07-11'))
 
-    # Some PRESUBMITs explicitly mention cycle detection.
-    if not any('R0401' in a or 'cyclic-import' in a for a in extra_args):
-      return [
-        GetPylintCmd(files, ["--disable=cyclic-import"], True),
-        GetPylintCmd(files, ["--disable=all", "--enable=cyclic-import"], False)
-      ]
-
-    return [ GetPylintCmd(files, [], True) ]
-
-  return map(lambda x: GetPylintCmd([x], [], 1), files)
+  return tests
 
 
 def RunPylint(input_api, *args, **kwargs):
