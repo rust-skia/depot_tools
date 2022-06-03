@@ -5,6 +5,22 @@ chromiumos/infra/crosjobs/linux-amd64
 	git_revision:ed616d595eb7241d39d34907050d2949121d6ae8
 	_vAeU0Q9lAxn933K8vDhwGK40zKVvV-yXGpIy43ATXAC
 
+infra/3pp/tools/ninja/linux-amd64
+	version:2@1.8.2.chromium.3
+	PUvdixKxFO_KVk9d6WFpXLVDMM0MHv86jyyySTMQ7KIC
+
+infra/3pp/tools/ninja/mac-amd64
+	version:2@1.8.2.chromium.3
+	w-R-1UrTQJ2UPgSjcqXMayjE6pf76XpXE434rOY1EC8C
+
+infra/3pp/tools/ninja/mac-arm64
+	version:2@1.8.2.chromium.3
+	nVO-Kzyky9nfG4pRb3Qo7KdxyoEXjdwuOhVwy-h0rbMC
+
+infra/3pp/tools/ninja/windows-amd64
+	version:2@1.8.2.chromium.3
+	HLdWFKyFMpFQO3VFSps1gevQGwY95hEBUFblIfDux5QC
+
 infra/chromeperf/pinpoint/linux-386
 	git_revision:bcddecafe86615e7580bec5cd98485cf46786387
 	DgfsgiORcJT3yb4G7bhWgwYAlNSR3NNN8mA6mTAhjtYC
