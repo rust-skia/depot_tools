@@ -1117,8 +1117,11 @@ def GetPylint(input_api,
     ]
   if version == '1.5':
     # Warn users about pylint-1.5 deprecation
-    tests.append(output_api.PresubmitPromptWarning(
-        'pylint-1.5 is deprecated, please switch to 2.7 before 2022-07-11'))
+    tests.append(
+        output_api.PresubmitPromptWarning(
+            'pylint-1.5 is being run on %s and is deprecated, please switch '
+            'to 2.7 before 2022-07-11 (add version=\'2.7\' to RunPylint call)'
+            % input_api.PresubmitLocalPath()))
 
   return tests
 
