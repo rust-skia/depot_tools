@@ -1058,11 +1058,7 @@ class GitWrapper(SCMWrapper):
       return
 
     if getattr(options, 'shallow', False):
-      # HACK(hinoka): These repositories should be super shallow.
-      if 'flash' in mirror.url:
-        depth = 10
-      else:
-        depth = 10000
+      depth = 10000
     else:
       depth = None
     mirror.populate(verbose=options.verbose,
