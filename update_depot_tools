@@ -129,11 +129,7 @@ if [ "X$DEPOT_TOOLS_UPDATE" != "X0" ]; then
   if [ -e "$base_dir/.git" ]; then
     cd "$base_dir"
     update_git_repo
-    UPDATE_RESULT=$?
     cd - > /dev/null
-    if [[ $UPDATE_RESULT -ne 0 ]]; then
-      exit $UPDATE_RESULT
-    fi
   fi
 
   # Sync CIPD-boostrapped packages.
