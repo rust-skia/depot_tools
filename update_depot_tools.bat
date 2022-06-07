@@ -5,17 +5,24 @@
 
 :: This batch file will try to sync the root directory.
 
-setlocal
+setlocal enabledelayedexpansion
 
 :: Windows freaks out if a file is overwritten while it's being executed.  Copy
 :: this script off to a temporary location and reinvoke from there before
 :: running any git commands.
 IF "%~nx0"=="update_depot_tools.bat" (
   COPY /Y "%~dp0update_depot_tools.bat" "%TEMP%\update_depot_tools_tmp.bat" >nul
-  if errorlevel 1 goto :EOF
+  if errorlevel 1 (
+    echo Error updating depot_tools, can't copy update_depot_tools.bat to TEMP.
+    :: !VAR! syntax is used to get delayed expansion, because %VAR% syntax would
+    :: return a value that was set prior entering the IF () block.
+    exit /b !ERRORLEVEL!
+  )
   :: Use call/exit to avoid leaving an orphaned window title.
   call "%TEMP%\update_depot_tools_tmp.bat" "%~dp0" %*
-  exit /b %ERRORLEVEL%
+  :: !VAR! syntax is used to get delayed expansion, because %VAR% syntax would
+  :: return a value that was set prior entering the IF () block.
+  exit /b !ERRORLEVEL!
 )
 
 set DEPOT_TOOLS_DIR=%~1
@@ -25,15 +32,16 @@ SHIFT
 IF EXIST "%DEPOT_TOOLS_DIR%.disable_auto_update" GOTO :EOF
 IF "%DEPOT_TOOLS_UPDATE%" == "0" GOTO :EOF
 
+echo Updating depot_tools...
 set GIT_URL=https://chromium.googlesource.com/chromium/tools/depot_tools.git
 
 :: Download git for the first time if it's not present.
 call git --version > nul 2>&1
-if %errorlevel% == 0 goto :GIT_UPDATE
+if %ERRORLEVEL% == 0 goto :GIT_UPDATE
 call "%DEPOT_TOOLS_DIR%bootstrap\win_tools.bat"
 if errorlevel 1 (
   echo Error updating depot_tools, no revision tool found.
-  goto :EOF
+  exit /b %ERRORLEVEL%
 )
 
 :GIT_UPDATE
@@ -60,7 +68,7 @@ call git fetch -q origin > NUL
 call git checkout -q origin/main > NUL
 if errorlevel 1 (
   echo Failed to update depot_tools.
-  goto :EOF
+  exit /b %ERRORLEVEL%
 )
 
 :: Sync CIPD and CIPD client tools.
