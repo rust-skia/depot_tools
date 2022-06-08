@@ -712,6 +712,10 @@ def CheckTreeIsOpen(input_api, output_api,
       if not status['can_commit_freely']:
         short_text = 'Tree state is: ' + status['general_state']
         long_text = status['message'] + '\n' + json_url
+        if input_api.no_diffs:
+          return [
+              output_api.PresubmitPromptWarning(short_text, long_text=long_text)
+          ]
         return [output_api.PresubmitError(short_text, long_text=long_text)]
     else:
       # TODO(bradnelson): drop this once all users are gone.
