@@ -775,7 +775,8 @@ def ChangeEdit(host, change, path, data):
   path = 'changes/%s/edit/%s' % (change, urllib.parse.quote(path, ''))
   body = {
       'binary_content':
-      'data:text/plain;base64,%s' % base64.b64encode(data.encode('utf-8'))
+      'data:text/plain;base64,%s' %
+      base64.b64encode(data.encode('utf-8')).decode('utf-8')
   }
   conn = CreateHttpConn(host, path, reqtype='PUT', body=body)
   return ReadHttpJsonResponse(conn, accept_statuses=(204, 409))
