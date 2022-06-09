@@ -31,7 +31,8 @@
 
 # Additional files for cipd_bin_setup.{sh, bat},
 # including cipd/cipd.bat, cipd_client_version* and cipd_manifest*.
-/cipd* recipes
+/cipd*          recipes
+/.cipd_impl.ps1 recipes
 
 # Symlinks
 /cbuildbot      recipes
