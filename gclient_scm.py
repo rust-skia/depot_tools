@@ -1104,12 +1104,6 @@ class GitWrapper(SCMWrapper):
                   retry=True,
                   print_stdout=print_stdout,
                   filter_fn=filter_fn)
-        self._Run(['-C', self.checkout_path, 'sparse-checkout', 'reapply'],
-                  options,
-                  cwd=self._root_dir,
-                  retry=True,
-                  print_stdout=print_stdout,
-                  filter_fn=filter_fn)
       except:
         traceback.print_exc(file=self.out_fh)
         raise

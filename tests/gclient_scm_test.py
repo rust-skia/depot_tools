@@ -238,21 +238,13 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
     options = self.Options()
     scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
     scm._Clone('123123ab', self.url, options)
-    self.assertEquals(mockRun.mock_calls, [
-        mock.call(
-            ['citc', 'clone-repo', self.url, scm.checkout_path, '123123ab'],
-            options,
-            cwd=scm._root_dir,
-            retry=True,
-            print_stdout=False,
-            filter_fn=scm.filter),
-        mock.call(['-C', scm.checkout_path, 'sparse-checkout', 'reapply'],
-                  options,
-                  cwd=scm._root_dir,
-                  retry=True,
-                  print_stdout=False,
-                  filter_fn=scm.filter),
-    ])
+    mockRun.assert_called_once_with(
+        ['citc', 'clone-repo', self.url, scm.checkout_path, '123123ab'],
+        options,
+        cwd=scm._root_dir,
+        retry=True,
+        print_stdout=False,
+        filter_fn=scm.filter)
     mockSetFetchConfig.assert_called_once()
     mockGetCurrentBranch.assert_called_once()
 
