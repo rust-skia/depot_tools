@@ -93,3 +93,6 @@ testing_support/google_appengine
 
 # Ignore VsChromium configuration file.
 /vs-chromium-project.txt
+
+# Ignore the file that logs Python 2 scripts run during presubmits.
+/python2_usage.txt

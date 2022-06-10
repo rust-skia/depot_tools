@@ -41,6 +41,8 @@ base_dir=$(dirname "$0")
 source "$base_dir/cipd_bin_setup.sh"
 cipd_bin_setup &> /dev/null
 
+echo $@ from $(pwd) >> "$base_dir/python2_usage.txt"
+
 # If Python bootstrapping is not disabled, make sure Python has been
 # bootstrapped and add it to the front of PATH.
 if [[ $(uname -s) = MINGW* || $(uname -s) = CYGWIN* ]]; then
