@@ -693,7 +693,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
             GitDependency(
                 parent=self,
                 name=name,
-                # Update URL with parent dep's protocol
+                # Update URL with scheme in protocol_override
                 url=GitDependency.updateProtocol(url, self.protocol),
                 managed=True,
                 custom_deps=None,
@@ -1446,14 +1446,6 @@ solutions = %(solution_list)s
     self._cipd_root = None
     self.config_content = None
 
-  @staticmethod
-  def _getScheme(url):
-    """Returns the scheme part of the given URL"""
-    if not url or not re.match('^([a-z]+)://', url):
-      return None
-
-    return url.split('://')[0]
-
   def _CheckConfig(self):
     """Verify that the config matches the state of the existing checked-out
     solutions."""
@@ -1536,7 +1528,9 @@ it or fix the checkout.
         deps_to_add.append(GitDependency(
             parent=self,
             name=s['name'],
-            url=s['url'],
+            # Update URL with scheme in protocol_override
+            url=GitDependency.updateProtocol(
+              s['url'], s.get('protocol_override', None)),
             managed=s.get('managed', True),
             custom_deps=s.get('custom_deps', {}),
             custom_vars=s.get('custom_vars', {}),
@@ -1547,8 +1541,8 @@ it or fix the checkout.
             relative=None,
             condition=None,
             print_outbuf=True,
-            # Pass parent URL protocol down the tree for child deps to use.
-            protocol=GClient._getScheme(s['url'])))
+            # Pass protocol_override down the tree for child deps to use.
+            protocol=s.get('protocol_override', None)))
       except KeyError:
         raise gclient_utils.Error('Invalid .gclient file. Solution is '
                                   'incomplete: %s' % s)
@@ -1777,7 +1771,7 @@ it or fix the checkout.
               GitDependency(
                   parent=self,
                   name=entry,
-                  # Update URL with parent dep's protocol
+                  # Update URL with scheme in protocol_override
                   url=GitDependency.updateProtocol(prev_url, self.protocol),
                   managed=False,
                   custom_deps={},

@@ -265,11 +265,10 @@ def run(options, spec, root):
     os.getcwd().startswith('/google/src/cloud'):
     options.protocol_override = 'sso'
 
-  # Replace https using the protocol specified in --protocol-override
+  # Update solutions with protocol_override field
   if options.protocol_override is not None:
     for solution in checkout_spec['solutions']:
-      solution['url'] = re.sub(
-        '^([a-z]+):', options.protocol_override + ':', solution['url'])
+      solution['protocol_override'] = options.protocol_override
 
   try:
     checkout = CheckoutFactory(checkout_type, options, checkout_spec, root)
