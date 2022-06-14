@@ -29,10 +29,8 @@
 /roll-dep*                    recipes
 /yapf*                        recipes
 
-# Additional files for cipd_bin_setup.{sh, bat},
-# including cipd/cipd.bat, cipd_client_version* and cipd_manifest*.
-/cipd*          recipes
-/.cipd_impl.ps1 recipes
+# Ensure depot_tools/.cipd_bin in a recipe step.
+/cipd_manifest* recipes
 
 # Symlinks
 /cbuildbot      recipes
