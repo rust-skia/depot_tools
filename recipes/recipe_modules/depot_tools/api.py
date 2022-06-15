@@ -70,6 +70,7 @@ class DepotToolsApi(recipe_api.RecipeApi):
     """
     # By default Depot Tools do not auto update on the bots.
     # (crbug/1090603)
+    self._cipd_bin_setup()
     with self.m.context(
         **{'env_suffixes': {
             'PATH': [self.root],
