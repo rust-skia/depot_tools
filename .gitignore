@@ -7,7 +7,9 @@
 /.versions
 
 # ignore ninja.exe copied from .cipd_bin.
-/ninja.exe
+# TODO(crbug.com/931218): checkin ninja.exe for issues that can't ensure
+# ninja.exe as expected.
+# /ninja.exe
 
 # Ignore "disable auto update" sentinel file.
 .disable_auto_update
