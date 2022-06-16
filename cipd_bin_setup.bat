@@ -5,5 +5,4 @@
 
 call "%~dp0\cipd.bat" ensure -log-level warning -ensure-file "%~dp0\cipd_manifest.txt" -root "%~dp0\.cipd_bin"
 :: copy ninja.exe to the root since many places assume ninja.exe exists in depot_tools.
-:: TODO(crbug.com/931218): check in ninja.exe for now.
-:: copy /y "%~dp0\.cipd_bin\ninja.exe" "%~dp0\ninja.exe" > nul
+copy /y "%~dp0\.cipd_bin\ninja.exe" "%~dp0\ninja.exe" > nul
