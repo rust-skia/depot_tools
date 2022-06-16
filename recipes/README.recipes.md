@@ -119,7 +119,7 @@ Sets a fixed revision for a single dependency using project revision
 properties.
 ### *recipe_modules* / [depot\_tools](/recipes/recipe_modules/depot_tools)
 
-[DEPS](/recipes/recipe_modules/depot_tools/__init__.py#7): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
+[DEPS](/recipes/recipe_modules/depot_tools/__init__.py#7): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 

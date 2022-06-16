@@ -86,11 +86,4 @@ class DepotToolsApi(recipe_api.RecipeApi):
       self.repo_resource('.cipd_bin'),
       self.repo_resource('cipd_manifest.txt'),
       'ensure depot_tools/.cipd_bin')
-    if self.m.platform.is_win:
-      # Copy ninja.exe from .cipd_bin to depot_tools root because there are
-      # many places that assume depot_tools/ninja.exe exists.
-      self.m.file.copy(
-        'copy depot_tools/.cipd_bin/ninja.exe to depot_tools/',
-        self.repo_resource('.cipd_bin', 'ninja.exe'),
-        self.repo_resource('ninja.exe'))
     self._cipd_bin_setup_called = True

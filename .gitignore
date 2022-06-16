@@ -6,9 +6,6 @@
 /.cipd_client*
 /.versions
 
-# ignore ninja.exe copied from .cipd_bin.
-/ninja.exe
-
 # Ignore "disable auto update" sentinel file.
 .disable_auto_update
 

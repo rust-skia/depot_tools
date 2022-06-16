@@ -64,20 +64,6 @@
   },
   {
     "cmd": [
-      "vpython3",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]\\resources\\fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "RECIPE_REPO[depot_tools]\\.cipd_bin\\ninja.exe",
-      "RECIPE_REPO[depot_tools]\\ninja.exe"
-    ],
-    "infra_step": true,
-    "name": "copy depot_tools/.cipd_bin/ninja.exe to depot_tools/"
-  },
-  {
-    "cmd": [
       "ls",
       "RECIPE_REPO[depot_tools]\\ninja.exe"
     ],
