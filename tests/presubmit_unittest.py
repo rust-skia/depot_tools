@@ -2467,7 +2467,7 @@ the current line as well!
             ('--rcfile=%s\n--disable=all\n--enable=cyclic-import\nfile1.py' %
              pylintrc).encode('utf-8')),
         mock.call(process,
-                  ('--rcfile=%s\n--disable=cyclic-import\n--jobs=2\nfile1.py' %
+                  ('--rcfile=%s\n--disable=cyclic-import\n--jobs=1\nfile1.py' %
                    pylintrc).encode('utf-8')),
     ])
 

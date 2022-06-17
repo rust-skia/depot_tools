@@ -1093,8 +1093,12 @@ def GetPylint(input_api,
       args.extend(extra)
       description += ' using %s' % (extra,)
     if parallel:
-      args.append('--jobs=%s' % input_api.cpu_count)
-      description += ' on %d cores' % input_api.cpu_count
+      # Make sure we don't request more parallelism than is justified for the
+      # number of files we have to process. PyLint child-process startup time is
+      # significant.
+      jobs = min(input_api.cpu_count, 1 + len(flist) // 10)
+      args.append('--jobs=%s' % jobs)
+      description += ' on %d processes' % jobs
 
     kwargs['stdin'] = '\n'.join(args + flist)
     if input_api.sys.version_info.major != 2:

@@ -169,6 +169,10 @@ class ThreadPool(object):
   def __init__(self, pool_size=None, timeout=None):
     self.timeout = timeout
     self._pool_size = pool_size or multiprocessing.cpu_count()
+    if sys.platform == 'win32':
+      # TODO(crbug.com/1190269) - we can't use more than 56 child processes on
+      # Windows or Python3 may hang.
+      self._pool_size = min(self._pool_size, 56)
     self._messages = []
     self._messages_lock = threading.Lock()
     self._tests = []
@@ -658,6 +662,10 @@ class InputApi(object):
     self.platform = sys.platform
 
     self.cpu_count = multiprocessing.cpu_count()
+    if self.is_windows:
+      # TODO(crbug.com/1190269) - we can't use more than 56 child processes on
+      # Windows or Python3 may hang.
+      self.cpu_count = min(self.cpu_count, 56)
 
     # The local path of the currently-being-processed presubmit script.
     self._current_presubmit_path = os.path.dirname(presubmit_path)
