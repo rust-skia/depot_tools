@@ -1855,12 +1855,13 @@ it or fix the checkout.
     # Once all the dependencies have been processed, it's now safe to write
     # out the gn_args_file and run the hooks.
     if command == 'update':
-      gn_args_dep = self.dependencies[0]
-      if gn_args_dep._gn_args_from:
-        deps_map = {dep.name: dep for dep in gn_args_dep.dependencies}
-        gn_args_dep = deps_map.get(gn_args_dep._gn_args_from)
-      if gn_args_dep and gn_args_dep.HasGNArgsFile():
-        gn_args_dep.WriteGNArgsFile()
+      for dependency in self.dependencies:
+        gn_args_dep = dependency
+        if gn_args_dep._gn_args_from:
+          deps_map = {dep.name: dep for dep in gn_args_dep.dependencies}
+          gn_args_dep = deps_map.get(gn_args_dep._gn_args_from)
+        if gn_args_dep and gn_args_dep.HasGNArgsFile():
+          gn_args_dep.WriteGNArgsFile()
 
       self._RemoveUnversionedGitDirs()
 
