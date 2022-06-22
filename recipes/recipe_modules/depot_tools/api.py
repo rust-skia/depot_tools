@@ -43,13 +43,11 @@ class DepotToolsApi(recipe_api.RecipeApi):
 
   @property
   def ninja_path(self):
-    self._cipd_bin_setup()
     ninja_exe = 'ninja.exe' if self.m.platform.is_win else 'ninja'
     return self.repo_resource(ninja_exe)
 
   @property
   def autoninja_path(self):
-    self._cipd_bin_setup()
     autoninja = 'autoninja.bat' if self.m.platform.is_win else 'autoninja'
     return self.repo_resource(autoninja)
 
@@ -70,20 +68,9 @@ class DepotToolsApi(recipe_api.RecipeApi):
     """
     # By default Depot Tools do not auto update on the bots.
     # (crbug/1090603)
-    self._cipd_bin_setup()
     with self.m.context(
         **{'env_suffixes': {
             'PATH': [self.root],
             'DEPOT_TOOLS_UPDATE': '0'
         }}):
       yield
-
-  def _cipd_bin_setup(self):
-    """Installs CIPD packages under .cipd_bin."""
-    if self._cipd_bin_setup_called:
-      return
-    self.m.cipd.ensure(
-      self.repo_resource('.cipd_bin'),
-      self.repo_resource('cipd_manifest.txt'),
-      'ensure depot_tools/.cipd_bin')
-    self._cipd_bin_setup_called = True

@@ -43,27 +43,6 @@
   },
   {
     "cmd": [
-      "cipd",
-      "ensure",
-      "-root",
-      "RECIPE_REPO[depot_tools]/.cipd_bin",
-      "-ensure-file",
-      "RECIPE_REPO[depot_tools]/cipd_manifest.txt",
-      "-max-threads",
-      "0",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "name": "ensure depot_tools/.cipd_bin",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {}@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
       "ls",
       "RECIPE_REPO[depot_tools]/ninja"
     ],
