@@ -839,7 +839,7 @@ def GetUnitTests(input_api,
             message=message_type))
         test_run = True
       if not test_run:
-        results.append(output_api.PresubmitPromptWarning(
+        results.append(output_api.PresubmitError(
             "The %s test was not run. You may need to add\n"
             "skip_shebang_check=True for python3 tests." % unit_test))
   return results
