@@ -933,8 +933,6 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     """Runs |command| then parse the DEPS file."""
     logging.info('Dependency(%s).run()' % self.name)
     assert self._file_list == []
-    if not self.should_process:
-      return
     # When running runhooks, there's no need to consult the SCM.
     # All known hooks are expected to run unconditionally regardless of working
     # copy state, so skip the SCM status check.
