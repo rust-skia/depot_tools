@@ -1160,7 +1160,7 @@ class GitWrapper(SCMWrapper):
       finally:
         if os.listdir(tmp_dir):
           self.Print('_____ removing non-empty tmp dir %s' % tmp_dir)
-          gclient_utils.rmtree(tmp_dir)
+        gclient_utils.rmtree(tmp_dir)
         if template_dir:
           gclient_utils.rmtree(template_dir)
 
