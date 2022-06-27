@@ -1003,7 +1003,7 @@ def GetPylint(input_api,
               disabled_warnings=None,
               extra_paths_list=None,
               pylintrc=None,
-              version='1.5'):
+              version='2.7'):
   """Run pylint on python files.
 
   The default files_to_check enforces looking only at *.py files.
