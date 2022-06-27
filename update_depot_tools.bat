@@ -48,6 +48,13 @@ if errorlevel 1 (
 :: Now clear errorlevel so it can be set by other programs later.
 set errorlevel=
 
+:: Make sure DEPOT_TOOLS_DIR is a git repo
+IF NOT EXIST "%DEPOT_TOOLS_DIR%.git\" (
+  echo Error: Your depot_tools directory does not appear to be a git repository, and cannot be updated.
+  echo Consider deleting your depot_tools directory and following the instructions at https://www.chromium.org/developers/how-tos/install-depot-tools/ to reinstall it.
+  exit /b 1
+)
+
 cd /d "%DEPOT_TOOLS_DIR%."
 call git config remote.origin.fetch > NUL
 for /F %%x in ('git config --get remote.origin.url') DO (
