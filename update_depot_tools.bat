@@ -49,7 +49,7 @@ if errorlevel 1 (
 set errorlevel=
 
 :: Make sure DEPOT_TOOLS_DIR is a git repo
-IF NOT EXIST "%DEPOT_TOOLS_DIR%.git\" (
+IF NOT EXIST "%DEPOT_TOOLS_DIR%.git" (
   echo Error: Your depot_tools directory does not appear to be a git repository, and cannot be updated.
   echo Consider deleting your depot_tools directory and following the instructions at https://www.chromium.org/developers/how-tos/install-depot-tools/ to reinstall it.
   exit /b 1
