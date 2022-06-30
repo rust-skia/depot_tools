@@ -9,6 +9,7 @@ See gclient_smoketest.py for integration tests.
 """
 
 import copy
+import json
 import logging
 import ntpath
 import os
@@ -78,6 +79,9 @@ class GclientTest(trial_dir.TestCase):
     self._old_createscm = gclient.gclient_scm.GitWrapper
     gclient.gclient_scm.GitWrapper = SCMMock
     SCMMock.unit_test = self
+
+    mock.patch('os.environ', {}).start()
+    self.addCleanup(mock.patch.stopall)
 
   def tearDown(self):
     self.assertEqual([], self._get_processed())
@@ -1434,6 +1438,96 @@ class GclientTest(trial_dir.TestCase):
     obj = gclient.GClient.LoadCurrentConfig(options)
     foo_sol = obj.dependencies[0]
     self.assertEqual('foo', foo_sol.FuzzyMatchUrl(['foo']))
+
+  def testLoadCurrentConfig_SkipSyncRevisions(self):
+    """Invalid skip_sync_revisions should raise an error."""
+    write(
+        '.gclient', 'solutions = [\n'
+        '  { "name": "foo", "url": "https://example.com/foo",\n'
+        '    "deps_file" : ".DEPS.git",\n'
+        '  },\n'
+        ']')
+    write(
+        os.path.join('foo', 'DEPS'), 'deps = {\n'
+        '  "bar": "https://example.com/bar.git@bar_version",\n'
+        '}')
+    options, _ = gclient.OptionParser().parse_args([])
+
+    options.skip_sync_revisions = ['1234']
+    with self.assertRaises(gclient_utils.Error):
+      gclient.GClient.LoadCurrentConfig(options)
+
+    options.skip_sync_revisions = ['notasolution@12345']
+    with self.assertRaises(gclient_utils.Error):
+      gclient.GClient.LoadCurrentConfig(options)
+
+  def testEnforceSkipSyncRevisions_DepsPatchRefs(self):
+    """Patch_refs for any deps removes all skip_sync_revisions."""
+    write(
+        '.gclient', 'solutions = [\n'
+        '  { "name": "foo", "url": "https://example.com/foo",\n'
+        '    "deps_file" : ".DEPS.git",\n'
+        '  },\n'
+        ']')
+    write(
+        os.path.join('foo', 'DEPS'), 'deps = {\n'
+        '  "bar": "https://example.com/bar.git@bar_version",\n'
+        '}')
+    options, _ = gclient.OptionParser().parse_args([])
+    options.skip_sync_revisions = ['foo@1234']
+    client = gclient.GClient.LoadCurrentConfig(options)
+    patch_refs = {'foo': '1222', 'somedeps': '1111'}
+    self.assertEqual({}, client._EnforceSkipSyncRevisions(patch_refs))
+
+  def testEnforceSkipSyncRevisions_CustomVars(self):
+    """Changes in a sol's custom_vars removes its revisions."""
+    write(
+        '.gclient', 'solutions = [\n'
+        '  { "name": "samevars", "url": "https://example.com/foo",\n'
+        '    "deps_file" : ".DEPS.git",\n'
+        '    "custom_vars" : { "checkout_foo": "true" },\n'
+        '  },\n'
+        '  { "name": "diffvars", "url": "https://example.com/chicken",\n'
+        '    "deps_file" : ".DEPS.git",\n'
+        '    "custom_vars" : { "checkout_chicken": "true" },\n'
+        '  },\n'
+        '  { "name": "novars", "url": "https://example.com/cow",\n'
+        '    "deps_file" : ".DEPS.git",\n'
+        '  },\n'
+        ']')
+    write(
+        os.path.join('samevars', 'DEPS'), 'deps = {\n'
+        '  "bar": "https://example.com/bar.git@bar_version",\n'
+        '}')
+    write(
+        os.path.join('diffvars', 'DEPS'), 'deps = {\n'
+        '  "moo": "https://example.com/moo.git@moo_version",\n'
+        '}')
+    write(
+        os.path.join('novars', 'DEPS'), 'deps = {\n'
+        '  "poo": "https://example.com/poo.git@poo_version",\n'
+        '}')
+
+    previous_custom_vars = {
+        'samevars': {
+            'checkout_foo': 'true'
+        },
+        'diffvars': {
+            'checkout_chicken': 'false'
+        },
+    }
+    os.environ[gclient.PREVIOUS_CUSTOM_VARS] = json.dumps(previous_custom_vars)
+    options, _ = gclient.OptionParser().parse_args([])
+
+    patch_refs = {'samevars': '1222'}
+    options.skip_sync_revisions = [
+        'samevars@10001', 'diffvars@10002', 'novars@10003'
+    ]
+    expected_skip_sync_revisions = {'samevars': '10001', 'novars': '10003'}
+
+    client = gclient.GClient.LoadCurrentConfig(options)
+    self.assertEqual(expected_skip_sync_revisions,
+                     client._EnforceSkipSyncRevisions(patch_refs))
 
 
 class MergeVarsTest(unittest.TestCase):
