@@ -1504,8 +1504,9 @@ class Changelist(object):
     return change_description
 
   def _GetTitleForUpload(self, options):
-    # When not squashing, just return options.title.
-    if not options.squash:
+    # When not squashing or options.title is provided, just return
+    # options.title.
+    if not options.squash or options.title:
       return options.title
 
     # On first upload, patchset title is always this string, while options.title
@@ -1515,8 +1516,6 @@ class Changelist(object):
 
     # When uploading subsequent patchsets, options.message is taken as the title
     # if options.title is not provided.
-    if options.title:
-      return options.title
     if options.message:
       return options.message.strip()
 

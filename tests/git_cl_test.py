@@ -878,11 +878,11 @@ class TestGitCl(unittest.TestCase):
         metrics_arguments.append('notify=NONE')
 
     # If issue is given, then description is fetched from Gerrit instead.
-    if issue is None:
-      if squash:
-        title = 'Initial upload'
-    else:
-      if not title:
+    if not title:
+      if issue is None:
+        if squash:
+          title = 'Initial upload'
+      else:
         calls += [
           ((['git', 'show', '-s', '--format=%s', 'HEAD'],), ''),
           (('ask_for_data', 'Title for patchset []: '), 'User input'),
@@ -1378,6 +1378,7 @@ class TestGitCl(unittest.TestCase):
         ['-f', '-t', 'title'],
         'title\n\ndesc\n\nChange-Id: 123456789',
         [],
+        title='title',
         force=True,
         squash=True,
         log_description='desc',
