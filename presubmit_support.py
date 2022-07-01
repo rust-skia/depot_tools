@@ -1483,7 +1483,7 @@ def DoPostUploadExecuter(change, gerrit_obj, verbose, use_python3=False):
     if verbose:
       sys.stdout.write('Running %s\n' % filename)
     # Accept CRLF presubmit script.
-    presubmit_script = gclient_utils.FileRead(filename, 'rU')
+    presubmit_script = gclient_utils.FileRead(filename).replace('\r\n', '\n')
     if _ShouldRunPresubmit(presubmit_script, use_python3):
       results.extend(executer.ExecPresubmitScript(
           presubmit_script, filename, gerrit_obj, change))
@@ -1755,7 +1755,7 @@ def DoPresubmitChecks(change,
       if verbose:
         sys.stdout.write('Running %s\n' % filename)
       # Accept CRLF presubmit script.
-      presubmit_script = gclient_utils.FileRead(filename, 'rU')
+      presubmit_script = gclient_utils.FileRead(filename).replace('\r\n', '\n')
       if _ShouldRunPresubmit(presubmit_script, use_python3):
         results += executer.ExecPresubmitScript(presubmit_script, filename)
       else:
