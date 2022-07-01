@@ -1482,6 +1482,54 @@ class GerritChangesTest(fake_repos.FakeReposTestBase):
     self.assertEqual(self.githash('repo_1', 5), self.gitrevparse(self.root_dir))
 
 
+class DepsChangesFakeRepo(fake_repos.FakeReposBase):
+  def populateGit(self):
+    self._commit_git('repo_1', {'DEPS': 'versionA', 'doesnotmatter': 'B'})
+    self._commit_git('repo_1', {'DEPS': 'versionA', 'doesnotmatter': 'C'})
+
+    self._commit_git('repo_1', {'DEPS': 'versionB'})
+    self._commit_git('repo_1', {'DEPS': 'versionA', 'doesnotmatter': 'C'})
+    self._create_ref('repo_1', 'refs/heads/main', 4)
+
+
+class CheckDiffTest(fake_repos.FakeReposTestBase):
+  FAKE_REPOS_CLASS = DepsChangesFakeRepo
+
+  def setUp(self):
+    super(CheckDiffTest, self).setUp()
+    self.enabled = self.FAKE_REPOS.set_up_git()
+    self.options = BaseGitWrapperTestCase.OptionsObject()
+    self.url = self.git_base + 'repo_1'
+    self.mirror = None
+    mock.patch('sys.stdout', StringIO()).start()
+    self.addCleanup(mock.patch.stopall)
+
+  def setUpMirror(self):
+    self.mirror = tempfile.mkdtemp()
+    git_cache.Mirror.SetCachePath(self.mirror)
+    self.addCleanup(gclient_utils.rmtree, self.mirror)
+    self.addCleanup(git_cache.Mirror.SetCachePath, None)
+
+  def testCheckDiff(self):
+    """Correctly check for diffs."""
+    scm = gclient_scm.GitWrapper(self.url, self.root_dir, '.')
+    file_list = []
+
+    # Make sure we don't specify a revision.
+    self.options.revision = None
+    scm.update(self.options, None, file_list)
+    self.assertEqual(self.githash('repo_1', 4), self.gitrevparse(self.root_dir))
+
+    self.assertFalse(scm.check_diff(self.githash('repo_1', 1), files=['DEPS']))
+    self.assertTrue(scm.check_diff(self.githash('repo_1', 1)))
+    self.assertTrue(scm.check_diff(self.githash('repo_1', 3), files=['DEPS']))
+
+    self.assertFalse(
+        scm.check_diff(self.githash('repo_1', 2),
+                       files=['DEPS', 'doesnotmatter']))
+    self.assertFalse(scm.check_diff(self.githash('repo_1', 2)))
+
+
 if 'unittest.util' in __import__('sys').modules:
   # Show full diff in self.assertEqual.
   __import__('sys').modules['unittest.util']._MAX_LENGTH = 999999999
