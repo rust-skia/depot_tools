@@ -423,9 +423,11 @@ class Mirror(object):
         # Start with a bare git dir.
         self.RunGit(['init', '--bare'], cwd=self.mirror_path)
         # Set appropriate symbolic-ref
-        remote_info = subprocess.check_output(
-            [self.git_exe, 'remote', 'show', self.url],
-            cwd=self.mirror_path).decode('utf-8', 'ignore').strip()
+        remote_info = exponential_backoff_retry(
+            lambda: subprocess.check_output(
+                [self.git_exe, 'remote', 'show', self.url],
+                cwd=self.mirror_path).decode('utf-8', 'ignore').strip()
+        )
         default_branch_regexp = re.compile(r'HEAD branch: (.*)$')
         m = default_branch_regexp.search(remote_info, re.MULTILINE)
         if m:
