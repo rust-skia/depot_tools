@@ -1792,7 +1792,7 @@ def DoPresubmitChecks(change,
     for name in ['Messages', 'Warnings', 'ERRORS']:
       if name in messages:
         items = messages[name]
-        sys.stdout.write('** Presubmit %s **\n' % name)
+        sys.stdout.write('** Presubmit %s: %d **\n' % (name, len(items)))
         for item in items:
           item.handle()
           sys.stdout.write('\n')
