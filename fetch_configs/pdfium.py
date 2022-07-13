@@ -14,17 +14,27 @@ class PdfiumConfig(config_util.Config):
 
   @staticmethod
   def fetch_spec(props):
+    url = 'https://pdfium.googlesource.com/pdfium.git',
+    solution = {
+        'name': 'src',
+        'url': url,
+        'managed': False,
+        'custom_vars': {},
+    }
+    if props.get('checkout_configuration'):
+      solution['custom_vars']['checkout_configuration'] = props[
+          'checkout_configuration']
+    spec = {
+        'solutions': [solution],
+    }
+    if props.get('target_os'):
+      spec['target_os'] = props['target_os'].split(',')
+    if props.get('target_os_only'):
+      spec['target_os_only'] = props['target_os_only']
+
     return {
-      'type': 'gclient_git',
-      'gclient_git_spec': {
-        'solutions': [
-          {
-            'name': 'pdfium',
-            'url': 'https://pdfium.googlesource.com/pdfium.git',
-            'managed': False,
-          },
-        ],
-      },
+        'type': 'gclient_git',
+        'gclient_git_spec': spec,
     }
 
   @staticmethod
