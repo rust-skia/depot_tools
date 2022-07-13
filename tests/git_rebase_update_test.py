@@ -347,7 +347,6 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
     self.assertEqual(self.repo['G'], self.origin['G'])
 
     output, _ = self.repo.capture_stdio(self.reup.main)
-    self.assertIn('Fetching', output)
     self.assertIn('Rebasing: branch_G', output)
     self.assertIn('Rebasing: branch_K', output)
     self.assertIn('Rebasing: branch_L', output)
