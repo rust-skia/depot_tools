@@ -73,4 +73,4 @@ infra/3pp/tools/ninja/${os=mac}-${arch} version:2@1.8.2.chromium.3
 infra/tools/dirmd/${platform} git_revision:5242fcd971c12d801210fe0490126091cc4a551b
 
 # Pinpoint CLI
-infra/chromeperf/pinpoint/${platform} git_revision:aaee924ce5e66f2c443dad58c4ed11693baeab2f
+infra/chromeperf/pinpoint/${platform} git_revision:53d72e5099bc6f080370ae5f23560383027b947f
