@@ -1655,8 +1655,8 @@ class PresubmitExecuter(object):
 
     elapsed_time = time_time() - start_time
     if elapsed_time > 10.0:
-      sys.stdout.write('%s from %s took %.1fs to run.\n' %
-                       (function_name, presubmit_path, elapsed_time))
+      sys.stdout.write('%6.1fs to run %s from %s.\n' %
+                       (elapsed_time, function_name, presubmit_path))
     if sink:
       status = rdb_wrapper.STATUS_PASS
       if any(r.fatal for r in result):
