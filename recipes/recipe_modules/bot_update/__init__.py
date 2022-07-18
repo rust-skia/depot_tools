@@ -22,7 +22,6 @@ DEPS = [
 ]
 
 from recipe_engine.recipe_api import Property
-from recipe_engine.config import ConfigGroup, Single
 
 PROPERTIES = {
   # Gerrit patches will have all properties about them prefixed with patch_.
@@ -32,10 +31,6 @@ PROPERTIES = {
   '$depot_tools/bot_update': Property(
       help='Properties specific to bot_update module.',
       param_name='properties',
-      kind=ConfigGroup(
-          # Whether we should do the patching in gclient instead of bot_update
-          apply_patch_on_gclient=Single(bool),
-      ),
       default={},
   ),
 }

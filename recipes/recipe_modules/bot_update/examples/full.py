@@ -217,10 +217,6 @@ def GenTests(api):
       try_build(git_repo='https://chromium.googlesource.com/angle/angle')
   )
   yield (
-      api.test('no_apply_patch_on_gclient') +
-      try_build(git_repo='https://chromium.googlesource.com/angle/angle')
-  )
-  yield (
       api.test('tryjob_gerrit_v8_feature_branch') +
       try_build(git_repo='https://chromium.googlesource.com/v8/v8') +
       api.tryserver.gerrit_change_target_ref('refs/heads/experimental/feature')
