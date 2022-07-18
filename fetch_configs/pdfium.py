@@ -14,9 +14,9 @@ class PdfiumConfig(config_util.Config):
 
   @staticmethod
   def fetch_spec(props):
-    url = 'https://pdfium.googlesource.com/pdfium.git',
+    url = 'https://pdfium.googlesource.com/pdfium.git'
     solution = {
-        'name': 'src',
+        'name': 'pdfium',
         'url': url,
         'managed': False,
         'custom_vars': {},
