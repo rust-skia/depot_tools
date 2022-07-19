@@ -22,12 +22,11 @@ class GerritApi(recipe_api.RecipeApi):
         env['PATH'], str(self.repo_resource())])
 
     with self.m.context(env=env):
-      return self.m.python(prefix + name,
-                           self.repo_resource('gerrit_client.py'),
-                           cmd,
-                           infra_step=infra_step,
-                           venv=True,
-                           **kwargs)
+      return self.m.step(
+          prefix + name,
+          ['vpython3', self.repo_resource('gerrit_client.py')] + cmd,
+          infra_step=infra_step,
+          **kwargs)
 
   def call_raw_api(self,
                    host,
