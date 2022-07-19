@@ -38,7 +38,7 @@ $VerifiedPlatform linux-armv6l linux-mips64 linux-mips64le linux-mipsle
 infra/tools/luci/vpython/${platform} git_revision:b91f9144cceb6508d98c5f0ecb8a31f59d277929
 
 # LUCI editor
-infra/tools/luci/led/${platform} git_revision:675ae8e961c277222f676827af22af1f7b5f0a41
+infra/tools/luci/led/${platform} git_revision:339fc51de1f75fe88e35f02781649ca27c2b6977
 
 # LUCI config generator
 infra/tools/luci/lucicfg/${platform} git_revision:0540ed6b0a561d49e476250acf3df623a28d69ad
