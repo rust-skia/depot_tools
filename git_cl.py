@@ -3391,9 +3391,9 @@ def CMDcreds_check(parser, args):
 @metrics.collector.collect_metrics('git cl baseurl')
 def CMDbaseurl(parser, args):
   """Gets or sets base-url for this branch."""
+  _, args = parser.parse_args(args)
   branchref = scm.GIT.GetBranchRef(settings.GetRoot())
   branch = scm.GIT.ShortBranchName(branchref)
-  _, args = parser.parse_args(args)
   if not args:
     print('Current base-url:')
     return RunGit(['config', 'branch.%s.base-url' % branch],
