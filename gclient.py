@@ -132,6 +132,7 @@ UNSET_CACHE_DIR = object()
 
 
 PREVIOUS_CUSTOM_VARS = 'GCLIENT_PREVIOUS_CUSTOM_VARS'
+PREVIOUS_SYNC_COMMITS = 'GCLIENT_PREVIOUS_SYNC_COMMITS'
 
 
 class GNException(Exception):
@@ -457,7 +458,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     # Whether we should sync git/cipd dependencies and hooks from the
     # DEPS file.
-    # This is set based on options.skip_sync_revisions and must be done
+    # This is set based on skip_sync_revisions and must be done
     # after the patch refs are applied.
     # If this is False, we will still run custom_hooks and process
     # custom_deps, if any.
@@ -1010,13 +1011,20 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
             'sync_status': sync_status,
           })
 
-      patch_repo = self.url.split('@')[0]
-      patch_ref = patch_refs.pop(self.FuzzyMatchUrl(patch_refs), None)
-      target_branch = target_branches.pop(
-          self.FuzzyMatchUrl(target_branches), None)
-      if command == 'update' and patch_ref is not None:
-        self._used_scm.apply_patch_ref(patch_repo, patch_ref, target_branch,
-                                       options, file_list)
+      if isinstance(self, GitDependency) and command == 'update':
+        patch_repo = self.url.split('@')[0]
+        patch_ref = patch_refs.pop(self.FuzzyMatchUrl(patch_refs), None)
+        target_branch = target_branches.pop(
+            self.FuzzyMatchUrl(target_branches), None)
+        if patch_ref:
+          latest_commit = self._used_scm.apply_patch_ref(
+              patch_repo, patch_ref, target_branch, options, file_list)
+        else:
+          latest_commit = self._used_scm.revinfo(None, None, None)
+        existing_sync_commits = json.loads(
+            os.environ.get(PREVIOUS_SYNC_COMMITS, '{}'))
+        existing_sync_commits[self.name] = latest_commit
+        os.environ[PREVIOUS_SYNC_COMMITS] = json.dumps(existing_sync_commits)
 
       if file_list:
         file_list = [os.path.join(self.name, f.strip()) for f in file_list]
@@ -1637,15 +1645,6 @@ it or fix the checkout.
               ', '.join(s.name for s in client.dependencies[1:])),
           file=sys.stderr)
 
-    if any('@' not in r for r in options.skip_sync_revisions):
-      raise gclient_utils.Error(
-          "You must specify the full solution name like --revision src@abc")
-    skip_sync_names = [rev.split('@')[0] for rev in options.skip_sync_revisions]
-    sol_names = [s.name for s in client.dependencies]
-    if any(name not in sol_names for name in skip_sync_names):
-      raise gclient_utils.Error(
-          "--skip_sync_revisions are only allowed for solutions.")
-
     return client
 
   def SetDefaultConfig(self, solution_name, deps_file, solution_url,
@@ -1702,12 +1701,15 @@ it or fix the checkout.
   def _EnforceSkipSyncRevisions(self, patch_refs):
     # type: (Mapping[str, str]) -> Mapping[str, str]
     """Checks for and enforces revisions for skipping deps syncing."""
-    if not self._options.skip_sync_revisions:
+    previous_sync_commits = json.loads(
+        os.environ.get(PREVIOUS_SYNC_COMMITS, '{}'))
+
+    if not previous_sync_commits:
       return {}
 
     # Current `self.dependencies` only contain solutions. If a patch_ref is
     # not for a solution, then it is for a solution's dependency or recursed
-    # dependency which we cannot support with skip_sync_revisions.
+    # dependency which we cannot support while skipping sync.
     if patch_refs:
       unclaimed_prs = []
       candidates = []
@@ -1719,9 +1721,9 @@ it or fix the checkout.
           unclaimed_prs.append(patch_repo)
       if unclaimed_prs:
         print(
-            'Ignoring all --skip-sync-revisions. It cannot be used when there '
-            'are --patch-refs flags for non-solution dependencies. To skip '
-            'syncing remove patch_refs for: \n%s' % '\n'.join(unclaimed_prs))
+            'We cannot skip syncs when there are --patch-refs flags for '
+            'non-solution dependencies. To skip syncing, remove patch_refs '
+            'for: \n%s' % '\n'.join(unclaimed_prs))
         return {}
 
     # We cannot skip syncing if there are custom_vars that differ from the
@@ -1729,16 +1731,16 @@ it or fix the checkout.
     previous_custom_vars = json.loads(os.environ.get(PREVIOUS_CUSTOM_VARS,
                                                      '{}'))
     cvs_by_name = {s.name: s.custom_vars for s in self.dependencies}
+
     skip_sync_revisions = {}
-    for revision in self._options.skip_sync_revisions:
-      name, rev = revision.split('@', 1)
+    for name, commit in previous_sync_commits.items():
       previous_vars = previous_custom_vars.get(name, {})
       if previous_vars == cvs_by_name.get(name):
-        skip_sync_revisions[name] = rev
+        skip_sync_revisions[name] = commit
       else:
-        print('--skip-sync-revisions cannot be used for solutions where '
-              'custom_vars is different from custom_vars of the last run on '
-              'this machine.\nRemoving skip_sync_revision for:\n'
+        print('We cannot skip syncs when custom_vars for solutions have '
+              'changed since the last sync run on this machine.\n'
+              '\nRemoving skip_sync_revision for:\n'
               'solution: %s, current: %r, previous: %r.' %
               (name, cvs_by_name.get(name), previous_vars))
     return skip_sync_revisions
@@ -1924,6 +1926,14 @@ it or fix the checkout.
       # TODO(crbug.com/1339472): Pass skip_sync_revisions to flush()
       _skip_sync_revisions = self._EnforceSkipSyncRevisions(patch_refs)
 
+      # Store solutions' custom_vars on disk to compare in the next run.
+      # All dependencies added later are inherited from the current
+      # self.dependencies.
+      custom_vars = {}
+      for dep in self.dependencies:
+        custom_vars[dep.name] = dep.custom_vars
+      os.environ[PREVIOUS_CUSTOM_VARS] = json.dumps(sorted(custom_vars))
+
     # Disable progress for non-tty stdout.
     should_show_progress = (
         setup_color.IS_TTY and not self._options.verbose and progress)
@@ -1976,12 +1986,6 @@ it or fix the checkout.
       if should_show_progress:
         pm = Progress('Running hooks', 1)
       self.RunHooksRecursively(self._options, pm)
-
-    # Store custom_vars on disk to compare in the next run.
-    custom_vars = {}
-    for dep in self.dependencies:
-      custom_vars[dep.name] = dep.custom_vars
-    os.environ[PREVIOUS_CUSTOM_VARS] = json.dumps(sorted(custom_vars))
 
     return 0
 
@@ -3300,8 +3304,6 @@ class OptionParser(optparse.OptionParser):
     if not hasattr(options, 'revisions'):
       # GClient.RunOnDeps expects it even if not applicable.
       options.revisions = []
-    if not hasattr(options, 'skip_sync_revisions'):
-      options.skip_sync_revisions = []
     if not hasattr(options, 'head'):
       options.head = None
     if not hasattr(options, 'nohooks'):

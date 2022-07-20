@@ -68,6 +68,9 @@ class SCMMock(object):
   def GetActualRemoteURL(self, _):
     return self.url
 
+  def revinfo(self, _, _a, _b):
+    return 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+
 
 class GclientTest(trial_dir.TestCase):
   def setUp(self):
@@ -1546,44 +1549,23 @@ class GclientTest(trial_dir.TestCase):
     foo_sol = obj.dependencies[0]
     self.assertEqual('foo', foo_sol.FuzzyMatchUrl(['foo']))
 
-  def testLoadCurrentConfig_SkipSyncRevisions(self):
-    """Invalid skip_sync_revisions should raise an error."""
-    write(
-        '.gclient', 'solutions = [\n'
-        '  { "name": "foo", "url": "https://example.com/foo",\n'
-        '    "deps_file" : ".DEPS.git",\n'
-        '  },\n'
-        ']')
-    write(
-        os.path.join('foo', 'DEPS'), 'deps = {\n'
-        '  "bar": "https://example.com/bar.git@bar_version",\n'
-        '}')
-    options, _ = gclient.OptionParser().parse_args([])
-
-    options.skip_sync_revisions = ['1234']
-    with self.assertRaises(gclient_utils.Error):
-      gclient.GClient.LoadCurrentConfig(options)
-
-    options.skip_sync_revisions = ['notasolution@12345']
-    with self.assertRaises(gclient_utils.Error):
-      gclient.GClient.LoadCurrentConfig(options)
-
   def testEnforceSkipSyncRevisions_DepsPatchRefs(self):
     """Patch_refs for any deps removes all skip_sync_revisions."""
     write(
         '.gclient', 'solutions = [\n'
-        '  { "name": "foo", "url": "https://example.com/foo",\n'
+        '  { "name": "foo/src", "url": "https://example.com/foo",\n'
         '    "deps_file" : ".DEPS.git",\n'
         '  },\n'
         ']')
     write(
-        os.path.join('foo', 'DEPS'), 'deps = {\n'
+        os.path.join('foo/src', 'DEPS'), 'deps = {\n'
         '  "bar": "https://example.com/bar.git@bar_version",\n'
         '}')
     options, _ = gclient.OptionParser().parse_args([])
-    options.skip_sync_revisions = ['foo@1234']
+    os.environ[gclient.PREVIOUS_SYNC_COMMITS] = json.dumps(
+        {'foo/src': '1234'})
     client = gclient.GClient.LoadCurrentConfig(options)
-    patch_refs = {'foo': '1222', 'somedeps': '1111'}
+    patch_refs = {'foo/src': '1222', 'somedeps': '1111'}
     self.assertEqual({}, client._EnforceSkipSyncRevisions(patch_refs))
 
   def testEnforceSkipSyncRevisions_CustomVars(self):
@@ -1627,9 +1609,12 @@ class GclientTest(trial_dir.TestCase):
     options, _ = gclient.OptionParser().parse_args([])
 
     patch_refs = {'samevars': '1222'}
-    options.skip_sync_revisions = [
-        'samevars@10001', 'diffvars@10002', 'novars@10003'
-    ]
+    previous_sync_commits = {'samevars': '10001',
+                             'diffvars': '10002',
+                             'novars': '10003'}
+    os.environ[
+        gclient.PREVIOUS_SYNC_COMMITS] = json.dumps(previous_sync_commits)
+
     expected_skip_sync_revisions = {'samevars': '10001', 'novars': '10003'}
 
     client = gclient.GClient.LoadCurrentConfig(options)

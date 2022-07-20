@@ -399,6 +399,7 @@ class GitWrapper(SCMWrapper):
 
   def apply_patch_ref(self, patch_repo, patch_rev, target_rev, options,
                       file_list):
+    # type: (str, str, str, optparse.Values, Collection[str]) -> str
     """Apply a patch on top of the revision we're synced at.
 
     The patch ref is given by |patch_repo|@|patch_rev|.
@@ -440,7 +441,7 @@ class GitWrapper(SCMWrapper):
     except subprocess2.CalledProcessError:
       pass
 
-    base_rev = self._Capture(['rev-parse', 'HEAD'])
+    base_rev = self.revinfo(None, None, None)
 
     if not target_rev:
       raise gclient_utils.Error('A target revision for the patch must be given')
@@ -533,8 +534,10 @@ class GitWrapper(SCMWrapper):
       if file_list is not None:
         file_list.extend(self._GetDiffFilenames(base_rev))
 
+    latest_commit = self.revinfo(None, None, None)
     if options.reset_patch_ref:
       self._Capture(['reset', '--soft', base_rev])
+    return latest_commit
 
   def check_diff(self, previous_commit, files=None):
     # type: (str, Optional[List[str]]) -> bool
