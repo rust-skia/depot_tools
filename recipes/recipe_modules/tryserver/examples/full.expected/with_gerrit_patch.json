@@ -116,7 +116,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE_REPO[depot_tools]/git_footers.py",
       "--json",
       "/path/to/tmp/json"
@@ -204,7 +204,7 @@
   },
   {
     "cmd": [
-      "python",
+      "python3",
       "RECIPE_REPO[depot_tools]/git_footers.py",
       "--json",
       "/path/to/tmp/json"
