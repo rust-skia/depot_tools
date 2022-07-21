@@ -1558,7 +1558,7 @@ class PresubmitExecuter(object):
     context = {}
 
     try:
-      exec(compile(script_text, 'PRESUBMIT.py', 'exec', dont_inherit=True),
+      exec(compile(script_text, presubmit_path, 'exec', dont_inherit=True),
            context)
     except Exception as e:
       raise PresubmitFailure('"%s" had an exception.\n%s' % (presubmit_path, e))
