@@ -879,7 +879,8 @@ class GclientTest(trial_dir.TestCase):
     options, _ = gclient.OptionParser().parse_args([])
     obj = gclient.GClient.LoadCurrentConfig(options)
     obj.RunOnDeps('None', [])
-    self.assertEqual(
+    six.assertCountEqual(
+        self,
         [
           ('foo', 'svn://example.com/foo'),
           (os.path.join('foo', 'bar'), 'svn://example.com/override'),
