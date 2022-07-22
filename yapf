@@ -12,7 +12,6 @@
 # [VPYTHON:END]
 
 # -*- coding: utf-8 -*-
-import re
 import sys
 
 from yapf import run_main
