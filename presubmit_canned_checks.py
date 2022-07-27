@@ -796,8 +796,9 @@ def GetUnitTests(input_api,
       maybe_shebang = f.readline()
     return maybe_shebang.startswith('#!') and 'python3' in maybe_shebang
 
-  # We don't want to hinder users from uploading incomplete patches.
-  if input_api.is_committing:
+  # We don't want to hinder users from uploading incomplete patches, but we do
+  # want to report errors as errors when doing presubmit --all testing.
+  if input_api.is_committing or input_api.no_diffs:
     message_type = output_api.PresubmitError
   else:
     message_type = output_api.PresubmitPromptWarning
