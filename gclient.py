@@ -134,6 +134,8 @@ UNSET_CACHE_DIR = object()
 PREVIOUS_CUSTOM_VARS = 'GCLIENT_PREVIOUS_CUSTOM_VARS'
 PREVIOUS_SYNC_COMMITS = 'GCLIENT_PREVIOUS_SYNC_COMMITS'
 
+NO_SYNC_EXPERIMENT = 'no-sync'
+
 
 class GNException(Exception):
   pass
@@ -969,7 +971,8 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       work_queue,  # type: ExecutionQueue
       options,  # type: optparse.Values
       patch_refs,  # type: Mapping[str, str]
-      target_branches  # type: Mapping[str, str]
+      target_branches,  # type: Mapping[str, str]
+      skip_sync_revisions,  # type: Mapping[str, str]
   ):
     # type: () -> None
     """Runs |command| then parse the DEPS file."""
@@ -1042,13 +1045,29 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         while file_list[i].startswith(('\\', '/')):
           file_list[i] = file_list[i][1:]
 
-    # TODO(crbug.com/1339472): Pass skip_sync_revisions into this run()
-    # and check for DEPS diffs to set self._should_sync.
+    # We must check for diffs AFTER any patch_refs have been applied.
+    if skip_sync_revisions:
+      skip_sync_rev = skip_sync_revisions.pop(
+          self.FuzzyMatchUrl(skip_sync_revisions), None)
+      self._should_sync = (skip_sync_rev is None
+                           or self._used_scm.check_diff(skip_sync_rev,
+                                                        files=['DEPS']))
+      if not self._should_sync:
+        logging.debug('Skipping sync for %s. No DEPS changes since last '
+                      'sync at %s' % (self.name, skip_sync_rev))
+      else:
+        logging.debug('DEPS changes detected for %s since last sync at '
+                      '%s. Not skipping deps sync' % (
+                          self.name, skip_sync_rev))
+
     if self.should_recurse:
       self.ParseDepsFile()
 
     self._run_is_done(file_list or [])
 
+    # TODO(crbug.com/1339471): If should_recurse is false, ParseDepsFile never
+    # gets called meaning we never fetch hooks and dependencies. So there's
+    # no need to check should_recurse again here.
     if self.should_recurse:
       if command in ('update', 'revert') and not options.noprehooks:
         self.RunPreDepsHooks()
@@ -1743,6 +1762,7 @@ it or fix the checkout.
               '\nRemoving skip_sync_revision for:\n'
               'solution: %s, current: %r, previous: %r.' %
               (name, cvs_by_name.get(name), previous_vars))
+    print('no-sync experiment enabled with %r' % skip_sync_revisions)
     return skip_sync_revisions
 
   # TODO(crbug.com/1340695): Remove handling revisions without '@'.
@@ -1754,14 +1774,12 @@ it or fix the checkout.
     if not self._options.revisions:
       return revision_overrides
     solutions_names = [s.name for s in self.dependencies]
-    index = 0
-    for revision in self._options.revisions:
+    for index, revision in enumerate(self._options.revisions):
       if not '@' in revision:
         # Support for --revision 123
         revision = '%s@%s' % (solutions_names[index], revision)
       name, rev = revision.split('@', 1)
       revision_overrides[name] = rev
-      index += 1
     return revision_overrides
 
   def _EnforcePatchRefsAndBranches(self):
@@ -1914,6 +1932,7 @@ it or fix the checkout.
     revision_overrides = {}
     patch_refs = {}
     target_branches = {}
+    skip_sync_revisions = {}
     # It's unnecessary to check for revision overrides for 'recurse'.
     # Save a few seconds by not calling _EnforceRevisions() in that case.
     if command not in ('diff', 'recurse', 'runhooks', 'status', 'revert',
@@ -1923,10 +1942,10 @@ it or fix the checkout.
 
     if command == 'update':
       patch_refs, target_branches = self._EnforcePatchRefsAndBranches()
-      # TODO(crbug.com/1339472): Pass skip_sync_revisions to flush()
-      _skip_sync_revisions = self._EnforceSkipSyncRevisions(patch_refs)
+      if NO_SYNC_EXPERIMENT in self._options.experiments:
+        skip_sync_revisions = self._EnforceSkipSyncRevisions(patch_refs)
 
-      # Store solutions' custom_vars on disk to compare in the next run.
+      # Store solutions' custom_vars on memory to compare in the next run.
       # All dependencies added later are inherited from the current
       # self.dependencies.
       custom_vars = {}
@@ -1949,8 +1968,13 @@ it or fix the checkout.
     for s in self.dependencies:
       if s.should_process:
         work_queue.enqueue(s)
-    work_queue.flush(revision_overrides, command, args, options=self._options,
-                     patch_refs=patch_refs, target_branches=target_branches)
+    work_queue.flush(revision_overrides,
+                     command,
+                     args,
+                     options=self._options,
+                     patch_refs=patch_refs,
+                     target_branches=target_branches,
+                     skip_sync_revisions=skip_sync_revisions)
 
     if revision_overrides:
       print('Please fix your script, having invalid --revision flags will soon '
@@ -1998,8 +2022,12 @@ it or fix the checkout.
     for s in self.dependencies:
       if s.should_process:
         work_queue.enqueue(s)
-    work_queue.flush({}, None, [], options=self._options, patch_refs=None,
-                     target_branches=None)
+    work_queue.flush({},
+                     None, [],
+                     options=self._options,
+                     patch_refs=None,
+                     target_branches=None,
+                     skip_sync_revisions=None)
 
     def ShouldPrintRevision(dep):
       return (not self._options.filter
@@ -2136,15 +2164,15 @@ class CipdDependency(Dependency):
 
   #override
   def run(self, revision_overrides, command, args, work_queue, options,
-          patch_refs, target_branches):
+          patch_refs, target_branches, skip_sync_revisions):
     """Runs |command| then parse the DEPS file."""
     logging.info('CipdDependency(%s).run()' % self.name)
     if not self.should_process:
       return
     self._CreatePackageIfNecessary()
-    super(CipdDependency, self).run(revision_overrides, command, args,
-                                    work_queue, options, patch_refs,
-                                    target_branches)
+    super(CipdDependency,
+          self).run(revision_overrides, command, args, work_queue, options,
+                    patch_refs, target_branches, skip_sync_revisions)
 
   def _CreatePackageIfNecessary(self):
     # We lazily create the CIPD package to make sure that only packages
@@ -2897,6 +2925,11 @@ def CMDsync(parser, args):
   parser.add_option('--no-reset-patch-ref', action='store_false',
                     dest='reset_patch_ref', default=True,
                     help='Bypass calling reset after patching the ref.')
+  parser.add_option('--experiment',
+                    action='append',
+                    dest='experiments',
+                    default=[],
+                    help='Which experiments should be enabled.')
   (options, args) = parser.parse_args(args)
   client = GClient.LoadCurrentConfig(options)
 
@@ -2930,6 +2963,7 @@ def CMDsync(parser, args):
           'scm': d.used_scm.name if d.used_scm else None,
           'url': str(d.url) if d.url else None,
           'was_processed': d.should_process,
+          'was_synced': d._should_sync,
       }
     with open(options.output_json, 'w') as f:
       json.dump({'solutions': slns}, f)
@@ -3304,6 +3338,8 @@ class OptionParser(optparse.OptionParser):
     if not hasattr(options, 'revisions'):
       # GClient.RunOnDeps expects it even if not applicable.
       options.revisions = []
+    if not hasattr(options, 'experiments'):
+      options.experiments = []
     if not hasattr(options, 'head'):
       options.head = None
     if not hasattr(options, 'nohooks'):

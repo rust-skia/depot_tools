@@ -810,6 +810,63 @@ class FakeRepoBlinkDEPS(FakeReposBase):
     raise NotImplementedError()
 
 
+class FakeRepoNoSyncDEPS(FakeReposBase):
+  """Simulates a repo with some DEPS changes."""
+
+  NB_GIT_REPOS = 2
+
+  def populateGit(self):
+    self._commit_git('repo_2', {'myfile': 'then egg'})
+    self._commit_git('repo_2', {'myfile': 'before egg!'})
+
+    self._commit_git(
+        'repo_1', {
+            'DEPS':
+            textwrap.dedent(
+                """\
+          deps = {
+            'src/repo2': {
+              'url': %(git_base)r + 'repo_2@%(repo2hash)s',
+            },
+          }""" % {
+                    'git_base': self.git_base,
+                    'repo2hash': self.git_hashes['repo_2'][1][0][:7]
+                })
+        })
+    self._commit_git(
+        'repo_1', {
+            'DEPS':
+            textwrap.dedent(
+                """\
+          deps = {
+            'src/repo2': {
+              'url': %(git_base)r + 'repo_2@%(repo2hash)s',
+            },
+          }""" % {
+                    'git_base': self.git_base,
+                    'repo2hash': self.git_hashes['repo_2'][2][0][:7]
+                })
+        })
+    self._commit_git(
+        'repo_1', {
+            'foo_file':
+            'chicken content',
+            'DEPS':
+            textwrap.dedent(
+                """\
+          deps = {
+            'src/repo2': {
+              'url': %(git_base)r + 'repo_2@%(repo2hash)s',
+            },
+          }""" % {
+                    'git_base': self.git_base,
+                    'repo2hash': self.git_hashes['repo_2'][1][0][:7]
+                })
+        })
+
+    self._commit_git('repo_1', {'foo_file': 'chicken content@4'})
+
+
 class FakeReposTestBase(trial_dir.TestCase):
   """This is vaguely inspired by twisted."""
   # Static FakeRepos instances. Lazy loaded.

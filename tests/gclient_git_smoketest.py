@@ -108,25 +108,29 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
                 'url': self.git_base + 'repo_1',
                 'revision': self.githash('repo_1', 2),
                 'was_processed': True,
+                'was_synced': True,
             },
             'src/repo2/': {
                 'scm': 'git',
                 'url':
-                    self.git_base + 'repo_2@' + self.githash('repo_2', 1)[:7],
+                self.git_base + 'repo_2@' + self.githash('repo_2', 1)[:7],
                 'revision': self.githash('repo_2', 1),
                 'was_processed': True,
+                'was_synced': True,
             },
             'src/repo2/repo_renamed/': {
                 'scm': 'git',
                 'url': self.git_base + 'repo_3',
                 'revision': self.githash('repo_3', 2),
                 'was_processed': True,
+                'was_synced': True,
             },
             'src/should_not_process/': {
                 'scm': None,
                 'url': self.git_base + 'repo_4',
                 'revision': None,
                 'was_processed': False,
+                'was_synced': True,
             },
         },
     }
