@@ -130,8 +130,9 @@ DEPOT_TOOLS_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
 # one, e.g. if a spec explicitly says `cache_dir = None`.)
 UNSET_CACHE_DIR = object()
 
+PREVIOUS_CUSTOM_VARS_FILE = '.gclient_previous_custom_vars'
+PREVIOUS_SYNC_COMMITS_FILE = '.gclient_previous_sync_commits'
 
-PREVIOUS_CUSTOM_VARS = 'GCLIENT_PREVIOUS_CUSTOM_VARS'
 PREVIOUS_SYNC_COMMITS = 'GCLIENT_PREVIOUS_SYNC_COMMITS'
 
 NO_SYNC_EXPERIMENT = 'no-sync'
@@ -1717,11 +1718,34 @@ it or fix the checkout.
       gclient_utils.SyntaxErrorToError(filename, e)
     return scope.get('entries', {})
 
+  def _ExtractFileJsonContents(self, default_filename):
+    # type: (str) -> Mapping[str,Any]
+    f = os.path.join(self.root_dir, default_filename)
+
+    if not os.path.exists(f):
+      logging.info('File %s does not exist.' % f)
+      return {}
+
+    with open(f, 'r') as open_f:
+      logging.info('Reading content from file %s' % f)
+      content = open_f.read().rstrip()
+      if content:
+        return json.loads(content)
+    return {}
+
+  def _WriteFileContents(self, default_filename, content):
+    # type: (str, str) -> None
+    f = os.path.join(self.root_dir, default_filename)
+
+    with open(f, 'w') as open_f:
+      logging.info('Writing to file %s' % f)
+      open_f.write(content)
+
   def _EnforceSkipSyncRevisions(self, patch_refs):
     # type: (Mapping[str, str]) -> Mapping[str, str]
     """Checks for and enforces revisions for skipping deps syncing."""
-    previous_sync_commits = json.loads(
-        os.environ.get(PREVIOUS_SYNC_COMMITS, '{}'))
+    previous_sync_commits = self._ExtractFileJsonContents(
+        PREVIOUS_SYNC_COMMITS_FILE)
 
     if not previous_sync_commits:
       return {}
@@ -1747,14 +1771,16 @@ it or fix the checkout.
 
     # We cannot skip syncing if there are custom_vars that differ from the
     # previous run's custom_vars.
-    previous_custom_vars = json.loads(os.environ.get(PREVIOUS_CUSTOM_VARS,
-                                                     '{}'))
+    previous_custom_vars = self._ExtractFileJsonContents(
+        PREVIOUS_CUSTOM_VARS_FILE)
+
     cvs_by_name = {s.name: s.custom_vars for s in self.dependencies}
 
     skip_sync_revisions = {}
     for name, commit in previous_sync_commits.items():
-      previous_vars = previous_custom_vars.get(name, {})
-      if previous_vars == cvs_by_name.get(name):
+      previous_vars = previous_custom_vars.get(name)
+      if previous_vars == cvs_by_name.get(name) or (not previous_vars and
+                                                    not cvs_by_name.get(name)):
         skip_sync_revisions[name] = commit
       else:
         print('We cannot skip syncs when custom_vars for solutions have '
@@ -1808,13 +1834,24 @@ it or fix the checkout.
     delete_unversioned_trees is set to true.
     """
 
-    entries = [i.name for i in self.root.subtree(False) if i.url]
+    entry_names_and_sync = [(i.name, i._should_sync)
+                            for i in self.root.subtree(False) if i.url]
+    entries = []
+    if entry_names_and_sync:
+      entries, _ = zip(*entry_names_and_sync)
     full_entries = [os.path.join(self.root_dir, e.replace('/', os.path.sep))
                     for e in entries]
+    no_sync_entries = [
+        name for name, should_sync in entry_names_and_sync if not should_sync
+    ]
 
     for entry, prev_url in self._ReadEntries().items():
       if not prev_url:
         # entry must have been overridden via .gclient custom_deps
+        continue
+      if any(entry.startswith(sln) for sln in no_sync_entries):
+        # Dependencies of solutions that skipped syncing would not
+        # show up in `entries`.
         continue
       # Fix path separator on Windows.
       entry_fixed = entry.replace('/', os.path.sep)
@@ -1945,13 +1982,16 @@ it or fix the checkout.
       if NO_SYNC_EXPERIMENT in self._options.experiments:
         skip_sync_revisions = self._EnforceSkipSyncRevisions(patch_refs)
 
-      # Store solutions' custom_vars on memory to compare in the next run.
-      # All dependencies added later are inherited from the current
-      # self.dependencies.
-      custom_vars = {}
-      for dep in self.dependencies:
-        custom_vars[dep.name] = dep.custom_vars
-      os.environ[PREVIOUS_CUSTOM_VARS] = json.dumps(sorted(custom_vars))
+    # Store solutions' custom_vars on memory to compare in the next run.
+    # All dependencies added later are inherited from the current
+    # self.dependencies.
+    custom_vars = {
+        dep.name: dep.custom_vars
+        for dep in self.dependencies if dep.custom_vars
+    }
+    if custom_vars:
+      self._WriteFileContents(PREVIOUS_CUSTOM_VARS_FILE,
+                              json.dumps(custom_vars))
 
     # Disable progress for non-tty stdout.
     should_show_progress = (
@@ -2010,6 +2050,9 @@ it or fix the checkout.
       if should_show_progress:
         pm = Progress('Running hooks', 1)
       self.RunHooksRecursively(self._options, pm)
+
+    self._WriteFileContents(PREVIOUS_SYNC_COMMITS_FILE,
+                            os.environ.get(PREVIOUS_SYNC_COMMITS, '{}'))
 
     return 0
 

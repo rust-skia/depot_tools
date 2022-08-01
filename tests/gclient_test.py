@@ -1566,9 +1566,10 @@ class GclientTest(trial_dir.TestCase):
         os.path.join('foo/src', 'DEPS'), 'deps = {\n'
         '  "bar": "https://example.com/bar.git@bar_version",\n'
         '}')
+    write(gclient.PREVIOUS_SYNC_COMMITS_FILE,
+          json.dumps({'foo/src': '1234'}))
     options, _ = gclient.OptionParser().parse_args([])
-    os.environ[gclient.PREVIOUS_SYNC_COMMITS] = json.dumps(
-        {'foo/src': '1234'})
+
     client = gclient.GClient.LoadCurrentConfig(options)
     patch_refs = {'foo/src': '1222', 'somedeps': '1111'}
     self.assertEqual({}, client._EnforceSkipSyncRevisions(patch_refs))
@@ -1601,7 +1602,6 @@ class GclientTest(trial_dir.TestCase):
         os.path.join('novars', 'DEPS'), 'deps = {\n'
         '  "poo": "https://example.com/poo.git@poo_version",\n'
         '}')
-
     previous_custom_vars = {
         'samevars': {
             'checkout_foo': 'true'
@@ -1610,16 +1610,17 @@ class GclientTest(trial_dir.TestCase):
             'checkout_chicken': 'false'
         },
     }
-    os.environ[gclient.PREVIOUS_CUSTOM_VARS] = json.dumps(previous_custom_vars)
-    options, _ = gclient.OptionParser().parse_args([])
-
-    patch_refs = {'samevars': '1222'}
+    write(gclient.PREVIOUS_CUSTOM_VARS_FILE,
+          json.dumps(previous_custom_vars))
     previous_sync_commits = {'samevars': '10001',
                              'diffvars': '10002',
                              'novars': '10003'}
-    os.environ[
-        gclient.PREVIOUS_SYNC_COMMITS] = json.dumps(previous_sync_commits)
+    write(gclient.PREVIOUS_SYNC_COMMITS_FILE,
+          json.dumps(previous_sync_commits))
 
+    options, _ = gclient.OptionParser().parse_args([])
+
+    patch_refs = {'samevars': '1222'}
     expected_skip_sync_revisions = {'samevars': '10001', 'novars': '10003'}
 
     client = gclient.GClient.LoadCurrentConfig(options)

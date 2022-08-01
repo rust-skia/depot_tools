@@ -23,6 +23,16 @@ import subprocess2
 from testing_support import fake_repos
 
 
+def write(filename, content):
+  """Writes the content of a file and create the directories as needed."""
+  filename = os.path.abspath(filename)
+  dirname = os.path.dirname(filename)
+  if not os.path.isdir(dirname):
+    os.makedirs(dirname)
+  with open(filename, 'w') as f:
+    f.write(content)
+
+
 class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
   """Smoke tests for the no-sync experiment."""
 
@@ -63,8 +73,14 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
     patch_ref = self.FAKE_REPOS.git_hashes['repo_1'][3][0]  # DEPS 2
 
     # Previous run did a sync at revision_1
-    self.env[gclient.PREVIOUS_SYNC_COMMITS] = json.dumps({'src': revision_1})
-    self.env[gclient.PREVIOUS_CUSTOM_VARS] = json.dumps({'src': {'mac': True}})
+    write(
+        os.path.join(self.root_dir, gclient.PREVIOUS_SYNC_COMMITS_FILE),
+        json.dumps({'src': revision_1}))
+    write(
+        os.path.join(self.root_dir, gclient.PREVIOUS_CUSTOM_VARS_FILE),
+        json.dumps({'src': {
+            'mac': True
+        }}))
 
     # We checkout src at revision_2 which has a different DEPS
     # but that should not matter because patch_ref and revision_1
@@ -117,8 +133,14 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
     patch_ref = self.FAKE_REPOS.git_hashes['repo_1'][3][0]  # DEPS 2
 
     # Previous run did a sync at revision_1
-    self.env[gclient.PREVIOUS_SYNC_COMMITS] = json.dumps({'src': revision_1})
-    self.env[gclient.PREVIOUS_CUSTOM_VARS] = json.dumps({'src': {'mac': True}})
+    write(
+        os.path.join(self.root_dir, gclient.PREVIOUS_SYNC_COMMITS_FILE),
+        json.dumps({'src': revision_1}))
+    write(
+        os.path.join(self.root_dir, gclient.PREVIOUS_CUSTOM_VARS_FILE),
+        json.dumps({'src': {
+            'mac': True
+        }}))
 
     self.gclient([
         'sync',
@@ -179,7 +201,9 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
     patch_ref = self.FAKE_REPOS.git_hashes['repo_1'][3][0]  # DEPS 1
 
     # Previous run did a sync at revision_1
-    self.env[gclient.PREVIOUS_SYNC_COMMITS] = json.dumps({'src': revision_1})
+    write(
+        os.path.join(self.root_dir, gclient.PREVIOUS_SYNC_COMMITS_FILE),
+        json.dumps({'src': revision_1}))
     # No PREVIOUS_CUSTOM_VARS
 
     # We checkout src at revision_2 which has a different DEPS
@@ -225,7 +249,9 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
     patch_ref = self.FAKE_REPOS.git_hashes['repo_1'][3][0]  # DEPS 1
 
     # Previous run did a sync at revision_1
-    self.env[gclient.PREVIOUS_SYNC_COMMITS] = json.dumps({'src': revision_2})
+    write(
+        os.path.join(self.root_dir, gclient.PREVIOUS_SYNC_COMMITS_FILE),
+        json.dumps({'src': revision_2}))
 
     # We checkout src at revision_1 which has the same DEPS
     # but that should not matter because patch_ref and revision_2
