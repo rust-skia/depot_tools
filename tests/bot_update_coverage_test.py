@@ -228,6 +228,16 @@ class BotUpdateUnittests(unittest.TestCase):
     self.assertTrue(found)
     return self.call.records
 
+  def testGclientNoSyncExperiment(self):
+    ref = 'refs/changes/12/345/6'
+    repo = 'https://chromium.googlesource.com/v8/v8'
+    self.params['patch_refs'] = ['%s@%s' % (repo, ref)]
+    self.params['experiments'] = bot_update.EXP_NO_SYNC
+    bot_update.ensure_checkout(**self.params)
+    args = self.gclient.records[0]
+    idx = args.index('--experiment')
+    self.assertEqual(args[idx+1], bot_update.EXP_NO_SYNC)
+
   def testApplyPatchOnGclient(self):
     ref = 'refs/changes/12/345/6'
     repo = 'https://chromium.googlesource.com/v8/v8'
