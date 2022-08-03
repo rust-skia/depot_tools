@@ -52,8 +52,7 @@ elif [[ $DEPOT_TOOLS_BOOTSTRAP_PYTHON3 != 0 ]]; then
     source "$base_dir/bootstrap_python3"
     bootstrap_python3
   fi
-  PYTHON_BIN_RELDIR="$base_dir/$(cat "$base_dir/python_bin_reldir.txt" | xargs echo)"
-  exec "$base_dir/.cipd_bin/vpython" -vpython-interpreter  "$PYTHON_BIN_RELDIR/python" "$@"
+  exec "$base_dir/.cipd_bin/vpython" "$@"
 else
   exec "$base_dir/.cipd_bin/vpython" "$@"
 fi

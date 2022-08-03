@@ -7,4 +7,4 @@
 
 call "%~dp0\cipd_bin_setup.bat" > nul 2>&1
 echo %* from %cd% >> "%~dp0\python2_usage.txt"
-"%~dp0\.cipd_bin\vpython.exe" -vpython-interpreter "%~dp0\python.bat" %*
+"%~dp0\.cipd_bin\vpython.exe" %*
