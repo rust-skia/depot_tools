@@ -202,6 +202,14 @@ _GCLIENT_SCHEMA = schema.Schema(
         # Also see 'skip_child_includes' and 'specific_include_rules'.
         schema.Optional('include_rules'): [schema.Optional(basestring)],
 
+        # Optionally discards rules from parent directories, similar to
+        # "noparent" in OWNERS files. For example, if
+        # //base/allocator/partition_allocator has "noparent = True" then it
+        # will not inherit rules from //base/DEPS and //base/allocator/DEPS,
+        # forcing each //base/allocator/partition_allocator/{foo,bar,...} to
+        # declare all its dependencies.
+        schema.Optional('noparent'): bool,
+
         # Hooks executed before processing DEPS. See 'hooks' for more details.
         schema.Optional('pre_deps_hooks'): _GCLIENT_HOOKS_SCHEMA,
 
