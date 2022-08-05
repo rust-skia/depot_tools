@@ -1772,9 +1772,9 @@ class Changelist(object):
 
     status = self._GetChangeDetail()['status']
     if status == 'ABANDONED':
-       DieWithError(
-           'Change %s has been abandoned, new uploads are not allowed' %
-           (self.GetIssueURL()))
+      DieWithError(
+          'Change %s has been abandoned, new uploads are not allowed' %
+          (self.GetIssueURL()))
     if status == 'MERGED':
       answer = gclient_utils.AskForData(
           'Change %s has been submitted, new uploads are not allowed. '
@@ -4132,10 +4132,18 @@ def CMDpresubmit(parser, args):
     # Default to diffing against the common ancestor of the upstream branch.
     base_branch = cl.GetCommonAncestorWithUpstream()
 
-  if cl.GetIssue():
-    description = cl.FetchDescription()
-  else:
+  start = time.time()
+  try:
+    if not 'PRESUBMIT_SKIP_NETWORK' in os.environ and cl.GetIssue():
+      description = cl.FetchDescription()
+    else:
+      description = _create_description_from_log([base_branch])
+  except Exception as e:
+    print('Failed to fetch CL description - %s' % str(e))
     description = _create_description_from_log([base_branch])
+  elapsed = time.time() - start
+  if elapsed > 5:
+    print('%.1f s to get CL description.' % elapsed)
 
   if not base_branch:
     if not options.force:

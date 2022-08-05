@@ -705,7 +705,8 @@ def CheckTreeIsOpen(input_api, output_api,
     closed: regex to match for closed status.
     json_url: url to download json style status.
   """
-  if not input_api.is_committing:
+  if not input_api.is_committing or \
+      'PRESUBMIT_SKIP_NETWORK' in _os.environ:
     return []
   try:
     if json_url:
@@ -1439,13 +1440,16 @@ def PanProjectChecks(input_api, output_api,
 
   snapshot("checking owners files format")
   try:
-    results.extend(input_api.canned_checks.CheckOwnersFormat(
-        input_api, output_api))
+    if not 'PRESUBMIT_SKIP_NETWORK' in _os.environ:
+      results.extend(
+          input_api.canned_checks.CheckOwnersFormat(input_api, output_api))
 
-    if owners_check:
-      snapshot("checking owners")
-      results.extend(input_api.canned_checks.CheckOwners(
-          input_api, output_api, source_file_filter=None))
+      if owners_check:
+        snapshot("checking owners")
+        results.extend(
+            input_api.canned_checks.CheckOwners(input_api,
+                                                output_api,
+                                                source_file_filter=None))
   except Exception as e:
     print('Failed to check owners - %s' % str(e))
 

@@ -677,7 +677,7 @@ class InputApi(object):
     self._named_temporary_files = []
 
     self.owners_client = None
-    if self.gerrit:
+    if self.gerrit and not 'PRESUBMIT_SKIP_NETWORK' in self.environ:
       try:
         self.owners_client = owners_client.GetCodeOwnersClient(
             root=change.RepositoryRoot(),
