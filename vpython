@@ -43,16 +43,8 @@ cipd_bin_setup &> /dev/null
 
 echo $@ from $(pwd) >> "$base_dir/python2_usage.txt"
 
-# If Python bootstrapping is not disabled, make sure Python has been
-# bootstrapped and add it to the front of PATH.
 if [[ $(uname -s) = MINGW* || $(uname -s) = CYGWIN* ]]; then
   cmd.exe //c $0.bat "$@"
-elif [[ $DEPOT_TOOLS_BOOTSTRAP_PYTHON3 != 0 ]]; then
-  if [[ ! -e "$base_dir/python_bin_reldir.txt" ]]; then
-    source "$base_dir/bootstrap_python3"
-    bootstrap_python3
-  fi
-  exec "$base_dir/.cipd_bin/vpython" "$@"
 else
   exec "$base_dir/.cipd_bin/vpython" "$@"
 fi
