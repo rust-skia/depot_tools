@@ -644,7 +644,8 @@ class GitWrapper(SCMWrapper):
         self._UpdateMirrorIfNotContains(mirror, options, rev_type, revision)
       try:
         self._Clone(revision, url, options)
-      except subprocess2.CalledProcessError:
+      except subprocess2.CalledProcessError as e:
+        logging.warning('Clone failed due to: %s', e)
         self._DeleteOrMove(options.force)
         self._Clone(revision, url, options)
       if file_list is not None:
@@ -1173,6 +1174,7 @@ class GitWrapper(SCMWrapper):
                   retry=True,
                   print_stdout=print_stdout,
                   filter_fn=filter_fn)
+        logging.debug('Cloned into temporary dir, moving to checkout_path')
         gclient_utils.safe_makedirs(self.checkout_path)
         gclient_utils.safe_rename(os.path.join(tmp_dir, '.git'),
                                   os.path.join(self.checkout_path, '.git'))
