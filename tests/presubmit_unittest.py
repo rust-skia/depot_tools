@@ -43,7 +43,9 @@ import gclient_utils
 import git_cl
 import git_common as git
 import json
+import owners
 import owners_client
+import owners_finder
 import presubmit_support as presubmit
 import rdb_wrapper
 import scm
@@ -2565,9 +2567,25 @@ the current line as well!
 
   def GetInputApiWithOWNERS(self, owners_content, code_owners_enabled=False):
     input_api = self.GetInputApiWithFiles({'OWNERS': ('M', owners_content)})
+
+    owners_file = StringIO(owners_content)
+    fopen = lambda *args: owners_file
+
+    input_api.owners_db = owners.Database('', fopen, os.path)
     input_api.gerrit.IsCodeOwnersEnabledOnRepo = lambda: code_owners_enabled
 
     return input_api
+
+  def testCheckOwnersFormatWorks(self):
+    input_api = self.GetInputApiWithOWNERS('\n'.join([
+        'set noparent',
+        'per-file lalala = lemur@chromium.org',
+    ]))
+    self.assertEqual(
+        [],
+        presubmit_canned_checks.CheckOwnersFormat(
+            input_api, presubmit.OutputApi)
+    )
 
   def testCheckOwnersFormatWorks_CodeOwners(self):
     # If code owners is enabled, we rely on it to check owners format instead of

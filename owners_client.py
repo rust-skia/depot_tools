@@ -2,11 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import itertools
 import os
 import random
+import threading
 
 import gerrit_util
 import git_common
+import owners as owners_db
+import scm
 
 
 class OwnersClient(object):
@@ -113,6 +117,47 @@ class OwnersClient(object):
 
     return selected
 
+
+class DepotToolsClient(OwnersClient):
+  """Implement OwnersClient using owners.py Database."""
+  def __init__(self, root, branch, fopen=open, os_path=os.path):
+    super(DepotToolsClient, self).__init__()
+
+    self._root = root
+    self._branch = branch
+    self._fopen = fopen
+    self._os_path = os_path
+    self._db = None
+    self._db_lock = threading.Lock()
+
+  def _ensure_db(self):
+    if self._db is not None:
+      return
+    self._db = owners_db.Database(self._root, self._fopen, self._os_path)
+    self._db.override_files = self._GetOriginalOwnersFiles()
+
+  def _GetOriginalOwnersFiles(self):
+    return {
+      f: scm.GIT.GetOldContents(self._root, f, self._branch).splitlines()
+      for _, f in scm.GIT.CaptureStatus(self._root, self._branch)
+      if os.path.basename(f) == 'OWNERS'
+    }
+
+  def ListOwners(self, path):
+    # all_possible_owners is not thread safe.
+    with self._db_lock:
+      self._ensure_db()
+      # all_possible_owners returns a dict {owner: [(path, distance)]}. We want
+      # to return a list of owners sorted by increasing distance.
+      distance_by_owner = self._db.all_possible_owners([path], None)
+      # We add a small random number to the distance, so that owners at the
+      # same distance are returned in random order to avoid overloading those
+      # who would appear first.
+      return sorted(
+          distance_by_owner,
+          key=lambda o: distance_by_owner[o][0][1] + random.random())
+
+
 class GerritClient(OwnersClient):
   """Implement OwnersClient using OWNERS REST API."""
   def __init__(self, host, project, branch):
@@ -151,14 +196,11 @@ class GerritClient(OwnersClient):
     return self._owners_cache[path]
 
 
-def GetCodeOwnersClient(host, project, branch):
+def GetCodeOwnersClient(root, upstream, host, project, branch):
   """Get a new OwnersClient.
 
-  Uses GerritClient and raises an exception if code-owners plugin is not
-  available."""
+  Defaults to GerritClient, and falls back to DepotToolsClient if code-owners
+  plugin is not available."""
   if gerrit_util.IsCodeOwnersEnabledOnHost(host):
     return GerritClient(host, project, branch)
-  raise Exception(
-      'code-owners plugin is not enabled. Ask your host admin to enable it '
-      'on %s. Read more about code-owners at '
-      'https://gerrit.googlesource.com/plugins/code-owners.' % host)
+  return DepotToolsClient(root, upstream)

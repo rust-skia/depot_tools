@@ -44,6 +44,7 @@ import gclient_paths  # Exposed through the API
 import gclient_utils
 import git_footers
 import gerrit_util
+import owners as owners_db
 import owners_client
 import owners_finder
 import presubmit_canned_checks
@@ -679,11 +680,15 @@ class InputApi(object):
     if self.gerrit and not 'PRESUBMIT_SKIP_NETWORK' in self.environ:
       try:
         self.owners_client = owners_client.GetCodeOwnersClient(
+            root=change.RepositoryRoot(),
+            upstream=change.UpstreamBranch(),
             host=self.gerrit.host,
             project=self.gerrit.project,
             branch=self.gerrit.branch)
       except Exception as e:
         print('Failed to set owners_client - %s' % str(e))
+    self.owners_db = owners_db.Database(
+        change.RepositoryRoot(), fopen=open, os_path=self.os_path)
     self.owners_finder = owners_finder.OwnersFinder
     self.verbose = verbose
     self.Command = CommandData
