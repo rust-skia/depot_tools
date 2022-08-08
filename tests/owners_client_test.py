@@ -26,41 +26,6 @@ dave = 'dave@example.com'
 emily = 'emily@example.com'
 
 
-class DepotToolsClientTest(unittest.TestCase):
-  def setUp(self):
-    self.repo = filesystem_mock.MockFileSystem(files={
-        '/OWNERS': '\n'.join([
-            'per-file approved.cc=approver@example.com',
-            'per-file reviewed.h=reviewer@example.com',
-            'missing@example.com',
-        ]),
-        '/approved.cc': '',
-        '/reviewed.h': '',
-        '/bar/insufficient_reviewers.py': '',
-        '/bar/everyone/OWNERS': '*',
-        '/bar/everyone/foo.txt': '',
-    })
-    self.root = '/'
-    self.fopen = self.repo.open_for_reading
-    self.addCleanup(mock.patch.stopall)
-    self.client = owners_client.DepotToolsClient(
-        '/', 'branch', self.fopen, self.repo)
-
-  @mock.patch('scm.GIT.CaptureStatus')
-  @mock.patch('scm.GIT.GetOldContents')
-  def testListOwners(self, mockGetOldContents, mockCaptureStatus):
-    mockGetOldContents.side_effect = lambda r, f, _b: self.repo.files[r + f]
-    mockCaptureStatus.return_value = [
-        ('M', 'bar/everyone/foo.txt'),
-        ('M', 'OWNERS'),
-    ]
-
-    self.assertEqual(
-        ['*', 'missing@example.com'],
-        self.client.ListOwners('bar/everyone/foo.txt'))
-    mockCaptureStatus.assert_called_once_with('/', 'branch')
-
-
 class GerritClientTest(unittest.TestCase):
   def setUp(self):
     self.client = owners_client.GerritClient('host', 'project', 'branch')
@@ -295,17 +260,16 @@ class GetCodeOwnersClientTest(unittest.TestCase):
     mock.patch('gerrit_util.IsCodeOwnersEnabledOnHost').start()
     self.addCleanup(mock.patch.stopall)
 
-  def testGetCodeOwnersClient_GerritClient(self):
+  def testGetCodeOwnersClient_CodeOwnersEnabled(self):
     gerrit_util.IsCodeOwnersEnabledOnHost.return_value = True
     self.assertIsInstance(
-        owners_client.GetCodeOwnersClient('', '', 'host', 'project', 'branch'),
+        owners_client.GetCodeOwnersClient('host', 'project', 'branch'),
         owners_client.GerritClient)
 
-  def testGetCodeOwnersClient_DepotToolsClient(self):
+  def testGetCodeOwnersClient_CodeOwnersDisabled(self):
     gerrit_util.IsCodeOwnersEnabledOnHost.return_value = False
-    self.assertIsInstance(
-        owners_client.GetCodeOwnersClient('root', 'branch', '', '', ''),
-        owners_client.DepotToolsClient)
+    with self.assertRaises(Exception):
+      owners_client.GetCodeOwnersClient('', '', '')
 
 
 if __name__ == '__main__':
