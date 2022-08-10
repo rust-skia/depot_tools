@@ -102,7 +102,7 @@ class GerritClientTest(unittest.TestCase):
     # Always use slashes as separators.
     gerrit_util.GetOwnersForFile.assert_called_once_with(
         'host', 'project', 'branch', 'bar/everyone/foo.txt',
-        resolve_all_users=False, seed=mock.ANY)
+        resolve_all_users=False, highest_score_only=False, seed=mock.ANY)
 
   def testListOwnersOwnedByAll(self):
     mock.patch(

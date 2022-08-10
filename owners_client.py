@@ -167,6 +167,7 @@ class GerritClient(OwnersClient):
     self._project = project
     self._branch = branch
     self._owners_cache = {}
+    self._best_owners_cache = {}
 
     # Seed used by Gerrit to shuffle code owners that have the same score. Can
     # be used to make the sort order stable across several requests, e.g. to get
@@ -174,26 +175,46 @@ class GerritClient(OwnersClient):
     # same code owners.
     self._seed = random.getrandbits(30)
 
-  def ListOwners(self, path):
+  def _FetchOwners(self, path, cache, highest_score_only=False):
     # Always use slashes as separators.
     path = path.replace(os.sep, '/')
-    if path not in self._owners_cache:
+    if path not in cache:
       # GetOwnersForFile returns a list of account details sorted by order of
       # best reviewer for path. If owners have the same score, the order is
       # random, seeded by `self._seed`.
-      data = gerrit_util.GetOwnersForFile(
-          self._host, self._project, self._branch, path,
-          resolve_all_users=False, seed=self._seed)
-      self._owners_cache[path] = [
-        d['account']['email']
-        for d in data['code_owners']
-        if 'account' in d and 'email' in d['account']
+      data = gerrit_util.GetOwnersForFile(self._host,
+                                          self._project,
+                                          self._branch,
+                                          path,
+                                          resolve_all_users=False,
+                                          highest_score_only=highest_score_only,
+                                          seed=self._seed)
+      cache[path] = [
+          d['account']['email'] for d in data['code_owners']
+          if 'account' in d and 'email' in d['account']
       ]
       # If owned_by_all_users is true, add everyone as an owner at the end of
       # the owners list.
       if data.get('owned_by_all_users', False):
-        self._owners_cache[path].append(self.EVERYONE)
-    return self._owners_cache[path]
+        cache[path].append(self.EVERYONE)
+    return cache[path]
+
+  def ListOwners(self, path):
+    return self._FetchOwners(path, self._owners_cache)
+
+  def ListBestOwners(self, path):
+    return self._FetchOwners(path,
+                             self._best_owners_cache,
+                             highest_score_only=True)
+
+  def BatchListBestOwners(self, paths):
+    """List only the higest-scoring owners for a group of files.
+
+    Returns a dictionary {path: [owners]}.
+    """
+    with git_common.ScopedPool(kind='threads') as pool:
+      return dict(
+          pool.imap_unordered(lambda p: (p, self.ListBestOwners(p)), paths))
 
 
 def GetCodeOwnersClient(root, upstream, host, project, branch):
