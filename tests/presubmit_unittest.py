@@ -2456,18 +2456,10 @@ the current line as well!
             [pylint, '--args-on-stdin'], env=env,
             cwd='CWD', stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
             stdin=subprocess.PIPE),
-        mock.call(
-            [pylint, '--args-on-stdin'], env=env,
-            cwd='CWD', stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
-            stdin=subprocess.PIPE),
     ])
     self.assertEqual(presubmit.sigint_handler.wait.mock_calls, [
-        mock.call(
-            process,
-            ('--rcfile=%s\n--disable=all\n--enable=cyclic-import\nfile1.py' %
-             pylintrc).encode('utf-8')),
         mock.call(process,
-                  ('--rcfile=%s\n--disable=cyclic-import\n--jobs=1\nfile1.py' %
+                  ('--rcfile=%s\nfile1.py' %
                    pylintrc).encode('utf-8')),
     ])
 

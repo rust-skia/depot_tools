@@ -1071,6 +1071,7 @@ def GetPylint(input_api,
   env['PYTHONPATH'] = input_api.os_path.pathsep.join(extra_paths_list)
   env.pop('VPYTHON_CLEAR_PYTHONPATH', None)
   input_api.logging.debug('  with extra PYTHONPATH: %r', extra_paths_list)
+  files_per_job = 10
 
   def GetPylintCmd(flist, extra, parallel):
     # Windows needs help running python files so we explicitly specify
@@ -1103,9 +1104,10 @@ def GetPylint(input_api,
       # Make sure we don't request more parallelism than is justified for the
       # number of files we have to process. PyLint child-process startup time is
       # significant.
-      jobs = min(input_api.cpu_count, 1 + len(flist) // 10)
-      args.append('--jobs=%s' % jobs)
-      description += ' on %d processes' % jobs
+      jobs = min(input_api.cpu_count, 1 + len(flist) // files_per_job)
+      if jobs > 1:
+        args.append('--jobs=%s' % jobs)
+        description += ' on %d processes' % jobs
 
     kwargs['stdin'] = '\n'.join(args + flist)
     if input_api.sys.version_info.major != 2:
@@ -1119,9 +1121,11 @@ def GetPylint(input_api,
         python3=not python2)
 
   # pylint's cycle detection doesn't work in parallel, so spawn a second,
-  # single-threaded job for just that check.
+  # single-threaded job for just that check. However, only do this if there are
+  # actually enough files to process to justify parallelism in the first place.
   # Some PRESUBMITs explicitly mention cycle detection.
-  if not any('R0401' in a or 'cyclic-import' in a for a in extra_args):
+  if len(files) >= files_per_job and not any(
+      'R0401' in a or 'cyclic-import' in a for a in extra_args):
     tests = [
       GetPylintCmd(files, ["--disable=cyclic-import"], True),
       GetPylintCmd(files, ["--disable=all", "--enable=cyclic-import"], False),
