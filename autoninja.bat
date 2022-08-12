@@ -9,7 +9,7 @@ set scriptdir=%~dp0
 
 if not defined AUTONINJA_BUILD_ID (
   :: Set unique build ID.
-  FOR /f "usebackq tokens=*" %%a in (`call %scriptdir%python-bin\python3.bat -c "import uuid; print(uuid.uuid4())"`) do set AUTONINJA_BUILD_ID=%%a
+  FOR /f "usebackq tokens=*" %%a in (`%scriptdir%python-bin\python3.bat -c "import uuid; print(uuid.uuid4())"`) do set AUTONINJA_BUILD_ID=%%a
 )
 
 :: If a build performance summary has been requested then also set NINJA_STATUS
@@ -39,7 +39,7 @@ IF NOT "%1"=="" (
 :: Don't use python3 because it doesn't work in git bash on Windows and we
 :: should be consistent between autoninja.bat and the autoninja script used by
 :: git bash.
-FOR /f "usebackq tokens=*" %%a in (`call %scriptdir%python-bin\python3.bat %scriptdir%autoninja.py "%*"`) do (echo %%a & %%a)
+FOR /f "usebackq tokens=*" %%a in (`%scriptdir%python-bin\python3.bat %scriptdir%autoninja.py "%*"`) do echo %%a & %%a
 @if errorlevel 1 goto buildfailure
 
 :: Use call to invoke python script here, because we use python via python3.bat.
