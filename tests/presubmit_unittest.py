@@ -624,9 +624,12 @@ class PresubmitUnittest(PresubmitTestsBase):
         0,
         presubmit.DoPostUploadExecuter(
             change=change, gerrit_obj=None, verbose=False))
-    self.assertEqual(
-        'Running Python ' + str(sys.version_info.major) + ' '
-        'post upload checks ...\n', sys.stdout.getvalue())
+    expected = (r'Running Python ' + str(sys.version_info.major) +
+                r' post upload checks \.\.\.\n')
+    if sys.version_info[0] == 2:
+      expected += r'Running .*PRESUBMIT.py under Python 2.\n'
+      expected += r'Running .*PRESUBMIT.py under Python 2.\n'
+    self.assertRegexpMatches(sys.stdout.getvalue(), expected)
 
   def testDoPostUploadExecuterWarning(self):
     path = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
@@ -656,13 +659,18 @@ class PresubmitUnittest(PresubmitTestsBase):
         1,
         presubmit.DoPostUploadExecuter(
             change=change, gerrit_obj=None, verbose=False))
-    self.assertEqual(
-        'Running Python ' + str(sys.version_info.major) + ' '
-        'post upload checks ...\n'
-        '\n'
-        '** Post Upload Hook Messages **\n'
-        '!!\n'
-        '\n', sys.stdout.getvalue())
+
+    extra = ''
+    if sys.version_info[0] == 2:
+      extra = r'Running .*PRESUBMIT.py under Python 2.\n'
+    expected = ('Running Python ' + str(sys.version_info.major) + ' '
+                'post upload checks \.\.\.\n'
+                '%s'
+                '\n'
+                '\*\* Post Upload Hook Messages \*\*\n'
+                '!!\n'
+                '\n' % extra)
+    self.assertRegexpMatches(sys.stdout.getvalue(), expected)
 
   def testDoPresubmitChecksNoWarningsOrErrors(self):
     haspresubmit_path = os.path.join(

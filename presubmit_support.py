@@ -1480,11 +1480,13 @@ def DoPostUploadExecuter(change, gerrit_obj, verbose, use_python3=False):
 
   for filename in presubmit_files:
     filename = os.path.abspath(filename)
-    if verbose:
-      sys.stdout.write('Running %s\n' % filename)
     # Accept CRLF presubmit script.
     presubmit_script = gclient_utils.FileRead(filename).replace('\r\n', '\n')
     if _ShouldRunPresubmit(presubmit_script, use_python3):
+      if sys.version_info[0] == 2:
+        sys.stdout.write('Running %s under Python 2.\n' % filename)
+      elif verbose:
+        sys.stdout.write('Running %s\n' % filename)
       results.extend(executer.ExecPresubmitScript(
           presubmit_script, filename, gerrit_obj, change))
 
@@ -1752,11 +1754,13 @@ def DoPresubmitChecks(change,
         skipped_count += 1
     for filename in presubmit_files:
       filename = os.path.abspath(filename)
-      if verbose:
-        sys.stdout.write('Running %s\n' % filename)
       # Accept CRLF presubmit script.
       presubmit_script = gclient_utils.FileRead(filename).replace('\r\n', '\n')
       if _ShouldRunPresubmit(presubmit_script, use_python3):
+        if sys.version_info[0] == 2:
+          sys.stdout.write('Running %s under Python 2.\n' % filename)
+        elif verbose:
+          sys.stdout.write('Running %s\n' % filename)
         results += executer.ExecPresubmitScript(presubmit_script, filename)
       else:
         skipped_count += 1
