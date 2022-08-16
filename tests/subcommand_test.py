@@ -139,7 +139,7 @@ class SubcommandTest(unittest.TestCase):
     self._setUpTestCommands()
 
     self.assertEqual(0, self.sc.execute(self.parser, ['not-found']))
-    self.module.CMDhelp.assert_called_once_with(self.parser, ['not-found'])
+    self.module.CMDhelp.assert_called_once_with(self.parser, [])
     self.assertEqual(
         'Module documentation\n\n'
         'Commands are:\n'

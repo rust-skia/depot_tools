@@ -255,7 +255,9 @@ class CommandDispatcher(object):
     if cmdhelp:
       # Not a known command. Default to help.
       self._add_command_usage(parser, cmdhelp)
-      return cmdhelp(parser, args)
+      # Don't pass list of arguments as those may not be supported by cmdhelp.
+      # See: https://crbug.com/1352093
+      return cmdhelp(parser, [])
 
     # Nothing can be done.
     return 2
