@@ -402,12 +402,12 @@ infra/tools/luci/vpython/windows-amd64
 	yBWGUVYTDDCzwvrFWfB5W5GIRSKndvSK75M1m8l5qfUC
 
 infra/tools/mac_toolchain/mac-amd64
-	git_revision:723fc1a6c8cdf2631a57851f5610e598db0c1de1
-	2ozLryqklxu4fc7KZr_EqEpL66z0G0moWJef2qnPXXwC
+	git_revision:d14d3b7a182f083b41d2df282885d3db210eba79
+	d17Ijg1_sD07eNX6ZeqC_YECqAXie3v4j-g_HtK4JwAC
 
 infra/tools/mac_toolchain/mac-arm64
-	git_revision:723fc1a6c8cdf2631a57851f5610e598db0c1de1
-	1VL13oNQ2PA-Ez2iYTQOWHFcXwA9UD_nhKdhqXsJw-MC
+	git_revision:d14d3b7a182f083b41d2df282885d3db210eba79
+	zpxMyw-nUSR_KIrTn1XCK63frrhYgf0QNklzO-sZ5pMC
 
 infra/tools/prpc/linux-386
 	git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f

@@ -44,7 +44,7 @@ infra/tools/luci/led/${platform} git_revision:f09dbc988cae854052bc20d21a90089d9c
 infra/tools/luci/lucicfg/${platform} git_revision:eb24a3f8d027a68e8b3e3deed440d72cfb2f7393
 
 # Mac toolchain installer
-infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:723fc1a6c8cdf2631a57851f5610e598db0c1de1
+infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:d14d3b7a182f083b41d2df282885d3db210eba79
 
 # LUCI rpc command line tool
 infra/tools/prpc/${platform} git_revision:5a038afb97f6b77e0fcefe1185317da216fced1f
