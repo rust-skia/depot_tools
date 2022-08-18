@@ -111,6 +111,29 @@ def main(args):
               use_goma = True
               break
 
+  # If use_remoteexec is set, but the reclient binaries or configs don't
+  # exist, display an error message and stop.  Otherwise, the build will
+  # attempt to run with rewrapper wrapping actions, but will fail with
+  # possible non-obvious problems.
+  # As of August 2022, dev builds with reclient are not supported, so
+  # indicate that use_goma should be swapped for use_remoteexec.  This
+  # message will be changed when dev builds are fully supported.
+  if (not offline and use_remoteexec and (
+      not os.path.exists(reclient_bin_dir) or not os.path.exists(reclient_cfg))
+     ):
+      print(("Build is configured to use reclient but necessary binaries "
+             "or config files can't be found.  Developer builds with "
+             "reclient are not yet supported.  Try regenerating your "
+             "build with use_goma in place of use_remoteexec for now."),
+             file=sys.stderr)
+      if sys.platform.startswith('win'):
+        # Set an exit code of 1 in the batch file.
+        print('cmd "/c exit 1"')
+      else:
+        # Set an exit code of 1 by executing 'false' in the bash script.
+        print('false')
+      sys.exit(1)
+
   # If GOMA_DISABLED is set to "true", "t", "yes", "y", or "1"
   # (case-insensitive) then gomacc will use the local compiler instead of doing
   # a goma compile. This is convenient if you want to briefly disable goma. It
