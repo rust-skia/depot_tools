@@ -33,7 +33,7 @@ if not exist "%BOOTSTRAP_ROOT_DIR%\.bleeding_edge" (
 :: This method requires EnableDelayedExpansion, and extracts the Python version
 :: from our CIPD manifest. Variables referenced using "!" instead of "%" are
 :: delayed expansion variables.
-for /F "tokens=*" %%A in (%~dp0%CIPD_MANIFEST%) do (
+for /F "usebackq tokens=*" %%A in ("%~dp0%CIPD_MANIFEST%") do (
   set LINE=%%A
   if not "x!LINE:cpython/=!" == "x!LINE!" set PYTHON_VERSION=!LINE:*version:=!
   if not "x!LINE:cpython3/=!" == "x!LINE!" set PYTHON3_VERSION=!LINE:*version:=!

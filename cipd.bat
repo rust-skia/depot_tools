@@ -6,10 +6,10 @@
 setlocal
 
 set CIPD_BACKEND=https://chrome-infra-packages.appspot.com
-set VERSION_FILE="%~dp0cipd_client_version"
-set CIPD_BINARY="%~dp0.cipd_client.exe"
+set VERSION_FILE=%~dp0cipd_client_version
+set CIPD_BINARY=%~dp0.cipd_client.exe
 
-if not exist %CIPD_BINARY% (
+if not exist "%CIPD_BINARY%" (
   call :CLEAN_BOOTSTRAP
   goto :EXEC_CIPD
 )
@@ -46,9 +46,9 @@ exit /b %EXPORT_ERRORLEVEL%
 :: and unzipping the depot_tools.zip distribution, we clear the Zone.Identifier
 :: alternate data stream. This is equivalent to clicking the "Unblock" button
 :: in the file's properties dialog.
-echo.>%~dp0.cipd_impl.ps1:Zone.Identifier
+echo.>"%~dp0.cipd_impl.ps1:Zone.Identifier"
 powershell -NoProfile -ExecutionPolicy RemoteSigned ^
-    -Command "%~dp0.cipd_impl.ps1" ^
+    -File "%~dp0.cipd_impl.ps1" ^
     -CipdBinary "%CIPD_BINARY%" ^
     -BackendURL "%CIPD_BACKEND%" ^
     -VersionFile "%VERSION_FILE%" ^
