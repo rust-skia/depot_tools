@@ -697,10 +697,15 @@ class GitWrapper(SCMWrapper):
       # Switch over to the new upstream
       self._Run(['remote', 'set-url', self.remote, url], options)
       if mirror:
+        # Because we use Git alternatives, our existing repository is not
+        # self-contained. It's possible that new git alternative doesn't have
+        # all necessary objects that the current repository needs. Instead of
+        # blindly hoping that new alternative contains all necessary objects,
+        # keep the old alternative and just append a new one on top of it.
         with open(os.path.join(
             self.checkout_path, '.git', 'objects', 'info', 'alternates'),
-            'w') as fh:
-          fh.write(os.path.join(url, 'objects'))
+            'a') as fh:
+          fh.write("\n" + os.path.join(url, 'objects'))
       self._EnsureValidHeadObjectOrCheckout(revision, options, url)
       self._FetchAndReset(revision, file_list, options)
 
