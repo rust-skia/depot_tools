@@ -366,12 +366,10 @@ class _PresubmitResult(object):
   def handle(self):
     sys.stdout.write(self._message)
     sys.stdout.write('\n')
-    for index, item in enumerate(self._items):
+    for item in self._items:
       sys.stdout.write('  ')
       # Write separately in case it's unicode.
       sys.stdout.write(str(item))
-      if index < len(self._items) - 1:
-        sys.stdout.write(' \\')
       sys.stdout.write('\n')
     if self._long_text:
       sys.stdout.write('\n***************\n')
