@@ -16,7 +16,7 @@ if not defined AUTONINJA_BUILD_ID (
 :: to trigger more verbose status updates. In particular this makes it possible
 :: to see how quickly process creation is happening - often a critical clue on
 :: Windows. The trailing space is intentional.
-if "%NINJA_SUMMARIZE_BUILD%" == "1" set NINJA_STATUS=[%%r processes, %%f/%%t @ %%o/s : %%es ]
+if "%NINJA_SUMMARIZE_BUILD%" == "1" set "NINJA_STATUS=[%%r processes, %%f/%%t @ %%o/s : %%es ] "
 
 :loop
 IF NOT "%1"=="" (
