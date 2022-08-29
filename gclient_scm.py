@@ -214,7 +214,8 @@ class GitWrapper(SCMWrapper):
   def _IsCog():
     """Returns true if the env is cog"""
     if not GitWrapper._is_env_cog:
-      GitWrapper._is_env_cog = os.getcwd().startswith('/google/src/cloud')
+      GitWrapper._is_env_cog = any(os.getcwd().startswith(x) for x in [
+          '/google/cog/cloud', '/google/src/cloud'])
 
     return GitWrapper._is_env_cog
 
