@@ -2508,8 +2508,8 @@ class Changelist(object):
     refspec_opts = []
 
     # By default, new changes are started in WIP mode, and subsequent patchsets
-    # don't send email. At any time, passing --send-mail will mark the change
-    # ready and send email for that particular patch.
+    # don't send email. At any time, passing --send-mail or --send-email will
+    # mark the change ready and send email for that particular patch.
     if options.send_mail:
       refspec_opts.append('ready')
       refspec_opts.append('notify=ALL')
@@ -2518,8 +2518,9 @@ class Changelist(object):
     else:
       refspec_opts.append('notify=NONE')
 
-    # TODO(tandrii): options.message should be posted as a comment
-    # if --send-mail is set on non-initial upload as Rietveld used to do it.
+    # TODO(tandrii): options.message should be posted as a comment if
+    # --send-mail or --send-email is set on non-initial upload as Rietveld used
+    # to do it.
 
     # Set options.title in case user was prompted in _GetTitleForUpload and
     # _CMDUploadChange needs to be called again.
@@ -2609,11 +2610,11 @@ class Changelist(object):
     if self.GetIssue() and (reviewers or cc):
       # GetIssue() is not set in case of non-squash uploads according to tests.
       # TODO(crbug.com/751901): non-squash uploads in git cl should be removed.
-      gerrit_util.AddReviewers(
-          self.GetGerritHost(),
-          self._GerritChangeIdentifier(),
-          reviewers, cc,
-          notify=bool(options.send_mail))
+      gerrit_util.AddReviewers(self.GetGerritHost(),
+                               self._GerritChangeIdentifier(),
+                               reviewers,
+                               cc,
+                               notify=bool(options.send_mail))
 
     return 0
 
@@ -4313,7 +4314,11 @@ def CMDupload(parser, args):
                     action='append', default=[],
                     help=('Gerrit hashtag for new CL; '
                           'can be applied multiple times'))
-  parser.add_option('-s', '--send-mail', action='store_true',
+  parser.add_option('-s',
+                    '--send-mail',
+                    '--send-email',
+                    dest='send_mail',
+                    action='store_true',
                     help='send email to reviewer(s) and cc(s) immediately')
   parser.add_option('--target_branch',
                     '--target-branch',
@@ -4330,10 +4335,12 @@ def CMDupload(parser, args):
                     const='TBR', help='add a set of OWNERS to TBR')
   parser.add_option('--r-owners', dest='add_owners_to', action='store_const',
                     const='R', help='add a set of OWNERS to R')
-  parser.add_option('-c', '--use-commit-queue', action='store_true',
+  parser.add_option('-c',
+                    '--use-commit-queue',
+                    action='store_true',
                     default=False,
                     help='tell the CQ to commit this patchset; '
-                         'implies --send-mail')
+                    'implies --send-mail')
   parser.add_option('-d', '--cq-dry-run',
                     action='store_true', default=False,
                     help='Send the patchset to do a CQ dry run right after '

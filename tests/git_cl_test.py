@@ -1315,6 +1315,18 @@ class TestGitCl(unittest.TestCase):
         final_description=(
             'desc ✔\n\nBUG=\nR=foo@example.com\n\nChange-Id: I123456789'))
 
+  def test_gerrit_reviewers_cmd_line_send_email(self):
+    self._run_gerrit_upload_test(
+        ['-r', 'foo@example.com', '--send-email'],
+        'desc ✔\n\nBUG=\n\nChange-Id: I123456789',
+        reviewers=['foo@example.com'],
+        squash=False,
+        squash_mode='override_nosquash',
+        notify=True,
+        change_id='I123456789',
+        final_description=(
+            'desc ✔\n\nBUG=\nR=foo@example.com\n\nChange-Id: I123456789'))
+
   def test_gerrit_upload_force_sets_bug(self):
     self._run_gerrit_upload_test(
         ['-b', '10000', '-f'],
