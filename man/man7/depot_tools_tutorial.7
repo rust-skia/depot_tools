@@ -2,12 +2,12 @@
 .\"     Title: depot_tools_tutorial
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 07/01/2021
+.\"      Date: 08/26/2022
 .\"    Manual: Chromium depot_tools Manual
-.\"    Source: depot_tools 696f1e12
+.\"    Source: depot_tools 59e95c91
 .\"  Language: English
 .\"
-.TH "DEPOT_TOOLS_TUTORIAL" "7" "07/01/2021" "depot_tools 696f1e12" "Chromium depot_tools Manual"
+.TH "DEPOT_TOOLS_TUTORIAL" "7" "08/26/2022" "depot_tools 59e95c91" "Chromium depot_tools Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -564,6 +564,7 @@ Let\*(Aqs fix something!
 .\}
 .nf
 \fB$ git new\-branch fix_typo\fR
+
 \fB$ echo \-e \*(Aq/Banana\ens/Banana/Kuun\enwq\*(Aq | ed build/whitespace_file\&.txt\fR
 1503
 It was a Domo\-Banana\&.
@@ -572,6 +573,7 @@ It was a Domo\-Kuun\&.
 \fB$ git commit \-am \*(AqFix terrible typo\&.\*(Aq\fR
 [fix_typo 615ffa7] Fix terrible typo\&.
  1 file changed, 1 insertion(+), 1 deletion(\-)
+
 \fB$ git map\fR
 * \fB615ffa720f\fR	\fB(HEAD \-> fix_typo\fR\fB) \fR2014\-04\-10 ~ Fix terrible typo\&.
 * \fBbeec6f4746\fR	\fB(origin/main\fR\fB, origin/HEAD\fR\fB) \fR2014\-04\-10 ~ Make ReflectorImpl use mailboxes
@@ -582,12 +584,14 @@ It was a Domo\-Kuun\&.
 * \fB2250f532d7\fR	2014\-04\-10 ~ ozone: evdev: Filter devices by path
 * \fB33a7a742b7\fR	2014\-04\-10 ~ Always output seccomp error messages to stderr
 
+
 \fB$ git status\fR
 On branch fix_typo
 Your branch is ahead of \*(Aqorigin/main\*(Aq by 1 commit\&.
   (use "git push" to publish your local commits)
 
 nothing to commit, working tree clean
+
 \fB$ git cl upload \-r domo@chromium\&.org \-\-send\-mail\fR
 \&.\&.\&. truncated output \&.\&.\&.
 .fi
@@ -602,10 +606,12 @@ While we wait for feedback, let\*(Aqs do something else\&.
 .\}
 .nf
 \fB$ git new\-branch chap2\fR
+
 \fB$ git map\-branches\fR
 \fBorigin/main
   chap2 *
 \fR  fix_typo
+
 \fB$ cat >> build/whitespace_file\&.txt <<EOF\fR
 
 "You recall what happened on Mulholland drive?" The ceiling fan rotated slowly
@@ -622,6 +628,7 @@ Changes not staged for commit:
 	modified:   build/whitespace_file\&.txt
 
 no changes added to commit (use "git add" and/or "git commit \-a")
+
 .fi
 .if n \{\
 .RE
@@ -634,20 +641,22 @@ Someone on the code review pointed out that our typo\-fix has a typo :( We\*(Aqr
 .\}
 .nf
 \fB$ git freeze\fR
+
 \fB$ git checkout fix_typo\fR
 Switched to branch \*(Aqfix_typo\*(Aq
 Your branch is ahead of \*(Aqorigin/main\*(Aq by 1 commit\&.
   (use "git push" to publish your local commits)
+
 \fB$ echo \-e \*(Aq/Kuun\ens/Kuun/Kun\enwq\*(Aq | ed build/whitespace_file\&.txt\fR
 1501
 It was a Domo\-Kuun\&.
 It was a Domo\-Kun\&.
 1500
 \fB$ git upstream\-diff \-\-wordwise\fR
-\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt\fR
-\fBindex 3eba355\&.\&.57cdcee 100644\fR
-\fB\-\-\- a/build/whitespace_file\&.txt\fR
-\fB+++ b/build/whitespace_file\&.txt\fR
+\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt
+index 3eba355\&.\&.57cdcee 100644
+\-\-\- a/build/whitespace_file\&.txt
++++ b/build/whitespace_file\&.txt
 @@ \-17,7 +17,7 @@ swept up the streets (for it is in London that our scene lies), rattling along
 the housetops, and fiercely agitating the scanty flame of the lamps that
 struggled against the elements\&. A hooded figure emerged\&.
@@ -656,9 +665,11 @@ It was a Domo\-BananaKun\&.
 
 "What took you so long?", inquired his wife\&.
 
+\fR
 \fB$ git commit \-am \*(AqFix typo for good!\*(Aq\fR
 [fix_typo 2c0ad9c] Fix typo for good!
  1 file changed, 1 insertion(+), 1 deletion(\-)
+
 \fB$ git cl upload\fR
 \&.\&.\&. truncated output \&.\&.\&.
 .fi
@@ -686,6 +697,7 @@ Since we got lgtm, let the CQ land it\&.
 * \fB2250f532d7\fR	2014\-04\-10 ~ ozone: evdev: Filter devices by path
 * \fB33a7a742b7\fR	2014\-04\-10 ~ Always output seccomp error messages to stderr
 
+
 .fi
 .if n \{\
 .RE
@@ -701,7 +713,8 @@ Switch back to where we were using the nav* commands (for fun\&.\&.\&. git check
 origin/main
   chap2
 \fB  fix_typo *
-$ git nav\-upstream\fR
+\fR
+\fB$ git nav\-upstream\fR
 Note: switching to \*(Aqorigin/main\*(Aq\&.
 
 You are in \*(Aqdetached HEAD\*(Aq state\&. You can look around, make experimental
@@ -720,6 +733,7 @@ Or undo this operation with:
 Turn off this advice by setting config variable advice\&.detachedHead to false
 
 HEAD is now at beec6f4 Make ReflectorImpl use mailboxes
+
 \fB$ git nav\-downstream\fR
 Previous HEAD position was beec6f4 Make ReflectorImpl use mailboxes
 Switched to branch \*(Aqchap2\*(Aq
@@ -733,6 +747,7 @@ Selection (0\-1)[0]: 0
 origin/main
 \fB  chap2 *
 \fR  fix_typo
+
 .fi
 .if n \{\
 .RE
@@ -745,11 +760,12 @@ Now we can pick up on chapter2 where we left off\&.
 .\}
 .nf
 \fB$ git thaw\fR
+
 \fB$ git diff\fR
-\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt\fR
-\fBindex 3eba355\&.\&.9d08d9d 100644\fR
-\fB\-\-\- a/build/whitespace_file\&.txt\fR
-\fB+++ b/build/whitespace_file\&.txt\fR
+\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt
+index 3eba355\&.\&.9d08d9d 100644
+\-\-\- a/build/whitespace_file\&.txt
++++ b/build/whitespace_file\&.txt
 @@ \-34,3 +34,7 @@ with his fork, watching the runny jelly spread and pool across his plate,
  like the blood of a dying fawn\&. \e"It reminds me of that time \-\-\e" he started, as
  his wife cut in quickly: \e"\-\- please\&. I can\*(Aqt bear to hear it\&.\e"\&. A flury of
@@ -758,15 +774,16 @@ Now we can pick up on chapter2 where we left off\&.
 +"You recall what happened on Mulholland drive?" The ceiling fan rotated slowly
 +overhead, barely disturbing the thick cigarette smoke\&. No doubt was left about
 +when the fan was last cleaned\&.
+\fR
 \fB$ cat >> build/whitespace_file\&.txt <<EOF\fR
 
 There was an poignant pause\&.
 EOF
 \fB$ git diff\fR
-\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt\fR
-\fBindex 3eba355\&.\&.e3a55de 100644\fR
-\fB\-\-\- a/build/whitespace_file\&.txt\fR
-\fB+++ b/build/whitespace_file\&.txt\fR
+\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt
+index 3eba355\&.\&.e3a55de 100644
+\-\-\- a/build/whitespace_file\&.txt
++++ b/build/whitespace_file\&.txt
 @@ \-34,3 +34,9 @@ with his fork, watching the runny jelly spread and pool across his plate,
  like the blood of a dying fawn\&. \e"It reminds me of that time \-\-\e" he started, as
  his wife cut in quickly: \e"\-\- please\&. I can\*(Aqt bear to hear it\&.\e"\&. A flury of
@@ -777,9 +794,11 @@ EOF
 +when the fan was last cleaned\&.
 +
 +There was an poignant pause\&.
+\fR
 \fB$ git commit \-am \*(AqFinish chapter 2\*(Aq\fR
 [chap2 ceef712] Finish chapter 2
  1 file changed, 6 insertions(+)
+
 \fB$ git map\fR
 * \fBceef712d7f\fR	\fB(HEAD \-> chap2\fR\fB) \fR2014\-04\-10 ~ Finish chapter 2
 | * \fB2c0ad9c59b\fR	\fB(fix_typo\fR\fB) \fR2014\-04\-10 ~ Fix typo for good!
@@ -792,6 +811,7 @@ EOF
 * \fB073b0c203a\fR	2014\-04\-10 ~ ContentView\->ContentViewCore in ContentViewRenderView
 * \fB2250f532d7\fR	2014\-04\-10 ~ ozone: evdev: Filter devices by path
 * \fB33a7a742b7\fR	2014\-04\-10 ~ Always output seccomp error messages to stderr
+
 
 \fB$ git cl upload \-r domo@chromium\&.org \-\-send\-mail\fR
 \&.\&.\&. truncated output \&.\&.\&.
@@ -819,6 +839,7 @@ While that runs through the CQ, let\*(Aqs get started on chapter 3\&. Since we k
 .\}
 .nf
 \fB$ git new\-branch \-\-upstream_current chap3\fR
+
 \fB$ cat >> build/whitespace_file\&.txt <<EOF\fR
 
 CHAPTER 3:
@@ -828,6 +849,7 @@ EOF
 \fB$ git commit \-am \*(Aqbeginning of chapter 3\*(Aq\fR
 [chap3 7d4238a] beginning of chapter 3
  1 file changed, 4 insertions(+)
+
 \fB$ git map\fR
 * \fB7d4238a1e2\fR	\fB(HEAD \-> chap3\fR\fB) \fR2014\-04\-10 ~ beginning of chapter 3
 * \fBceef712d7f\fR	\fB(chap2\fR\fB) \fR2014\-04\-10 ~ Finish chapter 2
@@ -841,6 +863,7 @@ EOF
 * \fB073b0c203a\fR	2014\-04\-10 ~ ContentView\->ContentViewCore in ContentViewRenderView
 * \fB2250f532d7\fR	2014\-04\-10 ~ ozone: evdev: Filter devices by path
 * \fB33a7a742b7\fR	2014\-04\-10 ~ Always output seccomp error messages to stderr
+
 
 .fi
 .if n \{\
@@ -895,6 +918,7 @@ Well look at that\&. The CQ landed our typo and chapter2 branches already and gi
 * \fB2250f532d7\fR	2014\-04\-10 ~ ozone: evdev: Filter devices by path
 * \fB33a7a742b7\fR	2014\-04\-10 ~ Always output seccomp error messages to stderr
 
+
 .fi
 .if n \{\
 .RE
@@ -913,10 +937,10 @@ From https://upstream
 Rebasing: chap2
 \&.\&.\&. lots of output, it\*(Aqs a conflict alright :(\&.\&.\&.
 \fB$ git diff\fR
-\fBdiff \-\-cc build/whitespace_file\&.txt\fR
-\fBindex 1293282,f903ea2\&.\&.0000000\fR
-\fB\-\-\- a/build/whitespace_file\&.txt\fR
-\fB+++ b/build/whitespace_file\&.txt\fR
+\fBdiff \-\-cc build/whitespace_file\&.txt
+index 1293282,f903ea2\&.\&.0000000
+\-\-\- a/build/whitespace_file\&.txt
++++ b/build/whitespace_file\&.txt
 @@@ \-42,4 \-42,5 +42,9 @@@ when the fan was last cleaned
   There was an poignant pause\&.
 
@@ -927,6 +951,7 @@ Rebasing: chap2
 + Mr\&. Usagi felt that something wasn\*(Aqt right\&. Shortly after the Domo\-Kun left he
 + began feeling sick\&.
 ++>>>>>>> 93fe917 (beginning of chapter 3)
+\fR
 .fi
 .if n \{\
 .RE
@@ -941,11 +966,12 @@ Oh, well, that\*(Aqs not too bad\&. In fact\&.\&.\&. that\*(Aqs a terrible chapt
 \fB$ $EDITOR build/whitespace_file\&.txt\fR
 \&.\&.\&. /me deletes bad chapter 3 \&.\&.\&.
 \fB$ git add build/whitespace_file\&.txt\fR
+
 \fB$ git diff \-\-cached\fR
-\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt\fR
-\fBindex 1293282\&.\&.f903ea2 100644\fR
-\fB\-\-\- a/build/whitespace_file\&.txt\fR
-\fB+++ b/build/whitespace_file\&.txt\fR
+\fBdiff \-\-git a/build/whitespace_file\&.txt b/build/whitespace_file\&.txt
+index 1293282\&.\&.f903ea2 100644
+\-\-\- a/build/whitespace_file\&.txt
++++ b/build/whitespace_file\&.txt
 @@ \-42,4 +42,5 @@ when the fan was last cleaned\&.
  There was an poignant pause\&.
 
@@ -953,6 +979,7 @@ Oh, well, that\*(Aqs not too bad\&. In fact\&.\&.\&. that\*(Aqs a terrible chapt
 \-Hilariousness! This chapter is awesome!
 +Mr\&. Usagi felt that something wasn\*(Aqt right\&. Shortly after the Domo\-Kun left he
 +began feeling sick\&.
+\fR
 .fi
 .if n \{\
 .RE
@@ -967,11 +994,13 @@ Much better
 \fB$ git rebase \-\-continue\fR
 [detached HEAD 1cb4f5b] beginning of chapter 3
  1 file changed, 2 insertions(+), 1 deletion(\-)
+
 \fB$ git rebase\-update\fR
 Fetching origin
 chap3 up\-to\-date
 
 Running `git gc \-\-auto` \- Ctrl\-C to abort is OK\&.
+
 \fB$ gclient sync\fR
 \&.\&.\&. truncated output \&.\&.\&.
 \fB$ git map\fR
@@ -992,6 +1021,7 @@ Running `git gc \-\-auto` \- Ctrl\-C to abort is OK\&.
 * \fB073b0c203a\fR	2014\-04\-10 ~ ContentView\->ContentViewCore in ContentViewRenderView
 * \fB2250f532d7\fR	2014\-04\-10 ~ ozone: evdev: Filter devices by path
 * \fB33a7a742b7\fR	2014\-04\-10 ~ Always output seccomp error messages to stderr
+
 
 \fB$ git cl upload\fR
 \&.\&.\&. truncated output \&.\&.\&.

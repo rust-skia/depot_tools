@@ -22,7 +22,7 @@ add_ws() {
 ed_ws() {
   echo -ne "\x1B[37;1m$ echo -e "
   echo -n "'$1'"
-  echo -e " | ed $WS\x1B[m"
+  echo -e " | ed $WS\x1B[0m"
   echo -e "$1" | ed $WS 2>&1
 }
 

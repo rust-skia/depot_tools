@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 9.1.0" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
 <title>git-hyper-blame(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -816,7 +816,7 @@ and any commits mentioned in this file are added to the ignore list.</p></div>
 <h2 id="_example">EXAMPLE</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Let&#8217;s run <code>git blame</code> on a file:</p></div>
-<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git blame ipsum.txt</span>
+<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #BFBFBF">$ git blame ipsum.txt</span>
 c6eb3bfa (lorem           2014-08-11 23:15:57 +0000 1) LOREM IPSUM DOLOR SIT AMET, CONSECTETUR
 3ddda43c (auto-uppercaser 2014-07-05 02:05:18 +0000 2) ADIPISCING ELIT, SED DO EIUSMOD TEMPOR
 3ddda43c (auto-uppercaser 2014-07-05 02:05:18 +0000 3) INCIDIDUNT UT LABORE ET DOLORE MAGNA
@@ -828,7 +828,7 @@ c6eb3bfa (lorem           2014-08-11 23:15:57 +0000 5) NOSTRUD EXERCITATION ULLA
 aren&#8217;t interested in the uppercasing of the file. You want to know who
 wrote/modified those lines in the first place. Just tell <code>hyper-blame</code> to ignore
 that commit:</p></div>
-<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git hyper-blame -i 3ddda43c ipsum.txt</span>
+<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #BFBFBF">$ git hyper-blame -i 3ddda43c ipsum.txt</span>
 c6eb3bfa (lorem 2014-08-11 23:15:57 +0000  1) LOREM IPSUM DOLOR SIT AMET, CONSECTETUR
 134200d1 (lorem 2014-04-10 08:54:46 +0000 2*) ADIPISCING ELIT, SED DO EIUSMOD TEMPOR
 a34a1d0d (ipsum 2014-04-11 11:25:04 +0000 3*) INCIDIDUNT UT LABORE ET DOLORE MAGNA
@@ -873,7 +873,7 @@ by checking out the <a href="https://chromium.googlesource.com/chromium/tools/de
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-07-01 07:07:00 PDT
+ 2022-08-26 21:13:38 PDT
 </div>
 </div>
 </body>

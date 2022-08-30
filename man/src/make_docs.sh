@@ -4,6 +4,9 @@ set -e
 
 shopt -s nullglob
 
+# disable metrics report
+export DEPOT_TOOLS_METRICS=0
+
 cd $(dirname "$0")
 
 # Script which takes all the asciidoc git-*.txt files in this directory, renders
@@ -34,22 +37,22 @@ then
 fi
 
 # We pull asciidoc to get the right version
-BRANCH=9.1.0
-ASCIIDOC_HASH=9705d428439530104ce55d0ba12e8ef9d1b57ad1
+BRANCH=10.2.0
+ASCIIDOC_HASH=545b79b8d7dae70d12bf0657359bdd36de0c5c26
 if [[ ! -d asciidoc || $(cd asciidoc && git rev-parse HEAD) != $ASCIIDOC_HASH ]]
 then
   echo Cloning asciidoc
   rm -rf asciidoc
   git clone --branch $BRANCH https://github.com/asciidoc-py/asciidoc-py asciidoc
-  (cd asciidoc && ln -s asciidoc.py asciidoc)
+  (cd asciidoc/asciidoc && ln -s asciidoc.py asciidoc)
 fi
 echo Asciidoc up to date at $ASCIIDOC_HASH \($BRANCH\)
 
-export PATH=`pwd`/asciidoc:$PATH
+export PATH=`pwd`/asciidoc/asciidoc:$PATH
 
 # We pull ansi2hash to convert demo script output
-BRANCH=1.6.0
-ANSI2HTML_HASH=1ca0e862dda765c55e9124bf50a06a3e2f769521
+BRANCH=1.8.0
+ANSI2HTML_HASH=545b79b8d7dae70d12bf0657359bdd36de0c5c26
 if [[ ! -d ansi2html || $(git -C ansi2html rev-parse HEAD) != $ANSI2HTML_HASH ]]
 then
   echo Cloning ansi2html
@@ -61,8 +64,8 @@ fi
 echo ansi2html up to date at $ANSI2HTML_HASH \($BRANCH\)
 
 # We pull git to get its documentation toolchain
-BRANCH=v2.32.0
-GITHASH=ebf3c04b262aa27fbb97f8a0156c2347fecafafb
+BRANCH=v2.35.1
+GITHASH=4c53a8c20f8984adb226293a3ffd7b88c3f4ac1a
 if [[ ! -d git || $(git -C git rev-parse HEAD) != $GITHASH ]]
 then
   echo Cloning git
@@ -71,7 +74,7 @@ then
     https://kernel.googlesource.com/pub/scm/git/git.git  2> /dev/null
 ed git/Documentation/Makefile <<EOF
 H
-141
+142
 s/Git Manual/Chromium depot_tools Manual
 s/Git/depot_tools
 wq
@@ -131,7 +134,7 @@ EOF
 (?su)[\\\\]?(?P<name>demo):(?P<target>\S*?)\[\]=
 
 [demo-inlinemacro]
-{sys3:cd $(pwd); ./{docname}.demo.{target}.sh | python filter_demo_output.py {backend} }
+{sys3:cd $(pwd); ./{docname}.demo.{target}.sh | python3 filter_demo_output.py {backend} }
 EOF
 
 fi
@@ -229,7 +232,7 @@ fi
 (
   export GIT_DIR="$(git rev-parse --git-dir)" &&
   cd git/Documentation &&
-  GIT_EDITOR=true make -j"$JOBS" "${MAN1_TARGETS[@]}" "${MAN7_TARGETS[@]}" "${HTML_TARGETS[@]}" 
+  GIT_EDITOR=true make "${MAN1_TARGETS[@]}" "${MAN7_TARGETS[@]}" "${HTML_TARGETS[@]}"
 )
 
 for x in "${HTML_TARGETS[@]}"

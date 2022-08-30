@@ -2,12 +2,12 @@
 .\"     Title: git-footers
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 10/05/2021
+.\"      Date: 08/26/2022
 .\"    Manual: Chromium depot_tools Manual
-.\"    Source: depot_tools a594dbdd
+.\"    Source: depot_tools 59e95c91
 .\"  Language: English
 .\"
-.TH "GIT\-FOOTERS" "1" "10/05/2021" "depot_tools a594dbdd" "Chromium depot_tools Manual"
+.TH "GIT\-FOOTERS" "1" "08/26/2022" "depot_tools 59e95c91" "Chromium depot_tools Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -116,13 +116,17 @@ in the example above)\&.
 Tech\-Debt\-Introduced: \-4 microMSOffices
 Tech\-Debt\-Introduced: 17 microMSOffices
 Cr\-Commit\-Position: refs/heads/main@{#292272}
+
 \fB$ git footers \-\-key Tech\-Debt\-Introduced HEAD\fR
 \-4 microMSOffices
 17 microMSOffices
+
 \fB$ git footers \-\-position HEAD\fR
 refs/heads/main@{#292272}
+
 \fB$ git footers \-\-position\-num HEAD\fR
 292272
+
 \fB$ git footers \-\-position\-ref HEAD\fR
 refs/heads/main
 .fi

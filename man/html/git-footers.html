@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 9.1.0" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
 <title>git-footers(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -838,18 +838,22 @@ refs/branch-heads/branchname</code></pre>
 <div class="sect1">
 <h2 id="_example">EXAMPLE</h2>
 <div class="sectionbody">
-<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git footers HEAD</span>
+<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #BFBFBF">$ git footers HEAD</span>
 Tech-Debt-Introduced: -4 microMSOffices
 Tech-Debt-Introduced: 17 microMSOffices
 Cr-Commit-Position: refs/heads/main@{#292272}
-<span style="font-weight: bold; color: #ffffff">$ git footers --key Tech-Debt-Introduced HEAD</span>
+
+<span style="font-weight: bold; color: #BFBFBF">$ git footers --key Tech-Debt-Introduced HEAD</span>
 -4 microMSOffices
 17 microMSOffices
-<span style="font-weight: bold; color: #ffffff">$ git footers --position HEAD</span>
+
+<span style="font-weight: bold; color: #BFBFBF">$ git footers --position HEAD</span>
 refs/heads/main@{#292272}
-<span style="font-weight: bold; color: #ffffff">$ git footers --position-num HEAD</span>
+
+<span style="font-weight: bold; color: #BFBFBF">$ git footers --position-num HEAD</span>
 292272
-<span style="font-weight: bold; color: #ffffff">$ git footers --position-ref HEAD</span>
+
+<span style="font-weight: bold; color: #BFBFBF">$ git footers --position-ref HEAD</span>
 refs/heads/main
 </code></pre></div></div><p><div class="paragraph"></p></div>
 </div>
@@ -873,7 +877,7 @@ by checking out the <a href="https://chromium.googlesource.com/chromium/tools/de
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-10-05 09:49:24 PDT
+ 2022-08-26 21:13:38 PDT
 </div>
 </div>
 </body>

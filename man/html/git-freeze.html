@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
-<meta name="generator" content="AsciiDoc 9.1.0" />
+<meta name="generator" content="AsciiDoc 10.2.0" />
 <title>git-freeze(1)</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
@@ -781,46 +781,51 @@ time you ran git freeze (freshly modified files, new files, etc.).</p></div>
 <div class="sect1">
 <h2 id="_example">EXAMPLE</h2>
 <div class="sectionbody">
-<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #ffffff">$ git status --short</span>
-<span style="color: #19c518">A</span>  added_file
-<span style="color: #19c518">A</span><span style="color: #e42e16">M</span> added_file_with_unstaged_changes
-<span style="color: #19c518">D</span>  deleted_file
- <span style="color: #e42e16">M</span> modified_file
- <span style="color: #e42e16">D</span> unstaged_deleted_file
-<span style="color: #e42e16">??</span> unadded_file
-<span style="font-weight: bold; color: #ffffff">$ git freeze</span>
-<span style="font-weight: bold; color: #ffffff">$ git status --short</span>
-<span style="font-weight: bold; color: #ffffff">$ git log -n 2 --stat</span>
-<span style="color: #e7e71c">commit 2b8214881eb8a660a86c0551f84eb39e6763acf3</span>
+<div class="paragraph"><p></p></div><div class="listingblock"><div class="content"><pre><code><span style="font-weight: bold; color: #BFBFBF">$ git status --short</span>
+<span style="color: #50FA7B">A</span>  added_file
+<span style="color: #50FA7B">A</span><span style="color: #FF5555">M</span> added_file_with_unstaged_changes
+<span style="color: #50FA7B">D</span>  deleted_file
+ <span style="color: #FF5555">M</span> modified_file
+ <span style="color: #FF5555">D</span> unstaged_deleted_file
+<span style="color: #FF5555">??</span> unadded_file
+
+<span style="font-weight: bold; color: #BFBFBF">$ git freeze</span>
+
+<span style="font-weight: bold; color: #BFBFBF">$ git status --short</span>
+
+<span style="font-weight: bold; color: #BFBFBF">$ git log -n 2 --stat</span>
+<span style="color: #F1FA8C">commit 0e48260b7ae6d82b41234fbe19ea6cb646a835de</span>
 Author: local &lt;local@chromium.org&gt;
 Date:   Thu Apr 10 08:54:56 2014 +0000
 
     FREEZE.unindexed
 
- added_file_with_unstaged_changes | 1 <span style="color: #19c518">+</span>
- modified_file                    | 1 <span style="color: #19c518">+</span>
+ added_file_with_unstaged_changes | 1 <span style="color: #50FA7B">+</span>
+ modified_file                    | 1 <span style="color: #50FA7B">+</span>
  unadded_file                     | 0
- unstaged_deleted_file            | 1 <span style="color: #e42e16">-</span>
+ unstaged_deleted_file            | 1 <span style="color: #FF5555">-</span>
  4 files changed, 2 insertions(+), 1 deletion(-)
 
-<span style="color: #e7e71c">commit 4e1ca78d22a542047891f597545223dc6ce1b757</span>
+<span style="color: #F1FA8C">commit af7eb3e39942ada944e8489e6217753771f20562</span>
 Author: local &lt;local@chromium.org&gt;
 Date:   Thu Apr 10 08:54:56 2014 +0000
 
     FREEZE.indexed
 
- added_file                       | 1 <span style="color: #19c518">+</span>
- added_file_with_unstaged_changes | 1 <span style="color: #19c518">+</span>
- deleted_file                     | 1 <span style="color: #e42e16">-</span>
+ added_file                       | 1 <span style="color: #50FA7B">+</span>
+ added_file_with_unstaged_changes | 1 <span style="color: #50FA7B">+</span>
+ deleted_file                     | 1 <span style="color: #FF5555">-</span>
  3 files changed, 2 insertions(+), 1 deletion(-)
-<span style="font-weight: bold; color: #ffffff">$ git thaw</span>
-<span style="font-weight: bold; color: #ffffff">$ git status --short</span>
-<span style="color: #19c518">A</span>  added_file
-<span style="color: #19c518">A</span><span style="color: #e42e16">M</span> added_file_with_unstaged_changes
-<span style="color: #19c518">D</span>  deleted_file
- <span style="color: #e42e16">M</span> modified_file
- <span style="color: #e42e16">D</span> unstaged_deleted_file
-<span style="color: #e42e16">??</span> unadded_file
+
+<span style="font-weight: bold; color: #BFBFBF">$ git thaw</span>
+
+<span style="font-weight: bold; color: #BFBFBF">$ git status --short</span>
+<span style="color: #50FA7B">A</span>  added_file
+<span style="color: #50FA7B">A</span><span style="color: #FF5555">M</span> added_file_with_unstaged_changes
+<span style="color: #50FA7B">D</span>  deleted_file
+ <span style="color: #FF5555">M</span> modified_file
+ <span style="color: #FF5555">D</span> unstaged_deleted_file
+<span style="color: #FF5555">??</span> unadded_file
 </code></pre></div></div><p><div class="paragraph"></p></div>
 </div>
 </div>
@@ -854,7 +859,7 @@ by checking out the <a href="https://chromium.googlesource.com/chromium/tools/de
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-07-01 07:07:00 PDT
+ 2022-08-26 21:13:38 PDT
 </div>
 </div>
 </body>

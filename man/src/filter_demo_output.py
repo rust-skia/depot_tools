@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2014 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -11,8 +11,7 @@ import re
 import sys
 
 from xml.sax.saxutils import escape
-
-from cStringIO import StringIO
+from io import StringIO
 
 if not os.path.exists('ansi2html'):
   print('You must run ./make_docs.sh once before running this script.')
@@ -60,11 +59,6 @@ def simpleXML(string):
 
 
 def main():
-  ansi2html.converter.SCHEME['custom'] = (
-      "#000000", "#e42e16", "#19c518", "#e7e71c", "#492ee1",
-      "#d338d3", "#33d6e5", "#ffffff",
-  )
-
   backend = sys.argv[1]
   output = sys.stdin.read().rstrip()
 
@@ -87,7 +81,7 @@ def main():
         '</p></div><div class="listingblock"><div class="content"><pre><code>'
     )
     postamble = '</code></pre></div></div><p><div class="paragraph">'
-    c = ansi2html.Ansi2HTMLConverter(inline=True, scheme='custom')
+    c = ansi2html.Ansi2HTMLConverter(inline=True, scheme='dracula')
 
     in_code = False
     body = c.convert(output, full=False)
@@ -102,7 +96,7 @@ def main():
           w(preamble)
           in_code = True
         ext = ''
-        for _ in xrange(callouts[i]):
+        for _ in range(callouts[i]):
           if not ext:
             ext += '</span>'
           ext += ' <b>&lt;%d&gt;</b>' % callout_counter
@@ -129,7 +123,7 @@ def main():
           w(preamble)
           in_code = True
         ext = ''
-        for _ in xrange(callouts[i]):
+        for _ in range(callouts[i]):
           ext += '  <emphasis role="strong">(%d)</emphasis>' % callout_counter
           callout_counter += 1
         w(line + ext + '\n')

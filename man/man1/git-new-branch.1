@@ -2,12 +2,12 @@
 .\"     Title: git-new-branch
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 10/26/2021
+.\"      Date: 08/26/2022
 .\"    Manual: Chromium depot_tools Manual
-.\"    Source: depot_tools 5c9e8b47
+.\"    Source: depot_tools 59e95c91
 .\"  Language: English
 .\"
-.TH "GIT\-NEW\-BRANCH" "1" "10/26/2021" "depot_tools 5c9e8b47" "Chromium depot_tools Manual"
+.TH "GIT\-NEW\-BRANCH" "1" "08/26/2022" "depot_tools 59e95c91" "Chromium depot_tools Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -100,7 +100,9 @@ origin/main
     subfeature         [ 2 commits | behind 1 ]
   fixit                [ 2 commits            ]
 \fB    frozen_branch *    [ 3 commits            ]
-$ git new\-branch independent_cl\fR
+\fR
+\fB$ git new\-branch independent_cl\fR
+
 \fB$ git map\-branches \-v\fR
 \fBorigin/main
 \fR  cool_feature        [ 4 commits            ]
@@ -108,7 +110,8 @@ $ git new\-branch independent_cl\fR
   fixit               [ 2 commits            ]
     frozen_branch     [ 3 commits            ]
 \fB  independent_cl *
-$ vi foo && git add \-A && git commit \-m foo\fR
+\fR
+\fB$ vi foo && git add \-A && git commit \-m foo\fR
 \fB$ git map\-branches \-v\fR
 origin/main
   cool_feature        [ 4 commits            ]
@@ -116,7 +119,9 @@ origin/main
   fixit               [ 2 commits            ]
     frozen_branch     [ 3 commits            ]
 \fB  independent_cl *    [ 1 commit             ]
-$ git new\-branch \-\-upstream subfeature nested_cl\fR
+\fR
+\fB$ git new\-branch \-\-upstream subfeature nested_cl\fR
+
 \fB$ git map\-branches \-v\fR
 origin/main
   cool_feature       [ 4 commits            ]
@@ -125,11 +130,14 @@ origin/main
 \fR  fixit              [ 2 commits            ]
     frozen_branch    [ 3 commits            ]
   independent_cl     [ 1 commit             ]
+
 \fB$ git checkout cool_feature\fR
 Switched to branch \*(Aqcool_feature\*(Aq
 Your branch is ahead of \*(Aqorigin/main\*(Aq by 4 commits\&.
   (use "git push" to publish your local commits)
+
 \fB$ git new\-branch \-\-upstream_current cl_depends_on_cool_feature\fR
+
 \fB$ git map\-branches \-v\fR
 origin/main
 \fB  cool_feature                      [ 4 commits            ]
@@ -139,11 +147,14 @@ origin/main
   fixit                             [ 2 commits            ]
     frozen_branch                   [ 3 commits            ]
   independent_cl                    [ 1 commit             ]
+
 \fB$ git checkout subfeature\fR
 Your branch and \*(Aqcool_feature\*(Aq have diverged,
 and have 2 and 1 different commits each, respectively\&.
   (use "git pull" to merge the remote branch into yours)
+
 \fB$ git new\-branch \-\-inject_current injected_cl\fR
+
 \fB$ git map\-branches \-v\fR
 origin/main
 \fB  cool_feature                    [ 4 commits            ]

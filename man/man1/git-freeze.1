@@ -2,12 +2,12 @@
 .\"     Title: git-freeze
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 07/01/2021
+.\"      Date: 08/26/2022
 .\"    Manual: Chromium depot_tools Manual
-.\"    Source: depot_tools 906b5026
+.\"    Source: depot_tools 59e95c91
 .\"  Language: English
 .\"
-.TH "GIT\-FREEZE" "1" "07/01/2021" "depot_tools 906b5026" "Chromium depot_tools Manual"
+.TH "GIT\-FREEZE" "1" "08/26/2022" "depot_tools 59e95c91" "Chromium depot_tools Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -57,10 +57,13 @@ D  deleted_file
  M modified_file
  D unstaged_deleted_file
 ?? unadded_file
+
 \fB$ git freeze\fR
+
 \fB$ git status \-\-short\fR
+
 \fB$ git log \-n 2 \-\-stat\fR
-commit 288d7302bb306adec039d7ca24870d8d0ca14f36
+commit 3eb0e183eb4b1f8d5ce1ff29be3ced2ca85d8951
 Author: local <local@chromium\&.org>
 Date:   Thu Apr 10 08:54:56 2014 +0000
 
@@ -72,7 +75,7 @@ Date:   Thu Apr 10 08:54:56 2014 +0000
  unstaged_deleted_file            | 1 \-
  4 files changed, 2 insertions(+), 1 deletion(\-)
 
-commit 9533cdaea75b6973d439f91b7f6007479db0f5a4
+commit b57d611f2738de2193ec16f150991a4bc8dbd2fe
 Author: local <local@chromium\&.org>
 Date:   Thu Apr 10 08:54:56 2014 +0000
 
@@ -82,7 +85,9 @@ Date:   Thu Apr 10 08:54:56 2014 +0000
  added_file_with_unstaged_changes | 1 +
  deleted_file                     | 1 \-
  3 files changed, 2 insertions(+), 1 deletion(\-)
+
 \fB$ git thaw\fR
+
 \fB$ git status \-\-short\fR
 A  added_file
 AM added_file_with_unstaged_changes
