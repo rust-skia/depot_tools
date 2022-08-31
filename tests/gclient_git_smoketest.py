@@ -378,7 +378,9 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
                              '--revision', 'src@' + self.githash('repo_5', 2)],
                             expectation)
     self.assertEqual('Cloning into ', out[0][1][:13])
-    self.assertEqual(2, len(out[1]), out[1])
+    # parseGClient may produce hook slowness warning, so we expect either 2 or 3
+    # blocks.
+    self.assertIn(len(out[1]), [2, 3], out[1])
     self.assertEqual('pre-deps hook', out[1][1])
     tree = self.mangle_git_tree(('repo_5@2', 'src'),
                                 ('repo_1@2', 'src/repo1'),
