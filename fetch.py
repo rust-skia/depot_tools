@@ -262,7 +262,8 @@ def run(options, spec, root):
 
   # Use sso:// by default if the env is cog
   if not options.protocol_override and \
-    os.getcwd().startswith('/google/src/cloud'):
+    (any(os.getcwd().startswith(x) for x in [
+        '/google/src/cloud', '/google/cog/cloud'])):
     options.protocol_override = 'sso'
 
   # Update solutions with protocol_override field
