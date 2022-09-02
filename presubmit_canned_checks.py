@@ -7,7 +7,6 @@
 from __future__ import print_function
 
 import os as _os
-import io as _io
 
 from warnings import warn
 _HERE = _os.path.dirname(_os.path.abspath(__file__))
@@ -171,9 +170,9 @@ def CheckAuthorizedAuthor(input_api, output_api, bot_allowlist=None):
       input_api.PresubmitLocalPath(), 'AUTHORS')
   author_re = input_api.re.compile(r'[^#]+\s+\<(.+?)\>\s*$')
   valid_authors = []
-  with _io.open(authors_path, 'rb', encoding='utf-8') as fp:
+  with open(authors_path, 'rb') as fp:
     for line in fp:
-      m = author_re.match(line)
+      m = author_re.match(line.decode('utf8'))
       if m:
         valid_authors.append(m.group(1).lower())
 
@@ -799,7 +798,7 @@ def GetUnitTests(input_api,
   assert run_on_python3 or run_on_python2, (
       'At least one of "run_on_python2" or "run_on_python3" must be set.')
   def has_py3_shebang(test):
-    with _io.open(test, encoding='utf-8') as f:
+    with open(test) as f:
       maybe_shebang = f.readline()
     return maybe_shebang.startswith('#!') and 'python3' in maybe_shebang
 
@@ -1900,7 +1899,7 @@ def CheckJsonParses(input_api, output_api, file_filter=None):
       file_filter=file_filter)
   warnings = []
   for f in affected_files:
-    with _io.open(f.AbsoluteLocalPath(), encoding='utf-8') as j:
+    with open(f.AbsoluteLocalPath()) as j:
       try:
         json.load(j)
       except ValueError:
