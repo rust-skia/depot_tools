@@ -116,7 +116,7 @@ class CheckCallAndFilterTestCase(unittest.TestCase):
         'allo',
         'addb',
         '✔',
-        '________ running \'boo foo bar\' in \'bleh\' attempt 2 / 4\n',
+        '________ running \'boo foo bar\' in \'bleh\' attempt 2 / 2\n',
         'ahah',
         'accb',
         'allo',

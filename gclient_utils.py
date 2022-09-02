@@ -39,8 +39,11 @@ else:
   import urllib.parse as urlparse
 
 
-RETRY_MAX = 3
-RETRY_INITIAL_SLEEP = 0.5
+# Git wrapper retries on a transient error, and some callees do retries too,
+# such as GitWrapper.update (doing clone). One retry attempt should be
+# sufficient to help with any transient errors at this level.
+RETRY_MAX = 1
+RETRY_INITIAL_SLEEP = 2  # in seconds
 START = datetime.datetime.now()
 
 
