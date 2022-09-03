@@ -12,6 +12,7 @@ always roll to the tip of to origin/main.
 from __future__ import print_function
 
 import argparse
+import itertools
 import os
 import re
 import subprocess2
@@ -200,9 +201,13 @@ def main():
       '--ignore-dirty-tree', action='store_true',
       help='Roll anyways, even if there is a diff.')
   parser.add_argument(
-      '-r', '--reviewer',
-      help='To specify multiple reviewers, use comma separated list, e.g. '
-           '-r joe,jane,john. Defaults to @chromium.org')
+      '-r',
+      '--reviewer',
+      action='append',
+      help=
+      'To specify multiple reviewers, either use a comma separated list, e.g. '
+      '-r joe,jane,john or provide the flag multiple times, e.g. '
+      '-r joe -r jane. Defaults to @chromium.org')
   parser.add_argument('-b', '--bug', help='Associate a bug number to the roll')
   # It is important that --no-log continues to work, as it is used by
   # internal -> external rollers. Please do not remove or break it.
@@ -230,7 +235,7 @@ def main():
           'Can\'t use multiple paths to roll simultaneously and --key')
   reviewers = None
   if args.reviewer:
-    reviewers = args.reviewer.split(',')
+    reviewers = list(itertools.chain(*[r.split(',') for r in args.reviewer]))
     for i, r in enumerate(reviewers):
       if not '@' in r:
         reviewers[i] = r + '@chromium.org'
