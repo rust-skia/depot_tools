@@ -10,6 +10,7 @@
 from __future__ import unicode_literals
 
 import functools
+import io
 import itertools
 import logging
 import multiprocessing
@@ -26,12 +27,10 @@ if sys.version_info.major == 2:
   from cStringIO import StringIO
   import mock
   import urllib2 as urllib_request
-  BUILTIN_OPEN = '__builtin__.open'
 else:
   from io import StringIO
   from unittest import mock
   import urllib.request as urllib_request
-  BUILTIN_OPEN = 'builtins.open'
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _ROOT)
@@ -2987,9 +2986,9 @@ the current line as well!
     self.AssertOwnersWorks(approvers=set(['ben@example.com']),
                            is_committing=False)
 
-  @mock.patch(BUILTIN_OPEN, mock.mock_open())
+  @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTests(self):
-    open().readline.return_value = ''
+    io.open().readline.return_value = ''
     change = presubmit.Change(
         'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
     input_api = self.MockInputApi(change, False)
@@ -3033,9 +3032,9 @@ the current line as well!
 
     self.checkstdout('')
 
-  @mock.patch(BUILTIN_OPEN, mock.mock_open())
+  @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsWithTimer(self):
-    open().readline.return_value = ''
+    io.open().readline.return_value = ''
     change = presubmit.Change(
         'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
     input_api = self.MockInputApi(change, False)
@@ -3059,9 +3058,9 @@ the current line as well!
 
     self.checkstdout('')
 
-  @mock.patch(BUILTIN_OPEN, mock.mock_open())
+  @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsWithTimerTimesOut(self):
-    open().readline.return_value = ''
+    io.open().readline.return_value = ''
     change = presubmit.Change(
         'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
     input_api = self.MockInputApi(change, False)
@@ -3093,9 +3092,9 @@ the current line as well!
         input_api.thread_pool.timeout, mock.ANY)
     timer_instance.start.assert_called_once_with()
 
-  @mock.patch(BUILTIN_OPEN, mock.mock_open())
+  @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsPython3(self):
-    open().readline.return_value = '#!/usr/bin/env python3'
+    io.open().readline.return_value = '#!/usr/bin/env python3'
     change = presubmit.Change(
         'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
     input_api = self.MockInputApi(change, False)
@@ -3149,9 +3148,9 @@ the current line as well!
 
     self.checkstdout('')
 
-  @mock.patch(BUILTIN_OPEN, mock.mock_open())
+  @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsDontRunOnPython2(self):
-    open().readline.return_value = '#!/usr/bin/env python3'
+    io.open().readline.return_value = '#!/usr/bin/env python3'
     change = presubmit.Change(
         'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
     input_api = self.MockInputApi(change, False)
@@ -3193,9 +3192,9 @@ the current line as well!
 
     self.checkstdout('')
 
-  @mock.patch(BUILTIN_OPEN, mock.mock_open())
+  @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsDontRunOnPython3(self):
-    open().readline.return_value = '#!/usr/bin/env python3'
+    io.open().readline.return_value = '#!/usr/bin/env python3'
     change = presubmit.Change(
         'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
     input_api = self.MockInputApi(change, False)

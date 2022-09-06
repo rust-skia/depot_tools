@@ -6,6 +6,7 @@
 
 from __future__ import print_function
 
+import io as _io
 import os as _os
 
 from warnings import warn
@@ -170,9 +171,9 @@ def CheckAuthorizedAuthor(input_api, output_api, bot_allowlist=None):
       input_api.PresubmitLocalPath(), 'AUTHORS')
   author_re = input_api.re.compile(r'[^#]+\s+\<(.+?)\>\s*$')
   valid_authors = []
-  with open(authors_path, 'rb') as fp:
+  with _io.open(authors_path, encoding='utf-8') as fp:
     for line in fp:
-      m = author_re.match(line.decode('utf8'))
+      m = author_re.match(line)
       if m:
         valid_authors.append(m.group(1).lower())
 
@@ -798,7 +799,7 @@ def GetUnitTests(input_api,
   assert run_on_python3 or run_on_python2, (
       'At least one of "run_on_python2" or "run_on_python3" must be set.')
   def has_py3_shebang(test):
-    with open(test) as f:
+    with _io.open(test, encoding='utf-8') as f:
       maybe_shebang = f.readline()
     return maybe_shebang.startswith('#!') and 'python3' in maybe_shebang
 
@@ -1899,7 +1900,7 @@ def CheckJsonParses(input_api, output_api, file_filter=None):
       file_filter=file_filter)
   warnings = []
   for f in affected_files:
-    with open(f.AbsoluteLocalPath()) as j:
+    with _io.open(f.AbsoluteLocalPath(), encoding='utf-8') as j:
       try:
         json.load(j)
       except ValueError:
