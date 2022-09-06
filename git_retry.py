@@ -32,6 +32,7 @@ class TeeThread(threading.Thread):
   def run(self):
     chunks = []
     for line in self.fd:
+      line = line.decode('utf-8')
       chunks.append(line)
       self.out_fd.write(line)
     self.data = ''.join(chunks)
