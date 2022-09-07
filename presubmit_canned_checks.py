@@ -656,8 +656,8 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
     # "All rights reserved" is also deprecated, but tolerate it until it's
     # removed from all files.
     license_re = (
-        r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors\.'
-          r'( All rights reserved\.)?\r?\n'
+        r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors'
+          r'(\. All rights reserved\.)?\r?\n'
         r'.*? %(key_line)s\r?\n'
         r'.*? found in the LICENSE file\.(?: \*/)?\r?\n'
     ) % {
