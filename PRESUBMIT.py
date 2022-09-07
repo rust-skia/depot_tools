@@ -10,6 +10,8 @@ details on the presubmit API built into depot_tools.
 
 PRESUBMIT_VERSION = '2.0.0'
 
+USE_PYTHON3 = True
+
 import fnmatch
 import os
 import sys
@@ -85,17 +87,16 @@ def CheckRecipes(input_api, output_api):
   return input_api.canned_checks.CheckJsonParses(input_api, output_api,
                                                  file_filter=file_filter)
 
-def CheckPythonVersion(input_api, output_api):
-  # The tests here are assuming this is not defined, so raise an error
-  # if it is.
-  if 'USE_PYTHON3' in globals():
-    return [output_api.PresubmitError(
-        'USE_PYTHON3 is defined; update the tests in //PRESUBMIT.py and '
-        '//tests/PRESUBMIT.py.')]
-  if sys.version_info.major != 2:
-    return [output_api.PresubmitError(
-        'Did not use Python2 for //PRESUBMIT.py by default.')]
-  return []
+
+def CheckUsePython3(input_api, output_api):
+  results = []
+
+  if sys.version_info.major != 3:
+    results.append(
+        output_api.PresubmitError(
+            'Did not use Python3 for //tests/PRESUBMIT.py.'))
+
+  return results
 
 
 def CheckJsonFiles(input_api, output_api):
@@ -104,8 +105,21 @@ def CheckJsonFiles(input_api, output_api):
 
 
 def CheckUnitTestsOnCommit(input_api, output_api):
-  # Do not run integration tests on upload since they are way too slow.
+  """ Do not run integration tests on upload since they are way too slow."""
+
   input_api.SetTimeout(TEST_TIMEOUT_S)
+
+  # We still support python2 presubmit tests, so we need to test them. We don't
+  # run py3 here as the code below will start those tests
+  tests = input_api.canned_checks.GetUnitTestsInDirectory(
+      input_api,
+      output_api,
+      'tests',
+      files_to_check=[
+          r'.*presubmit_unittest\.py$',
+      ],
+      run_on_python2=True,
+      run_on_python3=False)
 
   # Run only selected tests on Windows.
   test_to_run_list = [r'.*test\.py$']
@@ -120,40 +134,13 @@ def CheckUnitTestsOnCommit(input_api, output_api):
         r'.*ninjalog_uploader_test\.py$',
         r'.*recipes_test\.py$',
     ])
-  py2_only_tests = [
-      'recipes_test.py',
-  ]
 
-  py3_only_tests = [
-      'autoninja_test.py',
-      'ninjalog_uploader_test.py',
-  ]
-
-  tests = input_api.canned_checks.GetUnitTestsInDirectory(
-      input_api,
-      output_api,
-      'tests',
-      files_to_check=test_to_run_list,
-      files_to_skip=tests_to_skip_list + py2_only_tests + py3_only_tests,
-      run_on_python3=True)
-
-  # TODO: once py3 compatbile, remove those tests
   tests.extend(
       input_api.canned_checks.GetUnitTestsInDirectory(
           input_api,
           output_api,
           'tests',
-          files_to_check=py2_only_tests,
-          files_to_skip=tests_to_skip_list,
-          run_on_python3=False))
-
-  # TODO: use this for all tests when py2 support is dropped.
-  tests.extend(
-      input_api.canned_checks.GetUnitTestsInDirectory(
-          input_api,
-          output_api,
-          'tests',
-          files_to_check=py3_only_tests,
+          files_to_check=test_to_run_list,
           files_to_skip=tests_to_skip_list,
           run_on_python3=True,
           run_on_python2=False))

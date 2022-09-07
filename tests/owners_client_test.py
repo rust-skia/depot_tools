@@ -1,3 +1,4 @@
+#!/usr/bin/env vpython3
 # Copyright (c) 2020 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -91,12 +92,12 @@ class GerritClientTest(unittest.TestCase):
             }
           ]
         }).start()
-    self.assertEquals(
+    self.assertEqual(
         ['approver@example.com', 'reviewer@example.com', 'missing@example.com'],
         self.client.ListOwners(os.path.join('bar', 'everyone', 'foo.txt')))
 
     # Result should be cached.
-    self.assertEquals(
+    self.assertEqual(
         ['approver@example.com', 'reviewer@example.com', 'missing@example.com'],
         self.client.ListOwners(os.path.join('bar', 'everyone', 'foo.txt')))
     # Always use slashes as separators.
@@ -130,12 +131,9 @@ class GerritClientTest(unittest.TestCase):
         },
       ]
     ).start()
-    self.assertEquals(
-        ['foo@example.com', self.client.EVERYONE],
-        self.client.ListOwners('foo.txt'))
-    self.assertEquals(
-        ['bar@example.com'],
-        self.client.ListOwners('bar.txt'))
+    self.assertEqual(['foo@example.com', self.client.EVERYONE],
+                     self.client.ListOwners('foo.txt'))
+    self.assertEqual(['bar@example.com'], self.client.ListOwners('bar.txt'))
 
 
 class TestClient(owners_client.OwnersClient):
@@ -280,7 +278,7 @@ class OwnersClientTest(unittest.TestCase):
         'bar/foo/': [bob, chris]
     }
 
-    self.assertEquals(
+    self.assertEqual(
         {
             'bar/everyone/foo.txt': [alice, bob],
             'bar/everyone/bar.txt': [bob],

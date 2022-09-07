@@ -6,14 +6,22 @@ import sys
 
 PRESUBMIT_VERSION = '2.0.0'
 
-USE_PYTHON3 = True
+# This file can be removed once py2 presubmit is no longer supported. This is
+# an integration test to ensure py2 presubmit still works.
 
 
-def CheckUsePython3(input_api, output_api):
-  results = []
-
-  if sys.version_info.major != 3:
-    results.append(output_api.PresubmitError(
-        'Did not use Python3 for //tests/PRESUBMIT.py.'))
-
-  return results
+def CheckPythonVersion(input_api, output_api):
+  # The tests here are assuming this is not defined, so raise an error
+  # if it is.
+  if 'USE_PYTHON3' in globals():
+    return [
+        output_api.PresubmitError(
+            'USE_PYTHON3 is defined; update the tests in //PRESUBMIT.py and '
+            '//tests/PRESUBMIT.py.')
+    ]
+  if sys.version_info.major != 2:
+    return [
+        output_api.PresubmitError(
+            'Did not use Python2 for //PRESUBMIT.py by default.')
+    ]
+  return []
