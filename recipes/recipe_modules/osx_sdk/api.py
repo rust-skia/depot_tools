@@ -14,8 +14,8 @@ from recipe_engine import recipe_api
 # TODO(iannucci): replace this with something sane when PROPERTIES is
 # implemented with a proto message.
 _PROPERTY_DEFAULTS = {
-  'toolchain_pkg': 'infra/tools/mac_toolchain/${platform}',
-  'toolchain_ver': 'git_revision:723fc1a6c8cdf2631a57851f5610e598db0c1de1',
+    'toolchain_pkg': 'infra/tools/mac_toolchain/${platform}',
+    'toolchain_ver': 'git_revision:248bbfc433c8e2fc4e3536d8f58477724ce7110d',
 }
 
 # Rationalized from https://en.wikipedia.org/wiki/Xcode.
