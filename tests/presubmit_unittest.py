@@ -624,8 +624,10 @@ class PresubmitUnittest(PresubmitTestsBase):
     expected = (r'Running Python ' + str(sys.version_info.major) +
                 r' post upload checks \.\.\.\n')
     if sys.version_info[0] == 2:
-      expected += r'Running .*PRESUBMIT.py under Python 2.\n'
-      expected += r'Running .*PRESUBMIT.py under Python 2.\n'
+      expected += ('Running .*PRESUBMIT.py under Python 2. Add USE_PYTHON3 = '
+                   'True to prevent this.\n')
+      expected += ('Running .*PRESUBMIT.py under Python 2. Add USE_PYTHON3 = '
+                   'True to prevent this.\n')
     self.assertRegexpMatches(sys.stdout.getvalue(), expected)
 
   def testDoPostUploadExecuterWarning(self):
@@ -659,7 +661,8 @@ class PresubmitUnittest(PresubmitTestsBase):
 
     extra = ''
     if sys.version_info[0] == 2:
-      extra = r'Running .*PRESUBMIT.py under Python 2.\n'
+      extra = ('Running .*PRESUBMIT.py under Python 2. Add USE_PYTHON3 = True '
+               'to prevent this.\n')
     expected = ('Running Python ' + str(sys.version_info.major) + ' '
                 'post upload checks \.\.\.\n'
                 '%s'
