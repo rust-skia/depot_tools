@@ -1264,21 +1264,13 @@ def CheckOwnersDirMetadataExclusive(input_api, output_api):
 def CheckOwnersFormat(input_api, output_api):
   if input_api.gerrit and input_api.gerrit.IsCodeOwnersEnabledOnRepo():
     return []
-  affected_files = {
-      f.LocalPath()
-      for f in input_api.change.AffectedFiles()
-      if 'OWNERS' in f.LocalPath() and f.Action() != 'D'
-  }
-  if not affected_files:
-    return []
-  try:
-    owners_db = input_api.owners_db
-    owners_db.override_files = {}
-    owners_db.load_data_needed_for(affected_files)
-    return []
-  except Exception as e:
-    return [output_api.PresubmitError(
-        'Error parsing OWNERS files:\n%s' % e)]
+
+  return [
+      output_api.PresubmitError(
+          'code-owners is not enabled. Ask your host enable it on your gerrit '
+          'host. Read more about code-owners at '
+          'https://gerrit.googlesource.com/plugins/code-owners.')
+  ]
 
 
 def CheckOwners(
@@ -1293,58 +1285,12 @@ def CheckOwners(
   if input_api.gerrit and input_api.gerrit.IsCodeOwnersEnabledOnRepo():
     return []
 
-  affected_files = {f.LocalPath() for f in
-                    input_api.change.AffectedFiles(
-                        file_filter=source_file_filter)}
-  owner_email, reviewers = GetCodereviewOwnerAndReviewers(
-      input_api, approval_needed=input_api.is_committing)
-
-  owner_email = owner_email or input_api.change.author_email
-
-  approval_status = input_api.owners_client.GetFilesApprovalStatus(
-      affected_files, reviewers.union([owner_email]), [])
-  missing_files = [
-      f for f in affected_files
-      if approval_status[f] != input_api.owners_client.APPROVED]
-  affects_owners = any('OWNERS' in name for name in missing_files)
-
-  if input_api.is_committing:
-    if input_api.tbr and not affects_owners:
-      return [output_api.PresubmitNotifyResult(
-          '--tbr was specified, skipping OWNERS check')]
-    needed = 'LGTM from an OWNER'
-    output_fn = output_api.PresubmitError
-    if input_api.change.issue:
-      if input_api.dry_run:
-        output_fn = lambda text: output_api.PresubmitNotifyResult(
-            'This is a dry run, but these failures would be reported on ' +
-            'commit:\n' + text)
-    else:
-      return [output_api.PresubmitError(
-          'OWNERS check failed: this CL has no Gerrit change number, '
-          'so we can\'t check it for approvals.')]
-  else:
-    needed = 'OWNER reviewers'
-    output_fn = output_api.PresubmitNotifyResult
-
-  if missing_files:
-    output_list = [
-        output_fn('Missing %s for these files:\n    %s' %
-                  (needed, '\n    '.join(sorted(missing_files))))]
-    if input_api.tbr and affects_owners:
-      output_list.append(output_fn('TBR for OWNERS files are ignored.'))
-    if not input_api.is_committing:
-      suggested_owners = input_api.owners_client.SuggestOwners(
-          missing_files, exclude=[owner_email])
-      output_list.append(output_fn('Suggested OWNERS: ' +
-          '(Use "git-cl owners" to interactively select owners.)\n    %s' %
-          ('\n    '.join(suggested_owners))))
-    return output_list
-
-  if (input_api.is_committing and not reviewers and
-      not input_api.gerrit.IsBotCommitApproved(input_api.change.issue)):
-    return [output_fn('Missing LGTM from someone other than %s' % owner_email)]
-  return []
+  return [
+      output_api.PresubmitError(
+          'code-owners is not enabled. Ask your host enable it on your gerrit '
+          'host. Read more about code-owners at '
+          'https://gerrit.googlesource.com/plugins/code-owners.')
+  ]
 
 
 def GetCodereviewOwnerAndReviewers(

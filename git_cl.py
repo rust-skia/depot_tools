@@ -1023,8 +1023,6 @@ class Changelist(object):
       remote, remote_branch = self.GetRemoteBranch()
       branch = GetTargetRef(remote, remote_branch, None)
       self._owners_client = owners_client.GetCodeOwnersClient(
-          root=settings.GetRoot(),
-          upstream=self.GetCommonAncestorWithUpstream(),
           host=self.GetGerritHost(),
           project=self.GetGerritProject(),
           branch=branch)
