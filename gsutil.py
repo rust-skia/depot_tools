@@ -127,11 +127,7 @@ def ensure_gsutil(version, target, clean):
     with zipfile.ZipFile(target_zip_filename, 'r') as target_zip:
       target_zip.extractall(download_dir)
 
-    try:
-      os.rename(download_dir, bin_dir)
-    except (OSError, IOError):
-      # Something else did this in parallel.
-      pass
+    shutil.move(download_dir, bin_dir)
     # Final check that the gsutil bin exists.  This should never fail.
     if not os.path.isfile(gsutil_bin):
       raise InvalidGsutilError()
