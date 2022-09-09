@@ -28,22 +28,18 @@ class PresubmitApi(recipe_api.RecipeApi):
   def __call__(self, *args, **kwargs):
     """Returns a presubmit step."""
 
-    kwargs['venv'] = True
     name = kwargs.pop('name', 'presubmit')
     with self.m.depot_tools.on_path():
-      presubmit_args = list(args) + [
-          '--json_output', self.m.json.output(),
-      ]
+      cmd = ['vpython', self.presubmit_support_path]
+      cmd.extend(args)
+      cmd.extend(['--json_output', self.m.json.output()])
       if self.m.resultdb.enabled:
         kwargs['wrapper'] = ('rdb', 'stream', '--')
-      step_data = self.m.python(
-          name, self.presubmit_support_path, presubmit_args, **kwargs)
+      step_data = self.m.step(name, cmd, **kwargs)
       output = step_data.json.output or {}
       if self.m.step.active_result.retcode != 0:
         return output
 
-      # Run with vpython3 directly
-      del (kwargs['venv'])
       presubmit_args = list(args) + [
           '--json_output',
           self.m.json.output(),

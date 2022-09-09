@@ -16,10 +16,9 @@ class GitClApi(recipe_api.RecipeApi):
       name = name + ' (%s)' % kwargs.pop('suffix')
 
     my_loc = self.c.repo_location if self.c else None
+    cmd = ['vpython', self.repo_resource('git_cl.py'), subcmd] + args
     with self.m.context(cwd=self.m.context.cwd or my_loc):
-      return self.m.python(
-          name, self.repo_resource('git_cl.py'), [subcmd] + args,
-          venv=True, **kwargs)
+      return self.m.step(name, cmd, **kwargs)
 
   def get_description(self, patch_url=None, **kwargs):
     """DEPRECATED. Consider using gerrit.get_change_description instead."""
