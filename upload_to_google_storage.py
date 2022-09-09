@@ -120,7 +120,7 @@ def _upload_worker(
       if os.stat(filename).st_mode & stat.S_IEXEC:
         code, _, err = gsutil.check_call_with_retries(
             'setmeta', '-h', 'x-goog-meta-executable:1', file_url)
-        if not code:
+        if code != 0:
           ret_codes.put(
               (code,
                'Encountered error on setting metadata on %s\n%s' %
