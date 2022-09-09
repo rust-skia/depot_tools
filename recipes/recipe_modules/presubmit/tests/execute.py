@@ -27,10 +27,22 @@ def RunSteps(api):
   with api.context(cwd=api.path['cache'].join('builder')):
     bot_update_step = api.presubmit.prepare()
     skip_owners = api.properties.get('skip_owners', False)
-    return api.presubmit.execute(bot_update_step, skip_owners)
+    run_all = api.properties.get('run_all', False)
+    return api.presubmit.execute(bot_update_step, skip_owners, run_all)
 
 
 def GenTests(api):
+  yield api.test(
+      'success_ci',
+      api.buildbucket.ci_build(
+          git_repo='https://chromium.googlesource.com/infra/infra'),
+      api.properties(run_all=True),
+      api.step_data('presubmit', api.json.output({})),
+      api.step_data('presubmit py3', api.json.output({})),
+      api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation),
+  )
+
   yield (api.test('success') + api.runtime(is_experimental=False) +
          api.buildbucket.try_build(project='infra') + api.step_data(
              'presubmit',
