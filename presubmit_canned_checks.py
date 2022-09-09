@@ -668,6 +668,7 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
 
   license_re = input_api.re.compile(license_re, input_api.re.MULTILINE)
   bad_files = []
+  bad_new_files = False
   for f in input_api.AffectedSourceFiles(source_file_filter):
     contents = input_api.ReadFile(f, 'r')
     if accept_empty_files and not contents:
@@ -675,8 +676,21 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
     # Search for key_line first to avoid fruitless and expensive regex searches.
     if (key_line and not key_line in contents):
       bad_files.append(f.LocalPath())
+      # f.OldContents() is expensive so don't call unless necessary.
+      if not f.OldContents():
+        bad_new_files = True
     elif not license_re.search(contents):
       bad_files.append(f.LocalPath())
+      # f.OldContents() is expensive so don't call unless necessary.
+      if not f.OldContents():
+        bad_new_files = True
+  if bad_new_files:
+    return [
+        output_api.PresubmitError(
+            'License must match:\n%s\n' % license_re.pattern +
+            'Found a bad license header in these files, some of which are new:',
+            items=bad_files)
+    ]
   if bad_files:
     return [output_api.PresubmitPromptWarning(
         'License must match:\n%s\n' % license_re.pattern +
