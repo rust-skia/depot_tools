@@ -1675,7 +1675,8 @@ def CheckForCommitObjects(input_api, output_api):
 
 
 def CheckVPythonSpec(input_api, output_api, file_filter=None):
-  """Validates any changed .vpython files with vpython verification tool.
+  """Validates any changed .vpython and .vpython3 files with vpython
+  verification tool.
 
   Args:
     input_api: Bag of input related interfaces.
@@ -1688,17 +1689,18 @@ def CheckVPythonSpec(input_api, output_api, file_filter=None):
   Returns:
     A list of input_api.Command objects containing verification commands.
   """
-  file_filter = file_filter or (lambda f: f.LocalPath().endswith('.vpython'))
+  file_filter = file_filter or (lambda f: f.LocalPath().endswith('.vpython') or
+                                f.LocalPath().endswith('.vpython3'))
   affected_files = input_api.AffectedTestableFiles(file_filter=file_filter)
   affected_files = map(lambda f: f.AbsoluteLocalPath(), affected_files)
 
   commands = []
   for f in affected_files:
-    commands.append(input_api.Command(
-      'Verify %s' % f,
-      ['vpython', '-vpython-spec', f, '-vpython-tool', 'verify'],
-      {'stderr': input_api.subprocess.STDOUT},
-      output_api.PresubmitError))
+    commands.append(
+        input_api.Command('Verify %s' % f, [
+            input_api.python3_executable, '-vpython-spec', f, '-vpython-tool',
+            'verify'
+        ], {'stderr': input_api.subprocess.STDOUT}, output_api.PresubmitError))
 
   return commands
 
