@@ -65,6 +65,11 @@ else:
 # Ask for feedback only once in program lifetime.
 _ASKED_FOR_FEEDBACK = False
 
+# Set if super-verbose mode is requested, for tracking where presubmit messages
+# are coming from.
+_SHOW_CALLSTACKS = False
+
+
 def time_time():
   # Use this so that it can be mocked in tests without interfering with python
   # system machinery.
@@ -342,6 +347,9 @@ class _PresubmitResult(object):
     self._message = _PresubmitResult._ensure_str(message)
     self._items = items or []
     self._long_text = _PresubmitResult._ensure_str(long_text.rstrip())
+    if _SHOW_CALLSTACKS:
+      self._long_text += 'Presubmit result call stack is:\n'
+      self._long_text += ''.join(traceback.format_stack(None, 8))
 
   @staticmethod
   def _ensure_str(val):
@@ -2046,6 +2054,12 @@ def main(argv=None):
   log_format = ('[%(levelname).1s%(asctime)s %(process)d %(thread)d '
                 '%(filename)s] %(message)s')
   logging.basicConfig(format=log_format, level=log_level)
+
+  # Print call stacks when _PresubmitResult objects are created with -v -v is
+  # specified. This helps track down where presubmit messages are coming from.
+  if options.verbose >= 2:
+    global _SHOW_CALLSTACKS
+    _SHOW_CALLSTACKS = True
 
   if options.description_file:
     options.description = gclient_utils.FileRead(options.description_file)
