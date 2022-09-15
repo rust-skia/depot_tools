@@ -5476,7 +5476,7 @@ def CMDformat(parser, args):
 
       tool_dir = os.path.join(top_dir, xml_dir)
       pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
-      cmd = ['vpython', pretty_print_tool, '--non-interactive']
+      cmd = ['vpython3', pretty_print_tool, '--non-interactive']
 
       # If the XML file is histograms.xml or enums.xml, add the xml path to the
       # command as histograms/pretty_print.py now needs a relative path argument
