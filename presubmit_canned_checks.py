@@ -529,6 +529,7 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
   ]
 
   def no_long_lines(file_extension, line):
+    """Returns True if the line length is okay."""
     # Check for language specific exceptions.
     if any(file_extension in exts and line.lstrip().startswith(exceptions)
            for exts, exceptions in LANGUAGE_EXCEPTIONS):
@@ -546,6 +547,9 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
 
     # Allow long URLs of any length.
     if any((url in line) for url in ('file://', 'http://', 'https://')):
+      return True
+
+    if 'presubmit: ignore-long-line' in line:
       return True
 
     if line_len > extra_maxlen:
