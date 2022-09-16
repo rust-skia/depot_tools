@@ -1718,12 +1718,13 @@ class Changelist(object):
     if remote_url is None:
       logging.warning('invalid remote')
       return
-    if urllib.parse.urlparse(remote_url).scheme != 'https':
-      logging.warning('Ignoring branch %(branch)s with non-https remote '
-                      '%(remote)s', {
-                          'branch': self.branch,
-                          'remote': self.GetRemoteUrl()
-                      })
+    if urllib.parse.urlparse(remote_url).scheme not in ['https', 'sso']:
+      logging.warning(
+          'Ignoring branch %(branch)s with non-https/sso remote '
+          '%(remote)s', {
+              'branch': self.branch,
+              'remote': self.GetRemoteUrl()
+          })
       return
 
     # Lazy-loader to identify Gerrit and Git hosts.

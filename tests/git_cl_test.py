@@ -2093,11 +2093,11 @@ class TestGitCl(unittest.TestCase):
     self.mockGit.config['remote.origin.url'] = 'custom-scheme://repo'
     self.calls = [
         (('logging.warning',
-            'Ignoring branch %(branch)s with non-https remote '
-            '%(remote)s', {
+          'Ignoring branch %(branch)s with non-https/sso remote '
+          '%(remote)s', {
               'branch': 'main',
-              'remote': 'custom-scheme://repo'}
-          ), None),
+              'remote': 'custom-scheme://repo'
+          }), None),
     ]
     mock.patch('git_cl.gerrit_util.CookiesAuthenticator',
               CookiesAuthenticatorMockFactory(hosts_with_creds={})).start()
