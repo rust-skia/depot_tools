@@ -140,7 +140,7 @@ class GclientGitCheckout(GclientCheckout, GitCheckout):
     sync_cmd = ['sync']
     if self.options.nohooks:
       sync_cmd.append('--nohooks')
-    if self.options.no_history:
+    if self.options.nohistory:
       sync_cmd.append('--no-history')
     if self.spec.get('with_branch_heads', False):
       sync_cmd.append('--with_branch_heads')
@@ -154,7 +154,7 @@ class GclientGitCheckout(GclientCheckout, GitCheckout):
         'submodule', 'foreach',
         'git config -f $toplevel/.git/config submodule.$name.ignore all',
         cwd=wd)
-    if not self.options.no_history:
+    if not self.options.nohistory:
       self.run_git(
           'config', '--add', 'remote.origin.fetch',
           '+refs/tags/*:refs/tags/*', cwd=wd)
@@ -194,10 +194,17 @@ def handle_args(argv):
 
   parser.add_argument('-n', '--dry-run', action='store_true', default=False,
     help='Don\'t run commands, only print them.')
-  parser.add_argument('--nohooks', action='store_true', default=False,
-    help='Don\'t run hooks after checkout.')
-  parser.add_argument('--no-history', action='store_true', default=False,
-    help='Perform shallow clones, don\'t fetch the full git history.')
+  parser.add_argument('--nohooks',
+                      '--no-hooks',
+                      action='store_true',
+                      default=False,
+                      help='Don\'t run hooks after checkout.')
+  parser.add_argument(
+      '--nohistory',
+      '--no-history',
+      action='store_true',
+      default=False,
+      help='Perform shallow clones, don\'t fetch the full git history.')
   parser.add_argument('--force', action='store_true', default=False,
     help='(dangerous) Don\'t look for existing .gclient file.')
   parser.add_argument(

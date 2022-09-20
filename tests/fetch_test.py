@@ -48,40 +48,40 @@ class TestUtilityFunctions(unittest.TestCase):
 
   def test_handle_args_valid_usage(self):
     response = fetch.handle_args(['filename', 'foo'])
-    self.assertEqual(argparse.Namespace(
-      dry_run=False,
-      nohooks=False,
-      no_history=False,
-      force=False,
-      config='foo',
-      protocol_override=None,
-      props=[]), response)
+    self.assertEqual(
+        argparse.Namespace(dry_run=False,
+                           nohooks=False,
+                           nohistory=False,
+                           force=False,
+                           config='foo',
+                           protocol_override=None,
+                           props=[]), response)
 
     response = fetch.handle_args([
         'filename', '-n', '--dry-run', '--nohooks', '--no-history', '--force',
         '--protocol-override', 'sso', 'foo', '--some-param=1', '--bar=2'
     ])
-    self.assertEqual(argparse.Namespace(
-      dry_run=True,
-      nohooks=True,
-      no_history=True,
-      force=True,
-      config='foo',
-      protocol_override='sso',
-      props=['--some-param=1', '--bar=2']), response)
+    self.assertEqual(
+        argparse.Namespace(dry_run=True,
+                           nohooks=True,
+                           nohistory=True,
+                           force=True,
+                           config='foo',
+                           protocol_override='sso',
+                           props=['--some-param=1', '--bar=2']), response)
 
     response = fetch.handle_args([
-        'filename', '-n', '--dry-run', '--nohooks', '--no-history', '--force',
+        'filename', '-n', '--dry-run', '--no-hooks', '--nohistory', '--force',
         '-p', 'sso', 'foo', '--some-param=1', '--bar=2'
     ])
-    self.assertEqual(argparse.Namespace(
-      dry_run=True,
-      nohooks=True,
-      no_history=True,
-      force=True,
-      config='foo',
-      protocol_override='sso',
-      props=['--some-param=1', '--bar=2']), response)
+    self.assertEqual(
+        argparse.Namespace(dry_run=True,
+                           nohooks=True,
+                           nohistory=True,
+                           force=True,
+                           config='foo',
+                           protocol_override='sso',
+                           props=['--some-param=1', '--bar=2']), response)
 
   @mock.patch('os.path.exists', return_value=False)
   @mock.patch('sys.stdout', StringIO())
@@ -237,8 +237,7 @@ class TestGclientGitCheckout(unittest.TestCase):
     self.run_gclient = mock.patch('fetch.GclientCheckout.run_gclient').start()
     self.run_git = mock.patch('fetch.GitCheckout.run_git').start()
 
-    self.opts = argparse.Namespace(
-      dry_run=False, nohooks=True, no_history=False)
+    self.opts = argparse.Namespace(dry_run=False, nohooks=True, nohistory=False)
     specs = {
         'solutions': [{
             'foo': 'bar',
