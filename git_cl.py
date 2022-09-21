@@ -138,6 +138,7 @@ settings = None
 # And scroll up to see the stack trace printed.
 _IS_BEING_TESTED = False
 
+_GOOGLESOURCE = 'googlesource.com'
 
 _KNOWN_GERRIT_TO_SHORT_URLS = {
     'https://chrome-internal-review.googlesource.com': 'https://crrev.com/i',
@@ -324,6 +325,29 @@ def _parse_bucket(raw_bucket):
   return project, bucket
 
 
+def _canonical_git_googlesource_host(host):
+  """Normalizes Gerrit hosts (with '-review') to Git host."""
+  assert host.endswith(_GOOGLESOURCE)
+  # Prefix doesn't include '.' at the end.
+  prefix = host[:-(1 + len(_GOOGLESOURCE))]
+  if prefix.endswith('-review'):
+    prefix = prefix[:-len('-review')]
+  return prefix + '.' + _GOOGLESOURCE
+
+
+def _canonical_gerrit_googlesource_host(host):
+  git_host = _canonical_git_googlesource_host(host)
+  prefix = git_host.split('.', 1)[0]
+  return prefix + '-review.' + _GOOGLESOURCE
+
+
+def _get_counterpart_host(host):
+  assert host.endswith(_GOOGLESOURCE)
+  git = _canonical_git_googlesource_host(host)
+  gerrit = _canonical_gerrit_googlesource_host(git)
+  return git if gerrit == host else gerrit
+
+
 def _trigger_tryjobs(changelist, jobs, options, patchset):
   """Sends a request to Buildbucket to trigger tryjobs for a changelist.
 
@@ -399,11 +423,11 @@ def _make_tryjob_schedule_requests(changelist, jobs, options, patchset):
     if options.ensure_value('revision', None):
       remote, remote_branch = changelist.GetRemoteBranch()
       requests[-1]['scheduleBuild']['gitilesCommit'] = {
-          'host': gerrit_changes[0]['host'],
+          'host': _canonical_git_googlesource_host(gerrit_changes[0]['host']),
           'project': gerrit_changes[0]['project'],
           'id': options.revision,
           'ref': GetTargetRef(remote, remote_branch, None)
-       }
+      }
 
   return requests
 
@@ -3116,8 +3140,6 @@ def DownloadGerritHook(force):
 class _GitCookiesChecker(object):
   """Provides facilities for validating and suggesting fixes to .gitcookies."""
 
-  _GOOGLESOURCE = 'googlesource.com'
-
   def __init__(self):
     # Cached list of [host, identity, source], where source is either
     # .gitcookies or .netrc.
@@ -3186,14 +3208,10 @@ class _GitCookiesChecker(object):
   def get_hosts_with_creds(self, include_netrc=False):
     if self._all_hosts is None:
       a = gerrit_util.CookiesAuthenticator()
-      self._all_hosts = [
-          (h, u, s)
-          for h, u, s in itertools.chain(
-              ((h, u, '.netrc') for h, (u, _, _) in a.netrc.hosts.items()),
-              ((h, u, '.gitcookies') for h, (u, _) in a.gitcookies.items())
-          )
-          if h.endswith(self._GOOGLESOURCE)
-      ]
+      self._all_hosts = [(h, u, s) for h, u, s in itertools.chain((
+          (h, u, '.netrc') for h, (u, _, _) in a.netrc.hosts.items()), (
+              (h, u, '.gitcookies') for h, (u, _) in a.gitcookies.items()))
+                         if h.endswith(_GOOGLESOURCE)]
 
     if include_netrc:
       return self._all_hosts
@@ -3225,33 +3243,13 @@ class _GitCookiesChecker(object):
       username = username[len('git-'):]
     return username, domain
 
-  def _canonical_git_googlesource_host(self, host):
-    """Normalizes Gerrit hosts (with '-review') to Git host."""
-    assert host.endswith(self._GOOGLESOURCE)
-    # Prefix doesn't include '.' at the end.
-    prefix = host[:-(1 + len(self._GOOGLESOURCE))]
-    if prefix.endswith('-review'):
-      prefix = prefix[:-len('-review')]
-    return prefix + '.' + self._GOOGLESOURCE
-
-  def _canonical_gerrit_googlesource_host(self, host):
-    git_host = self._canonical_git_googlesource_host(host)
-    prefix = git_host.split('.', 1)[0]
-    return prefix + '-review.' + self._GOOGLESOURCE
-
-  def _get_counterpart_host(self, host):
-    assert host.endswith(self._GOOGLESOURCE)
-    git = self._canonical_git_googlesource_host(host)
-    gerrit = self._canonical_gerrit_googlesource_host(git)
-    return git if gerrit == host else gerrit
-
   def has_generic_host(self):
     """Returns whether generic .googlesource.com has been configured.
 
     Chrome Infra recommends to use explicit ${host}.googlesource.com instead.
     """
     for host, _, _ in self.get_hosts_with_creds(include_netrc=False):
-      if host == '.' + self._GOOGLESOURCE:
+      if host == '.' + _GOOGLESOURCE:
         return True
     return False
 
@@ -3262,7 +3260,7 @@ class _GitCookiesChecker(object):
     """
     host_to_identity_pairs = {}
     for host, identity, _ in self.get_hosts_with_creds():
-      canonical = self._canonical_git_googlesource_host(host)
+      canonical = _canonical_git_googlesource_host(host)
       pair = host_to_identity_pairs.setdefault(canonical, [None, None])
       idx = 0 if canonical == host else 1
       pair[idx] = identity
@@ -3270,9 +3268,9 @@ class _GitCookiesChecker(object):
 
   def get_partially_configured_hosts(self):
     return set(
-        (host if i1 else self._canonical_gerrit_googlesource_host(host))
+        (host if i1 else _canonical_gerrit_googlesource_host(host))
         for host, (i1, i2) in self._get_git_gerrit_identity_pairs().items()
-        if None in (i1, i2) and host != '.' + self._GOOGLESOURCE)
+        if None in (i1, i2) and host != '.' + _GOOGLESOURCE)
 
   def get_conflicting_hosts(self):
     return set(
@@ -3316,9 +3314,9 @@ class _GitCookiesChecker(object):
     if partial:
       yield ('Credentials should come in pairs for Git and Gerrit hosts. '
              'These hosts are missing',
-             self._format_hosts(partial, lambda host: 'but %s defined' %
-                self._get_counterpart_host(host)),
-             partial)
+             self._format_hosts(
+                 partial, lambda host: 'but %s defined' % _get_counterpart_host(
+                     host)), partial)
 
     conflicting = self.get_conflicting_hosts()
     if conflicting:
@@ -3349,11 +3347,11 @@ class _GitCookiesChecker(object):
             'visit the following URLs with correct account to generate '
             'correct credential lines:\n' %
             gerrit_util.CookiesAuthenticator.get_gitcookies_path())
-      print('    %s' % '\n    '.join(sorted(set(
-          gerrit_util.CookiesAuthenticator().get_new_password_url(
-              self._canonical_git_googlesource_host(host))
-          for host in bad_hosts
-      ))))
+      print('    %s' % '\n    '.join(
+          sorted(
+              set(gerrit_util.CookiesAuthenticator().get_new_password_url(
+                  _canonical_git_googlesource_host(host))
+                  for host in bad_hosts))))
     return found
 
 

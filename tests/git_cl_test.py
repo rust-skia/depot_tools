@@ -492,9 +492,9 @@ class GitCookiesCheckerTest(unittest.TestCase):
 
   def mock_hosts_creds(self, subhost_identity_pairs):
     def ensure_googlesource(h):
-      if not h.endswith(self.c._GOOGLESOURCE):
+      if not h.endswith(git_cl._GOOGLESOURCE):
         assert not h.endswith('.')
-        return h + '.' + self.c._GOOGLESOURCE
+        return h + '.' + git_cl._GOOGLESOURCE
       return h
     self.c._all_hosts = [(ensure_googlesource(h), i, '.gitcookies')
                          for h, i in subhost_identity_pairs]
@@ -3795,7 +3795,8 @@ class CMDTryTestCase(CMDTestCaseBase):
     expected_request = {
         "requests": [{
             "scheduleBuild": {
-                "requestId": "uuid4",
+                "requestId":
+                "uuid4",
                 "builder": {
                     "project": "chromium",
                     "builder": "linux",
@@ -3809,24 +3810,32 @@ class CMDTryTestCase(CMDTestCaseBase):
                 }],
                 "properties": {
                     "category": "git_cl_try",
-                    "json": [{"a": 1}, None],
+                    "json": [{
+                        "a": 1
+                    }, None],
                     "key": "val",
                 },
                 "tags": [
-                    {"value": "linux", "key": "builder"},
-                    {"value": "git_cl_try", "key": "user_agent"},
+                    {
+                        "value": "linux",
+                        "key": "builder"
+                    },
+                    {
+                        "value": "git_cl_try",
+                        "key": "user_agent"
+                    },
                 ],
                 "gitilesCommit": {
-                    "host": "chromium-review.googlesource.com",
+                    "host": "chromium.googlesource.com",
                     "project": "depot_tools",
                     "id": "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef",
                     "ref": "refs/heads/main",
                 }
             },
-        },
-        {
+        }, {
             "scheduleBuild": {
-                "requestId": "uuid4",
+                "requestId":
+                "uuid4",
                 "builder": {
                     "project": "chromium",
                     "builder": "win",
@@ -3840,15 +3849,23 @@ class CMDTryTestCase(CMDTestCaseBase):
                 }],
                 "properties": {
                     "category": "git_cl_try",
-                    "json": [{"a": 1}, None],
+                    "json": [{
+                        "a": 1
+                    }, None],
                     "key": "val",
                 },
                 "tags": [
-                    {"value": "win", "key": "builder"},
-                    {"value": "git_cl_try", "key": "user_agent"},
+                    {
+                        "value": "win",
+                        "key": "builder"
+                    },
+                    {
+                        "value": "git_cl_try",
+                        "key": "user_agent"
+                    },
                 ],
                 "gitilesCommit": {
-                    "host": "chromium-review.googlesource.com",
+                    "host": "chromium.googlesource.com",
                     "project": "depot_tools",
                     "id": "beeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeef",
                     "ref": "refs/heads/main",
@@ -4073,7 +4090,7 @@ class MakeRequestsHelperTestCase(unittest.TestCase):
         changelist, jobs, options, patchset=None)
     self.assertEqual(
         requests[0]['scheduleBuild']['gitilesCommit'], {
-            'host': 'chromium-review.googlesource.com',
+            'host': 'chromium.googlesource.com',
             'id': 'ba5eba11',
             'project': 'depot_tools',
             'ref': 'refs/heads/main',
