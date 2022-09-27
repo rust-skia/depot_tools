@@ -847,8 +847,8 @@ def is_dirty_git_tree(cmd):
 
   dirty = get_dirty_files()
   if dirty:
-    w('Cannot %s with a dirty tree. Commit, freeze or stash your changes first.'
-      % cmd)
+    w('Cannot %s with a dirty tree. Commit%s or stash your changes first.' %
+      (cmd, '' if cmd == 'upload' else ', freeze'))
     w('Uncommitted files: (git diff-index --name-status HEAD)')
     w(dirty[:4096])
     if len(dirty) > 4096: # pragma: no cover
