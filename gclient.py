@@ -1832,6 +1832,8 @@ it or fix the checkout.
     Notify the user if there is an orphaned entry in their working copy.
     Only delete the directory if there are no changes in it, and
     delete_unversioned_trees is set to true.
+
+    Returns CIPD packages that are no longer versioned.
     """
 
     entry_names_and_sync = [(i.name, i._should_sync)
@@ -1845,6 +1847,7 @@ it or fix the checkout.
         name for name, should_sync in entry_names_and_sync if not should_sync
     ]
 
+    removed_cipd_entries = []
     for entry, prev_url in self._ReadEntries().items():
       if not prev_url:
         # entry must have been overridden via .gclient custom_deps
@@ -1852,6 +1855,11 @@ it or fix the checkout.
       if any(entry.startswith(sln) for sln in no_sync_entries):
         # Dependencies of solutions that skipped syncing would not
         # show up in `entries`.
+        continue
+      if (':' in entry):
+        # This is a cipd package. Don't clean it up, but prepare for return
+        if entry not in entries:
+          removed_cipd_entries.append(entry)
         continue
       # Fix path separator on Windows.
       entry_fixed = entry.replace('/', os.path.sep)
@@ -1955,6 +1963,7 @@ it or fix the checkout.
           gclient_utils.rmtree(e_dir)
     # record the current list of entries for next time
     self._SaveEntries()
+    return removed_cipd_entries
 
   def RunOnDeps(self, command, args, ignore_requirements=False, progress=True):
     """Runs a command on each dependency in a client and its dependencies.
@@ -2029,6 +2038,7 @@ it or fix the checkout.
 
     # Once all the dependencies have been processed, it's now safe to write
     # out the gn_args_file and run the hooks.
+    removed_cipd_entries = []
     if command == 'update':
       for dependency in self.dependencies:
         gn_args_dep = dependency
@@ -2038,13 +2048,24 @@ it or fix the checkout.
         if gn_args_dep and gn_args_dep.HasGNArgsFile():
           gn_args_dep.WriteGNArgsFile()
 
-      self._RemoveUnversionedGitDirs()
+      removed_cipd_entries = self._RemoveUnversionedGitDirs()
 
     # Sync CIPD dependencies once removed deps are deleted. In case a git
     # dependency was moved to CIPD, we want to remove the old git directory
     # first and then sync the CIPD dep.
     if self._cipd_root:
       self._cipd_root.run(command)
+      # It's possible that CIPD removed some entries that are now part of git
+      # worktree. Try to checkout those directories
+      if removed_cipd_entries:
+        for cipd_entry in removed_cipd_entries:
+          cwd = os.path.join(self._root_dir, cipd_entry.split(':')[0])
+          cwd, tail = os.path.split(cwd)
+          if cwd:
+            try:
+              gclient_scm.scm.GIT.Capture(['checkout', tail], cwd=cwd)
+            except subprocess2.CalledProcessError:
+              pass
 
     if not self._options.nohooks:
       if should_show_progress:
