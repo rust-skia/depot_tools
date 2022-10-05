@@ -516,7 +516,6 @@ class Mirror(object):
         cwd=self.mirror_path).decode('utf-8', 'ignore').strip()
     gsutil = Gsutil(path=self.gsutil_exe, boto_path=None)
 
-    src_name = self.mirror_path
     dest_prefix = '%s/%s' % (self._gs_path, gen_number)
 
     # ls_out lists contents in the format: gs://blah/blah/123...
@@ -560,11 +559,15 @@ class Mirror(object):
       # getting compressed enough.
     self.RunGit(gc_args)
 
-    gsutil.call('-m', 'cp', '-r', src_name, dest_prefix)
+    self.print('running "gsutil -m cp -r %s %s"' %
+               (self.mirror_path, dest_prefix))
+    gsutil.call('-m', 'cp', '-r', self.mirror_path, dest_prefix)
 
     # Create .ready file and upload
     _, ready_file_name =  tempfile.mkstemp(suffix='.ready')
     try:
+      self.print('running "gsutil cp %s %s.ready"' %
+                 (ready_file_name, dest_prefix))
       gsutil.call('cp', ready_file_name, '%s.ready' % (dest_prefix))
     finally:
       os.remove(ready_file_name)
