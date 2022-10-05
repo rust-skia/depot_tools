@@ -158,13 +158,20 @@ class PresubmitApi(recipe_api.RecipeApi):
     if self.m.cq.active and self.m.cq.run_mode == self.m.cq.DRY_RUN:
       presubmit_args.append('--dry_run')
 
-    presubmit_args.extend([
-      '--root', abs_root,
-      '--commit',
-      '--verbose', '--verbose',
+    additionalArgs = ['--root', abs_root,'--commit']
+
+
+    if not run_all:
+      additionalArgs.extend([
+        '--verbose', '--verbose',
+      ])
+
+    additionalArgs.extend([
       '--skip_canned', 'CheckTreeIsOpen',
       '--upstream', upstream,  # '' if not in bot_update mode.
     ])
+
+    presubmit_args.extend(additionalArgs)
 
     if skip_owners:
       presubmit_args.extend([
