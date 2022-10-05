@@ -4509,6 +4509,14 @@ def CMDsplit(parser, args):
                     help='Sends your change to the CQ after an approval. Only '
                          'works on repos that have the Auto-Submit label '
                          'enabled')
+  parser.add_option('--max-depth',
+                    type='int',
+                    default=0,
+                    help='The max depth to look for OWNERS files. Useful for '
+                    'controlling the granularity of the split CLs, e.g. '
+                    '--max-depth=1 will only split by top-level '
+                    'directory. Specifying a value less than 1 means no '
+                    'limit on max depth.')
   options, _ = parser.parse_args(args)
 
   if not options.description_file:
@@ -4517,10 +4525,10 @@ def CMDsplit(parser, args):
   def WrappedCMDupload(args):
     return CMDupload(OptionParser(), args)
 
-  return split_cl.SplitCl(
-      options.description_file, options.comment_file, Changelist,
-      WrappedCMDupload, options.dry_run, options.cq_dry_run,
-      options.enable_auto_submit, settings.GetRoot())
+  return split_cl.SplitCl(options.description_file, options.comment_file,
+                          Changelist, WrappedCMDupload, options.dry_run,
+                          options.cq_dry_run, options.enable_auto_submit,
+                          options.max_depth, settings.GetRoot())
 
 
 @subcommand.usage('DEPRECATED')
