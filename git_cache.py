@@ -520,6 +520,7 @@ class Mirror(object):
 
     # ls_out lists contents in the format: gs://blah/blah/123...
     _, ls_out, _ = gsutil.check_call('ls', self._gs_path)
+    self.print('ran "gsutil ls %s": %s' % (self._gs_path, ls_out))
 
     # Check to see if folder already exists in gs
     ls_out_set = set(ls_out.strip().splitlines())
