@@ -510,6 +510,19 @@ class Mirror(object):
                     reset_fetch_config)
 
   def update_bootstrap(self, prune=False, gc_aggressive=False, branch='main'):
+    # NOTE: There have been cases where repos were being recursively uploaded
+    # to google storage.
+    # E.g. `<host_url>-<repo>/<gen_number>/<host_url>-<repo>/` in GS and
+    # <host_url>-<repo>/<host_url>-<repo>/ on the bot.
+    # Check for recursed files on the bot here and remove them if found
+    # before we upload to GS.
+    # See crbug.com/1370443; keep this check until root cause is found.
+    recursed_dir = os.path.join(self.mirror_path,
+                                self.mirror_path.split(os.path)[-1])
+    if os.path.exists(recursed_dir):
+      self.print('Deleting unexpected directory: %s' % recursed_dir)
+      os.remove(recursed_dir)
+
     # The folder is <git number>
     gen_number = subprocess.check_output(
         [self.git_exe, 'number', branch],
@@ -519,8 +532,13 @@ class Mirror(object):
     dest_prefix = '%s/%s' % (self._gs_path, gen_number)
 
     # ls_out lists contents in the format: gs://blah/blah/123...
-    _, ls_out, _ = gsutil.check_call('ls', self._gs_path)
-    self.print('ran "gsutil ls %s": %s' % (self._gs_path, ls_out))
+    self.print('running "gsutil ls %s":' % self.gs_path)
+    ls_code, ls_out, ls_error = gsutil.check_call_with_retries(
+        'ls', self._gs_path)
+    if ls_code != 0:
+      self.print(ls_error)
+    else:
+      self.print(ls_out)
 
     # Check to see if folder already exists in gs
     ls_out_set = set(ls_out.strip().splitlines())
@@ -560,9 +578,9 @@ class Mirror(object):
       # getting compressed enough.
     self.RunGit(gc_args)
 
-    self.print('running "gsutil -m cp -r %s %s"' %
+    self.print('running "gsutil -m rsync -r -d %s %s"' %
                (self.mirror_path, dest_prefix))
-    gsutil.call('-m', 'cp', '-r', self.mirror_path, dest_prefix)
+    gsutil.call('-m', 'rsync', '-r', '-d', self.mirror_path, dest_prefix)
 
     # Create .ready file and upload
     _, ready_file_name =  tempfile.mkstemp(suffix='.ready')
