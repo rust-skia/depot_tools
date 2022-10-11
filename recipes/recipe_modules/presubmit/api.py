@@ -153,7 +153,10 @@ class PresubmitApi(recipe_api.RecipeApi):
       ]
 
     if run_all:
-      presubmit_args.append('--all')
+      presubmit_args.extend([
+        '--all', '--no_diffs',
+        '--verbose'
+        ])
 
     if self.m.cq.active and self.m.cq.run_mode == self.m.cq.DRY_RUN:
       presubmit_args.append('--dry_run')
