@@ -521,7 +521,7 @@ class Mirror(object):
                                 self.mirror_path.split(os.path.sep)[-1])
     if os.path.exists(recursed_dir):
       self.print('Deleting unexpected directory: %s' % recursed_dir)
-      os.remove(recursed_dir)
+      gclient_utils.rmtree(recursed_dir)
 
     # The folder is <git number>
     gen_number = subprocess.check_output(
