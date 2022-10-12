@@ -518,7 +518,7 @@ class Mirror(object):
     # before we upload to GS.
     # See crbug.com/1370443; keep this check until root cause is found.
     recursed_dir = os.path.join(self.mirror_path,
-                                self.mirror_path.split(os.path)[-1])
+                                self.mirror_path.split(os.path.sep)[-1])
     if os.path.exists(recursed_dir):
       self.print('Deleting unexpected directory: %s' % recursed_dir)
       os.remove(recursed_dir)
