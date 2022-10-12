@@ -532,7 +532,7 @@ class Mirror(object):
     dest_prefix = '%s/%s' % (self._gs_path, gen_number)
 
     # ls_out lists contents in the format: gs://blah/blah/123...
-    self.print('running "gsutil ls %s":' % self.gs_path)
+    self.print('running "gsutil ls %s":' % self._gs_path)
     ls_code, ls_out, ls_error = gsutil.check_call_with_retries(
         'ls', self._gs_path)
     if ls_code != 0:
