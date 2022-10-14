@@ -1740,8 +1740,11 @@ def DoPresubmitChecks(change,
     if not presubmit_files and verbose:
       sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
     results = []
-    depot_tools = os.path.dirname(os.path.abspath(__file__))
-    python2_usage_log_file = os.path.join(depot_tools, 'python2_usage.txt')
+    if sys.platform == 'win32':
+      temp = os.environ['TEMP']
+    else:
+      temp = '/tmp'
+    python2_usage_log_file = os.path.join(temp, 'python2_usage.txt')
     if os.path.exists(python2_usage_log_file):
       os.remove(python2_usage_log_file)
     thread_pool = ThreadPool()
