@@ -639,59 +639,69 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
   if license_re and license_re == '.*':
     return []
 
-  key_line = None
-  if not license_re:
+  if license_re:
+    new_license_re = license_re
+  else:
     project_name = project_name or 'Chromium'
 
     # Accept any year number from 2006 to the current year, or the special
     # 2006-20xx string used on the oldest files. 2006-20xx is deprecated, but
-    # tolerated on old files.
+    # tolerated on old files. On new files the current year must be specified.
     current_year = int(input_api.time.strftime('%Y'))
     allowed_years = (str(s) for s in reversed(range(2006, current_year + 1)))
     years_re = '(' + '|'.join(allowed_years) + '|2006-2008|2006-2009|2006-2010)'
 
-    # A file that lacks this line necessarily lacks a compatible license.
-    # Checking for this line lets us avoid the cost of a complex regex across a
-    # possibly large file. This has been seen to save 50+ seconds on a single
-    # file.
+    # Reduce duplication between the two regex expressions.
     key_line = ('Use of this source code is governed by a BSD-style license '
                'that can be')
     # The (c) is deprecated, but tolerate it until it's removed from all files.
     # "All rights reserved" is also deprecated, but tolerate it until it's
     # removed from all files.
-    license_re = (
-        r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors'
-          r'(\. All rights reserved\.)?\r?\n'
-        r'.*? %(key_line)s\r?\n'
-        r'.*? found in the LICENSE file\.(?: \*/)?\r?\n'
-    ) % {
-        'year': years_re,
-        'project': project_name,
-        'key_line' : key_line,
-    }
+    license_re = (r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors'
+                  r'(\. All rights reserved\.)?\n'
+                  r'.*? %(key_line)s\n'
+                  r'.*? found in the LICENSE file\.(?: \*/)?\n') % {
+                      'year': years_re,
+                      'project': project_name,
+                      'key_line': key_line,
+                  }
+    # On new files don't tolerate any digression from the ideal.
+    new_license_re = (r'.*? Copyright %(year)s The %(project)s Authors\n'
+                      r'.*? %(key_line)s\n'
+                      r'.*? found in the LICENSE file\.\n') % {
+                          'year': current_year,
+                          'project': project_name,
+                          'key_line': key_line,
+                      }
 
   license_re = input_api.re.compile(license_re, input_api.re.MULTILINE)
+  new_license_re = input_api.re.compile(new_license_re, input_api.re.MULTILINE)
   bad_files = []
   bad_new_files = False
   for f in input_api.AffectedSourceFiles(source_file_filter):
-    contents = input_api.ReadFile(f, 'r')
+    # Only examine the first 1,000 bytes of the file to avoid expensive and
+    # fruitless regex searches over long files with no license.
+    # re.match would also avoid this but can't be used because some files have
+    # a shebang line ahead of the license.
+    # The \r\n fixup is because it is possible on Windows to copy/paste the
+    # license in such a way that \r\n line endings are inserted. This leads to
+    # confusing license error messages - it's better to let the separate \r\n
+    # check handle those.
+    contents = input_api.ReadFile(f, 'r')[:1000].replace('\r\n', '\n')
     if accept_empty_files and not contents:
       continue
-    # Search for key_line first to avoid fruitless and expensive regex searches.
-    if (key_line and not key_line in contents):
-      bad_files.append(f.LocalPath())
-      # f.OldContents() is expensive so don't call unless necessary.
-      if not f.OldContents():
+    if f.Action() == 'A':
+      # Stricter checking for new files.
+      if not new_license_re.search(contents):
+        bad_files.append(f.LocalPath())
         bad_new_files = True
     elif not license_re.search(contents):
       bad_files.append(f.LocalPath())
-      # f.OldContents() is expensive so don't call unless necessary.
-      if not f.OldContents():
-        bad_new_files = True
   if bad_new_files:
     return [
         output_api.PresubmitError(
-            'License must match:\n%s\n' % license_re.pattern +
+            'License on new files must match:\n%s\n\n' % new_license_re.pattern
+            +
             'Found a bad license header in these files, some of which are new:',
             items=bad_files)
     ]
