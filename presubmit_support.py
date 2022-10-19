@@ -541,7 +541,8 @@ class OutputApi(object):
 
   def AppendCC(self, cc):
     """Appends a user to cc for this change."""
-    self.more_cc.append(cc)
+    if cc not in self.more_cc:
+      self.more_cc.append(cc)
 
   def PresubmitPromptOrNotify(self, *args, **kwargs):
     """Warn the user when uploading, but only notify if committing."""
