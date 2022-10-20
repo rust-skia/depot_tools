@@ -669,7 +669,7 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
     new_license_re = (r'.*? Copyright %(year)s The %(project)s Authors\n'
                       r'.*? %(key_line)s\n'
                       r'.*? found in the LICENSE file\.\n') % {
-                          'year': current_year,
+                          'year': years_re,
                           'project': project_name,
                           'key_line': key_line,
                       }
@@ -677,7 +677,8 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
   license_re = input_api.re.compile(license_re, input_api.re.MULTILINE)
   new_license_re = input_api.re.compile(new_license_re, input_api.re.MULTILINE)
   bad_files = []
-  bad_new_files = False
+  wrong_year_new_files = []
+  bad_new_files = []
   for f in input_api.AffectedSourceFiles(source_file_filter):
     # Only examine the first 1,000 bytes of the file to avoid expensive and
     # fruitless regex searches over long files with no license.
@@ -691,25 +692,39 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
     if accept_empty_files and not contents:
       continue
     if f.Action() == 'A':
-      # Stricter checking for new files.
-      if not new_license_re.search(contents):
-        bad_files.append(f.LocalPath())
-        bad_new_files = True
+      # Stricter checking for new files (but might actually be moved).
+      match = new_license_re.search(contents)
+      if not match:
+        # License is totally wrong.
+        bad_new_files.append(f.LocalPath())
+      elif match.groups()[0] != current_year:
+        # License does not list this year.
+        wrong_year_new_files.append(f.LocalPath())
     elif not license_re.search(contents):
       bad_files.append(f.LocalPath())
+  results = []
   if bad_new_files:
-    return [
+    results.append(
         output_api.PresubmitError(
             'License on new files must match:\n%s\n\n' % new_license_re.pattern
-            +
-            'Found a bad license header in these files, some of which are new:',
-            items=bad_files)
-    ]
+            + 'Found a bad license header in these new files:',
+            items=bad_new_files))
+  if wrong_year_new_files:
+    # We can't distinguish between new and moved files, so this has to be a
+    # warning rather than an error.
+    results.append(
+        output_api.PresubmitPromptWarning(
+            'License doesn\'t list the current year. If this is a new file, '
+            'use the current year. If this is a moved file then ignore this '
+            'warning.',
+            items=wrong_year_new_files))
   if bad_files:
-    return [output_api.PresubmitPromptWarning(
-        'License must match:\n%s\n' % license_re.pattern +
-        'Found a bad license header in these files:', items=bad_files)]
-  return []
+    results.append(
+        output_api.PresubmitPromptWarning(
+            'License must match:\n%s\n' % license_re.pattern +
+            'Found a bad license header in these files:',
+            items=bad_files))
+  return results
 
 
 ### Other checks
