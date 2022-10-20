@@ -697,7 +697,7 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
       if not match:
         # License is totally wrong.
         bad_new_files.append(f.LocalPath())
-      elif match.groups()[0] != current_year:
+      elif match.groups()[0] != str(current_year):
         # License does not list this year.
         wrong_year_new_files.append(f.LocalPath())
     elif not license_re.search(contents):
