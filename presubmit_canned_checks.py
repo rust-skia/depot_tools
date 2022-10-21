@@ -639,6 +639,8 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
   if license_re and license_re == '.*':
     return []
 
+  current_year = int(input_api.time.strftime('%Y'))
+
   if license_re:
     new_license_re = license_re
   else:
@@ -647,7 +649,6 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
     # Accept any year number from 2006 to the current year, or the special
     # 2006-20xx string used on the oldest files. 2006-20xx is deprecated, but
     # tolerated on old files. On new files the current year must be specified.
-    current_year = int(input_api.time.strftime('%Y'))
     allowed_years = (str(s) for s in reversed(range(2006, current_year + 1)))
     years_re = '(' + '|'.join(allowed_years) + '|2006-2008|2006-2009|2006-2010)'
 
