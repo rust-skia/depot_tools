@@ -63,6 +63,8 @@ OFF_UNLESS_MANUALLY_ENABLED_LINT_FILTERS = [
     '-whitespace/tab',
 ]
 
+_CORP_LINK_KEYWORD = '.corp.google'
+
 ### Description checks
 
 def CheckChangeHasBugField(input_api, output_api):
@@ -104,6 +106,17 @@ def CheckDoNotSubmitInDescription(input_api, output_api):
   if keyword in input_api.change.DescriptionText():
     return [output_api.PresubmitError(
         keyword + ' is present in the changelist description.')]
+
+  return []
+
+
+def CheckCorpLinksInDescription(input_api, output_api):
+  """Checks that the description doesn't contain corp links."""
+  if _CORP_LINK_KEYWORD in input_api.change.DescriptionText():
+    return [
+        output_api.PresubmitPromptWarning(
+            'Corp link is present in the changelist description.')
+    ]
 
   return []
 
@@ -211,6 +224,17 @@ def CheckDoNotSubmitInFiles(input_api, output_api):
   text = '\n'.join('Found %s in %s' % (keyword, loc) for loc in errors)
   if text:
     return [output_api.PresubmitError(text)]
+  return []
+
+
+def CheckCorpLinksInFiles(input_api, output_api, source_file_filter=None):
+  """Checks that files do not contain a corp link."""
+  errors = _FindNewViolationsOfRule(
+      lambda _, line: _CORP_LINK_KEYWORD not in line, input_api,
+      source_file_filter)
+  text = '\n'.join('Found corp link in %s' % loc for loc in errors)
+  if text:
+    return [output_api.PresubmitPromptWarning(text)]
   return []
 
 
@@ -1463,6 +1487,11 @@ def PanProjectChecks(input_api, output_api,
   results.extend(input_api.canned_checks.CheckLicense(
       input_api, output_api, license_header, project_name,
       source_file_filter=sources))
+  snapshot("checking corp links in files")
+  results.extend(
+      input_api.canned_checks.CheckCorpLinksInFiles(input_api,
+                                                    output_api,
+                                                    source_file_filter=sources))
 
   if input_api.is_committing:
     if global_checks:
@@ -1478,6 +1507,9 @@ def PanProjectChecks(input_api, output_api,
           input_api, output_api))
       results.extend(input_api.canned_checks.CheckDoNotSubmitInDescription(
           input_api, output_api))
+      results.extend(
+          input_api.canned_checks.CheckCorpLinksInDescription(
+              input_api, output_api))
       if input_api.change.scm == 'git':
         snapshot("checking for commit objects in tree")
         results.extend(input_api.canned_checks.CheckForCommitObjects(
