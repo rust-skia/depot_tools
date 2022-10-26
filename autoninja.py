@@ -23,6 +23,17 @@ import sys
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
+def exit_with_message(msg):
+  print(msg, file=sys.stderr)
+  if sys.platform.startswith('win'):
+    # Set an exit code of 1 in the batch file.
+    print('cmd "/c exit 1"')
+  else:
+    # Set an exit code of 1 by executing 'false' in the bash script.
+    print('false')
+  sys.exit(1)
+
+
 def main(args):
   # The -t tools are incompatible with -j
   t_specified = False
@@ -64,8 +75,13 @@ def main(args):
   # Strip -o/--offline so ninja doesn't see them.
   input_args = [arg for arg in input_args if arg not in ('-o', '--offline')]
 
+  # Arguments to detect for remote execution.  The use_rbe and
+  # reclient_bootstrap_enabled are intended to be deprecated in the future
+  # but need special handling for the moment.
   use_goma = False
   use_remoteexec = False
+  use_rbe = False
+  reclient_bootstrap_enabled = True
 
   # Currently get reclient binary and config dirs relative to output_dir.  If
   # they exist and using remoteexec, then automatically call bootstrap to start
@@ -84,6 +100,9 @@ def main(args):
       for line in file_handle:
         # Either use_goma or use_remoteexec will activate build acceleration.
         #
+        # The older use_rbe argument will also activate build acceleration, but
+        # will also trigger checks against the enable_rbe_bootstrap argument.
+        #
         # This test can match multi-argument lines. Examples of this are:
         # is_debug=false use_goma=true is_official_build=false
         # use_goma=false# use_goma=true This comment is ignored
@@ -97,6 +116,17 @@ def main(args):
         if re.search(r'(^|\s)(use_remoteexec)\s*=\s*true($|\s)',
                      line_without_comment):
           use_remoteexec = True
+          continue
+        if re.search(r'(^|\s)(use_rbe)\s*=\s*true($|\s)', line_without_comment):
+          # Set both use_remoteexec and use_rbe when use_rbe arg is found.
+          # The use_remoteexec argument triggers the start/stop of reproxy
+          # and use_rbe triggers the checks against reclient_bootstrap_enabled.
+          use_remoteexec = True
+          use_rbe = True
+          continue
+        if re.search(r'(^|\s)(enable_rbe_bootstrap)\s*=\s*false($|\s)',
+                     line_without_comment):
+          reclient_bootstrap_enabled = False
           continue
   else:
     for relative_path in [
@@ -121,18 +151,25 @@ def main(args):
   if (not offline and use_remoteexec and (
       not os.path.exists(reclient_bin_dir) or not os.path.exists(reclient_cfg))
      ):
-      print(("Build is configured to use reclient but necessary binaries "
-             "or config files can't be found.  Developer builds with "
-             "reclient are not yet supported.  Try regenerating your "
-             "build with use_goma in place of use_remoteexec for now."),
-             file=sys.stderr)
-      if sys.platform.startswith('win'):
-        # Set an exit code of 1 in the batch file.
-        print('cmd "/c exit 1"')
-      else:
-        # Set an exit code of 1 by executing 'false' in the bash script.
-        print('false')
-      sys.exit(1)
+    exit_with_message(
+        "Build is configured to use reclient but necessary binaries "
+        "or config files can't be found.  Developer builds with "
+        "reclient are not yet supported.  Try regenerating your "
+        "build with use_goma in place of use_remoteexec for now.")
+
+  # Some builds bootstrap reproxy as part of the build graph.  This is being
+  # phased out.  For now don't let autoninja start a build that has the
+  # enable_rbe_bootstrap gn argument set.  Instead, display an error to re-gen
+  # the build with the argument explicitly set to false.
+  #
+  # These builds have the enable_rbe_bootstrap argument set to true by default,
+  # so they don't appear in the args.gn file.
+  if (not offline and use_rbe and reclient_bootstrap_enabled):
+    exit_with_message(
+        "Build is configured to start reproxy as an action in the build.  "
+        "Builds with this enabled should not use autoninja to start them.  "
+        "Regenerate the build with the enable_rbe_bootstrap gn argument "
+        "explicitly set to false.")
 
   # If GOMA_DISABLED is set to "true", "t", "yes", "y", or "1"
   # (case-insensitive) then gomacc will use the local compiler instead of doing
@@ -158,15 +195,8 @@ def main(args):
                                stderr=subprocess.PIPE,
                                shell=False)
       if status == 1:
-        print('Goma is not running. Use "goma_ctl ensure_start" to start it.',
-              file=sys.stderr)
-        if sys.platform.startswith('win'):
-          # Set an exit code of 1 in the batch file.
-          print('cmd "/c exit 1"')
-        else:
-          # Set an exit code of 1 by executing 'false' in the bash script.
-          print('false')
-        sys.exit(1)
+        exit_with_message(
+            'Goma is not running. Use "goma_ctl ensure_start" to start it.')
 
   # Specify ninja.exe on Windows so that ninja.bat can call autoninja and not
   # be called back.
