@@ -922,7 +922,7 @@ def tags(*args):
 
 def thaw():
   took_action = False
-  for sha in run_stream('rev-list', 'HEAD').readlines():
+  for sha in run_stream('rev-list', 'HEAD'):
     sha = sha.strip().decode('utf-8')
     msg = run('show', '--format=%f%b', '-s', 'HEAD')
     match = FREEZE_MATCHER.match(msg)
