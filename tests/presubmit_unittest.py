@@ -568,7 +568,7 @@ class PresubmitUnittest(PresubmitTestsBase):
         'def CheckChangeOnCommit(input_api, output_api):\n'
         '  return [output_api.PresubmitResult("test")]\n', fake_presubmit)
     sink.report.assert_called_with('CheckChangeOnCommit',
-                                   rdb_wrapper.STATUS_PASS, 0)
+                                   rdb_wrapper.STATUS_PASS, 0, None)
 
     # STATUS_FAIL on fatal error
     sink.reset_mock()
@@ -577,7 +577,7 @@ class PresubmitUnittest(PresubmitTestsBase):
         'def CheckChangeOnCommit(input_api, output_api):\n'
         '  return [output_api.PresubmitError("error")]\n', fake_presubmit)
     sink.report.assert_called_with('CheckChangeOnCommit',
-                                   rdb_wrapper.STATUS_FAIL, 0)
+                                   rdb_wrapper.STATUS_FAIL, 0, "error\n")
 
   def testExecPresubmitScriptTemporaryFilesRemoval(self):
     tempfile.NamedTemporaryFile.side_effect = [

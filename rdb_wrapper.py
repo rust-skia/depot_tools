@@ -17,19 +17,28 @@ STATUS_ABORT = 'ABORT'
 STATUS_SKIP = 'SKIP'
 
 
+# ResultDB limits failure reasons to 1024 characters.
+_FAILURE_REASON_LENGTH_LIMIT = 1024
+
+
+# Message to use at the end of a truncated failure reason.
+_FAILURE_REASON_TRUNCATE_TEXT = '\n...\nFailure reason was truncated.'
+
+
 class ResultSink(object):
   def __init__(self, session, url, prefix):
     self._session = session
     self._url = url
     self._prefix = prefix
 
-  def report(self, function_name, status, elapsed_time):
+  def report(self, function_name, status, elapsed_time, failure_reason=None):
     """Reports the result and elapsed time of a presubmit function call.
 
     Args:
       function_name (str): The name of the presubmit function
       status: the status to report the function call with
       elapsed_time: the time taken to invoke the presubmit function
+      failure_reason (str or None): if set, the failure reason
     """
     tr = {
         'testId': self._prefix + function_name,
@@ -37,6 +46,12 @@ class ResultSink(object):
         'expected': status == STATUS_PASS,
         'duration': '{:.9f}s'.format(elapsed_time)
     }
+    if failure_reason:
+      if len(failure_reason) > _FAILURE_REASON_LENGTH_LIMIT:
+        failure_reason = failure_reason[
+            :-len(_FAILURE_REASON_TRUNCATE_TEXT) - 1]
+        failure_reason += _FAILURE_REASON_TRUNCATE_TEXT
+      tr['failureReason'] = {'primaryErrorMessage': failure_reason}
     self._session.post(self._url, json={'testResults': [tr]})
 
 

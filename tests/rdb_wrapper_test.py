@@ -96,6 +96,45 @@ class TestResultSink(unittest.TestCase):
         json={'testResults': [expected]},
     )
 
+  def test_report_failure_reason(self):
+    session = mock.MagicMock()
+    sink = rdb_wrapper.ResultSink(session, 'http://host', 'test_id_prefix/')
+    sink.report("function_foo", rdb_wrapper.STATUS_PASS, 123, 'Bad CL.')
+    expected = {
+        'testId': 'test_id_prefix/function_foo',
+        'status': rdb_wrapper.STATUS_PASS,
+        'expected': True,
+        'duration': '123.000000000s',
+        'failureReason': {
+            'primaryErrorMessage': 'Bad CL.',
+        },
+    }
+    session.post.assert_called_once_with(
+        'http://host',
+        json={'testResults': [expected]},
+    )
+
+  def test_report_failure_reason_truncated(self):
+    session = mock.MagicMock()
+    sink = rdb_wrapper.ResultSink(session, 'http://host', 'test_id_prefix/')
+    sink.report("function_foo", rdb_wrapper.STATUS_PASS, 123, 'X' * 1025)
+    trunc_text = rdb_wrapper._FAILURE_REASON_TRUNCATE_TEXT
+    limit = rdb_wrapper._FAILURE_REASON_LENGTH_LIMIT
+    expected_truncated_error = 'X' * (limit - len(trunc_text)) + trunc_text
+    expected = {
+        'testId': 'test_id_prefix/function_foo',
+        'status': rdb_wrapper.STATUS_PASS,
+        'expected': True,
+        'duration': '123.000000000s',
+        'failureReason': {
+            'primaryErrorMessage': expected_truncated_error,
+        },
+    }
+    session.post.assert_called_once_with(
+        'http://host',
+        json={'testResults': [expected]},
+    )
+
 
 if __name__ == '__main__':
   logging.basicConfig(
