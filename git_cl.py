@@ -1455,17 +1455,19 @@ class Changelist(object):
             py2_results.get('warnings', []) + py3_results.get('warnings', []))
     }
 
-  def RunPostUploadHook(self, verbose, upstream, description):
+  def RunPostUploadHook(self, verbose, upstream, description, py3_only):
     args = self._GetCommonPresubmitArgs(verbose, upstream)
     args.append('--post_upload')
 
     with gclient_utils.temporary_file() as description_file:
       gclient_utils.FileWrite(description_file, description)
       args.extend(['--description_file', description_file])
-      p_py2 = subprocess2.Popen(['vpython', PRESUBMIT_SUPPORT] + args)
+      if not py3_only:
+        p_py2 = subprocess2.Popen(['vpython', PRESUBMIT_SUPPORT] + args)
       p_py3 = subprocess2.Popen(['vpython3', PRESUBMIT_SUPPORT] + args +
                                 ['--use-python3'])
-      p_py2.wait()
+      if not py3_only:
+        p_py2.wait()
       p_py3.wait()
 
   def _GetDescriptionForUpload(self, options, git_diff_args, files):
@@ -1599,8 +1601,9 @@ class Changelist(object):
           'last-upload-hash', scm.GIT.ResolveCommit(settings.GetRoot(), 'HEAD'))
       # Run post upload hooks, if specified.
       if settings.GetRunPostUploadHook():
-        self.RunPostUploadHook(
-            options.verbose, base_branch, change_desc.description)
+        self.RunPostUploadHook(options.verbose, base_branch,
+                               change_desc.description,
+                               options.no_python2_post_upload_hooks)
 
       # Upload all dependencies if specified.
       if options.dependencies:
@@ -4402,6 +4405,9 @@ def CMDupload(parser, args):
                     action='store_true',
                     dest='no_add_changeid',
                     help='Do not add change-ids to messages.')
+  parser.add_option('--no-python2-post-upload-hooks',
+                    action='store_true',
+                    help='Only run post-upload hooks in Python 3.')
 
   orig_args = args
   (options, args) = parser.parse_args(args)

@@ -3315,7 +3315,7 @@ class ChangelistTest(unittest.TestCase):
 
   def testRunPostUploadHook(self):
     cl = git_cl.Changelist()
-    cl.RunPostUploadHook(2, 'upstream', 'description')
+    cl.RunPostUploadHook(2, 'upstream', 'description', False)
 
     subprocess2.Popen.assert_any_call([
         'vpython',
@@ -3371,6 +3371,40 @@ class ChangelistTest(unittest.TestCase):
 
     gclient_utils.FileWrite.assert_called_once_with(
         '/tmp/fake-temp1', 'description')
+
+  def testRunPostUploadHookPy3Only(self):
+    cl = git_cl.Changelist()
+    cl.RunPostUploadHook(2, 'upstream', 'description', True)
+
+    subprocess2.Popen.assert_called_once_with([
+        'vpython3',
+        'PRESUBMIT_SUPPORT',
+        '--root',
+        'root',
+        '--upstream',
+        'upstream',
+        '--verbose',
+        '--verbose',
+        '--gerrit_url',
+        'https://chromium-review.googlesource.com',
+        '--gerrit_project',
+        'project',
+        '--gerrit_branch',
+        'refs/heads/main',
+        '--author',
+        'author',
+        '--issue',
+        '123456',
+        '--patchset',
+        '7',
+        '--post_upload',
+        '--description_file',
+        '/tmp/fake-temp1',
+        '--use-python3',
+    ])
+
+    gclient_utils.FileWrite.assert_called_once_with('/tmp/fake-temp1',
+                                                    'description')
 
   @mock.patch('git_cl.RunGit', _mock_run_git)
   def testDefaultTitleEmptyMessage(self):
