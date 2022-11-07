@@ -30,6 +30,10 @@ case "${UNAME}" in
     ;;
   darwin)
     OS=mac
+    # Allow mac users to override easily override arch detection
+    if [ ! -z "${ARCH_MAC_OVERRIDE}" ]; then
+      ARCH="${ARCH_MAC_OVERRIDE}"
+    fi
     ;;
   *)
     >&2 echo "CIPD not supported on ${UNAME}"
