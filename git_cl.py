@@ -125,6 +125,13 @@ YAPF_CONFIG_FILENAME = '.style.yapf'
 ISSUE_CONFIG_KEY = 'gerritissue'
 PATCHSET_CONFIG_KEY = 'gerritpatchset'
 CODEREVIEW_SERVER_CONFIG_KEY = 'gerritserver'
+# When using squash workflow, _CMDUploadChange doesn't simply push the commit(s)
+# you make to Gerrit. Instead, it creates a new commit object that contains all
+# changes you've made, diffed against a parent/merge base.
+# This is the hash of the new squashed commit and you can find this on Gerrit.
+GERRIT_SQUASH_HASH_CONFIG_KEY = 'gerritsquashhash'
+# This is the latest uploaded local commit hash.
+LAST_UPLOAD_HASH_CONFIG_KEY = 'last-upload-hash'
 
 # Shortcut since it quickly becomes repetitive.
 Fore = colorama.Fore
@@ -1289,11 +1296,11 @@ class Changelist(object):
     else:
       # Reset all of these just to be clean.
       reset_suffixes = [
-          'last-upload-hash',
+          LAST_UPLOAD_HASH_CONFIG_KEY,
           ISSUE_CONFIG_KEY,
           PATCHSET_CONFIG_KEY,
           CODEREVIEW_SERVER_CONFIG_KEY,
-          'gerritsquashhash',
+          GERRIT_SQUASH_HASH_CONFIG_KEY,
       ]
       for prop in reset_suffixes:
         try:
@@ -1598,7 +1605,8 @@ class Changelist(object):
         options, git_diff_args, custom_cl_base, change_desc)
     if not ret:
       self._GitSetBranchConfigValue(
-          'last-upload-hash', scm.GIT.ResolveCommit(settings.GetRoot(), 'HEAD'))
+          LAST_UPLOAD_HASH_CONFIG_KEY,
+          scm.GIT.ResolveCommit(settings.GetRoot(), 'HEAD'))
       # Run post upload hooks, if specified.
       if settings.GetRunPostUploadHook():
         self.RunPostUploadHook(options.verbose, base_branch,
@@ -2108,7 +2116,7 @@ class Changelist(object):
                         'Are you sure you wish to bypass it?\n',
                         action='bypass CQ')
     differs = True
-    last_upload = self._GitGetBranchConfigValue('gerritsquashhash')
+    last_upload = self._GitGetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY)
     # Note: git diff outputs nothing if there is no diff.
     if not last_upload or RunGit(['diff', last_upload]).strip():
       print('WARNING: Some changes from local branch haven\'t been uploaded.')
@@ -2217,8 +2225,8 @@ class Changelist(object):
       self.SetIssue(parsed_issue_arg.issue)
       self.SetPatchset(patchset)
       fetched_hash = scm.GIT.ResolveCommit(settings.GetRoot(), 'FETCH_HEAD')
-      self._GitSetBranchConfigValue('last-upload-hash', fetched_hash)
-      self._GitSetBranchConfigValue('gerritsquashhash', fetched_hash)
+      self._GitSetBranchConfigValue(LAST_UPLOAD_HASH_CONFIG_KEY, fetched_hash)
+      self._GitSetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY, fetched_hash)
     else:
       print('WARNING: You are in detached HEAD state.\n'
             'The patch has been applied to your checkout, but you will not be '
@@ -2631,7 +2639,7 @@ class Changelist(object):
           ('Created|Updated %d issues on Gerrit, but only 1 expected.\n'
            'Change-Id: %s') % (len(change_numbers), change_id), change_desc)
       self.SetIssue(change_numbers[0])
-      self._GitSetBranchConfigValue('gerritsquashhash', ref_to_push)
+      self._GitSetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY, ref_to_push)
 
     if self.GetIssue() and (reviewers or cc):
       # GetIssue() is not set in case of non-squash uploads according to tests.
@@ -2689,8 +2697,8 @@ class Changelist(object):
     # the tree hash of the parent branch. The upside is less likely bogus
     # requests to reupload parent change just because it's uploadhash is
     # missing, yet the downside likely exists, too (albeit unknown to me yet).
-    parent = scm.GIT.GetBranchConfig(
-        settings.GetRoot(), upstream_branch_name, 'gerritsquashhash')
+    parent = scm.GIT.GetBranchConfig(settings.GetRoot(), upstream_branch_name,
+                                     GERRIT_SQUASH_HASH_CONFIG_KEY)
     # Verify that the upstream branch has been uploaded too, otherwise
     # Gerrit will create additional CLs when uploading.
     if not parent or (RunGitSilent(['rev-parse', upstream_branch + ':']) !=
@@ -5008,9 +5016,9 @@ def CMDdiff(parser, args):
   if not issue:
     DieWithError('No issue found for current branch (%s)' % branch)
 
-  base = cl._GitGetBranchConfigValue('last-upload-hash')
+  base = cl._GitGetBranchConfigValue(LAST_UPLOAD_HASH_CONFIG_KEY)
   if not base:
-    base = cl._GitGetBranchConfigValue('gerritsquashhash')
+    base = cl._GitGetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY)
   if not base:
     detail = cl._GetChangeDetail(['CURRENT_REVISION', 'CURRENT_COMMIT'])
     revision_info = detail['revisions'][detail['current_revision']]
