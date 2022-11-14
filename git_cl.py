@@ -1903,13 +1903,14 @@ class Changelist(object):
     # Somehow there are no messages even though there are reviewers.
     return 'unsent'
 
-  def GetMostRecentPatchset(self):
+  def GetMostRecentPatchset(self, update=True):
     if not self.GetIssue():
       return None
 
     data = self._GetChangeDetail(['CURRENT_REVISION'])
     patchset = data['revisions'][data['current_revision']]['_number']
-    self.SetPatchset(patchset)
+    if update:
+      self.SetPatchset(patchset)
     return patchset
 
   def GetMostRecentDryRunPatchset(self):
@@ -2090,11 +2091,12 @@ class Changelist(object):
     self._detail_cache.setdefault(cache_key, []).append((options_set, data))
     return data
 
-  def _GetChangeCommit(self):
+  def _GetChangeCommit(self, revision='current'):
     assert self.GetIssue(), 'issue must be set to query Gerrit'
     try:
-      data = gerrit_util.GetChangeCommit(
-          self.GetGerritHost(), self._GerritChangeIdentifier())
+      data = gerrit_util.GetChangeCommit(self.GetGerritHost(),
+                                         self._GerritChangeIdentifier(),
+                                         revision)
     except gerrit_util.GerritError as e:
       if e.http_status == 404:
         raise GerritChangeNotExists(self.GetIssue(), self.GetCodereviewServer())
@@ -2448,12 +2450,21 @@ class Changelist(object):
     """Upload the current branch to Gerrit."""
     if options.squash:
       self._GerritCommitMsgHookCheck(offer_removal=not options.force)
+      external_parent = None
       if self.GetIssue():
         # User requested to change description
         if options.edit_description:
           change_desc.prompt()
-        change_id = self._GetChangeDetail()['change_id']
+        change_detail = self._GetChangeDetail(['CURRENT_REVISION'])
+        change_id = change_detail['change_id']
         change_desc.ensure_change_id(change_id)
+
+        # Check if changes outside of this workspace have been uploaded.
+        current_rev = change_detail['current_revision']
+        last_uploaded_rev = self._GitGetBranchConfigValue(
+            GERRIT_SQUASH_HASH_CONFIG_KEY)
+        if last_uploaded_rev and current_rev != last_uploaded_rev:
+          external_parent = self._UpdateWithExternalChanges()
       else:  # if not self.GetIssue()
         if not options.force and not options.message_file:
           change_desc.prompt()
@@ -2468,7 +2479,7 @@ class Changelist(object):
         change_desc.set_preserve_tryjobs()
 
       remote, upstream_branch = self.FetchUpstreamTuple(self.GetBranch())
-      parent = self._ComputeParent(
+      parent = external_parent or self._ComputeParent(
           remote, upstream_branch, custom_cl_base, options.force, change_desc)
       tree = RunGit(['rev-parse', 'HEAD:']).strip()
       with gclient_utils.temporary_file() as desc_tempfile:
@@ -2625,6 +2636,10 @@ class Changelist(object):
         'description': change_desc.description,
     }
 
+    # Gerrit may or may not update fast enough to return the correct patchset
+    # number after we push. Get the pre-upload patchset and increment later.
+    latest_ps = self.GetMostRecentPatchset(update=False) or 0
+
     push_stdout = self._RunGitPushWithTraces(refspec, refspec_opts,
                                              git_push_metadata,
                                              options.push_options)
@@ -2639,6 +2654,7 @@ class Changelist(object):
           ('Created|Updated %d issues on Gerrit, but only 1 expected.\n'
            'Change-Id: %s') % (len(change_numbers), change_id), change_desc)
       self.SetIssue(change_numbers[0])
+      self.SetPatchset(latest_ps + 1)
       self._GitSetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY, ref_to_push)
 
     if self.GetIssue() and (reviewers or cc):
@@ -2712,6 +2728,82 @@ class Changelist(object):
           % upstream_branch_name,
           change_desc)
     return parent
+
+  def _UpdateWithExternalChanges(self):
+    """Updates workspace with external changes.
+
+    Returns the commit hash that should be used as the merge base on upload.
+    """
+    local_ps = self.GetPatchset()
+    if local_ps is None:
+      return
+
+    external_ps = self.GetMostRecentPatchset(update=False)
+    if external_ps is None or local_ps == external_ps:
+      return
+
+    num_changes = external_ps - local_ps
+    print('\n%d external change(s) have been published to %s. '
+          'Uploading as-is will override them.' %
+          (num_changes, self.GetIssueURL(short=True)))
+    if not ask_for_explicit_yes('Get the latest changes and apply?'):
+      return
+
+    # Get latest Gerrit merge base. Use the first parent even if multiple exist.
+    external_parent = self._GetChangeCommit(revision=external_ps)['parents'][0]
+    external_base = external_parent['commit']
+
+    branch = git_common.current_branch()
+    local_base = self.GetCommonAncestorWithUpstream()
+    if local_base != external_base:
+      print('\nLocal merge base %s is different from Gerrit %s.\n' %
+            (local_base, external_base))
+      if git_common.upstream(branch):
+        DieWithError('Upstream branch set. Consider using `git rebase-update` '
+                     'to make these the same.')
+      print('No upstream branch set. Consider setting it and using '
+            '`git rebase-update`.\nContinuing upload with Gerrit merge base.')
+
+    # Fetch Gerrit's CL base if it doesn't exist locally.
+    remote, _ = self.GetRemoteBranch()
+    if not scm.GIT.IsValidRevision(settings.GetRoot(), external_base):
+      RunGitSilent(['fetch', remote, external_base])
+
+    # Get the diff between local_ps and external_ps.
+    issue = self.GetIssue()
+    changes_ref = 'refs/changes/%d/%d/' % (issue % 100, issue)
+    RunGitSilent(['fetch', remote, changes_ref + str(local_ps)])
+    last_uploaded = RunGitSilent(['rev-parse', 'FETCH_HEAD']).strip()
+    RunGitSilent(['fetch', remote, changes_ref + str(external_ps)])
+    latest_external = RunGitSilent(['rev-parse', 'FETCH_HEAD']).strip()
+    diff = RunGitSilent(['diff', '%s..%s' % (last_uploaded, latest_external)])
+
+    # Diff can be empty in the case of trivial rebases.
+    if not diff:
+      return external_base
+
+    # Apply the diff.
+    with gclient_utils.temporary_file() as diff_tempfile:
+      gclient_utils.FileWrite(diff_tempfile, diff)
+      clean_patch = RunGitWithCode(['apply', '--check', diff_tempfile])[0] == 0
+      RunGitSilent(['apply', '-3', '--intent-to-add', diff_tempfile])
+      if not clean_patch:
+        # Normally patchset is set after upload. But because we exit, that never
+        # happens. Updating here makes sure that subsequent uploads don't need
+        # to fetch/apply the same diff again.
+        self.SetPatchset(external_ps)
+        DieWithError('\nPatch did not apply cleanly. Please resolve any '
+                     'conflicts and reupload.')
+
+      message = 'Incorporate external changes from '
+      if num_changes == 1:
+        message += 'patchset %d' % external_ps
+      else:
+        message += 'patchsets %d to %d' % (local_ps + 1, external_ps)
+      RunGitSilent(['commit', '-am', message])
+      # TODO(crbug.com/1382528): Use the previous commit's message as a default
+      # patchset title instead of this 'Incorporate' message.
+    return external_base
 
   def _AddChangeIdToCommitMessage(self, log_desc, args):
     """Re-commits using the current message, assumes the commit hook is in

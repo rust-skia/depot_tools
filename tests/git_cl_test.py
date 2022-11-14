@@ -805,6 +805,8 @@ class TestGitCl(unittest.TestCase):
                            force=False,
                            edit_description=None,
                            default_branch='main',
+                           ref_to_push='abcdef0123456789',
+                           external_parent=None,
                            push_opts=None):
     if post_amend_description is None:
       post_amend_description = description
@@ -830,22 +832,25 @@ class TestGitCl(unittest.TestCase):
         calls += [
           ((['RunEditor'],), edit_description),
         ]
-      ref_to_push = 'abcdef0123456789'
 
-      if custom_cl_base is None:
-        parent = 'origin/' + default_branch
-        git_common.get_or_create_merge_base.return_value = parent
+      if external_parent:
+        parent = external_parent
       else:
-        calls += [
-          ((['git', 'merge-base', '--is-ancestor', custom_cl_base,
-             'refs/remotes/origin/' + default_branch],),
-           callError(1)),   # Means not ancenstor.
-          (('ask_for_data',
-            'Do you take responsibility for cleaning up potential mess '
-            'resulting from proceeding with upload? Press Enter to upload, '
-            'or Ctrl+C to abort'), ''),
-        ]
-        parent = custom_cl_base
+        if custom_cl_base is None:
+          parent = 'origin/' + default_branch
+          git_common.get_or_create_merge_base.return_value = parent
+        else:
+          calls += [
+              (([
+                  'git', 'merge-base', '--is-ancestor', custom_cl_base,
+                  'refs/remotes/origin/' + default_branch
+              ], ), callError(1)),  # Means not ancenstor.
+              (('ask_for_data',
+                'Do you take responsibility for cleaning up potential mess '
+                'resulting from proceeding with upload? Press Enter to upload, '
+                'or Ctrl+C to abort'), ''),
+          ]
+          parent = custom_cl_base
 
       calls += [
         ((['git', 'rev-parse', 'HEAD:'],),  # `HEAD:` means HEAD's tree hash.
@@ -1097,6 +1102,7 @@ class TestGitCl(unittest.TestCase):
                               notify=False,
                               post_amend_description=None,
                               issue=None,
+                              patchset=None,
                               cc=None,
                               fetched_status=None,
                               other_cl_owner=None,
@@ -1112,6 +1118,8 @@ class TestGitCl(unittest.TestCase):
                               edit_description=None,
                               fetched_description=None,
                               default_branch='main',
+                              ref_to_push='abcdef0123456789',
+                              external_parent=None,
                               push_opts=None,
                               reset_issue=False):
     """Generic gerrit upload test framework."""
@@ -1130,6 +1138,8 @@ class TestGitCl(unittest.TestCase):
                 same_auth=('git-owner.example.com', '', 'pass'))).start()
     mock.patch('git_cl.Changelist._GerritCommitMsgHookCheck',
               lambda _, offer_removal: None).start()
+    mock.patch('git_cl.Changelist.GetMostRecentPatchset', lambda _, update:
+               patchset).start()
     mock.patch('git_cl.gclient_utils.RunEditor',
               lambda *_, **__: self._mocked_call(['RunEditor'])).start()
     mock.patch('git_cl.DownloadGerritHook', lambda force: self._mocked_call(
@@ -1220,15 +1230,18 @@ class TestGitCl(unittest.TestCase):
           force=force,
           edit_description=edit_description,
           default_branch=default_branch,
+          ref_to_push=ref_to_push,
+          external_parent=external_parent,
           push_opts=push_opts)
     # Uncomment when debugging.
     # print('\n'.join(map(lambda x: '%2i: %s' % x, enumerate(self.calls))))
     git_cl.main(['upload'] + upload_args)
     if squash:
-      self.assertIssueAndPatchset(patchset=None)
+      self.assertIssueAndPatchset(patchset=str((patchset or 0) + 1))
       self.assertEqual(
-          'abcdef0123456789',
-          scm.GIT.GetBranchConfig('', 'main', 'gerritsquashhash'))
+          ref_to_push,
+          scm.GIT.GetBranchConfig('', 'main',
+                                  git_cl.GERRIT_SQUASH_HASH_CONFIG_KEY))
 
   def test_gerrit_upload_traces_no_gitcookies(self):
     self._run_gerrit_upload_test(
@@ -1500,6 +1513,23 @@ class TestGitCl(unittest.TestCase):
         issue=123456,
         change_id='123456789',
         edit_description=description)
+
+  @mock.patch('git_cl.Changelist._UpdateWithExternalChanges',
+              return_value='newparent')
+  def test_upload_change_uses_external_base(self, *_mocks):
+    squash_hash = 'branch.main.' + git_cl.GERRIT_SQUASH_HASH_CONFIG_KEY
+    self.mockGit.config[squash_hash] = 'beef2'
+
+    self._run_gerrit_upload_test(
+        ['--squash'],
+        'desc ✔\n\nBUG=\n\nChange-Id: 123456789',
+        [],
+        squash=True,
+        issue=123456,
+        change_id='123456789',
+        ref_to_push='beef2',
+        external_parent='newparent',
+    )
 
   @mock.patch('git_cl.RunGit')
   @mock.patch('git_cl.CMDupload')
