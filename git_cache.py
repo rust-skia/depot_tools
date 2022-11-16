@@ -439,15 +439,6 @@ class Mirror(object):
             'Git cache has a lot of pack files (%d). Tried to re-bootstrap '
             'but failed. Continuing with non-optimized repository.' %
             len(pack_files))
-    else:
-      # Reset head when refs/remotes/origin/HEAD points to master.
-      # https://crbug.com/1364030
-      origin_head = subprocess.check_output(
-          [self.git_exe, 'symbolic-ref', 'refs/remotes/origin/HEAD'],
-          cwd=self.mirror_path).decode('utf-8', 'ignore').strip()
-
-      if origin_head.endswith('master'):
-        self.RunGit(['remote', 'set-head', '-a', 'origin'])
 
   def _fetch(self,
              rundir,
