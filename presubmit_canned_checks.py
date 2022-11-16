@@ -654,19 +654,19 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
   return []
 
 
-def CheckLicense(input_api, output_api, license_re=None, project_name=None,
-    source_file_filter=None, accept_empty_files=True):
+def CheckLicense(input_api, output_api, license_re_param=None,
+    project_name=None, source_file_filter=None, accept_empty_files=True):
   """Verifies the license header.
   """
 
   # Early-out if the license_re is guaranteed to match everything.
-  if license_re and license_re == '.*':
+  if license_re_param and license_re_param == '.*':
     return []
 
   current_year = int(input_api.time.strftime('%Y'))
 
-  if license_re:
-    new_license_re = license_re
+  if license_re_param:
+    new_license_re = license_re = license_re_param
   else:
     project_name = project_name or 'Chromium'
 
@@ -693,7 +693,7 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
     # On new files don't tolerate any digression from the ideal.
     new_license_re = (r'.*? Copyright %(year)s The %(project)s Authors\n'
                       r'.*? %(key_line)s\n'
-                      r'.*? found in the LICENSE file\.\n') % {
+                      r'.*? found in the LICENSE file\.(?: \*/)?\n') % {
                           'year': years_re,
                           'project': project_name,
                           'key_line': key_line,
@@ -722,8 +722,9 @@ def CheckLicense(input_api, output_api, license_re=None, project_name=None,
       if not match:
         # License is totally wrong.
         bad_new_files.append(f.LocalPath())
-      elif match.groups()[0] != str(current_year):
-        # License does not list this year.
+      elif not license_re_param and match.groups()[0] != str(current_year):
+        # If we're using the built-in license_re on a new file then make sure
+        # the year is correct.
         wrong_year_new_files.append(f.LocalPath())
     elif not license_re.search(contents):
       bad_files.append(f.LocalPath())

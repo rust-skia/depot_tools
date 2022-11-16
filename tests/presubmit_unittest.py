@@ -2266,12 +2266,19 @@ the current line as well!
         None,
         presubmit.OutputApi.PresubmitPromptWarning)
 
-  def _LicenseCheck(self, text, license_text, committing, expected_result,
-      **kwargs):
+  def _LicenseCheck(self,
+                    text,
+                    license_text,
+                    committing,
+                    expected_result,
+                    new_file=False,
+                    **kwargs):
     change = mock.MagicMock(presubmit.GitChange)
     change.scm = 'svn'
     input_api = self.MockInputApi(change, committing)
     affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+    if new_file:
+      affected_file.Action.return_value = 'A'
     input_api.AffectedSourceFiles.return_value = [affected_file]
     input_api.ReadFile.return_value = text
     if expected_result:
@@ -2299,6 +2306,16 @@ the current line as well!
         r".*? All Rights Reserved\.\n"
     )
     self._LicenseCheck(text, license_text, True, None)
+
+  def testCheckLicenseSuccessNew(self):
+    # Make sure the license check works on new files with custom licenses.
+    text = ("#!/bin/python\n"
+            "# Copyright (c) 2037 Nobody.\n"
+            "# All Rights Reserved.\n"
+            "print('foo')\n")
+    license_text = (r".*? Copyright \(c\) 2037 Nobody.\n"
+                    r".*? All Rights Reserved\.\n")
+    self._LicenseCheck(text, license_text, True, None, new_file=True)
 
   def testCheckLicenseFailCommit(self):
     text = (
@@ -2335,6 +2352,60 @@ the current line as well!
         r".*? All Rights Reserved\.\n"
     )
     self._LicenseCheck(text, license_text, True, None, accept_empty_files=True)
+
+  def testCheckLicenseNewFilePass(self):
+    current_year = int(time.strftime('%Y'))
+    text = (
+        "#!/bin/python\n"
+        "# Copyright %d The Chromium Authors\n"
+        "# Use of this source code is governed by a BSD-style license that can "
+        "be\n"
+        "# found in the LICENSE file.\n"
+        "print('foo')\n" % current_year)
+    license_text = None
+    self._LicenseCheck(text, license_text, False, None, new_file=True)
+
+  def testCheckLicenseNewFileFail(self):
+    # Check that we fail on new files with the (c) symbol.
+    current_year = int(time.strftime('%Y'))
+    text = (
+        "#!/bin/python\n"
+        "# Copyright (c) %d The Chromium Authors\n"
+        "# Use of this source code is governed by a BSD-style license that can "
+        "be\n"
+        "# found in the LICENSE file.\n"
+        "print('foo')\n" % current_year)
+    license_text = None
+    self._LicenseCheck(text,
+                       license_text,
+                       False,
+                       presubmit.OutputApi.PresubmitError,
+                       new_file=True)
+
+  def _GetLicenseText(self, current_year):
+    return (
+        "#!/bin/python\n"
+        "# Copyright %d The Chromium Authors\n"
+        "# Use of this source code is governed by a BSD-style license that can "
+        "be\n"
+        "# found in the LICENSE file.\n"
+        "print('foo')\n" % current_year)
+
+  def testCheckLicenseNewFileWarn(self):
+    # Check that we warn on new files with wrong year. Test with first allowed
+    # year.
+    text = self._GetLicenseText(2006)
+    license_text = None
+    self._LicenseCheck(text,
+                       license_text,
+                       False,
+                       presubmit.OutputApi.PresubmitPromptWarning,
+                       new_file=True)
+
+  def testCheckLicenseNewCSSFilePass(self):
+    text = self._GetLicenseText(int(time.strftime('%Y')))
+    license_text = None
+    self._LicenseCheck(text, license_text, False, None, new_file=True)
 
   def testCannedCheckTreeIsOpenOpen(self):
     input_api = self.MockInputApi(None, True)
