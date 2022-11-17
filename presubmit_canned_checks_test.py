@@ -241,5 +241,39 @@ class DescriptionChecksTest(unittest.TestCase):
     self.assertEqual(0, len(errors))
 
 
+class CheckUpdateOwnersFileReferences(unittest.TestCase):
+  def testShowsWarningIfDeleting(self):
+    input_api = MockInputApi()
+    input_api.files = [
+        MockFile('foo/OWNERS', [], [], action='D'),
+    ]
+    results = presubmit_canned_checks.CheckUpdateOwnersFileReferences(
+        input_api, MockOutputApi())
+    self.assertEqual(1, len(results))
+    self.assertEqual('warning', results[0].type)
+    self.assertEqual(1, len(results[0].items))
+
+  def testShowsWarningIfMoving(self):
+    input_api = MockInputApi()
+    input_api.files = [
+        MockFile('new_directory/OWNERS', [], [], action='A'),
+        MockFile('old_directory/OWNERS', [], [], action='D'),
+    ]
+    results = presubmit_canned_checks.CheckUpdateOwnersFileReferences(
+        input_api, MockOutputApi())
+    self.assertEqual(1, len(results))
+    self.assertEqual('warning', results[0].type)
+    self.assertEqual(1, len(results[0].items))
+
+  def testNoWarningIfAdding(self):
+    input_api = MockInputApi()
+    input_api.files = [
+        MockFile('foo/OWNERS', [], [], action='A'),
+    ]
+    results = presubmit_canned_checks.CheckUpdateOwnersFileReferences(
+        input_api, MockOutputApi())
+    self.assertEqual(0, len(results))
+
+
 if __name__ == '__main__':
   unittest.main()

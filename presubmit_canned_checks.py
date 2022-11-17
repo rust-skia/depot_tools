@@ -2081,3 +2081,21 @@ def CheckInclusiveLanguage(input_api, output_api,
         output_api.PresubmitError('Banned non-inclusive language was used.\n' +
                                   '\n'.join(errors)))
   return result
+
+
+def CheckUpdateOwnersFileReferences(input_api, output_api):
+  """Checks whether an OWNERS file is being (re)moved and if so asks the
+    contributor to update any file:// references to it."""
+  files = []
+  # AffectedFiles() includes owner files, not AffectedSourceFiles().
+  for f in input_api.AffectedFiles():
+    # Moved files appear here as one deletion and one addition.
+    if f.LocalPath().endswith('OWNERS') and f.Action() == 'D':
+      files.append(f.LocalPath())
+  if not files:
+    return []
+  return [
+      output_api.PresubmitPromptWarning(
+          'OWNERS files being moved/removed, please update any file:// ' +
+          'references to them in other OWNERS files', files)
+  ]
