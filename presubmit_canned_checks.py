@@ -730,11 +730,25 @@ def CheckLicense(input_api, output_api, license_re_param=None,
       bad_files.append(f.LocalPath())
   results = []
   if bad_new_files:
-    results.append(
-        output_api.PresubmitError(
-            'License on new files must match:\n%s\n\n' % new_license_re.pattern
-            + 'Found a bad license header in these new files:',
-            items=bad_new_files))
+    if license_re_param:
+      error_message = ('License on new files must match:\n\n%s\n' %
+                       license_re_param)
+    else:
+      # Verbatim text that can be copy-pasted into new files (possibly adjusting
+      # the leading comment delimiter).
+      new_license_text = ('// Copyright %(year)s The %(project)s Authors\n'
+                          '// %(key_line)s\n'
+                          '// found in the LICENSE file.\n') % {
+                              'year': current_year,
+                              'project': project_name,
+                              'key_line': key_line,
+                          }
+      error_message = (
+          'License on new files must be:\n\n%s\n' % new_license_text +
+          '(adjusting the comment delimiter accordingly).\n\n')
+    error_message += 'Found a bad license header in these new files:'
+    results.append(output_api.PresubmitError(error_message,
+                                             items=bad_new_files))
   if wrong_year_new_files:
     # We can't distinguish between new and moved files, so this has to be a
     # warning rather than an error.
