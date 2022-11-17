@@ -1913,6 +1913,23 @@ class Changelist(object):
       self.SetPatchset(patchset)
     return patchset
 
+  def _IsPatchsetRangeSignificant(self, lower, upper):
+    """Returns True if the inclusive range of patchsets contains any reworks or
+    rebases."""
+    if not self.GetIssue():
+      return False
+
+    data = self._GetChangeDetail(['ALL_REVISIONS'])
+    ps_kind = {}
+    for rev_info in data.get('revisions', {}).values():
+      ps_kind[rev_info['_number']] = rev_info.get('kind', '')
+
+    for ps in range(lower, upper + 1):
+      assert ps in ps_kind, 'expected patchset %d in change detail' % ps
+      if ps_kind[ps] not in ('NO_CHANGE', 'NO_CODE_CHANGE'):
+        return True
+    return False
+
   def GetMostRecentDryRunPatchset(self):
     """Get patchsets equivalent to the most recent patchset and return
     the patchset with the latest dry run. If none have been dry run, return
@@ -2739,7 +2756,8 @@ class Changelist(object):
       return
 
     external_ps = self.GetMostRecentPatchset(update=False)
-    if external_ps is None or local_ps == external_ps:
+    if external_ps is None or local_ps == external_ps or \
+        not self._IsPatchsetRangeSignificant(local_ps + 1, external_ps):
       return
 
     num_changes = external_ps - local_ps
