@@ -69,10 +69,10 @@ def fallback(ninja_args):
 def main(args):
   # Get gclient root + src.
   primary_solution_path = gclient_paths.GetPrimarySolutionPath()
-  if not primary_solution_path:
-    return fallback(args[1:])
   gclient_root_path = gclient_paths.FindGclientRoot(os.getcwd())
   for base_path in [primary_solution_path, gclient_root_path]:
+    if not base_path:
+      continue
     ninja_path = os.path.join(base_path, 'third_party', 'ninja',
                               'ninja' + gclient_paths.GetExeSuffix())
     if os.path.isfile(ninja_path):
