@@ -2354,14 +2354,7 @@ the current line as well!
     self._LicenseCheck(text, license_text, True, None, accept_empty_files=True)
 
   def testCheckLicenseNewFilePass(self):
-    current_year = int(time.strftime('%Y'))
-    text = (
-        "#!/bin/python\n"
-        "# Copyright %d The Chromium Authors\n"
-        "# Use of this source code is governed by a BSD-style license that can "
-        "be\n"
-        "# found in the LICENSE file.\n"
-        "print('foo')\n" % current_year)
+    text = self._GetLicenseText(int(time.strftime('%Y')))
     license_text = None
     self._LicenseCheck(text, license_text, False, None, new_file=True)
 
@@ -2403,7 +2396,15 @@ the current line as well!
                        new_file=True)
 
   def testCheckLicenseNewCSSFilePass(self):
-    text = self._GetLicenseText(int(time.strftime('%Y')))
+    # Check that CSS-style comments in license text are supported.
+    current_year = int(time.strftime('%Y'))
+    text = (
+        "/* Copyright %d The Chromium Authors\n"
+        " * Use of this source code is governed by a BSD-style license that "
+        "can be\n"
+        "* found in the LICENSE file. */\n"
+        "\n"
+        "h1 {}\n" % current_year)
     license_text = None
     self._LicenseCheck(text, license_text, False, None, new_file=True)
 
