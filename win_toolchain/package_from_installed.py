@@ -24,7 +24,7 @@ frameworks-> Visual C++ MFC for ARM64 (which also brings in ATL for ARM64).
 3. Use Add or Remove Programs to find the Windows SDK installed with VS
 and modify it to include the debuggers.
 4. Run this script, which will build a <sha1>.zip, something like this:
-  python package_from_installed.py 2017|2019 -w 10.0.17763.0|<SDK version>
+  python package_from_installed.py 2019|2022 -w 10.0.17763.0|<SDK version>
 
 Express is not yet supported by this script, but patches welcome (it's not too
 useful as the resulting zip can't be redistributed, and most will presumably
@@ -51,7 +51,7 @@ import get_toolchain_if_necessary
 _vs_version = None
 _win_version = None
 _vc_tools = None
-SUPPORTED_VS_VERSIONS = ['2017', '2019']
+SUPPORTED_VS_VERSIONS = ['2019', '2022']
 _allow_multiple_vs_installs = False
 
 
@@ -481,7 +481,7 @@ def main():
   if sys.version_info[0] < 3:
     print('This script requires Python 3')
     sys.exit(10)
-  usage = 'usage: %prog [options] 2017|2019'
+  usage = 'usage: %prog [options] 2019|2022'
   parser = optparse.OptionParser(usage)
   parser.add_option('-w', '--winver', action='store', type='string',
                     dest='winver', default='10.0.18362.0',
@@ -507,7 +507,7 @@ def main():
     files = BuildRepackageFileList(options.repackage_dir)
   else:
     if len(args) != 1 or args[0] not in SUPPORTED_VS_VERSIONS:
-      print('Must specify 2017 or 2019')
+      print('Must specify 2019 or 2022')
       parser.print_help();
       return 1
 
