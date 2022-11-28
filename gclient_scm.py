@@ -1137,6 +1137,12 @@ class GitWrapper(SCMWrapper):
         traceback.print_exc(file=self.out_fh)
         raise
       self._SetFetchConfig(options)
+    elif hasattr(options, 'no_history') and options.no_history:
+      self._Run(['init', self.checkout_path], options, cwd=self._root_dir)
+      self._Run(['remote', 'add', 'origin', url], options)
+      revision = self._AutoFetchRef(options, revision, depth=1)
+      remote_ref = scm.GIT.RefToRemoteRef(revision, self.remote)
+      self._Checkout(options, ''.join(remote_ref or revision), quiet=True)
     else:
       cfg = gclient_utils.DefaultIndexPackConfig(url)
       clone_cmd = cfg + ['clone', '--no-checkout', '--progress']
@@ -1145,29 +1151,6 @@ class GitWrapper(SCMWrapper):
       if options.verbose:
         clone_cmd.append('--verbose')
       clone_cmd.append(url)
-
-      template_dir = None
-      if hasattr(options, 'no_history') and options.no_history:
-        if gclient_utils.IsGitSha(revision):
-          # In the case of a subproject, the pinned sha is not necessarily the
-          # head of the remote branch (so we can't just use --depth=N). Instead,
-          # we tell git to fetch all the remote objects from SHA..HEAD by means
-          # of a template git dir which has a 'shallow' file pointing to the
-          # sha.
-          template_dir = tempfile.mkdtemp(prefix='_gclient_gittmp_%s' %
-                                          os.path.basename(self.checkout_path),
-                                          dir=parent_dir)
-          self._Run(['init', '--bare', template_dir],
-                    options,
-                    cwd=self._root_dir)
-          with open(os.path.join(template_dir, 'shallow'),
-                    'w') as template_file:
-            template_file.write(revision)
-            clone_cmd.append('--template=' + template_dir)
-        else:
-          # Otherwise, we're just interested in the HEAD. Just use --depth.
-          clone_cmd.append('--depth=1')
-
       tmp_dir = tempfile.mkdtemp(prefix='_gclient_%s_' %
                                  os.path.basename(self.checkout_path),
                                  dir=parent_dir)
@@ -1191,8 +1174,6 @@ class GitWrapper(SCMWrapper):
         if os.listdir(tmp_dir):
           self.Print('_____ removing non-empty tmp dir %s' % tmp_dir)
         gclient_utils.rmtree(tmp_dir)
-        if template_dir:
-          gclient_utils.rmtree(template_dir)
 
       self._SetFetchConfig(options)
       self._Fetch(options, prune=options.force)
@@ -1440,8 +1421,13 @@ class GitWrapper(SCMWrapper):
     checkout_args.append(ref)
     return self._Capture(checkout_args)
 
-  def _Fetch(self, options, remote=None, prune=False, quiet=False,
-             refspec=None):
+  def _Fetch(self,
+             options,
+             remote=None,
+             prune=False,
+             quiet=False,
+             refspec=None,
+             depth=None):
     cfg = gclient_utils.DefaultIndexPackConfig(self.url)
     # When updating, the ref is modified to be a remote ref .
     # (e.g. refs/heads/NAME becomes refs/remotes/REMOTE/NAME).
@@ -1471,6 +1457,8 @@ class GitWrapper(SCMWrapper):
       fetch_cmd.append('--no-tags')
     elif quiet:
       fetch_cmd.append('--quiet')
+    if depth:
+      fetch_cmd.append('--depth=' + str(depth))
     self._Run(fetch_cmd, options, show_header=options.verbose, retry=True)
 
   def _SetFetchConfig(self, options):
@@ -1498,12 +1486,12 @@ class GitWrapper(SCMWrapper):
                     '^\\+refs/tags/\\*:.*$']
       self._Run(config_cmd, options)
 
-  def _AutoFetchRef(self, options, revision):
+  def _AutoFetchRef(self, options, revision, depth=None):
     """Attempts to fetch |revision| if not available in local repo.
 
     Returns possibly updated revision."""
     if not scm.GIT.IsValidRevision(self.checkout_path, revision):
-      self._Fetch(options, refspec=revision)
+      self._Fetch(options, refspec=revision, depth=depth)
       revision = self._Capture(['rev-parse', 'FETCH_HEAD'])
     return revision
 
