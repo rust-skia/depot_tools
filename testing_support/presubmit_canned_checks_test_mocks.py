@@ -72,6 +72,7 @@ class MockInputApi(object):
     self.sys = sys
     self.files = []
     self.is_committing = False
+    self.no_diffs = False
     self.change = MockChange([])
     self.presubmit_local_path = os.path.dirname(__file__)
     self.logging = logging.getLogger('PRESUBMIT')

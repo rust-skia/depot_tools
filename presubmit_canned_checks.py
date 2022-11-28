@@ -1957,7 +1957,7 @@ _NON_INCLUSIVE_TERMS = (
         # ...' will not. This may require some tweaking to catch these cases
         # without triggering a lot of false positives. Leaving it naive and
         # less matchy for now.
-        r'/\b(?i)((black|white)list|slave)\b',  # nocheck
+        r'/(?i)\b((black|white)list|slave)\b',  # nocheck
         (
             'Please don\'t use blacklist, whitelist, '  # nocheck
             'or slave in your',  # nocheck
@@ -1966,7 +1966,7 @@ _NON_INCLUSIVE_TERMS = (
             'at the end of the offending line will bypass this PRESUBMIT error',
             'but avoid using this whenever possible. Reach out to',
             'community@chromium.org if you have questions'),
-        True),)
+        True), )
 
 
 def _GetMessageForMatchingTerm(input_api, affected_file, line_number, line,
