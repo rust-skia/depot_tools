@@ -11,6 +11,8 @@ import subprocess
 import sys
 
 
+DEPOT_TOOLS_DIR = os.path.dirname(os.path.realpath(__file__))
+
 # This function is inspired from the one in src/tools/vim/ninja-build.vim in the
 # Chromium repository.
 def path_to_source_root(path):
@@ -51,20 +53,15 @@ def main():
 
   print('Building %s' % options.file_path)
 
-  ninja_exec = 'ninja'
   carets = '^'
-  # We need to make sure that we call the ninja executable, calling |ninja|
-  # directly might end up calling a wrapper script that'll remove the caret
-  # characters.
   if sys.platform == 'win32':
-    ninja_exec = 'ninja.exe'
     # The caret character has to be escaped on Windows as it's an escape
     # character.
     carets = '^^'
 
   command = [
-      ninja_exec,
-      '-C', abs_build_dir,
+      'python3',
+      os.path.join(DEPOT_TOOLS_DIR, 'ninja.py'), '-C', abs_build_dir,
       '%s%s' % (src_relpath, carets)
   ]
   # |shell| should be set to True on Windows otherwise the carets characters
