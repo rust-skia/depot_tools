@@ -208,7 +208,7 @@ def rebase_branch(branch, parent, start_hash):
                  git rebase --abort && \\
                  git config branch.%s.dormant true
 
-          And then run `git rebase-update` again to resume.
+          And then run `git rebase-update -n` to resume.
           """ % branch))
           return False
   else:
