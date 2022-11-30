@@ -121,18 +121,18 @@ def main(args):
   if (not offline and use_remoteexec and (
       not os.path.exists(reclient_bin_dir) or not os.path.exists(reclient_cfg))
      ):
-      print(("Build is configured to use reclient but necessary binaries "
-             "or config files can't be found.  Developer builds with "
-             "reclient are not yet supported.  Try regenerating your "
-             "build with use_goma in place of use_remoteexec for now."),
-             file=sys.stderr)
-      if sys.platform.startswith('win'):
-        # Set an exit code of 1 in the batch file.
-        print('cmd "/c exit 1"')
-      else:
-        # Set an exit code of 1 by executing 'false' in the bash script.
-        print('false')
-      sys.exit(1)
+    print(("Build is configured to use reclient but necessary binaries "
+           "or config files can't be found.  Developer builds with "
+           "reclient are not yet supported.  Try regenerating your "
+           "build with use_goma in place of use_remoteexec for now."),
+          file=sys.stderr)
+    if sys.platform.startswith('win'):
+      # Set an exit code of 1 in the batch file.
+      print('cmd "/c exit 1"')
+    else:
+      # Set an exit code of 1 by executing 'false' in the bash script.
+      print('false')
+    sys.exit(1)
 
   # If GOMA_DISABLED is set to "true", "t", "yes", "y", or "1"
   # (case-insensitive) then gomacc will use the local compiler instead of doing
@@ -168,11 +168,6 @@ def main(args):
           print('false')
         sys.exit(1)
 
-  # Specify ninja.exe on Windows so that ninja.bat can call autoninja and not
-  # be called back.
-  ninja_exe = 'ninja.exe' if sys.platform.startswith('win') else 'ninja'
-  ninja_exe_path = os.path.join(SCRIPT_DIR, ninja_exe)
-
   # A large build (with or without goma) tends to hog all system resources.
   # Launching the ninja process with 'nice' priorities improves this situation.
   prefix_args = []
@@ -182,9 +177,10 @@ def main(args):
     # ionice -c 3 is IO priority IDLE
     prefix_args = ['nice'] + ['-10']
 
-  # Use absolute path for ninja path,
-  # or fail to execute ninja if depot_tools is not in PATH.
-  args = prefix_args + [ninja_exe_path] + input_args[1:]
+  # Call ninja.py so that it can find ninja binary installed by DEPS or one in
+  # PATH.
+  ninja_path = os.path.join(SCRIPT_DIR, 'ninja.py')
+  args = prefix_args + [sys.executable, ninja_path] + input_args[1:]
 
   num_cores = multiprocessing.cpu_count()
   if not j_specified and not t_specified:
