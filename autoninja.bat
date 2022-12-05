@@ -7,6 +7,12 @@ setlocal
 
 set scriptdir=%~dp0
 
+if "%*" == "/?" (
+  rem Handle "autoninja /?" which will otherwise give help on the "call" command
+  @call python3.bat %~dp0\ninja.py --help
+  exit /b
+)
+
 if not defined AUTONINJA_BUILD_ID (
   :: Set unique build ID.
   FOR /f "usebackq tokens=*" %%a in (`%scriptdir%python-bin\python3.bat -c "import uuid; print(uuid.uuid4())"`) do set AUTONINJA_BUILD_ID=%%a

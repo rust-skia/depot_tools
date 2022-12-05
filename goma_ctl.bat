@@ -8,5 +8,9 @@
 set scriptdir=%~dp0
 
 @call "%~dp0\cipd_bin_setup.bat" > nul 2>&1
+if "%*" == "/?" (
+  @call %scriptdir%python-bin\python3.bat %~dp0\.cipd_bin\goma_ctl.py --help
+  exit /b
+)
 @call %scriptdir%python-bin\python3.bat %~dp0\.cipd_bin\goma_ctl.py %*
 exit /b %ERRORLEVEL%
