@@ -31,11 +31,8 @@ def FindRustfmtToolInChromiumTree():
         'Could not find checkout in any parent of the current path.\n'
         'Set CHROMIUM_BUILDTOOLS_PATH to use outside of a chromium checkout.')
 
-  # TODO(lukasza): Deduplicate the is-Rust-supported and find-Rust-binaries code
-  # by somehow sharing the `rust_prefix` variable from //build/config/rust.gni
-  tool_path = os.path.join(chromium_src_path, 'third_party',
-                           'android_rust_toolchain', 'toolchain', 'bin',
-                           'rustfmt' + gclient_paths.GetExeSuffix())
+  tool_path = os.path.join(chromium_src_path, 'third_party', 'rust-toolchain',
+                           'bin', 'rustfmt' + gclient_paths.GetExeSuffix())
   if not os.path.exists(tool_path):
     raise NotFoundError('File does not exist: %s' % tool_path)
   return tool_path
