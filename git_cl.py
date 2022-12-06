@@ -2789,7 +2789,7 @@ class Changelist(object):
 
     # Get the diff between local_ps and external_ps.
     issue = self.GetIssue()
-    changes_ref = 'refs/changes/%d/%d/' % (issue % 100, issue)
+    changes_ref = 'refs/changes/%02d/%d/' % (issue % 100, issue)
     RunGitSilent(['fetch', remote, changes_ref + str(local_ps)])
     last_uploaded = RunGitSilent(['rev-parse', 'FETCH_HEAD']).strip()
     RunGitSilent(['fetch', remote, changes_ref + str(external_ps)])
