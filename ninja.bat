@@ -4,11 +4,9 @@
 :: found in the LICENSE file.
 setlocal
 
-set scriptdir=%~dp0
-
 :: Ensure that "depot_tools" is somewhere in PATH so this tool can be used
 :: standalone, but allow other PATH manipulations to take priority.
-set PATH=%PATH%;%scriptdir%
+set PATH=%PATH%;%~dp0
 
 :: Defer control.
-call %scriptdir%python-bin\python3.bat "%~dp0\ninja.py" %*
+python3 "%~dp0\ninja.py" %*
