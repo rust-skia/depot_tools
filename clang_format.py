@@ -27,6 +27,14 @@ class NotFoundError(Exception):
 
 def FindClangFormatToolInChromiumTree():
   """Return a path to the clang-format executable, or die trying."""
+  primary_solution_path = gclient_paths.GetPrimarySolutionPath()
+  if primary_solution_path:
+    bin_path = os.path.join(primary_solution_path, 'third_party',
+                            'clang-format',
+                            'clang-format' + gclient_paths.GetExeSuffix())
+    if os.path.exists(bin_path):
+      return bin_path
+
   bin_path = gclient_paths.GetBuildtoolsPlatformBinaryPath()
   if not bin_path:
     raise NotFoundError(
@@ -42,6 +50,13 @@ def FindClangFormatToolInChromiumTree():
 
 def FindClangFormatScriptInChromiumTree(script_name):
   """Return a path to a clang-format helper script, or die trying."""
+  primary_solution_path = gclient_paths.GetPrimarySolutionPath()
+  if primary_solution_path:
+    script_path = os.path.join(primary_solution_path, 'third_party',
+                               'clang-format', 'script', script_name)
+    if os.path.exists(script_path):
+      return script_path
+
   tools_path = gclient_paths.GetBuildtoolsPath()
   if not tools_path:
     raise NotFoundError(
