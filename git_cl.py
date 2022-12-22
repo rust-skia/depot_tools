@@ -5025,7 +5025,13 @@ def CMDupstream(parser, args):
 @metrics.collector.collect_metrics('git cl web')
 def CMDweb(parser, args):
   """Opens the current CL in the web browser."""
-  _, args = parser.parse_args(args)
+  parser.add_option('-p',
+                    '--print-only',
+                    action='store_true',
+                    dest='print_only',
+                    help='Only print the Gerrit URL, don\'t open it in the '
+                    'browser.')
+  (options, args) = parser.parse_args(args)
   if args:
     parser.error('Unrecognized args: %s' % ' '.join(args))
 
@@ -5033,6 +5039,10 @@ def CMDweb(parser, args):
   if not issue_url:
     print('ERROR No issue to open', file=sys.stderr)
     return 1
+
+  if options.print_only:
+    print(issue_url)
+    return 0
 
   # Redirect I/O before invoking browser to hide its output. For example, this
   # allows us to hide the "Created new window in existing browser session."
