@@ -42,7 +42,7 @@ class ConstantString(object):
     return self.value == other
 
   def __hash__(self):
-      return self.value.__hash__()
+    return self.value.__hash__()
 
 
 class _NodeDict(collections_abc.MutableMapping):
@@ -893,6 +893,15 @@ def GetCIPD(gclient_dict, dep_name, package_name):
 
 def GetRevision(gclient_dict, dep_name):
   if 'deps' not in gclient_dict or dep_name not in gclient_dict['deps']:
+    suggestions = []
+    if 'deps' in gclient_dict:
+      for key in gclient_dict['deps']:
+        if dep_name in key:
+          suggestions.append(key)
+    if suggestions:
+      raise KeyError(
+          "Could not find any dependency called %s. Did you mean %s" %
+          (dep_name, ' or '.join(suggestions)))
     raise KeyError(
         "Could not find any dependency called %s." % dep_name)
 

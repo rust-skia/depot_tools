@@ -17,6 +17,7 @@ import os
 import re
 import subprocess2
 import sys
+import tempfile
 
 NEED_SHELL = sys.platform.startswith('win')
 GCLIENT_PATH = os.path.join(
@@ -187,7 +188,14 @@ def finalize(commit_msg, current_dir, rolls):
   print('\n'.join('    ' + i for i in commit_msg.splitlines()))
 
   check_call(['git', 'add', 'DEPS'], cwd=current_dir)
-  check_call(['git', 'commit', '--quiet', '-m', commit_msg], cwd=current_dir)
+  # We have to set delete=False and then let the object go out of scope so
+  # that the file can be opened by name on Windows.
+  with tempfile.NamedTemporaryFile('w+', newline='', delete=False) as f:
+    commit_filename = f.name
+    f.write(commit_msg)
+  check_call(['git', 'commit', '--quiet', '--file', commit_filename],
+             cwd=current_dir)
+  os.remove(commit_filename)
 
   # Pull the dependency to the right revision. This is surprising to users
   # otherwise.
