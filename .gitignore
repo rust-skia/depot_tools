@@ -3,6 +3,7 @@
 
 # ignore cipd client files
 /.cipd_bin
+/.cipd_bin_cros_python2
 /.cipd_client*
 /.versions
 

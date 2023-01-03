@@ -13,6 +13,8 @@ It is intended to used strictly outside of the chroot.
 """
 
 import os
+import pathlib
+import subprocess
 import sys
 
 
@@ -20,6 +22,11 @@ import sys
 MIN_PYTHON_VER_SOFT = (3, 8)
 # Min version of Python that we *require*.  We abort for older versions.
 MIN_PYTHON_VER_HARD = (3, 6)
+
+DEPOT_TOOLS_DIR = pathlib.Path(__file__).resolve().parent
+
+# Directory where cros-specific CIPD packages are installed.
+CIPD_CACHE_DIR = DEPOT_TOOLS_DIR / '.cipd_bin_cros_python2'
 
 
 def _FindChromite(path):
@@ -71,6 +78,16 @@ def _CheckPythonVersion():
         'maintain support.', file=sys.stderr)
 
 
+def _BootstrapVpython27():
+  """Installs the vpython2.7 packages into the cipd cache directory."""
+  subprocess.run([DEPOT_TOOLS_DIR / 'cipd', 'ensure',
+                  '-log-level', 'info',
+                  '-ensure-file',
+                  DEPOT_TOOLS_DIR / 'cipd_manifest_cros_python2.txt',
+                  '-root', CIPD_CACHE_DIR],
+                 check=True)
+
+
 def main():
   _CheckPythonVersion()
 
@@ -80,7 +97,23 @@ def main():
     return _MissingErrorOut(target)
 
   path = os.path.join(chromite_dir, 'bin', target)
-  os.execv(path, [path] + sys.argv[1:])
+
+  # Check to see if this is a script requiring vpython2.7.
+  with open(path, 'rb') as fp:
+    shebang = next(fp).strip()
+  interpreter = shebang.split()[-1]
+  if interpreter in (b'python', b'python2', b'python2.7', b'vpython'):
+    _BootstrapVpython27()
+    vpython = CIPD_CACHE_DIR / 'vpython'
+    args = [vpython]
+    if interpreter != b'vpython':
+      args.extend(['-vpython-spec', DEPOT_TOOLS_DIR / 'cros_python2.vpython'])
+    args.append(path)
+    path = vpython
+  else:
+    args = [path]
+
+  os.execv(path, args + sys.argv[1:])
 
 
 if __name__ == '__main__':
