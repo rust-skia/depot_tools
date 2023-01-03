@@ -573,7 +573,7 @@ class InputApi(object):
       r'.+\.pm$',
       # Other
       r'.+\.java$', r'.+\.mk$', r'.+\.am$', r'.+\.css$', r'.+\.mojom$',
-      r'.+\.fidl$'
+      r'.+\.fidl$', r'.+\.rs$',
   )
 
   # Path regexp that should be excluded from being considered containing source
