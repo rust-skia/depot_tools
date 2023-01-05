@@ -80,7 +80,7 @@ def _CheckPythonVersion():
 
 def _BootstrapVpython27():
   """Installs the vpython2.7 packages into the cipd cache directory."""
-  subprocess.run([DEPOT_TOOLS_DIR / 'cipd', 'ensure',
+  subprocess.run(['cipd', 'ensure',
                   '-log-level', 'info',
                   '-ensure-file',
                   DEPOT_TOOLS_DIR / 'cipd_manifest_cros_python2.txt',
