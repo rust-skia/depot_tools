@@ -2761,10 +2761,29 @@ class Changelist(object):
       return
 
     num_changes = external_ps - local_ps
-    print('\n%d external change(s) have been published to %s. '
-          'Uploading as-is will override them.' %
-          (num_changes, self.GetIssueURL(short=True)))
-    if not ask_for_explicit_yes('Get the latest changes and apply?'):
+    if num_changes > 1:
+      change_words = 'changes were'
+    else:
+      change_words = 'change was'
+    print('\n%d external %s published to %s:\n' %
+          (num_changes, change_words, self.GetIssueURL(short=True)))
+
+    # Print an overview of external changes.
+    ps_to_commit = {}
+    ps_to_info = {}
+    revisions = self._GetChangeDetail(['ALL_REVISIONS'])
+    for commit_id, revision_info in revisions.get('revisions', {}).items():
+      ps_num = revision_info['_number']
+      ps_to_commit[ps_num] = commit_id
+      ps_to_info[ps_num] = revision_info
+
+    for ps in range(external_ps, local_ps, -1):
+      commit = ps_to_commit[ps][:8]
+      desc = ps_to_info[ps].get('description', '')
+      print('Patchset %d [%s] %s' % (ps, commit, desc))
+
+    if not ask_for_explicit_yes('\nUploading as-is will override them. '
+                                'Get the latest changes and apply?'):
       return
 
     # Get latest Gerrit merge base. Use the first parent even if multiple exist.
