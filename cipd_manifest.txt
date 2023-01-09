@@ -70,7 +70,7 @@ infra/3pp/tools/ninja/${os=linux,windows}-${arch=amd64} version:2@1.8.2.chromium
 infra/3pp/tools/ninja/${os=mac}-${arch} version:2@1.8.2.chromium.3
 
 # dirmd, a tool to work with DIR_METADATA files
-infra/tools/dirmd/${platform} git_revision:6ccfc187ae31591c9ce32acb35334062530c5333
+infra/tools/dirmd/${platform} git_revision:c51722d421a69fea8888d8133cc7e9b2b7cf937c
 
 # Pinpoint CLI
 infra/chromeperf/pinpoint/${platform} git_revision:06230fdc34c20ba24a242db1daba3426704f61fc
