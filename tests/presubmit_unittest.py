@@ -612,6 +612,47 @@ class PresubmitUnittest(PresubmitTestsBase):
     self.assertEqual(
         os.remove.mock_calls, [mock.call('baz'), mock.call('quux')])
 
+  def testExecPresubmitScriptInSourceDirectory(self):
+    """ Tests that the presubmits are executed with the current working
+    directory (CWD) set to the directory of the source presubmit script. """
+    orig_dir = os.getcwd()
+
+    fake_presubmit_dir = os.path.join(self.fake_root_dir, 'fake_dir')
+    fake_presubmit = os.path.join(fake_presubmit_dir, 'PRESUBMIT.py')
+    change = self.ExampleChange()
+
+    executer = presubmit.PresubmitExecuter(change, False, None,
+                                           presubmit.GerritAccessor())
+
+    executer.ExecPresubmitScript(self.presubmit_text_prefix, fake_presubmit)
+
+    # Check that the executer switched to the directory of the script and back.
+    self.assertEqual(os.chdir.call_args_list, [
+        mock.call(fake_presubmit_dir),
+        mock.call(orig_dir),
+    ])
+
+  def testExecPostUploadHookSourceDirectory(self):
+    """ Tests that the post upload hooks are executed with the current working
+    directory (CWD) set to the directory of the source presubmit script. """
+    orig_dir = os.getcwd()
+
+    fake_presubmit_dir = os.path.join(self.fake_root_dir, 'fake_dir')
+    fake_presubmit = os.path.join(fake_presubmit_dir, 'PRESUBMIT.py')
+    change = self.ExampleChange()
+
+    executer = presubmit.GetPostUploadExecuter(change,
+                                               presubmit.GerritAccessor(),
+                                               False)
+
+    executer.ExecPresubmitScript(self.presubmit_text, fake_presubmit)
+
+    # Check that the executer switched to the directory of the script and back.
+    self.assertEqual(os.chdir.call_args_list, [
+        mock.call(fake_presubmit_dir),
+        mock.call(orig_dir),
+    ])
+
   def testDoPostUploadExecuter(self):
     os.path.isfile.side_effect = lambda f: 'PRESUBMIT.py' in f
     os.listdir.return_value = ['PRESUBMIT.py']

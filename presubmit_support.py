@@ -1407,16 +1407,19 @@ def ListRelevantPresubmitFiles(files, root):
 
 
 class GetPostUploadExecuter(object):
-  def __init__(self, use_python3):
+  def __init__(self, change, gerrit_obj, use_python3):
     """
     Args:
+      change: The Change object.
+      gerrit_obj: provides basic Gerrit codereview functionality.
       use_python3: if true, will use python3 instead of python2 by default
                 if USE_PYTHON3 is not specified.
     """
+    self.change = change
+    self.gerrit = gerrit_obj
     self.use_python3 = use_python3
 
-  def ExecPresubmitScript(self, script_text, presubmit_path, gerrit_obj,
-                          change):
+  def ExecPresubmitScript(self, script_text, presubmit_path):
     """Executes PostUploadHook() from a single presubmit script.
     Caller is responsible for validating whether the hook should be executed
     and should only call this function if it should be.
@@ -1424,15 +1427,27 @@ class GetPostUploadExecuter(object):
     Args:
       script_text: The text of the presubmit script.
       presubmit_path: Project script to run.
-      gerrit_obj: The GerritAccessor object.
-      change: The Change object.
 
     Return:
       A list of results objects.
     """
+    # Change to the presubmit file's directory to support local imports.
+    presubmit_dir = os.path.dirname(presubmit_path)
+    main_path = os.getcwd()
+    try:
+      os.chdir(presubmit_dir)
+      return self._execute_with_local_working_directory(script_text,
+                                                        presubmit_dir,
+                                                        presubmit_path)
+    finally:
+      # Return the process to the original working directory.
+      os.chdir(main_path)
+
+  def _execute_with_local_working_directory(self, script_text, presubmit_dir,
+                                            presubmit_path):
     context = {}
     try:
-      exec(compile(script_text, 'PRESUBMIT.py', 'exec', dont_inherit=True),
+      exec(compile(script_text, presubmit_path, 'exec', dont_inherit=True),
            context)
     except Exception as e:
       raise PresubmitFailure('"%s" had an exception.\n%s'
@@ -1445,7 +1460,7 @@ class GetPostUploadExecuter(object):
     if not len(inspect.getargspec(post_upload_hook)[0]) == 3:
       raise PresubmitFailure(
           'Expected function "PostUploadHook" to take three arguments.')
-    return post_upload_hook(gerrit_obj, change, OutputApi(False))
+    return post_upload_hook(self.gerrit, self.change, OutputApi(False))
 
 
 def _MergeMasters(masters1, masters2):
@@ -1476,7 +1491,7 @@ def DoPostUploadExecuter(change, gerrit_obj, verbose, use_python3=False):
   if not presubmit_files and verbose:
     sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
   results = []
-  executer = GetPostUploadExecuter(use_python3)
+  executer = GetPostUploadExecuter(change, gerrit_obj, use_python3)
   # The root presubmit file should be executed after the ones in subdirectories.
   # i.e. the specific post upload hooks should run before the general ones.
   # Thus, reverse the order provided by ListRelevantPresubmitFiles.
@@ -1493,8 +1508,7 @@ def DoPostUploadExecuter(change, gerrit_obj, verbose, use_python3=False):
             'this.\n' % filename)
       elif verbose:
         sys.stdout.write('Running %s\n' % filename)
-      results.extend(executer.ExecPresubmitScript(
-          presubmit_script, filename, gerrit_obj, change))
+      results.extend(executer.ExecPresubmitScript(presubmit_script, filename))
 
   if not results:
     return 0
@@ -1553,10 +1567,19 @@ class PresubmitExecuter(object):
       A list of result objects, empty if no problems.
     """
     # Change to the presubmit file's directory to support local imports.
-    main_path = os.getcwd()
     presubmit_dir = os.path.dirname(presubmit_path)
-    os.chdir(presubmit_dir)
+    main_path = os.getcwd()
+    try:
+      os.chdir(presubmit_dir)
+      return self._execute_with_local_working_directory(script_text,
+                                                        presubmit_dir,
+                                                        presubmit_path)
+    finally:
+      # Return the process to the original working directory.
+      os.chdir(main_path)
 
+  def _execute_with_local_working_directory(self, script_text, presubmit_dir,
+                                            presubmit_path):
     # Load the presubmit script into context.
     input_api = InputApi(self.change, presubmit_path, self.committing,
                          self.verbose, gerrit_obj=self.gerrit,
@@ -1632,8 +1655,6 @@ class PresubmitExecuter(object):
       for f in input_api._named_temporary_files:
         os.remove(f)
 
-    # Return the process to the original working directory.
-    os.chdir(main_path)
     return results
 
   def _run_check_function(self, function_name, context, sink, presubmit_path):
