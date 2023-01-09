@@ -5,6 +5,7 @@
 
 """Run a pinned gsutil."""
 
+from __future__ import print_function
 
 import argparse
 import base64
@@ -35,6 +36,15 @@ DEFAULT_BIN_DIR = os.path.join(THIS_DIR, 'external_bin', 'gsutil')
 IS_WINDOWS = os.name == 'nt'
 
 VERSION = '4.68'
+
+# Environment variable to enable LUCI auth feature.
+GSUTIL_ENABLE_LUCI_AUTH = 'GSUTIL_ENABLE_LUCI_AUTH'
+
+# Google OAuth Context required by gsutil.
+LUCI_AUTH_SCOPES = [
+    'https://www.googleapis.com/auth/devstorage.full_control',
+    'https://www.googleapis.com/auth/userinfo.email',
+]
 
 
 class InvalidGsutilError(Exception):
@@ -138,7 +148,54 @@ def ensure_gsutil(version, target, clean):
   return gsutil_bin
 
 
+def _is_luci_context():
+  """Returns True if the script is run within luci-context"""
+  luci_context_env = os.getenv('LUCI_CONTEXT')
+  if not luci_context_env:
+    return False
+
+  try:
+    with open(luci_context_env) as f:
+      luci_context_json = json.load(f)
+      return 'local_auth' in luci_context_json
+  except (ValueError, FileNotFoundError):
+    return False
+
+
+def luci_context(cmd):
+  """Helper to call`luci-auth context`."""
+  return _luci_auth_cmd('context', wrapped_cmds=cmd)
+
+
+def luci_login():
+  """Helper to run `luci-auth login`."""
+  _luci_auth_cmd('login')
+
+
+def _luci_auth_cmd(luci_cmd, wrapped_cmds=None):
+  """Helper to call luci-auth command."""
+  print('WARNING: OOB authentication flow has been deprecated.')
+  print('Using luci-auth login instead.')
+  print('Override luci-auth by setting `BOTO_CONFIG` or '
+        '`AWS_CREDENTIAL_FILE` in your env.\n')
+
+  cmd = ['luci-auth', luci_cmd, '-scopes', ' '.join(LUCI_AUTH_SCOPES)]
+  if wrapped_cmds:
+    cmd += ['--'] + wrapped_cmds
+
+  return _run_subprocess(cmd)
+
+
+def _run_subprocess(cmd):
+  """Wrapper to run the given command within a subprocess."""
+  return subprocess.call(cmd, shell=IS_WINDOWS)
+
+
 def run_gsutil(target, args, clean=False):
+  # Redirect gsutil config calls to luci-auth.
+  if os.getenv(GSUTIL_ENABLE_LUCI_AUTH) == '1' and 'config' in args:
+    return luci_login()
+
   gsutil_bin = ensure_gsutil(VERSION, target, clean)
   args_opt = ['-o', 'GSUtil:software_update_check_period=0']
 
@@ -167,7 +224,14 @@ def run_gsutil(target, args, clean=False):
       '--',
       gsutil_bin
   ] + args_opt + args
-  return subprocess.call(cmd, shell=IS_WINDOWS)
+
+  # Bypass luci-auth when run within a bot or .boto file is set.
+  if (os.getenv(GSUTIL_ENABLE_LUCI_AUTH) != '1' or _is_luci_context()
+      or os.getenv('SWARMING_HEADLESS') == '1' or os.getenv('BOTO_CONFIG')
+      or os.getenv('AWS_CREDENTIAL_FILE')):
+    return _run_subprocess(cmd)
+
+  return luci_context(cmd)
 
 
 def parse_args():
