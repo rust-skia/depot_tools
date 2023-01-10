@@ -67,6 +67,14 @@ def fallback(ninja_args):
 
 
 def main(args):
+  # On Windows the ninja.bat script passes along the arguments enclosed in
+  # double quotes. This prevents multiple levels of parsing of the special '^'
+  # characters needed when compiling a single file.  When this case is detected,
+  # we need to split the argument. This means that arguments containing actual
+  # spaces are not supported by ninja.bat, but that is not a real limitation.
+  if (sys.platform.startswith('win') and len(args) == 2):
+    args = args[:1] + args[1].split(' ')
+
   # Get gclient root + src.
   primary_solution_path = gclient_paths.GetPrimarySolutionPath()
   gclient_root_path = gclient_paths.FindGclientRoot(os.getcwd())
