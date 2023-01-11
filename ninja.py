@@ -75,6 +75,15 @@ def main(args):
   if (sys.platform.startswith('win') and len(args) == 2):
     args = args[:1] + args[1].split(' ')
 
+  # macOS's python sets CPATH, LIBRARY_PATH, SDKROOT implicitly.
+  # https://openradar.appspot.com/radar?id=5608755232243712
+  #
+  # Removing thoese environment variables to avoid affecting clang's behaviors.
+  if sys.platform == 'darwin':
+    os.environ.pop("CPATH", None)
+    os.environ.pop("LIBRARY_PATH", None)
+    os.environ.pop("SDKROOT", None)
+
   # Get gclient root + src.
   primary_solution_path = gclient_paths.GetPrimarySolutionPath()
   gclient_root_path = gclient_paths.FindGclientRoot(os.getcwd())
