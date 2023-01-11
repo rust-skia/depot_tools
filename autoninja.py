@@ -98,9 +98,6 @@ def main(args):
                      line_without_comment):
           use_remoteexec = True
           continue
-        if re.search(r'(^|\s)(use_rbe)\s*=\s*true($|\s)', line_without_comment):
-          use_remoteexec = True
-          continue
   else:
     for relative_path in [
         '',  # GN keeps them in the root of output_dir
