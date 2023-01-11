@@ -3125,7 +3125,7 @@ the current line as well!
         input_api, presubmit.OutputApi, content='manifest_content')
     self.assertEqual(command.cmd,
         ['cipd', 'ensure-file-verify', '-log-level', 'debug', '-ensure-file=-'])
-    self.assertEqual(command.stdin, 'manifest_content')
+    self.assertEqual(command.stdin, b'manifest_content')
     self.assertEqual(command.kwargs, {
         'stdin': subprocess.PIPE,
         'stdout': subprocess.PIPE,
@@ -3151,7 +3151,7 @@ the current line as well!
         })
     self.assertEqual(command.cmd,
         ['cipd', 'ensure-file-verify', '-ensure-file=-'])
-    self.assertEqual(command.stdin, content)
+    self.assertEqual(command.stdin, content.encode())
     self.assertEqual(command.kwargs, {
         'stdin': subprocess.PIPE,
         'stdout': subprocess.PIPE,

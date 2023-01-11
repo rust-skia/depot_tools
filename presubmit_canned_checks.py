@@ -1645,6 +1645,8 @@ def CheckCIPDManifest(input_api, output_api, path=None, content=None):
     assert path is None, 'Cannot provide both "path" and "content".'
     cmd += ['-ensure-file=-']
     kwargs['stdin'] = content
+    if input_api.sys.version_info.major != 2:
+      kwargs['stdin'] = kwargs['stdin'].encode('utf-8')
     # quick and dirty parser to extract checked packages.
     packages = [
       l.split()[0] for l in (ll.strip() for ll in content.splitlines())
