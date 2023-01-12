@@ -11,18 +11,28 @@
 #     -VersionFile ./cipd_client_version
 # file _cipd.exe
 
-Param(
-  # Path to download the CIPD binary to.
-  [parameter(Mandatory=$true)][string]$CipdBinary,
-  # E.g. "https://chrome-infra-packages.appspot.com".
-  [parameter(Mandatory=$true)][string]$BackendURL,
-  # Path to the cipd_client_version file with the client version.
-  [parameter(Mandatory=$true)][string]$VersionFile
+param(
+    # Path to download the CIPD binary to.
+    [Parameter(Mandatory = $true)]
+    [string]
+    $CipdBinary,
+    
+    # CIPD platform to download the client for.
+    [string]
+    $Platform = "windows-amd64",
+
+    # E.g. "https://chrome-infra-packages.appspot.com".
+    [Parameter(Mandatory = $true)]
+    [string]
+    $BackendURL,
+
+    # Path to the cipd_client_version file with the client version.
+    [Parameter(Mandatory = $true)]
+    [string]
+    $VersionFile
 )
 
 $DepotToolsPath = Split-Path $MyInvocation.MyCommand.Path -Parent
-
-$Platform = "windows-amd64"
 
 # Put depot_tool's git revision into the user agent string.
 try {
