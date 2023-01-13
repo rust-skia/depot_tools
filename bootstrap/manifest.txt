@@ -15,13 +15,13 @@
 # the string "cpython3/" and ends with the CIPD tag "version:VERSION".
 # It uses this to extract VERSION.
 
-$VerifiedPlatform windows-amd64 linux-amd64 mac-amd64 mac-arm64
+$VerifiedPlatform windows-amd64 windows-arm64 linux-amd64 mac-amd64 mac-arm64
 
 @Subdir python
-infra/3pp/tools/cpython/${platform} version:2@2.7.18.chromium.39
+infra/3pp/tools/cpython/${platform} version:2@2.7.18.chromium.44
 
 @Subdir python3
-infra/3pp/tools/cpython3/${platform} version:2@3.8.10.chromium.23
+infra/3pp/tools/cpython3/${platform} version:2@3.8.10.chromium.26
 
 @Subdir git
-infra/3pp/tools/git/${platform} version:2@2.35.1.chromium.8
+infra/3pp/tools/git/${platform} version:2@2.39.0.chromium.10
