@@ -5648,14 +5648,8 @@ def CMDformat(parser, args):
       #   $ python pretty_print.py metadata/UMA/histograms.xml
       #   $ python pretty_print.py enums.xml
 
-      # TODO (crbug/1116488): Remove this check after ensuring that the updated
-      # version of histograms/pretty_print.py is released.
-      filepath_required = os.path.exists(
-          os.path.join(tool_dir, 'validate_prefix.py'))
-
       if (diff_xml.endswith('histograms.xml') or diff_xml.endswith('enums.xml')
-          or diff_xml.endswith('histogram_suffixes_list.xml')
-          ) and filepath_required:
+          or diff_xml.endswith('histogram_suffixes_list.xml')):
         cmd.append(diff_xml)
 
       if opts.dry_run or opts.diff:
