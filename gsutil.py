@@ -222,6 +222,11 @@ def _run_subprocess(cmd, interactive=False, env=None):
   return subprocess.run(cmd, **kwargs)
 
 
+def is_boto_present():
+  """Returns true if the .boto file is present in the default path."""
+  return os.path.isfile(os.path.join(os.path.expanduser('~'), '.boto'))
+
+
 def run_gsutil(target, args, clean=False):
   # Redirect gsutil config calls to luci-auth.
   if os.getenv(GSUTIL_ENABLE_LUCI_AUTH) == '1' and 'config' in args:
@@ -259,7 +264,7 @@ def run_gsutil(target, args, clean=False):
   # Bypass luci-auth when run within a bot or .boto file is set.
   if (os.getenv(GSUTIL_ENABLE_LUCI_AUTH) != '1' or _is_luci_context()
       or os.getenv('SWARMING_HEADLESS') == '1' or os.getenv('BOTO_CONFIG')
-      or os.getenv('AWS_CREDENTIAL_FILE')):
+      or os.getenv('AWS_CREDENTIAL_FILE') or is_boto_present()):
     return _run_subprocess(cmd, interactive=True).returncode
 
   return luci_context(cmd).returncode
