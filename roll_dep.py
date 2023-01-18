@@ -210,12 +210,16 @@ def finalize(commit_msg, current_dir, rolls):
   # Pull the dependency to the right revision. This is surprising to users
   # otherwise. The revision update is done before commiting to update
   # submodule revision if present.
-  for _head, roll_to, full_dir in sorted(rolls.values()):
+  for dependency, (_head, roll_to, full_dir) in sorted(rolls.items()):
     check_call(['git', 'checkout', '--quiet', roll_to], cwd=full_dir)
 
     # This adds the submodule revision update to the commit.
     if is_submoduled():
-      check_call(['git', 'add', full_dir])
+      check_call([
+          'git', 'update-index', '--add', '--cacheinfo', '160000,{},{}'.format(
+              roll_to, dependency)
+      ],
+                 cwd=current_dir)
 
   check_call(['git', 'add', 'DEPS'], cwd=current_dir)
   # We have to set delete=False and then let the object go out of scope so
