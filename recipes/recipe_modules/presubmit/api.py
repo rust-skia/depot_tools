@@ -30,7 +30,17 @@ class PresubmitApi(recipe_api.RecipeApi):
 
     name = kwargs.pop('name', 'presubmit')
     with self.m.depot_tools.on_path():
-      cmd = ['vpython', self.presubmit_support_path]
+      exe = 'vpython'
+
+      # Use only vpython3 on bots that don't have vpython2 on the path any
+      # longer.
+      # TODO(https://crbug.com/1401307): Switch this to vpython3 premanently
+      # and remove py3 part below.
+      experiments = self.m.buildbucket.build.input.experiments
+      if 'luci.buildbucket.omit_python2' in experiments:
+        exe = 'vpython3'
+
+      cmd = [exe, self.presubmit_support_path]
       cmd.extend(args)
       cmd.extend(['--json_output', self.m.json.output()])
       if self.m.resultdb.enabled:

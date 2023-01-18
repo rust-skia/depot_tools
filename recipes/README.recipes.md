@@ -758,7 +758,7 @@ Raises:
 &mdash; **def [initialize](/recipes/recipe_modules/osx_sdk/api.py#48)(self):**
 ### *recipe_modules* / [presubmit](/recipes/recipe_modules/presubmit)
 
-[DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 PYTHON_VERSION_COMPATIBILITY: PY2+3
 
@@ -768,7 +768,7 @@ PYTHON_VERSION_COMPATIBILITY: PY2+3
 
 Returns a presubmit step.
 
-&mdash; **def [execute](/recipes/recipe_modules/presubmit/api.py#120)(self, bot_update_step, skip_owners=False, run_all=False):**
+&mdash; **def [execute](/recipes/recipe_modules/presubmit/api.py#130)(self, bot_update_step, skip_owners=False, run_all=False):**
 
 Runs presubmit and sets summary markdown if applicable.
 
@@ -779,7 +779,7 @@ Args:
 Returns:
   a RawResult object, suitable for being returned from RunSteps.
 
-&mdash; **def [prepare](/recipes/recipe_modules/presubmit/api.py#68)(self, root_solution_revision=None):**
+&mdash; **def [prepare](/recipes/recipe_modules/presubmit/api.py#78)(self, root_solution_revision=None):**
 
 Sets up a presubmit run.
 

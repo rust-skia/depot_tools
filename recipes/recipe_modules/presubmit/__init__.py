@@ -15,6 +15,7 @@ DEPS = [
   'depot_tools',
   'gclient',
   'git',
+  'recipe_engine/buildbucket',
   'recipe_engine/context',
   'recipe_engine/cq',
   'recipe_engine/json',
