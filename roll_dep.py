@@ -154,11 +154,31 @@ def generate_commit_message(
   return header + log_section
 
 
+def is_submoduled():
+  """Returns true if gclient root has submodules"""
+  return os.path.isfile(os.path.join(gclient(['root']), ".gitmodules"))
+
+
+def get_submodule_rev(submodule):
+  """Returns revision of the given submodule path"""
+  rev_output = check_output(['git', 'submodule', 'status', submodule],
+                            cwd=gclient(['root'])).strip()
+
+  # git submodule status <path> returns all submodules with its rev in the
+  # pattern: `(+|-| )(<revision>) (submodule.path)`
+  revision = rev_output.split(' ')[0]
+  return revision[1:] if revision[0] in ('+', '-') else revision
+
+
 def calculate_roll(full_dir, dependency, roll_to):
   """Calculates the roll for a dependency by processing gclient_dict, and
   fetching the dependency via git.
   """
-  head = gclient(['getdep', '-r', dependency])
+  # if the super-project uses submodules, get rev directly using git.
+  if is_submoduled():
+    head = get_submodule_rev(dependency)
+  else:
+    head = gclient(['getdep', '-r', dependency])
   if not head:
     raise Error('%s is unpinned.' % dependency)
   check_call(['git', 'fetch', 'origin', '--quiet'], cwd=full_dir)
@@ -187,6 +207,16 @@ def finalize(commit_msg, current_dir, rolls):
   print('Commit message:')
   print('\n'.join('    ' + i for i in commit_msg.splitlines()))
 
+  # Pull the dependency to the right revision. This is surprising to users
+  # otherwise. The revision update is done before commiting to update
+  # submodule revision if present.
+  for _head, roll_to, full_dir in sorted(rolls.values()):
+    check_call(['git', 'checkout', '--quiet', roll_to], cwd=full_dir)
+
+    # This adds the submodule revision update to the commit.
+    if is_submoduled():
+      check_call(['git', 'add', full_dir])
+
   check_call(['git', 'add', 'DEPS'], cwd=current_dir)
   # We have to set delete=False and then let the object go out of scope so
   # that the file can be opened by name on Windows.
@@ -196,11 +226,6 @@ def finalize(commit_msg, current_dir, rolls):
   check_call(['git', 'commit', '--quiet', '--file', commit_filename],
              cwd=current_dir)
   os.remove(commit_filename)
-
-  # Pull the dependency to the right revision. This is surprising to users
-  # otherwise.
-  for _head, roll_to, full_dir in sorted(rolls.values()):
-    check_call(['git', 'checkout', '--quiet', roll_to], cwd=full_dir)
 
 
 def main():
@@ -287,6 +312,7 @@ def main():
       logs.append(log)
       setdep_args.extend(['-r', '{}@{}'.format(dependency, roll_to)])
 
+    # DEPS is updated even if the repository uses submodules.
     gclient(['setdep'] + setdep_args)
 
     commit_msg = gen_commit_msg(logs, cmdline, reviewers, args.bug)
