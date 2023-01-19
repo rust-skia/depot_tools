@@ -54,7 +54,7 @@ infra/tools/prpc/${platform} git_revision:7db81fdd219325d5d11fdaf56357ec28c26fff
 infra/tools/luci-auth/${platform} git_revision:7db81fdd219325d5d11fdaf56357ec28c26fffb3
 
 # LUCI Buildbucket CLI
-infra/tools/bb/${platform} git_revision:7db81fdd219325d5d11fdaf56357ec28c26fffb3
+infra/tools/bb/${platform} git_revision:dbf41123a9d58072648411e28c76948c6bab1a59
 
 # LUCI ResultDB CLI
 infra/tools/rdb/${platform} git_revision:50399befbe02a980369b270c878fb5a4f0d38824
