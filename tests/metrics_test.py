@@ -63,7 +63,7 @@ class MetricsCollectorTest(unittest.TestCase):
     mock.patch('metrics.metrics_utils.get_python_version',
                lambda: '2.7.13').start()
     mock.patch(
-        'metrics.gclient_utils.GetMacWinAixOrLinux', lambda: 'linux').start()
+        'metrics.gclient_utils.GetOperatingSystem', lambda: 'linux').start()
     mock.patch('metrics.detect_host_arch.HostArch',
                lambda: 'x86').start()
     mock.patch('metrics_utils.get_repo_timestamp',

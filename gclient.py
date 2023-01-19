@@ -1410,7 +1410,13 @@ def merge_vars(result, new_vars):
 
 
 def _detect_host_os():
-  return _PLATFORM_MAPPING[sys.platform]
+  if sys.platform in _PLATFORM_MAPPING:
+    return _PLATFORM_MAPPING[sys.platform]
+
+  try:
+    return os.uname().sysname.lower()
+  except AttributeError:
+    return sys.platform
 
 
 class GitDependency(Dependency):

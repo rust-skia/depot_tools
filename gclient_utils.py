@@ -634,7 +634,7 @@ def CheckCallAndFilter(args, print_stdout=False, filter_fn=None,
     # If our stdout is a terminal, then pass in a psuedo-tty pipe to our
     # subprocess when filtering its output. This makes the subproc believe
     # it was launched from a terminal, which will preserve ANSI color codes.
-    os_type = GetMacWinAixOrLinux()
+    os_type = GetOperatingSystem()
     if sys.stdout.isatty() and os_type != 'win' and os_type != 'aix':
       pipe_reader, pipe_writer = os.openpty()
     else:
@@ -780,8 +780,8 @@ def FindFileUpwards(filename, path=None):
     path = new_path
 
 
-def GetMacWinAixOrLinux():
-  """Returns 'mac', 'win', or 'linux', matching the current platform."""
+def GetOperatingSystem():
+  """Returns 'mac', 'win', 'linux', or the name of the current platform."""
   if sys.platform.startswith(('cygwin', 'win')):
     return 'win'
 
@@ -794,7 +794,10 @@ def GetMacWinAixOrLinux():
   if sys.platform.startswith('aix'):
     return 'aix'
 
-  raise Error('Unknown platform: ' + sys.platform)
+  try:
+    return os.uname().sysname.lower()
+  except AttributeError:
+    return sys.platform
 
 
 def GetGClientRootAndEntries(path=None):
