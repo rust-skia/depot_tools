@@ -807,9 +807,6 @@ class Settings(object):
         'rietveld.run-post-upload-hook')
     return run_post_upload_hook == "True"
 
-  def GetDefaultCCList(self):
-    return self._GetConfig('rietveld.cc')
-
   def GetUsePython3(self):
     return self._GetConfig('rietveld.use-python3')
 
@@ -1066,9 +1063,7 @@ class Changelist(object):
     flag.
     """
     if self.cc is None:
-      base_cc = settings.GetDefaultCCList()
-      more_cc = ','.join(self.more_cc)
-      self.cc = ','.join(filter(None, (base_cc, more_cc))) or ''
+      self.cc = ','.join(filter(None, self.more_cc)) or ''
     return self.cc
 
   def ExtendCC(self, more_cc):
@@ -2538,7 +2533,7 @@ class Changelist(object):
 
     reviewers = sorted(change_desc.get_reviewers())
     cc = []
-    # Add CCs from WATCHLISTS and rietveld.cc git config unless this is
+    # Add CCs from WATCHLISTS and git config unless this is
     # the initial upload, the CL is private, or auto-CCing has ben disabled.
     if not (self.GetIssue() or options.private or options.no_autocc):
       cc = self.GetCCList().split(',')
@@ -3202,7 +3197,6 @@ def LoadCodereviewSettingsFromFile(fileobj):
     SetProperty('server', 'CODE_REVIEW_SERVER')
   # Only server setting is required. Other settings can be absent.
   # In that case, we ignore errors raised during option deletion attempt.
-  SetProperty('cc', 'CC_LIST', unset_error_ok=True)
   SetProperty('tree-status-url', 'STATUS', unset_error_ok=True)
   SetProperty('viewvc-url', 'VIEW_VC', unset_error_ok=True)
   SetProperty('bug-prefix', 'BUG_PREFIX', unset_error_ok=True)
