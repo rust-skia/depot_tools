@@ -324,6 +324,11 @@ def _ShouldRunPresubmit(script_text, use_python3):
     Return:
       A boolean if presubmit should be executed
   """
+  if os.getenv('LUCI_OMIT_PYTHON2') == 'true':
+    # If LUCI omits python2, run all presubmits with python3, regardless of
+    # USE_PYTHON3 variable.
+    return True
+
   m = re.search('^USE_PYTHON3 = (True|False)$', script_text, flags=re.MULTILINE)
   if m:
     use_python3 = m.group(1) == 'True'
