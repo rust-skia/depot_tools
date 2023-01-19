@@ -713,6 +713,7 @@ class TestGitCl(unittest.TestCase):
   def test_LoadCodereviewSettingsFromFile_gerrit(self):
     codereview_file = StringIO('GERRIT_HOST: true')
     self.calls = [
+      ((['git', 'config', '--unset-all', 'rietveld.cc'],), CERR1),
       ((['git', 'config', '--unset-all', 'rietveld.tree-status-url'],), CERR1),
       ((['git', 'config', '--unset-all', 'rietveld.viewvc-url'],), CERR1),
       ((['git', 'config', '--unset-all', 'rietveld.bug-prefix'],), CERR1),
