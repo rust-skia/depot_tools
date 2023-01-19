@@ -242,7 +242,8 @@ def main(args):
     teardown_args = [bootstrap, '--cfg=' + reclient_cfg, '--shutdown']
 
     cmd_sep = '\n' if sys.platform.startswith('win') else '&&'
-    args = setup_args + [cmd_sep] + args + [cmd_sep] + teardown_args
+    cmd_always_sep = '\n' if sys.platform.startswith('win') else '; '
+    args = setup_args + [cmd_sep] + args + [cmd_always_sep] + teardown_args
 
   if offline and not sys.platform.startswith('win'):
     # Tell goma or reclient to do local compiles. On Windows these environment
