@@ -1510,27 +1510,23 @@ class Changelist(object):
 
     change_description = ChangeDescription(description, bug, fixed)
 
-    # Fill gaps in OWNERS coverage to tbrs/reviewers if requested.
+    # Fill gaps in OWNERS coverage to reviewers if requested.
     if options.add_owners_to:
-      assert options.add_owners_to in ('TBR', 'R'), options.add_owners_to
+      assert options.add_owners_to in ('R'), options.add_owners_to
       status = self.owners_client.GetFilesApprovalStatus(
-          files, [], options.tbrs + options.reviewers)
+          files, [], options.reviewers)
       missing_files = [
         f for f in files
         if status[f] == self._owners_client.INSUFFICIENT_REVIEWERS
       ]
       owners = self.owners_client.SuggestOwners(
           missing_files, exclude=[self.GetAuthor()])
-      if options.add_owners_to == 'TBR':
-        assert isinstance(options.tbrs, list), options.tbrs
-        options.tbrs.extend(owners)
-      else:
-        assert isinstance(options.reviewers, list), options.reviewers
-        options.reviewers.extend(owners)
+      assert isinstance(options.reviewers, list), options.reviewers
+      options.reviewers.extend(owners)
 
     # Set the reviewer list now so that presubmit checks can access it.
-    if options.reviewers or options.tbrs:
-      change_description.update_reviewers(options.reviewers, options.tbrs)
+    if options.reviewers:
+      change_description.update_reviewers(options.reviewers)
 
     return change_description
 
@@ -2627,12 +2623,6 @@ class Changelist(object):
       refspec_opts.append('l=Commit-Queue+1')
       refspec_opts.append('l=Quick-Run+1')
 
-    if change_desc.get_reviewers(tbr_only=True):
-      score = gerrit_util.GetCodeReviewTbrScore(
-          self.GetGerritHost(),
-          self.GetGerritProject())
-      refspec_opts.append('l=Code-Review+%s' % score)
-
     # Gerrit sorts hashtags, so order is not important.
     hashtags = {change_desc.sanitize_hash_tag(t) for t in options.hashtags}
     if not self.GetIssue():
@@ -2988,56 +2978,40 @@ class ChangeDescription(object):
       description = git_footers.add_footer_change_id(description, change_id)
       self.set_description(description)
 
-  def update_reviewers(self, reviewers, tbrs):
-    """Rewrites the R=/TBR= line(s) as a single line each.
+  def update_reviewers(self, reviewers):
+    """Rewrites the R= line(s) as a single line each.
 
     Args:
       reviewers (list(str)) - list of additional emails to use for reviewers.
-      tbrs (list(str)) - list of additional emails to use for TBRs.
     """
-    if not reviewers and not tbrs:
+    if not reviewers:
       return
 
     reviewers = set(reviewers)
-    tbrs = set(tbrs)
-    LOOKUP = {
-      'TBR': tbrs,
-      'R': reviewers,
-    }
 
-    # Get the set of R= and TBR= lines and remove them from the description.
+    # Get the set of R= lines and remove them from the description.
     regexp = re.compile(self.R_LINE)
     matches = [regexp.match(line) for line in self._description_lines]
     new_desc = [l for i, l in enumerate(self._description_lines)
                 if not matches[i]]
     self.set_description(new_desc)
 
-    # Construct new unified R= and TBR= lines.
+    # Construct new unified R= lines.
 
-    # First, update tbrs/reviewers with names from the R=/TBR= lines (if any).
+    # First, update reviewers with names from the R= lines (if any).
     for match in matches:
       if not match:
         continue
-      LOOKUP[match.group(1)].update(cleanup_list([match.group(2).strip()]))
+      reviewers.update(cleanup_list([match.group(2).strip()]))
 
-    # If any folks ended up in both groups, remove them from tbrs.
-    tbrs -= reviewers
-
-    new_r_line = 'R=' + ', '.join(sorted(reviewers)) if reviewers else None
-    new_tbr_line = 'TBR=' + ', '.join(sorted(tbrs)) if tbrs else None
+    new_r_line = 'R=' + ', '.join(sorted(reviewers))
 
     # Put the new lines in the description where the old first R= line was.
     line_loc = next((i for i, match in enumerate(matches) if match), -1)
     if 0 <= line_loc < len(self._description_lines):
-      if new_tbr_line:
-        self._description_lines.insert(line_loc, new_tbr_line)
-      if new_r_line:
-        self._description_lines.insert(line_loc, new_r_line)
+      self._description_lines.insert(line_loc, new_r_line)
     else:
-      if new_r_line:
-        self.append_footer(new_r_line)
-      if new_tbr_line:
-        self.append_footer(new_tbr_line)
+      self.append_footer(new_r_line)
 
   def set_preserve_tryjobs(self):
     """Ensures description footer contains 'Cq-Do-Not-Cancel-Tryjobs: true'."""
@@ -4441,9 +4415,6 @@ def CMDupload(parser, args):
   parser.add_option('-r', '--reviewers',
                     action='append', default=[],
                     help='reviewer email addresses')
-  parser.add_option('--tbrs',
-                    action='append', default=[],
-                    help='TBR email addresses')
   parser.add_option('--cc',
                     action='append', default=[],
                     help='cc email addresses')
@@ -4468,8 +4439,6 @@ def CMDupload(parser, args):
                     help='Don\'t squash multiple commits into one')
   parser.add_option('--topic', default=None,
                     help='Topic to specify when uploading')
-  parser.add_option('--tbr-owners', dest='add_owners_to', action='store_const',
-                    const='TBR', help='add a set of OWNERS to TBR')
   parser.add_option('--r-owners', dest='add_owners_to', action='store_const',
                     const='R', help='add a set of OWNERS to R')
   parser.add_option('-c',
@@ -4558,7 +4527,6 @@ def CMDupload(parser, args):
     return 1
 
   options.reviewers = cleanup_list(options.reviewers)
-  options.tbrs = cleanup_list(options.tbrs)
   options.cc = cleanup_list(options.cc)
 
   if options.edit_description and options.force:

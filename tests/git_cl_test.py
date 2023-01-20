@@ -796,7 +796,6 @@ class TestGitCl(unittest.TestCase):
                            issue=None,
                            cc=None,
                            custom_cl_base=None,
-                           tbr=None,
                            short_hostname='chromium',
                            labels=None,
                            change_id=None,
@@ -935,14 +934,6 @@ class TestGitCl(unittest.TestCase):
     for k, v in sorted((labels or {}).items()):
       ref_suffix += ',l=%s+%d' % (k, v)
       metrics_arguments.append('l=%s+%d' % (k, v))
-
-    if tbr:
-      calls += [
-        (('GetCodeReviewTbrScore',
-          '%s-review.googlesource.com' % short_hostname,
-          'my/repo'),
-         2,),
-      ]
 
     calls += [
         (
@@ -1107,7 +1098,6 @@ class TestGitCl(unittest.TestCase):
                               fetched_status=None,
                               other_cl_owner=None,
                               custom_cl_base=None,
-                              tbr=None,
                               short_hostname='chromium',
                               labels=None,
                               change_id=None,
@@ -1221,7 +1211,6 @@ class TestGitCl(unittest.TestCase):
           issue=issue,
           cc=cc,
           custom_cl_base=custom_cl_base,
-          tbr=tbr,
           short_hostname=short_hostname,
           labels=labels,
           change_id=change_id,
@@ -1370,18 +1359,12 @@ class TestGitCl(unittest.TestCase):
         change_id='Ixxx')
 
   def test_gerrit_reviewer_multiple(self):
-    mock.patch('git_cl.gerrit_util.GetCodeReviewTbrScore',
-              lambda *a: self._mocked_call('GetCodeReviewTbrScore', *a)).start()
-    self._run_gerrit_upload_test(
-        [],
-        'desc ✔\nTBR=reviewer@example.com\nBUG=\nR=another@example.com\n'
-        'CC=more@example.com,people@example.com\n\n'
-        'Change-Id: 123456789',
-        ['reviewer@example.com', 'another@example.com'],
-        cc=['more@example.com', 'people@example.com'],
-        tbr='reviewer@example.com',
-        labels={'Code-Review': 2},
-        change_id='123456789')
+    self._run_gerrit_upload_test([], 'desc ✔\nBUG=\nR=another@example.com\n'
+                                 'CC=more@example.com,people@example.com\n\n'
+                                 'Change-Id: 123456789',
+                                 ['another@example.com'],
+                                 cc=['more@example.com', 'people@example.com'],
+                                 change_id='123456789')
 
   def test_gerrit_upload_squash_first_is_default(self):
     self._run_gerrit_upload_test(
@@ -1604,17 +1587,24 @@ class TestGitCl(unittest.TestCase):
   @mock.patch('git_cl.Changelist.GetGerritProject')
   @mock.patch('git_cl.Changelist.GetRemoteBranch')
   @mock.patch('owners_client.OwnersClient.BatchListOwners')
-  def getDescriptionForUploadTest(
-      self, mockBatchListOwners=None, mockGetRemoteBranch=None,
-      mockGetGerritProject=None, mockGetGerritHost=None,
-      mockGetCommonAncestorWithUpstream=None, mockGetBranch=None,
-      mockFetchDescription=None, mockGetBugPrefix=None,
-      mockIsCodeOwnersEnabledOnHost=None,
-      initial_description='desc', bug=None, fixed=None, branch='branch',
-      reviewers=None, tbrs=None, add_owners_to=None,
-      expected_description='desc'):
+  def getDescriptionForUploadTest(self,
+                                  mockBatchListOwners=None,
+                                  mockGetRemoteBranch=None,
+                                  mockGetGerritProject=None,
+                                  mockGetGerritHost=None,
+                                  mockGetCommonAncestorWithUpstream=None,
+                                  mockGetBranch=None,
+                                  mockFetchDescription=None,
+                                  mockGetBugPrefix=None,
+                                  mockIsCodeOwnersEnabledOnHost=None,
+                                  initial_description='desc',
+                                  bug=None,
+                                  fixed=None,
+                                  branch='branch',
+                                  reviewers=None,
+                                  add_owners_to=None,
+                                  expected_description='desc'):
     reviewers = reviewers or []
-    tbrs = tbrs or []
     owners_by_path = {
       'a': ['a@example.com'],
       'b': ['b@example.com'],
@@ -1636,7 +1626,6 @@ class TestGitCl(unittest.TestCase):
         bug=bug,
         fixed=fixed,
         reviewers=reviewers,
-        tbrs=tbrs,
         add_owners_to=add_owners_to,
         message=initial_description),
                                          git_diff_args=None,
@@ -1695,37 +1684,20 @@ class TestGitCl(unittest.TestCase):
   def testGetDescriptionForUpload_AddOwnersToR(self):
     self.getDescriptionForUploadTest(
         reviewers=['a@example.com'],
-        tbrs=['b@example.com'],
         add_owners_to='R',
         expected_description='\n'.join([
-          'desc',
-          '',
-          'R=a@example.com, c@example.com',
-          'TBR=b@example.com',
-        ]))
-
-  def testGetDescriptionForUpload_AddOwnersToTBR(self):
-    self.getDescriptionForUploadTest(
-        reviewers=['a@example.com'],
-        tbrs=['b@example.com'],
-        add_owners_to='TBR',
-        expected_description='\n'.join([
-          'desc',
-          '',
-          'R=a@example.com',
-          'TBR=b@example.com, c@example.com',
+            'desc',
+            '',
+            'R=a@example.com, b@example.com, c@example.com',
         ]))
 
   def testGetDescriptionForUpload_AddOwnersToNoOwnersNeeded(self):
     self.getDescriptionForUploadTest(
         reviewers=['a@example.com', 'c@example.com'],
-        tbrs=['b@example.com'],
-        add_owners_to='TBR',
         expected_description='\n'.join([
           'desc',
           '',
           'R=a@example.com, c@example.com',
-          'TBR=b@example.com',
         ]))
 
   def testGetDescriptionForUpload_Reviewers(self):
@@ -1737,24 +1709,13 @@ class TestGitCl(unittest.TestCase):
           'R=a@example.com, b@example.com',
         ]))
 
-  def testGetDescriptionForUpload_TBRs(self):
-    self.getDescriptionForUploadTest(
-        tbrs=['a@example.com', 'b@example.com'],
-        expected_description='\n'.join([
-          'desc',
-          '',
-          'TBR=a@example.com, b@example.com',
-        ]))
-
-  def test_desecription_append_footer(self):
+  def test_description_append_footer(self):
     for init_desc, footer_line, expected_desc in [
       # Use unique desc first lines for easy test failure identification.
       ('foo', 'R=one', 'foo\n\nR=one'),
       ('foo\n\nR=one', 'BUG=', 'foo\n\nR=one\nBUG='),
       ('foo\n\nR=one', 'Change-Id: Ixx', 'foo\n\nR=one\n\nChange-Id: Ixx'),
       ('foo\n\nChange-Id: Ixx', 'R=one', 'foo\n\nR=one\n\nChange-Id: Ixx'),
-      ('foo\n\nR=one\n\nChange-Id: Ixx', 'TBR=two',
-       'foo\n\nR=one\nTBR=two\n\nChange-Id: Ixx'),
       ('foo\n\nR=one\n\nChange-Id: Ixx', 'Foo-Bar: baz',
        'foo\n\nR=one\n\nChange-Id: Ixx\nFoo-Bar: baz'),
       ('foo\n\nChange-Id: Ixx', 'Foo-Bak: baz',
@@ -1767,47 +1728,29 @@ class TestGitCl(unittest.TestCase):
 
   def test_update_reviewers(self):
     data = [
-      ('foo', [], [],
-       'foo'),
-      ('foo\nR=xx', [], [],
-       'foo\nR=xx'),
-      ('foo\nTBR=xx', [], [],
-       'foo\nTBR=xx'),
-      ('foo', ['a@c'], [],
-       'foo\n\nR=a@c'),
-      ('foo\nR=xx', ['a@c'], [],
-       'foo\n\nR=a@c, xx'),
-      ('foo\nTBR=xx', ['a@c'], [],
-       'foo\n\nR=a@c\nTBR=xx'),
-      ('foo\nTBR=xx\nR=yy', ['a@c'], [],
-       'foo\n\nR=a@c, yy\nTBR=xx'),
-      ('foo\nBUG=', ['a@c'], [],
-       'foo\nBUG=\nR=a@c'),
-      ('foo\nR=xx\nTBR=yy\nR=bar', ['a@c'], [],
-       'foo\n\nR=a@c, bar, xx\nTBR=yy'),
-      ('foo', ['a@c', 'b@c'], [],
-       'foo\n\nR=a@c, b@c'),
-      ('foo\nBar\n\nR=\nBUG=', ['c@c'], [],
-       'foo\nBar\n\nR=c@c\nBUG='),
-      ('foo\nBar\n\nR=\nBUG=\nR=', ['c@c'], [],
-       'foo\nBar\n\nR=c@c\nBUG='),
-      # Same as the line before, but full of whitespaces.
-      (
-        'foo\nBar\n\n R = \n BUG = \n R = ', ['c@c'], [],
-        'foo\nBar\n\nR=c@c\n BUG =',
-      ),
-      # Whitespaces aren't interpreted as new lines.
-      ('foo BUG=allo R=joe ', ['c@c'], [],
-       'foo BUG=allo R=joe\n\nR=c@c'),
-      # Redundant TBRs get promoted to Rs
-      ('foo\n\nR=a@c\nTBR=t@c', ['b@c', 'a@c'], ['a@c', 't@c'],
-       'foo\n\nR=a@c, b@c\nTBR=t@c'),
+        ('foo', [], 'foo'),
+        ('foo\nR=xx', [], 'foo\nR=xx'),
+        ('foo', ['a@c'], 'foo\n\nR=a@c'),
+        ('foo\nR=xx', ['a@c'], 'foo\n\nR=a@c, xx'),
+        ('foo\nBUG=', ['a@c'], 'foo\nBUG=\nR=a@c'),
+        ('foo\nR=xx\nR=bar', ['a@c'], 'foo\n\nR=a@c, bar, xx'),
+        ('foo', ['a@c', 'b@c'], 'foo\n\nR=a@c, b@c'),
+        ('foo\nBar\n\nR=\nBUG=', ['c@c'], 'foo\nBar\n\nR=c@c\nBUG='),
+        ('foo\nBar\n\nR=\nBUG=\nR=', ['c@c'], 'foo\nBar\n\nR=c@c\nBUG='),
+        # Same as the line before, but full of whitespaces.
+        (
+            'foo\nBar\n\n R = \n BUG = \n R = ',
+            ['c@c'],
+            'foo\nBar\n\nR=c@c\n BUG =',
+        ),
+        # Whitespaces aren't interpreted as new lines.
+        ('foo BUG=allo R=joe ', ['c@c'], 'foo BUG=allo R=joe\n\nR=c@c'),
     ]
     expected = [i[-1] for i in data]
     actual = []
-    for orig, reviewers, tbrs, _expected in data:
+    for orig, reviewers, _expected in data:
       obj = git_cl.ChangeDescription(orig)
-      obj.update_reviewers(reviewers, tbrs)
+      obj.update_reviewers(reviewers)
       actual.append(obj.description)
     self.assertEqual(expected, actual)
 
