@@ -66,6 +66,7 @@ def main(args):
 
   use_goma = False
   use_remoteexec = False
+  use_rbe = False
 
   # Currently get reclient binary and config dirs relative to output_dir.  If
   # they exist and using remoteexec, then automatically call bootstrap to start
@@ -82,7 +83,7 @@ def main(args):
   if os.path.exists(os.path.join(output_dir, 'args.gn')):
     with open(os.path.join(output_dir, 'args.gn')) as file_handle:
       for line in file_handle:
-        # Either use_goma or use_remoteexec will activate build acceleration.
+        # use_goma, use_remoteexec, or use_rbe will activate build acceleration.
         #
         # This test can match multi-argument lines. Examples of this are:
         # is_debug=false use_goma=true is_official_build=false
@@ -98,6 +99,10 @@ def main(args):
                      line_without_comment):
           use_remoteexec = True
           continue
+        if re.search(r'(^|\s)(use_rbe)\s*=\s*true($|\s)', line_without_comment):
+          use_rbe = True
+          continue
+
   else:
     for relative_path in [
         '',  # GN keeps them in the root of output_dir
@@ -184,7 +189,7 @@ def main(args):
 
   num_cores = multiprocessing.cpu_count()
   if not j_specified and not t_specified:
-    if use_goma or use_remoteexec:
+    if use_goma or use_remoteexec or use_rbe:
       args.append('-j')
       default_core_multiplier = 80
       if platform.machine() in ('x86_64', 'AMD64'):
