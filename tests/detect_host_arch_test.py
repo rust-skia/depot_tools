@@ -38,6 +38,8 @@ class DetectHostArchTest(unittest.TestCase):
       ('aarch64', '', [''], 'arm64'),
       ('aarch64', '', ['32bit'], 'arm'),
       ('arm64', '', [''], 'arm64'),
+      ('amd64', 'ARMv8 (64-bit) Family', ['64bit', 'WindowsPE'], 'x64'),
+      ('arm64', 'ARMv8 (64-bit) Family', ['32bit', 'WindowsPE'], 'x64'),
       ('mips64', '', [''], 'mips64'),
       ('mips', '', [''], 'mips'),
       ('ppc', '', [''], 'ppc'),

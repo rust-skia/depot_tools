@@ -10,7 +10,6 @@ from __future__ import print_function
 import platform
 import re
 
-
 def HostArch():
   """Returns the host architecture with a predictable string."""
   host_arch = platform.machine().lower()
@@ -36,6 +35,14 @@ def HostArch():
   elif host_arch.startswith('riscv'):
     host_arch = 'riscv64'
 
+  if host_arch == 'arm64':
+    host_platform = platform.architecture()
+    if len(host_platform) > 1:
+      if host_platform[1].lower() == 'windowspe':
+        # Special case for Windows on Arm: windows-386 packages no longer work
+        # so use the x64 emulation (this restricts us to Windows 11). Python
+        # 32-bit returns the host_arch as arm64, 64-bit does not.
+        return 'x64'
 
   # platform.machine is based on running kernel. It's possible to use 64-bit
   # kernel with 32-bit userland, e.g. to give linker slightly more memory.
