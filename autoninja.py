@@ -68,15 +68,6 @@ def main(args):
   use_remoteexec = False
   use_rbe = False
 
-  # Currently get reclient binary and config dirs relative to output_dir.  If
-  # they exist and using remoteexec, then automatically call bootstrap to start
-  # reproxy.  This works under the current assumption that the output
-  # directory is two levels up from chromium/src.
-  reclient_bin_dir = os.path.join(output_dir, '..', '..', 'buildtools',
-                                  'reclient')
-  reclient_cfg = os.path.join(output_dir, '..', '..', 'buildtools',
-                              'reclient_cfgs', 'reproxy.cfg')
-
   # Attempt to auto-detect remote build acceleration. We support gn-based
   # builds, where we look for args.gn in the build tree, and cmake-based builds
   # where we look for rules.ninja.
@@ -115,29 +106,6 @@ def main(args):
             if re.match(r'^\s*command\s*=\s*\S+gomacc', line):
               use_goma = True
               break
-
-  # If use_remoteexec is set, but the reclient binaries or configs don't
-  # exist, display an error message and stop.  Otherwise, the build will
-  # attempt to run with rewrapper wrapping actions, but will fail with
-  # possible non-obvious problems.
-  # As of August 2022, dev builds with reclient are not supported, so
-  # indicate that use_goma should be swapped for use_remoteexec.  This
-  # message will be changed when dev builds are fully supported.
-  if (not offline and use_remoteexec and (
-      not os.path.exists(reclient_bin_dir) or not os.path.exists(reclient_cfg))
-     ):
-    print(("Build is configured to use reclient but necessary binaries "
-           "or config files can't be found.  Developer builds with "
-           "reclient are not yet supported.  Try regenerating your "
-           "build with use_goma in place of use_remoteexec for now."),
-          file=sys.stderr)
-    if sys.platform.startswith('win'):
-      # Set an exit code of 1 in the batch file.
-      print('cmd "/c exit 1"')
-    else:
-      # Set an exit code of 1 by executing 'false' in the bash script.
-      print('false')
-    sys.exit(1)
 
   # If GOMA_DISABLED is set to "true", "t", "yes", "y", or "1"
   # (case-insensitive) then gomacc will use the local compiler instead of doing
@@ -185,6 +153,10 @@ def main(args):
   # Call ninja.py so that it can find ninja binary installed by DEPS or one in
   # PATH.
   ninja_path = os.path.join(SCRIPT_DIR, 'ninja.py')
+  # If using remoteexec, use ninja_reclient.py which wraps ninja.py with
+  # starting and stopping reproxy.
+  if not offline and use_remoteexec:
+    ninja_path = os.path.join(SCRIPT_DIR, 'ninja_reclient.py')
   args = prefix_args + [sys.executable, ninja_path] + input_args[1:]
 
   num_cores = multiprocessing.cpu_count()
@@ -233,22 +205,6 @@ def main(args):
 
   if os.environ.get('NINJA_SUMMARIZE_BUILD', '0') == '1':
     args += ['-d', 'stats']
-
-  # If using remoteexec and the necessary environment variables are set,
-  # also start reproxy (via bootstrap) before running ninja.
-  if (not offline and use_remoteexec and os.path.exists(reclient_bin_dir)
-      and os.path.exists(reclient_cfg)):
-    bootstrap = os.path.join(reclient_bin_dir, 'bootstrap')
-    setup_args = [
-        bootstrap, '--cfg=' + reclient_cfg,
-        '--re_proxy=' + os.path.join(reclient_bin_dir, 'reproxy')
-    ]
-
-    teardown_args = [bootstrap, '--cfg=' + reclient_cfg, '--shutdown']
-
-    cmd_sep = '\n' if sys.platform.startswith('win') else '&&'
-    cmd_always_sep = '\n' if sys.platform.startswith('win') else '; '
-    args = setup_args + [cmd_sep] + args + [cmd_always_sep] + teardown_args
 
   if offline and not sys.platform.startswith('win'):
     # Tell goma or reclient to do local compiles. On Windows these environment
