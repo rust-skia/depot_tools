@@ -159,12 +159,15 @@ class RealGitTest(fake_repos.FakeReposTestBase):
     self.assertTrue(scm.GIT.IsValidRevision(cwd=self.cwd, rev='HEAD'))
 
   def testIsAncestor(self):
-    self.assertTrue(scm.GIT.IsAncestor(
-        self.cwd, self.githash('repo_1', 1), self.githash('repo_1', 2)))
-    self.assertFalse(scm.GIT.IsAncestor(
-        self.cwd, self.githash('repo_1', 2), self.githash('repo_1', 1)))
-    self.assertFalse(scm.GIT.IsAncestor(
-        self.cwd, self.githash('repo_1', 1), 'zebra'))
+    self.assertTrue(
+        scm.GIT.IsAncestor(self.githash('repo_1', 1),
+                           self.githash('repo_1', 2),
+                           cwd=self.cwd))
+    self.assertFalse(
+        scm.GIT.IsAncestor(self.githash('repo_1', 2),
+                           self.githash('repo_1', 1),
+                           cwd=self.cwd))
+    self.assertFalse(scm.GIT.IsAncestor(self.githash('repo_1', 1), 'zebra'))
 
   def testGetAllFiles(self):
     self.assertEqual(['DEPS','origin'], scm.GIT.GetAllFiles(self.cwd))

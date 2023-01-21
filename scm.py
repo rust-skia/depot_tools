@@ -314,7 +314,8 @@ class GIT(object):
     return upstream_branch
 
   @staticmethod
-  def IsAncestor(cwd, maybe_ancestor, ref):
+  def IsAncestor(maybe_ancestor, ref, cwd=None):
+    # type: (string, string, Optional[string]) -> bool
     """Verifies if |maybe_ancestor| is an ancestor of |ref|."""
     try:
       GIT.Capture(['merge-base', '--is-ancestor', maybe_ancestor, ref], cwd=cwd)

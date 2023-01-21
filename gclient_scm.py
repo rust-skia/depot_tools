@@ -495,7 +495,7 @@ class GitWrapper(SCMWrapper):
         self.Print('Will cherrypick %r .. %r on top of %r.' % (
             target_rev, pr, base_rev))
         try:
-          if scm.GIT.IsAncestor(self.checkout_path, pr, target_rev):
+          if scm.GIT.IsAncestor(pr, target_rev, cwd=self.checkout_path):
             if len(patch_revs_to_process) > 1:
               # If there are multiple patch_revs_to_process then we do not want
               # want to invalidate a previous patch so throw an error.
