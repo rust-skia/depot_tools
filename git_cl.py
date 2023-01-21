@@ -155,6 +155,11 @@ assert len(_KNOWN_GERRIT_TO_SHORT_URLS) == len(
     set(_KNOWN_GERRIT_TO_SHORT_URLS.values())), 'must have unique values'
 
 
+# Maximum number of branches in a stack that can be traversed and uploaded
+# at once. Picked arbitrarily.
+_MAX_STACKED_BRANCHES_UPLOAD = 20
+
+
 class GitPushError(Exception):
   pass
 
@@ -2251,7 +2256,10 @@ class Changelist(object):
 
     return 0
 
-  def _GerritCommitMsgHookCheck(self, offer_removal):
+  @staticmethod
+  def _GerritCommitMsgHookCheck(offer_removal):
+    # type: (bool) -> None
+    """Checks for the gerrit's commit-msg hook and removes it if necessary."""
     hook = os.path.join(settings.GetRoot(), '.git', 'hooks', 'commit-msg')
     if not os.path.exists(hook):
       return
@@ -4514,6 +4522,9 @@ def CMDupload(parser, args):
   parser.add_option('--no-python2-post-upload-hooks',
                     action='store_true',
                     help='Only run post-upload hooks in Python 3.')
+  parser.add_option('--stacked-exp',
+                    action='store_true',
+                    help=optparse.SUPPRESS_HELP)
 
   orig_args = args
   (options, args) = parser.parse_args(args)
@@ -4554,6 +4565,12 @@ def CMDupload(parser, args):
     # Load default for user, repo, squash=true, in this order.
     options.squash = settings.GetSquashGerritUploads()
 
+  if options.stacked_exp:
+    orig_args.remove('--stacked-exp')
+
+    UploadAllSquashed(options, orig_args)
+    return 0
+
   cl = Changelist(branchref=options.target_branch)
   # Warm change details cache now to avoid RPCs later, reducing latency for
   # developers.
@@ -4587,6 +4604,106 @@ def CMDupload(parser, args):
     _trigger_tryjobs(cl, jobs, options, patchset + 1)
 
   return ret
+
+
+def UploadAllSquashed(options, orig_args):
+  # type: (optparse.Values, Sequence[str]) -> Tuple[Sequence[Changelist], bool]
+  """Uploads the current and upstream branches (if necessary)."""
+  _cls, _cherry_pick_current = _UploadAllPrecheck(options, orig_args)
+
+  # TODO(b/265929888): parse cls and create commits.
+
+
+def _UploadAllPrecheck(options, orig_args):
+  # type: (optparse.Values, Sequence[str]) -> Tuple[Sequence[Changelist], bool]
+  """Checks the state of the tree and gives the user uploading options
+
+  Returns: A tuple of the ordered list of changes that have new commits
+      since their last upload and a boolean of whether the user wants to
+      cherry-pick and upload the current branch instead of uploading all cls.
+  """
+  branch_ref = None
+  cls = []
+  must_upload_upstream = False
+
+  Changelist._GerritCommitMsgHookCheck(offer_removal=not options.force)
+
+  while True:
+    if len(cls) > _MAX_STACKED_BRANCHES_UPLOAD:
+      DieWithError(
+          'More than %s branches in the stack have not been uploaded.\n'
+          'Are your branches in a misconfigured state?\n'
+          'If not, please upload some upstream changes first.' %
+          (_MAX_STACKED_BRANCHES_UPLOAD))
+
+    cl = Changelist(branchref=branch_ref)
+    cls.append(cl)
+
+    origin, upstream_branch_ref = Changelist.FetchUpstreamTuple(cl.GetBranch())
+    upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
+    branch_ref = upstream_branch_ref  # set branch for next run.
+
+    # Case 1: We've reached the beginning of the tree.
+    if origin != '.':
+      break
+
+    upstream_last_upload = scm.GIT.GetBranchConfig(settings.GetRoot(),
+                                                   upstream_branch,
+                                                   LAST_UPLOAD_HASH_CONFIG_KEY)
+
+    # Case 2: If any upstream branches have never been uploaded,
+    # the user MUST upload them.
+    if not upstream_last_upload:
+      must_upload_upstream = True
+      continue
+
+    base_commit = cl.GetCommonAncestorWithUpstream()
+
+    # Case 3: If upstream's last_upload == cl.base_commit we do
+    # not need to upload any more upstreams from this point on.
+    # (Even if there may be diverged branches higher up the tree)
+    if base_commit == upstream_last_upload:
+      break
+
+    # Case 4: If upstream's last_upload < cl.base_commit we are
+    # uploading cl and upstream_cl.
+    # Continue up the tree to check other branch relations.
+    if scm.GIT.IsAncestor(None, upstream_last_upload, base_commit):
+      continue
+
+    # Case 5: If cl.base_commit < upstream's last_upload the user
+    # must rebase before uploading.
+    if scm.GIT.IsAncestor(None, base_commit, upstream_last_upload):
+      DieWithError(
+          'At least one branch in the stack has diverged from its upstream '
+          'branch and does not contain its upstream\'s last upload.\n'
+          'Please rebase the stack with `git rebase-update` before uploading.')
+
+    # The tree went through a rebase. LAST_UPLOAD_HASH_CONFIG_KEY no longer has
+    # any relation to commits in the tree. Continue up the tree until we hit
+    # the root.
+
+  # We assume all cls in the stack have the same auth requirements and only
+  # check this once.
+  cls[0].EnsureAuthenticated(force=options.force)
+
+  cherry_pick = False
+  if len(cls) > 1:
+    message = ''
+    if len(orig_args):
+      message = ('options %s will be used for all uploads.\n' % orig_args)
+    if must_upload_upstream:
+      confirm_or_exit('\n' + message +
+                      'There are upstream branches that must be uploaded.\n')
+    else:
+      answer = gclient_utils.AskForData(
+          '\n' + message +
+          'Press enter to update branches %s.\nOr type `n` to upload only '
+          '`%s` cherry-picked on %s\'s last upload:' %
+          ([cl.branch for cl in cls], cls[0].branch, cls[1].branch))
+      if answer.lower() == 'n':
+        cherry_pick = True
+  return cls, cherry_pick
 
 
 @subcommand.usage('--description=<description file>')

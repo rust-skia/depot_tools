@@ -1514,6 +1514,163 @@ class TestGitCl(unittest.TestCase):
         external_parent='newparent',
     )
 
+  @mock.patch(
+      'git_cl.Changelist._GerritCommitMsgHookCheck', lambda offer_removal: None)
+  @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
+  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
+  @mock.patch('git_cl.Changelist.GetBranch')
+  @mock.patch('git_cl.Changelist.GetRemoteBranch')
+  @mock.patch('scm.GIT.IsAncestor')
+  @mock.patch('gclient_utils.AskForData')
+  def test_upload_all_precheck_long_chain(self, mockAskForData, mockIsAncestor,
+                                          mockGetRemoteBranch, mockGetBranch,
+                                          mockGetCommonAncestorWithUpstream,
+                                          mockFetchUpstreamTuple, *_mocks):
+
+    mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
+    mockGetBranch.side_effect = [
+        'current', 'upstream3', 'upstream2', 'upstream1', 'main'
+    ]
+    mockGetCommonAncestorWithUpstream.side_effect = [
+        'commit3.5', 'commit2.5', 'commit1.5', 'commit0.5'
+    ]
+    mockFetchUpstreamTuple.side_effect = [('.', 'refs/heads/upstream3'),
+                                          ('.', 'refs/heads/upstream2'),
+                                          ('.', 'refs/heads/upstream1'),
+                                          ('origin', 'refs/heads/main')]
+
+    options = optparse.Values()
+    options.force = False
+    orig_args = ['--preserve-tryjobs', '--chicken']
+
+    # Case 2: upstream3 has never been uploaded.
+    # (so no LAST_UPLOAD_HASH_CONIFG_KEY)
+
+    # Case 4: upstream2's last_upload is behind upstream3's base_commit
+    self.mockGit.config['branch.upstream1.%s' %
+                        git_cl.LAST_UPLOAD_HASH_CONFIG_KEY] = 'commit2.3'
+    mockIsAncestor.side_effect = [True]
+
+    # Case 3: upstream1's last_upload matches upstream2's base_commit
+    self.mockGit.config['branch.upstream1.%s' %
+                        git_cl.LAST_UPLOAD_HASH_CONFIG_KEY] = 'commit1.5'
+
+    cls, cherry_pick = git_cl._UploadAllPrecheck(options, orig_args)
+    self.assertFalse(cherry_pick)
+    mockAskForData.assert_called_once_with(
+        "\noptions ['--preserve-tryjobs', '--chicken'] will be used for all "
+        "uploads.\nThere are upstream branches that must be uploaded.\n"
+        "Press Enter to confirm, or Ctrl+C to abort")
+    self.assertEqual(len(cls), 4)
+
+  @mock.patch(
+      'git_cl.Changelist._GerritCommitMsgHookCheck', lambda offer_removal: None)
+  @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
+  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
+  @mock.patch('git_cl.Changelist.GetBranch')
+  @mock.patch('git_cl.Changelist.GetRemoteBranch')
+  @mock.patch('scm.GIT.IsAncestor')
+  @mock.patch('gclient_utils.AskForData')
+  def test_upload_all_precheck_must_rebase(self, mockAskForData, mockIsAncestor,
+                                           mockGetRemoteBranch, mockGetBranch,
+                                           mockGetCommonAncestorWithUpstream,
+                                           mockFetchUpstreamTuple, *_mocks):
+
+    options = optparse.Values()
+    options.force = False
+    orig_args = ['--preserve-tryjobs', '--chicken']
+
+    mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
+    mockGetBranch.side_effect = [
+        'current', 'upstream3', 'upstream2', 'upstream1', 'main'
+    ]
+    mockGetCommonAncestorWithUpstream.side_effect = [
+        'commit3.5', 'commit2.5', 'commit1.5', 'commit0.5'
+    ]
+    mockFetchUpstreamTuple.side_effect = [('.', 'refs/heads/upstream3'),
+                                          ('.', 'refs/heads/upstream2'),
+                                          ('.', 'refs/heads/upstream1'),
+                                          ('origin', 'refs/heads/main')]
+    # Case 5: current's base_commit is behind upstream3's last_upload.
+    self.mockGit.config['branch.upstream3.%s' %
+                        git_cl.LAST_UPLOAD_HASH_CONFIG_KEY] = 'commit3.7'
+    mockIsAncestor.side_effect = [False, True]
+    with self.assertRaises(SystemExitMock):
+      git_cl._UploadAllPrecheck(options, orig_args)
+
+  @mock.patch(
+      'git_cl.Changelist._GerritCommitMsgHookCheck', lambda offer_removal: None)
+  @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
+  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
+  @mock.patch('git_cl.Changelist.GetBranch')
+  @mock.patch('git_cl.Changelist.GetRemoteBranch')
+  @mock.patch('scm.GIT.IsAncestor')
+  @mock.patch('gclient_utils.AskForData')
+  def test_upload_all_precheck_hit_main(self, mockAskForData, mockIsAncestor,
+                                        mockGetRemoteBranch, mockGetBranch,
+                                        mockGetCommonAncestorWithUpstream,
+                                        mockFetchUpstreamTuple, *_mocks):
+
+    options = optparse.Values()
+    options.force = False
+    orig_args = ['--preserve-tryjobs', '--chicken']
+
+    mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
+    mockGetBranch.return_value = ['current', 'upstream3', 'main']
+    mockGetCommonAncestorWithUpstream.side_effect = ['commit3.5', 'commit0.5']
+    mockFetchUpstreamTuple.side_effect = [('.', 'refs/heads/upstream3'),
+                                          ('origin', 'refs/heads/main')]
+    mockIsAncestor.return_value = True
+
+    # Test user wants to cherry pick
+    mockAskForData.return_value = 'n'
+
+    # Give upstream3 a last upload hash
+    self.mockGit.config['branch.upstream3.%s' %
+                        git_cl.LAST_UPLOAD_HASH_CONFIG_KEY] = 'commit3.4'
+
+    # Case 1: We hit the main branch
+    cls, cherry_pick = git_cl._UploadAllPrecheck(options, orig_args)
+    self.assertTrue(cherry_pick)
+    self.assertEqual(len(cls), 2)
+
+    mockAskForData.assert_called_once_with(
+        "\noptions ['--preserve-tryjobs', '--chicken'] will be used for all "
+        "uploads.\n"
+        "Press enter to update branches [None, 'upstream3'].\n"
+        "Or type `n` to upload only `None` cherry-picked on upstream3's last "
+        "upload:")
+
+  @mock.patch(
+      'git_cl.Changelist._GerritCommitMsgHookCheck', lambda offer_removal: None)
+  @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
+  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
+  @mock.patch('git_cl.Changelist.GetBranch')
+  @mock.patch('git_cl.Changelist.GetRemoteBranch')
+  @mock.patch('scm.GIT.IsAncestor')
+  @mock.patch('gclient_utils.AskForData')
+  def test_upload_all_precheck_one_change(self, mockAskForData, mockIsAncestor,
+                                          mockGetRemoteBranch, mockGetBranch,
+                                          mockGetCommonAncestorWithUpstream,
+                                          mockFetchUpstreamTuple, *_mocks):
+
+    options = optparse.Values()
+    options.force = False
+    orig_args = ['--preserve-tryjobs', '--chicken']
+
+    mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
+    mockGetBranch.return_value = ['current', 'main']
+    mockGetCommonAncestorWithUpstream.side_effect = ['commit3.5']
+    mockFetchUpstreamTuple.side_effect = [('', 'refs/heads/main')]
+    mockIsAncestor.return_value = True
+
+    # Case 1: We hit the main branch
+    cls, cherry_pick = git_cl._UploadAllPrecheck(options, orig_args)
+    self.assertFalse(cherry_pick)
+    self.assertEqual(len(cls), 1)
+
+    mockAskForData.assert_not_called()
+
   @mock.patch('git_cl.RunGit')
   @mock.patch('git_cl.CMDupload')
   @mock.patch('sys.stdin', StringIO('\n'))
