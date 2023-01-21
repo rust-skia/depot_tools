@@ -3555,6 +3555,122 @@ class ChangelistTest(unittest.TestCase):
     for user_title in ['not empty', 'yes', 'YES']:
       self.assertEqual(cl._GetTitleForUpload(options), user_title)
 
+  @mock.patch('git_cl.Changelist.GetAffectedFiles', return_value=[])
+  @mock.patch('git_cl.GenerateGerritChangeId', return_value='1a2b3c')
+  @mock.patch('git_cl.Changelist.GetIssue', return_value=None)
+  @mock.patch('git_cl.ChangeDescription.prompt')
+  @mock.patch('git_cl.Changelist.RunHook')
+  @mock.patch('git_cl.Changelist._GetDescriptionForUpload')
+  @mock.patch('git_cl.Changelist.EnsureCanUploadPatchset')
+  def testPrepareChange_new(self, mockEnsureCanUploadPatchset,
+                            mockGetDescriptionForupload, mockRunHook,
+                            mockPrompt, *_mocks):
+    options = optparse.Values()
+
+    options.force = False
+    options.bypass_hooks = False
+    options.verbose = False
+    options.parallel = False
+    options.preserve_tryjobs = False
+    options.private = False
+    options.no_autocc = False
+    options.message_file = None
+    options.cc = ['chicken@bok.farm']
+    parent = '420parent'
+    latest_tree = '420latest_tree'
+
+    mockRunHook.return_value = {'more_cc': ['cow@moo.farm']}
+    desc = 'AH!\nCC=cow2@moo.farm\nR=horse@apple.farm'
+    mockGetDescriptionForupload.return_value = git_cl.ChangeDescription(desc)
+
+    cl = git_cl.Changelist()
+    reviewers, ccs, change_desc = cl._PrepareChange(options, parent,
+                                                    latest_tree)
+    self.assertEqual(reviewers, ['horse@apple.farm'])
+    self.assertEqual(ccs, ['chicken@bok.farm', 'cow2@moo.farm'])
+    self.assertEqual(change_desc._description_lines, [
+        'AH!', 'CC=cow2@moo.farm', 'R=horse@apple.farm', '', 'Change-Id: 1a2b3c'
+    ])
+    mockPrompt.assert_called_once()
+    mockEnsureCanUploadPatchset.assert_called_once()
+    mockRunHook.assert_called_once_with(committing=False,
+                                        may_prompt=True,
+                                        verbose=False,
+                                        parallel=False,
+                                        upstream='420parent',
+                                        description=desc,
+                                        all_files=False)
+
+  @mock.patch('git_cl.Settings.GetDefaultCCList', return_value=[])
+  @mock.patch('git_cl.Changelist.GetAffectedFiles', return_value=[])
+  @mock.patch('git_cl.Changelist.GetIssue', return_value='123')
+  @mock.patch('git_cl.ChangeDescription.prompt')
+  @mock.patch('gerrit_util.GetChangeDetail')
+  @mock.patch('git_cl.Changelist.RunHook')
+  @mock.patch('git_cl.Changelist._GetDescriptionForUpload')
+  @mock.patch('git_cl.Changelist.EnsureCanUploadPatchset')
+  def testPrepareChange_existing(self, mockEnsureCanUploadPatchset,
+                                 mockGetDescriptionForupload, mockRunHook,
+                                 mockGetChangeDetail, mockPrompt, *_mocks):
+    cl = git_cl.Changelist()
+    options = optparse.Values()
+
+    options.force = False
+    options.bypass_hooks = False
+    options.verbose = False
+    options.parallel = False
+    options.edit_description = False
+    options.preserve_tryjobs = False
+    options.private = False
+    options.no_autocc = False
+    options.cc = ['chicken@bok.farm']
+    parent = '420parent'
+    latest_tree = '420latest_tree'
+
+    mockRunHook.return_value = {'more_cc': ['cow@moo.farm']}
+    desc = 'AH!\nCC=cow2@moo.farm\nR=horse@apple.farm'
+    mockGetDescriptionForupload.return_value = git_cl.ChangeDescription(desc)
+
+    # Existing change
+    gerrit_util.GetChangeDetail.return_value = {
+        'change_id': ('123456789'),
+        'current_revision': 'sha1_of_current_revision',
+    }
+
+    reviewers, ccs, change_desc = cl._PrepareChange(options, parent,
+                                                    latest_tree)
+    self.assertEqual(reviewers, ['horse@apple.farm'])
+    self.assertEqual(ccs, ['cow@moo.farm', 'chicken@bok.farm', 'cow2@moo.farm'])
+    self.assertEqual(change_desc._description_lines, [
+        'AH!', 'CC=cow2@moo.farm', 'R=horse@apple.farm', '',
+        'Change-Id: 123456789'
+    ])
+    mockRunHook.assert_called_once_with(committing=False,
+                                        may_prompt=True,
+                                        verbose=False,
+                                        parallel=False,
+                                        upstream='420parent',
+                                        description=desc,
+                                        all_files=False)
+    mockEnsureCanUploadPatchset.assert_called_once()
+
+    # Test preserve_tryjob
+    options.preserve_tryjobs = True
+    # Test edit_description
+    options.edit_description = True
+    # Test private
+    options.private = True
+    options.no_autocc = True
+
+    reviewers, ccs, change_desc = cl._PrepareChange(options, parent,
+                                                    latest_tree)
+    self.assertEqual(ccs, ['chicken@bok.farm', 'cow2@moo.farm'])
+    mockPrompt.assert_called_once()
+    self.assertEqual(change_desc._description_lines, [
+        'AH!', 'CC=cow2@moo.farm', 'R=horse@apple.farm', '',
+        'Change-Id: 123456789', 'Cq-Do-Not-Cancel-Tryjobs: true'
+    ])
+
 
 class CMDTestCaseBase(unittest.TestCase):
   _STATUSES = [

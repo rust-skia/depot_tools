@@ -1322,9 +1322,14 @@ class Changelist(object):
       self.issue = None
       self.patchset = None
 
-  def GetAffectedFiles(self, upstream):
+  def GetAffectedFiles(self, upstream, end_commit=None):
+    # type: (str, Optional[str]) -> Sequence[str]
+    """Returns the list of affected files for the given commit range."""
     try:
-      return [f for _, f in scm.GIT.CaptureStatus(settings.GetRoot(), upstream)]
+      return [
+          f for _, f in scm.GIT.CaptureStatus(
+              settings.GetRoot(), upstream, end_commit=end_commit)
+      ]
     except subprocess2.CalledProcessError:
       DieWithError(
           ('\nFailed to diff against upstream branch %s\n\n'
@@ -1483,7 +1488,9 @@ class Changelist(object):
       p_py3.wait()
 
   def _GetDescriptionForUpload(self, options, git_diff_args, files):
-    # Get description message for upload.
+    # type: (optparse.Values, Sequence[str], Sequence[str]
+    #     ) -> ChangeDescription
+    """Get description message for upload."""
     if self.GetIssue():
       description = self.FetchDescription()
     elif options.message:
@@ -1561,6 +1568,80 @@ class Changelist(object):
     if user_title.lower() == 'y':
       return title
     return user_title or title
+
+  def _PrepareChange(self, options, parent, end_commit):
+    # type: (optparse.Values, str, str) ->
+    #     Tuple[Sequence[str], Sequence[str], ChangeDescription]
+    """Prepares the change to be uploaded."""
+    self.EnsureCanUploadPatchset(options.force)
+
+    files = self.GetAffectedFiles(parent, end_commit=end_commit)
+    change_desc = self._GetDescriptionForUpload(options, [parent, end_commit],
+                                                files)
+
+    watchlist = watchlists.Watchlists(settings.GetRoot())
+    self.ExtendCC(watchlist.GetWatchersForPaths(files))
+    if not options.bypass_hooks:
+      hook_results = self.RunHook(committing=False,
+                                  may_prompt=not options.force,
+                                  verbose=options.verbose,
+                                  parallel=options.parallel,
+                                  upstream=parent,
+                                  description=change_desc.description,
+                                  all_files=False)
+      self.ExtendCC(hook_results['more_cc'])
+
+    # Update the change description and ensure we have a Change Id.
+    if self.GetIssue():
+      if options.edit_description:
+        change_desc.prompt()
+      change_detail = self._GetChangeDetail(['CURRENT_REVISION'])
+      change_id = change_detail['change_id']
+      change_desc.ensure_change_id(change_id)
+
+      # TODO(b/265929888): Pull in external changes for the current branch
+      # only. No clear way to pull in external changes for upstream branches
+      # yet. Potentially offer a separate command to pull in external changes.
+    else:  # No change issue. First time uploading
+      if not options.force and not options.message_file:
+        change_desc.prompt()
+
+      # Check if user added a change_id in the descripiton.
+      change_ids = git_footers.get_footer_change_id(change_desc.description)
+      if len(change_ids) == 1:
+        change_id = change_ids[0]
+      else:
+        change_id = GenerateGerritChangeId(change_desc.description)
+        change_desc.ensure_change_id(change_id)
+
+    if options.preserve_tryjobs:
+      change_desc.set_preserve_tryjobs()
+
+    SaveDescriptionBackup(change_desc)
+
+    # Add ccs
+    ccs = []
+    # Add default, watchlist, presubmit ccs if this is an existing change
+    # and CL is not private and auto-ccing has not been disabled.
+    if self.GetIssue() and not (options.private and options.no_autocc):
+      ccs = self.GetCCList().split(',')
+      if len(ccs) > 100:
+        lsc = ('https://chromium.googlesource.com/chromium/src/+/HEAD/docs/'
+               'process/lsc/lsc_workflow.md')
+        print('WARNING: This will auto-CC %s users.' % len(ccs))
+        print('LSC may be more appropriate: %s' % lsc)
+        print('You can also use the --no-autocc flag to disable auto-CC.')
+        confirm_or_exit(action='continue')
+
+    # Add ccs from the --cc flag.
+    if options.cc:
+      ccs.extend(options.cc)
+
+    ccs = [email.strip() for email in ccs if email.strip()]
+    if change_desc.get_cced():
+      ccs.extend(change_desc.get_cced())
+
+    return change_desc.get_reviewers(), ccs, change_desc
 
   def CMDUpload(self, options, git_diff_args, orig_args):
     """Uploads a change to codereview."""

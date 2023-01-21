@@ -119,16 +119,22 @@ class GIT(object):
     return output.strip() if strip_out else output
 
   @staticmethod
-  def CaptureStatus(cwd, upstream_branch):
+  def CaptureStatus(cwd, upstream_branch, end_commit=None):
+    # type: (str, str, Optional[str]) -> Sequence[Tuple[str, str]]
     """Returns git status.
 
     Returns an array of (status, file) tuples."""
+    if end_commit is None:
+      end_commit = ''
     if upstream_branch is None:
       upstream_branch = GIT.GetUpstreamBranch(cwd)
       if upstream_branch is None:
         raise gclient_utils.Error('Cannot determine upstream branch')
-    command = ['-c', 'core.quotePath=false', 'diff',
-               '--name-status', '--no-renames', '-r', '%s...' % upstream_branch]
+    command = [
+        '-c', 'core.quotePath=false', 'diff', '--name-status', '--no-renames',
+        '-r',
+        '%s...%s' % (upstream_branch, end_commit)
+    ]
     status = GIT.Capture(command, cwd)
     results = []
     if status:
