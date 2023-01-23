@@ -90,13 +90,13 @@ CIPD_BACKEND="https://chrome-infra-packages.appspot.com"
 VERSION_FILE="${MYPATH}/cipd_client_version"
 
 CLIENT="${MYPATH}/.cipd_client"
-VERSION=`cat "${VERSION_FILE}"`
+VERSION=$(<"${VERSION_FILE}")
 PLATFORM="${OS}-${ARCH}"
 
 # A value in .cipd_client_platform overrides the "guessed" platform.
 PLATFORM_OVERRIDE_FILE="${MYPATH}/.cipd_client_platform"
 if [ -f "${PLATFORM_OVERRIDE_FILE}" ]; then
-  PLATFORM=`cat ${PLATFORM_OVERRIDE_FILE}`
+  PLATFORM=$(<"${PLATFORM_OVERRIDE_FILE}")
 fi
 
 URL="${CIPD_BACKEND}/client?platform=${PLATFORM}&version=${VERSION}"
@@ -232,7 +232,7 @@ function self_update() {
 # so mismatches are very unlikely.
 INSTALLED_VERSION_FILE="${MYPATH}/.versions/.cipd_client.cipd_version"
 if [ -f "${INSTALLED_VERSION_FILE}" ]; then
-  JSON_BODY=`cat "${INSTALLED_VERSION_FILE}"`
+  JSON_BODY=$(<"${INSTALLED_VERSION_FILE}")
   if [[ "$JSON_BODY" != *"infra/tools/cipd/${PLATFORM}"* ]]; then
     >&2 echo "Detected CIPD client platform change to ${PLATFORM}."
     >&2 echo "Deleting the existing client to trigger the bootstrap..."
