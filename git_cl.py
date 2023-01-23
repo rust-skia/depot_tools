@@ -1517,14 +1517,15 @@ class Changelist(object):
       #   bug_123
       #   fix-123
       #   fix-123-some-description
-      match = re.match(
-          r'^(?P<type>bug|fix(?:e[sd])?)[_-]?(?P<bugnum>\d+)([-_]|$)',
-          self.GetBranch())
-      if not bug and not fixed and match:
-        if match.group('type') == 'bug':
-          bug = match.group('bugnum')
-        else:
-          fixed = match.group('bugnum')
+      branch = self.GetBranch()
+      if branch is not None:
+        match = re.match(
+            r'^(?P<type>bug|fix(?:e[sd])?)[_-]?(?P<bugnum>\d+)([-_]|$)', branch)
+        if not bug and not fixed and match:
+          if match.group('type') == 'bug':
+            bug = match.group('bugnum')
+          else:
+            fixed = match.group('bugnum')
 
     change_description = ChangeDescription(description, bug, fixed)
 
@@ -1727,9 +1728,10 @@ class Changelist(object):
     ret = self.CMDUploadChange(
         options, git_diff_args, custom_cl_base, change_desc)
     if not ret:
-      self._GitSetBranchConfigValue(
-          LAST_UPLOAD_HASH_CONFIG_KEY,
-          scm.GIT.ResolveCommit(settings.GetRoot(), 'HEAD'))
+      if self.GetBranch() is not None:
+        self._GitSetBranchConfigValue(
+            LAST_UPLOAD_HASH_CONFIG_KEY,
+            scm.GIT.ResolveCommit(settings.GetRoot(), 'HEAD'))
       # Run post upload hooks, if specified.
       if settings.GetRunPostUploadHook():
         self.RunPostUploadHook(options.verbose, base_branch,
