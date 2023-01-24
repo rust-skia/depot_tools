@@ -113,6 +113,8 @@ REFS_THAT_ALIAS_TO_OTHER_REFS = {
 DEFAULT_OLD_BRANCH = 'refs/remotes/origin/master'
 DEFAULT_NEW_BRANCH = 'refs/remotes/origin/main'
 
+DEFAULT_BUILDBUCKET_HOST = 'cr-buildbucket.appspot.com'
+
 # Valid extensions for files we want to lint.
 DEFAULT_LINT_REGEX = r"(.*\.cpp|.*\.cc|.*\.h)"
 DEFAULT_LINT_IGNORE_REGEX = r"$^"
@@ -382,8 +384,8 @@ def _trigger_tryjobs(changelist, jobs, options, patchset):
   http.force_exception_to_status_code = True
 
   batch_request = {'requests': requests}
-  batch_response = _call_buildbucket(
-      http, options.buildbucket_host, 'Batch', batch_request)
+  batch_response = _call_buildbucket(http, DEFAULT_BUILDBUCKET_HOST, 'Batch',
+                                     batch_request)
 
   errors = [
       '  ' + response['error']['message']
@@ -1424,17 +1426,30 @@ class Changelist(object):
             ' was not specified. To enable ResultDB, please run the command'
             ' again with the --realm argument to specify the LUCI realm.')
 
-    py3_results = self._RunPresubmit(args, resultdb, realm, description,
-                                     use_python3=True)
+    py3_results = self._RunPresubmit(args,
+                                     description,
+                                     use_python3=True,
+                                     resultdb=resultdb,
+                                     realm=realm)
     if py3_results.get('skipped_presubmits', 1) == 0:
       print('No more presubmits to run - skipping Python 2 presubmits.')
       return py3_results
 
-    py2_results = self._RunPresubmit(args, resultdb, realm, description,
-                                      use_python3=False)
+    py2_results = self._RunPresubmit(args,
+                                     description,
+                                     use_python3=False,
+                                     resultdb=resultdb,
+                                     realm=realm)
     return self._MergePresubmitResults(py2_results, py3_results)
 
-  def _RunPresubmit(self, args, resultdb, realm, description, use_python3):
+  def _RunPresubmit(self,
+                    args,
+                    description,
+                    use_python3,
+                    resultdb=None,
+                    realm=None):
+    # type: (Sequence[str], str, bool, Optional[bool], Optional[str]
+    #    ) -> Mapping[str, Any]
     args = args[:]
     vpython = 'vpython3' if use_python3 else 'vpython'
 
@@ -1808,16 +1823,13 @@ class Changelist(object):
 
     change_desc = self._GetDescriptionForUpload(options, git_diff_args, files)
     if not options.bypass_hooks:
-      hook_results = self.RunHook(
-          committing=False,
-          may_prompt=not options.force,
-          verbose=options.verbose,
-          parallel=options.parallel,
-          upstream=base_branch,
-          description=change_desc.description,
-          all_files=False,
-          resultdb=options.resultdb,
-          realm=options.realm)
+      hook_results = self.RunHook(committing=False,
+                                  may_prompt=not options.force,
+                                  verbose=options.verbose,
+                                  parallel=options.parallel,
+                                  upstream=base_branch,
+                                  description=change_desc.description,
+                                  all_files=False)
       self.ExtendCC(hook_results['more_cc'])
 
     print_stats(git_diff_args)
@@ -4668,8 +4680,6 @@ def CMDupload(parser, args):
                     help='Retry failed tryjobs from old patchset immediately '
                          'after uploading new patchset. Cannot be used with '
                          '--use-commit-queue or --cq-dry-run.')
-  parser.add_option('--buildbucket-host', default='cr-buildbucket.appspot.com',
-                    help='Host of buildbucket. The default host is %default.')
   parser.add_option('--fixed', '-x',
                     help='List of bugs that will be commented on and marked '
                          'fixed (pre-populates "Fixed:" tag). Same format as '
@@ -4681,10 +4691,6 @@ def CMDupload(parser, args):
                          'or a new commit is created.')
   parser.add_option('--git-completion-helper', action="store_true",
                     help=optparse.SUPPRESS_HELP)
-  parser.add_option('--resultdb', action='store_true',
-                    help='Run presubmit checks in the ResultSink environment '
-                         'and send results to the ResultDB database.')
-  parser.add_option('--realm', help='LUCI realm if reporting to ResultDB')
   parser.add_option('-o',
                     '--push-options',
                     action='append',
@@ -4773,8 +4779,9 @@ def CMDupload(parser, args):
     if ret != 0:
       print('Upload failed, so --retry-failed has no effect.')
       return ret
-    builds, _ = _fetch_latest_builds(
-        cl, options.buildbucket_host, latest_patchset=patchset)
+    builds, _ = _fetch_latest_builds(cl,
+                                     DEFAULT_BUILDBUCKET_HOST,
+                                     latest_patchset=patchset)
     jobs = _filter_failed_for_retry(builds)
     if len(jobs) == 0:
       print('No failed tryjobs, so --retry-failed has no effect.')
@@ -5200,7 +5207,7 @@ def CMDtry(parser, args):
     jobs = sorted((project, bucket, bot) for bot in options.bot)
   elif options.retry_failed:
     print('Searching for failed tryjobs...')
-    builds, patchset = _fetch_latest_builds(cl, options.buildbucket_host)
+    builds, patchset = _fetch_latest_builds(cl, DEFAULT_BUILDBUCKET_HOST)
     if options.verbose:
       print('Got %d builds in patchset #%d' % (len(builds), patchset))
     jobs = _filter_failed_for_retry(builds)
@@ -5270,7 +5277,7 @@ def CMDtry_results(parser, args):
                    cl.GetIssue())
 
   try:
-    jobs = _fetch_tryjobs(cl, options.buildbucket_host, patchset)
+    jobs = _fetch_tryjobs(cl, DEFAULT_BUILDBUCKET_HOST, patchset)
   except BuildbucketResponseException as ex:
     print('Buildbucket error: %s' % ex)
     return 1
