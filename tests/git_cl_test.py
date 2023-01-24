@@ -3560,6 +3560,66 @@ class ChangelistTest(unittest.TestCase):
       self.assertEqual(cl._GetTitleForUpload(options), user_title)
 
   @mock.patch('git_cl.Settings.GetRoot', return_value='')
+  @mock.patch('git_cl.RunGit')
+  @mock.patch('git_cl.Changelist._PrepareChange')
+  @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
+  @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
+  def testPrepareSquashedCommit(self, mockFetchUpstreamTuple,
+                                mockGetCommonAncestorWithUpstream,
+                                mockPrepareChange, mockRunGit, *_mocks):
+
+    change_desc = git_cl.ChangeDescription('BOO!')
+    reviewers = []
+    ccs = []
+    mockPrepareChange.return_value = (reviewers, ccs, change_desc)
+
+    parent_hash = 'upstream-gerrit-hash'
+    parent_hash_root = 'root-commit'
+    hash_to_push = 'new-squash-hash'
+    hash_to_push_root = 'new-squash-hash-root'
+    branchref = 'refs/heads/current-branch'
+    end_hash = 'end-hash'
+    tree_hash = 'tree-hash'
+
+    def mock_run_git(commands):
+      if {'commit-tree', tree_hash, '-p', parent_hash,
+          '-F'}.issubset(set(commands)):
+        return hash_to_push
+      if {'commit-tree', tree_hash, '-p', parent_hash_root,
+          '-F'}.issubset(set(commands)):
+        return hash_to_push_root
+      if commands == ['rev-parse', branchref]:
+        return end_hash
+      if commands == ['rev-parse', end_hash + ':']:
+        return tree_hash
+
+    mockRunGit.side_effect = mock_run_git
+    cl = git_cl.Changelist(branchref=branchref)
+    options = optparse.Values()
+
+    # local origin
+    mockFetchUpstreamTuple.return_value = ('.', 'refs/heads/upstreamA')
+    self.mockGit.config['branch.upstreamA.%s' %
+                        git_cl.GERRIT_SQUASH_HASH_CONFIG_KEY] = (parent_hash)
+
+    new_upload = cl.PrepareSquashedCommit(options)
+    self.assertEqual(new_upload.reviewers, reviewers)
+    self.assertEqual(new_upload.ccs, ccs)
+    self.assertEqual(new_upload.commit_to_push, hash_to_push)
+    self.assertEqual(new_upload.new_last_uploaded_commit, end_hash)
+    self.assertEqual(new_upload.change_desc, change_desc)
+    mockPrepareChange.assert_called_with(options, parent_hash, end_hash)
+
+    # remote origin
+    mockFetchUpstreamTuple.return_value = ('origin', 'refs/heads/release-1')
+    mockGetCommonAncestorWithUpstream.return_value = parent_hash_root
+
+    new_upload = cl.PrepareSquashedCommit(options)
+    self.assertEqual(new_upload.commit_to_push, hash_to_push_root)
+    self.assertEqual(new_upload.new_last_uploaded_commit, end_hash)
+    mockPrepareChange.assert_called_with(options, parent_hash_root, end_hash)
+
+  @mock.patch('git_cl.Settings.GetRoot', return_value='')
   @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
   @mock.patch('git_cl.RunGitWithCode')
   @mock.patch('git_cl.RunGit')

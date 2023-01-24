@@ -1576,6 +1576,38 @@ class Changelist(object):
       return title
     return user_title or title
 
+  def PrepareSquashedCommit(self, options, parent=None, end_commit=None):
+    # type: (optparse.Values, Optional[str], Optional[str]) -> _NewUpload()
+    """Create a squashed commit to upload."""
+    if parent is None:
+      origin, upstream_branch_ref = self.FetchUpstreamTuple(self.GetBranch())
+      upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
+      if origin == '.':
+        # upstream is another local branch.
+        # Assume we want to upload from upstream's last upload.
+        parent = scm.GIT.GetBranchConfig(settings.GetRoot(), upstream_branch,
+                                         GERRIT_SQUASH_HASH_CONFIG_KEY)
+        assert parent, ('upstream branch %s not configured correctly. '
+                        'Could not fetch latest gerrit upload from git '
+                        'config.')
+      else:
+        # upstream is the root of the tree.
+        parent = self.GetCommonAncestorWithUpstream()
+
+    if end_commit is None:
+      end_commit = RunGit(['rev-parse', self.branchref]).strip()
+
+    reviewers, ccs, change_desc = self._PrepareChange(options, parent,
+                                                      end_commit)
+    latest_tree = RunGit(['rev-parse', end_commit + ':']).strip()
+    with gclient_utils.temporary_file() as desc_tempfile:
+      gclient_utils.FileWrite(desc_tempfile, change_desc.description)
+      commit_to_push = RunGit(
+          ['commit-tree', latest_tree, '-p', parent, '-F',
+           desc_tempfile]).strip()
+
+    return _NewUpload(reviewers, ccs, commit_to_push, end_commit, change_desc)
+
   def PrepareCherryPickSquashedCommit(self, options):
     # type: (optparse.Values) -> _NewUpload()
     """Create a commit cherry-picked on parent to push."""
