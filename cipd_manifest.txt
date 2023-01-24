@@ -63,8 +63,8 @@ infra/tools/rdb/${platform} git_revision:50399befbe02a980369b270c878fb5a4f0d3882
 chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d39d34907050d2949121d6ae8
 
 # goma client
-infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:9d557608987ecd97d7f63befe1ef597fa3dd097b
-infra/goma/client/${os=mac}-${arch} git_revision:9d557608987ecd97d7f63befe1ef597fa3dd097b
+infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:b493c375e7e891ed1eb4ddb4f8697df577fe2995
+infra/goma/client/${os=mac}-${arch} git_revision:b493c375e7e891ed1eb4ddb4f8697df577fe2995
 
 # ninja
 infra/3pp/tools/ninja/${os=linux,windows}-${arch=amd64} version:2@1.8.2.chromium.3
