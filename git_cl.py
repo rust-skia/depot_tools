@@ -1549,10 +1549,12 @@ class Changelist(object):
 
     return change_description
 
-  def _GetTitleForUpload(self, options):
-    # When not squashing or options.title is provided, just return
-    # options.title.
-    if not options.squash or options.title:
+  def _GetTitleForUpload(self, options, multi_change_upload=False):
+    # type: (optparse.Values, Optional[bool]) -> str
+
+    # Getting titles for multipl commits is not supported so we return the
+    # default.
+    if not options.squash or multi_change_upload or options.title:
       return options.title
 
     # On first upload, patchset title is always this string, while options.title
@@ -1575,6 +1577,68 @@ class Changelist(object):
     if user_title.lower() == 'y':
       return title
     return user_title or title
+
+  def _GetRefSpecOptions(self, options, change_desc, multi_change_upload=False):
+    # type: (optparse.Values, Sequence[Changelist], Optional[bool]
+    #     ) -> Sequence[str]
+
+    # Extra options that can be specified at push time. Doc:
+    # https://gerrit-review.googlesource.com/Documentation/user-upload.html
+    refspec_opts = []
+
+    # By default, new changes are started in WIP mode, and subsequent patchsets
+    # don't send email. At any time, passing --send-mail or --send-email will
+    # mark the change ready and send email for that particular patch.
+    if options.send_mail:
+      refspec_opts.append('ready')
+      refspec_opts.append('notify=ALL')
+    elif (not self.GetIssue() and options.squash and not multi_change_upload):
+      refspec_opts.append('wip')
+    else:
+      refspec_opts.append('notify=NONE')
+
+    # TODO(tandrii): options.message should be posted as a comment if
+    # --send-mail or --send-email is set on non-initial upload as Rietveld used
+    # to do it.
+
+    # Set options.title in case user was prompted in _GetTitleForUpload and
+    # _CMDUploadChange needs to be called again.
+    options.title = self._GetTitleForUpload(
+        options, multi_change_upload=multi_change_upload)
+
+    if options.title:
+      # Punctuation and whitespace in |title| must be percent-encoded.
+      refspec_opts.append('m=' +
+                          gerrit_util.PercentEncodeForGitRef(options.title))
+
+    if options.private:
+      refspec_opts.append('private')
+
+    if options.topic:
+      # Documentation on Gerrit topics is here:
+      # https://gerrit-review.googlesource.com/Documentation/user-upload.html#topic
+      refspec_opts.append('topic=%s' % options.topic)
+
+    if options.enable_auto_submit:
+      refspec_opts.append('l=Auto-Submit+1')
+    if options.set_bot_commit:
+      refspec_opts.append('l=Bot-Commit+1')
+    if options.use_commit_queue:
+      refspec_opts.append('l=Commit-Queue+2')
+    elif options.cq_dry_run:
+      refspec_opts.append('l=Commit-Queue+1')
+    elif options.cq_quick_run:
+      refspec_opts.append('l=Commit-Queue+1')
+      refspec_opts.append('l=Quick-Run+1')
+
+    if change_desc.get_reviewers(tbr_only=True):
+      score = gerrit_util.GetCodeReviewTbrScore(self.GetGerritHost(),
+                                                self.GetGerritProject())
+      refspec_opts.append('l=Code-Review+%s' % score)
+
+    # Note: hashtags, reviewers, and ccs are handled individually for each
+    # branch/change.
+    return refspec_opts
 
   def PrepareSquashedCommit(self, options, parent=None, end_commit=None):
     # type: (optparse.Values, Optional[str], Optional[str]) -> _NewUpload()
@@ -2727,33 +2791,7 @@ class Changelist(object):
 
     # Extra options that can be specified at push time. Doc:
     # https://gerrit-review.googlesource.com/Documentation/user-upload.html
-    refspec_opts = []
-
-    # By default, new changes are started in WIP mode, and subsequent patchsets
-    # don't send email. At any time, passing --send-mail or --send-email will
-    # mark the change ready and send email for that particular patch.
-    if options.send_mail:
-      refspec_opts.append('ready')
-      refspec_opts.append('notify=ALL')
-    elif not self.GetIssue() and options.squash:
-      refspec_opts.append('wip')
-    else:
-      refspec_opts.append('notify=NONE')
-
-    # TODO(tandrii): options.message should be posted as a comment if
-    # --send-mail or --send-email is set on non-initial upload as Rietveld used
-    # to do it.
-
-    # Set options.title in case user was prompted in _GetTitleForUpload and
-    # _CMDUploadChange needs to be called again.
-    options.title = self._GetTitleForUpload(options)
-    if options.title:
-      # Punctuation and whitespace in |title| must be percent-encoded.
-      refspec_opts.append(
-          'm=' + gerrit_util.PercentEncodeForGitRef(options.title))
-
-    if options.private:
-      refspec_opts.append('private')
+    refspec_opts = self._GetRefSpecOptions(options, change_desc)
 
     for r in sorted(reviewers):
       if r in valid_accounts:
@@ -2769,23 +2807,6 @@ class Changelist(object):
       if c in valid_accounts:
         refspec_opts.append('cc=%s' % c)
         cc.remove(c)
-
-    if options.topic:
-      # Documentation on Gerrit topics is here:
-      # https://gerrit-review.googlesource.com/Documentation/user-upload.html#topic
-      refspec_opts.append('topic=%s' % options.topic)
-
-    if options.enable_auto_submit:
-      refspec_opts.append('l=Auto-Submit+1')
-    if options.set_bot_commit:
-      refspec_opts.append('l=Bot-Commit+1')
-    if options.use_commit_queue:
-      refspec_opts.append('l=Commit-Queue+2')
-    elif options.cq_dry_run:
-      refspec_opts.append('l=Commit-Queue+1')
-    elif options.cq_quick_run:
-      refspec_opts.append('l=Commit-Queue+1')
-      refspec_opts.append('l=Quick-Run+1')
 
     # Gerrit sorts hashtags, so order is not important.
     hashtags = {change_desc.sanitize_hash_tag(t) for t in options.hashtags}
@@ -4681,6 +4702,7 @@ def CMDupload(parser, args):
   parser.add_option('--stacked-exp',
                     action='store_true',
                     help=optparse.SUPPRESS_HELP)
+  # TODO(b/265929888): Add --wip option of --cl-status option.
 
   orig_args = args
   (options, args) = parser.parse_args(args)
