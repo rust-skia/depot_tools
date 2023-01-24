@@ -3216,6 +3216,7 @@ class ChangelistTest(unittest.TestCase):
     self.temp_count = 0
     self.mockGit = GitMocks()
     mock.patch('scm.GIT.GetConfig', self.mockGit.GetConfig).start()
+    mock.patch('scm.GIT.SetConfig', self.mockGit.SetConfig).start()
 
   def testRunHook(self):
     expected_results = {
@@ -3807,6 +3808,41 @@ class ChangelistTest(unittest.TestCase):
         'AH!', 'CC=cow2@moo.farm', 'R=horse@apple.farm', '',
         'Change-Id: 123456789', 'Cq-Do-Not-Cancel-Tryjobs: true'
     ])
+
+  @mock.patch('git_cl.Changelist.GetGerritHost', return_value='chromium')
+  @mock.patch('git_cl.Settings.GetRunPostUploadHook', return_value=True)
+  @mock.patch('git_cl.Changelist.RunPostUploadHook')
+  @mock.patch('git_cl.gerrit_util.AddReviewers')
+  def testPostUploadUpdates(self, mockAddReviewers, mockRunPostHook, *_mocks):
+
+    cl = git_cl.Changelist(branchref='refs/heads/current-branch')
+    options = optparse.Values()
+    options.verbose = True
+    options.no_python2_post_upload_hooks = True
+    options.send_mail = False
+
+    reviewers = ['monkey@vp.circus']
+    ccs = ['cow@rds.corp']
+    change_desc = git_cl.ChangeDescription('[stonks] honk honk')
+    new_upload = git_cl._NewUpload(reviewers, ccs, 'pushed-commit',
+                                   'last-uploaded-commit', 'parent-commit',
+                                   change_desc)
+
+    cl.PostUploadUpdates(options, new_upload, '12345')
+    self.assertEqual(
+        self.mockGit.config['root:branch.current-branch.gerritsquashhash'],
+        new_upload.commit_to_push)
+    self.assertEqual(
+        self.mockGit.config['root:branch.current-branch.last-upload-hash'],
+        new_upload.new_last_uploaded_commit)
+
+    mockAddReviewers.assert_called_once_with('chromium',
+                                             'project~123456',
+                                             reviewers=reviewers,
+                                             ccs=ccs,
+                                             notify=False)
+    mockRunPostHook.assert_called_once_with(True, 'parent-commit',
+                                            change_desc.description, True)
 
 
 class CMDTestCaseBase(unittest.TestCase):

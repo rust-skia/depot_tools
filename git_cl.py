@@ -1002,7 +1002,7 @@ _CommentSummary = collections.namedtuple(
 
 
 _NewUpload = collections.namedtuple('NewUpload', [
-    'reviewers', 'ccs', 'commit_to_push', 'new_last_uploaded_commit',
+    'reviewers', 'ccs', 'commit_to_push', 'new_last_uploaded_commit', 'parent',
     'change_desc'
 ])
 
@@ -1651,7 +1651,20 @@ class Changelist(object):
                                                 self.GetGerritProject())
       refspec_opts.append('l=Code-Review+%s' % score)
 
-    # Note: hashtags, reviewers, and ccs are handled individually for each
+    # Gerrit sorts hashtags, so order is not important.
+    hashtags = {change_desc.sanitize_hash_tag(t) for t in options.hashtags}
+    # We check GetIssue because we only add hashtags from the
+    # description on the first upload.
+    # We also never add hashtags from the description if we are
+    # doing a multi-change push
+    if not (self.GetIssue() or multi_change_upload):
+      hashtags.update(change_desc.get_hash_tags())
+    refspec_opts.extend(['hashtag=%s' % t for t in hashtags])
+    # TODO(b/265929888): Consider replacing options.squash checks with
+    # multi_change_upload checks, where may be true for squashed
+    # and non-squashed workflows
+
+    # Note: Reviewers, and ccs are handled individually for each
     # branch/change.
     return refspec_opts
 
@@ -1685,7 +1698,8 @@ class Changelist(object):
           ['commit-tree', latest_tree, '-p', parent, '-F',
            desc_tempfile]).strip()
 
-    return _NewUpload(reviewers, ccs, commit_to_push, end_commit, change_desc)
+    return _NewUpload(reviewers, ccs, commit_to_push, end_commit, parent,
+                      change_desc)
 
   def PrepareCherryPickSquashedCommit(self, options):
     # type: (optparse.Values) -> _NewUpload()
@@ -1719,7 +1733,7 @@ class Changelist(object):
     commit_to_push = RunGit(['rev-parse', 'HEAD'])
     RunGit(['checkout', '-q', self.branch])
 
-    return _NewUpload(reviewers, ccs, commit_to_push, new_upload_hash,
+    return _NewUpload(reviewers, ccs, commit_to_push, new_upload_hash, parent,
                       change_desc)
 
   def _PrepareChange(self, options, parent, end_commit):
@@ -1795,6 +1809,29 @@ class Changelist(object):
       ccs.extend(change_desc.get_cced())
 
     return change_desc.get_reviewers(), ccs, change_desc
+
+  def PostUploadUpdates(self, options, new_upload, change_number):
+    # type: (optparse.Values, _NewUpload, change_number) -> None
+    """Makes necessary post upload changes to the local and remote cl."""
+    if not self.GetIssue():
+      self.SetIssue(change_number)
+
+    self._GitSetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY,
+                                  new_upload.commit_to_push)
+    self._GitSetBranchConfigValue(LAST_UPLOAD_HASH_CONFIG_KEY,
+                                  new_upload.new_last_uploaded_commit)
+
+    if settings.GetRunPostUploadHook():
+      self.RunPostUploadHook(options.verbose, new_upload.parent,
+                             new_upload.change_desc.description,
+                             options.no_python2_post_upload_hooks)
+
+    if new_upload.reviewers or new_upload.ccs:
+      gerrit_util.AddReviewers(self.GetGerritHost(),
+                               self._GerritChangeIdentifier(),
+                               reviewers=new_upload.reviewers,
+                               ccs=new_upload.ccs,
+                               notify=bool(options.send_mail))
 
   def CMDUpload(self, options, git_diff_args, orig_args):
     """Uploads a change to codereview."""
@@ -2819,12 +2856,6 @@ class Changelist(object):
       if c in valid_accounts:
         refspec_opts.append('cc=%s' % c)
         cc.remove(c)
-
-    # Gerrit sorts hashtags, so order is not important.
-    hashtags = {change_desc.sanitize_hash_tag(t) for t in options.hashtags}
-    if not self.GetIssue():
-      hashtags.update(change_desc.get_hash_tags())
-    refspec_opts += ['hashtag=%s' % t for t in sorted(hashtags)]
 
     refspec_suffix = ''
     if refspec_opts:
