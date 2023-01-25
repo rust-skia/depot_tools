@@ -4825,9 +4825,73 @@ def CMDupload(parser, args):
 def UploadAllSquashed(options, orig_args):
   # type: (optparse.Values, Sequence[str]) -> Tuple[Sequence[Changelist], bool]
   """Uploads the current and upstream branches (if necessary)."""
-  _cls, _cherry_pick_current = _UploadAllPrecheck(options, orig_args)
+  cls, cherry_pick_current = _UploadAllPrecheck(options, orig_args)
 
-  # TODO(b/265929888): parse cls and create commits.
+  # Create commits.
+  uploads_by_cl = []  #type: Sequence[Tuple[Changelist, _NewUpload]]
+  if cherry_pick_current:
+    parent = cls[1]._GitGetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY)
+    new_upload = cls[0].PrepareCherryPickSquashedCommit(options, parent)
+    uploads_by_cl.append((cls[0], new_upload))
+  else:
+    parent = None
+    ordered_cls = list(reversed(cls))
+
+    for i, cl in enumerate(ordered_cls):
+      # If we're in the middle of the stack, set end_commit to downstream's
+      # direct ancestor.
+      if i + 1 < len(ordered_cls):
+        child_base_commit = ordered_cls[i + 1].GetCommonAncestorWithUpstream()
+      else:
+        child_base_commit = None
+      new_upload = cl.PrepareSquashedCommit(options,
+                                            parent=parent,
+                                            end_commit=child_base_commit)
+      uploads_by_cl.append((cl, new_upload))
+
+      parent = new_upload.commit_to_push
+
+  # Create refspec options
+  cl, new_upload = uploads_by_cl[-1]
+  refspec_opts = cl._GetRefSpecOptions(
+      options,
+      new_upload.change_desc,
+      multi_change_upload=len(uploads_by_cl) > 1)
+  refspec_suffix = ''
+  if refspec_opts:
+    refspec_suffix = '%' + ','.join(refspec_opts)
+    assert ' ' not in refspec_suffix, ('spaces not allowed in refspec: "%s"' %
+                                       refspec_suffix)
+
+  remote, remote_branch = cl.GetRemoteBranch()
+  branch = GetTargetRef(remote, remote_branch, options.target_branch)
+  refspec = '%s:refs/for/%s%s' % (new_upload.commit_to_push, branch,
+                                  refspec_suffix)
+
+  # Git push
+  git_push_metadata = {
+      'gerrit_host':
+      cl.GetGerritHost(),
+      'title':
+      options.title or '<untitled>',
+      'change_id':
+      git_footers.get_footer_change_id(new_upload.change_desc.description),
+      'description':
+      new_upload.change_desc.description,
+  }
+  push_stdout = cl._RunGitPushWithTraces(refspec, refspec_opts,
+                                         git_push_metadata)
+
+  # Post push updates
+  regex = re.compile(r'remote:\s+https?://[\w\-\.\+\/#]*/(\d+)\s.*')
+  change_numbers = [
+      m.group(1) for m in map(regex.match, push_stdout.splitlines()) if m
+  ]
+
+  for i, (cl, new_upload) in enumerate(uploads_by_cl):
+    cl.PostUploadUpdates(options, new_upload, change_numbers[i])
+
+  return 0
 
 
 def _UploadAllPrecheck(options, orig_args):
