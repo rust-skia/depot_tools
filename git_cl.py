@@ -5127,8 +5127,8 @@ def CMDpatch(parser, args):
       RunGit(['pull'])
 
     target_issue_arg = ParseIssueNumberArgument(cl.GetIssue())
-    return cl.CMDPatchWithParsedIssue(target_issue_arg, options.nocommit, False,
-                                      False)
+    return cl.CMDPatchWithParsedIssue(target_issue_arg, options.nocommit,
+                                      options.force, False)
 
   if len(args) != 1 or not args[0]:
     parser.error('Must specify issue number or URL.')
