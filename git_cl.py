@@ -2489,9 +2489,9 @@ class Changelist(object):
 
     RunGit(['fetch', fetch_info['url'], fetch_info['ref']])
 
-    # If we have created a new branch then do the "set issue" immediately in
-    # case the cherry-pick fails, which happens when resolving conflicts.
-    if newbranch:
+    # Set issue immediately in case the cherry-pick fails, which happens
+    # when resolving conflicts.
+    if self.GetBranch():
       self.SetIssue(parsed_issue_arg.issue)
 
     if force:
@@ -2511,7 +2511,6 @@ class Changelist(object):
             'If you want to do that, use "git cl patch --force" instead.')
 
     if self.GetBranch():
-      self.SetIssue(parsed_issue_arg.issue)
       self.SetPatchset(patchset)
       fetched_hash = scm.GIT.ResolveCommit(settings.GetRoot(), 'FETCH_HEAD')
       self._GitSetBranchConfigValue(LAST_UPLOAD_HASH_CONFIG_KEY, fetched_hash)
