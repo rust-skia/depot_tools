@@ -4779,8 +4779,9 @@ def CMDupload(parser, args):
     # Load default for user, repo, squash=true, in this order.
     options.squash = settings.GetSquashGerritUploads()
 
-  if options.stacked_exp:
-    orig_args.remove('--stacked-exp')
+  if os.environ.get('DOGFOOD_STACKED_CHANGES') == '1':
+    if options.dependencies:
+      parser.error('--dependencies is not available for this workflow.')
 
     UploadAllSquashed(options, orig_args)
     return 0
