@@ -28,7 +28,7 @@ if exist "%PLATFORM_OVERRIDE_FILE%" (
 :: It has only "instance_id" as the other field (looking like a base64 string),
 :: so mismatches are very unlikely.
 set INSTALLED_VERSION_FILE=%~dp0.versions\.cipd_client.exe.cipd_version
-findstr /m "infra/tools/cipd/%CIPD_PLATFORM%" "%INSTALLED_VERSION_FILE%" 2>nul
+findstr /m "infra/tools/cipd/%CIPD_PLATFORM%" "%INSTALLED_VERSION_FILE%" 1>nul 2>nul
 if %ERRORLEVEL% neq 0 (
   if exist "%INSTALLED_VERSION_FILE%" (
     echo Detected CIPD client platform change to %CIPD_PLATFORM%. 1>&2
