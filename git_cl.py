@@ -1593,9 +1593,13 @@ class Changelist(object):
       return title
     return user_title or title
 
-  def _GetRefSpecOptions(self, options, change_desc, multi_change_upload=False):
-    # type: (optparse.Values, Sequence[Changelist], Optional[bool]
-    #     ) -> Sequence[str]
+  def _GetRefSpecOptions(self,
+                         options,
+                         change_desc,
+                         multi_change_upload=False,
+                         dogfood_path=False):
+    # type: (optparse.Values, Sequence[Changelist], Optional[bool],
+    #      Optional[bool]) -> Sequence[str]
 
     # Extra options that can be specified at push time. Doc:
     # https://gerrit-review.googlesource.com/Documentation/user-upload.html
@@ -1607,7 +1611,7 @@ class Changelist(object):
     if options.send_mail:
       refspec_opts.append('ready')
       refspec_opts.append('notify=ALL')
-    elif (not self.GetIssue() and options.squash and not multi_change_upload):
+    elif (not self.GetIssue() and options.squash and not dogfood_path):
       refspec_opts.append('wip')
     else:
       refspec_opts.append('notify=NONE')
@@ -1655,14 +1659,15 @@ class Changelist(object):
     hashtags = {change_desc.sanitize_hash_tag(t) for t in options.hashtags}
     # We check GetIssue because we only add hashtags from the
     # description on the first upload.
-    # We also never add hashtags from the description if we are
-    # doing a multi-change push
-    if not (self.GetIssue() or multi_change_upload):
+    # TODO(b/265929888): When we fully launch the new path:
+    # 1) remove fetching hashtags from description alltogether
+    # 2) Or use descrtiption hashtags for:
+    #    `not (self.GetIssue() and multi_change_upload)`
+    # 3) Or enabled change description tags for multi and single changes
+    #    by adding them post `git push`.
+    if not (self.GetIssue() and dogfood_path):
       hashtags.update(change_desc.get_hash_tags())
     refspec_opts.extend(['hashtag=%s' % t for t in hashtags])
-    # TODO(b/265929888): Consider replacing options.squash checks with
-    # multi_change_upload checks, where may be true for squashed
-    # and non-squashed workflows
 
     # Note: Reviewers, and ccs are handled individually for each
     # branch/change.
@@ -4856,7 +4861,8 @@ def UploadAllSquashed(options, orig_args):
   refspec_opts = cl._GetRefSpecOptions(
       options,
       new_upload.change_desc,
-      multi_change_upload=len(uploads_by_cl) > 1)
+      multi_change_upload=len(uploads_by_cl) > 1,
+      dogfood_path=True)
   refspec_suffix = ''
   if refspec_opts:
     refspec_suffix = '%' + ','.join(refspec_opts)
