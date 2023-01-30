@@ -3355,9 +3355,9 @@ class OptionParser(optparse.OptionParser):
     optparse.OptionParser.__init__(
         self, version='%prog ' + __version__, **kwargs)
 
-    # Some arm boards have issues with parallel sync.
+    # Some old arm boards have issues with parallel sync, so use default cores.
     if platform.machine().startswith('arm'):
-      jobs = 1
+      jobs = gclient_utils.NumLocalCpus()
     else:
       jobs = max(8, gclient_utils.NumLocalCpus())
 
