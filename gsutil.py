@@ -164,7 +164,19 @@ def _is_luci_context():
 
 def luci_context(cmd):
   """Helper to call`luci-auth context`."""
-  return _luci_auth_cmd('context', wrapped_cmds=cmd)
+  p = _luci_auth_cmd('context', wrapped_cmds=cmd)
+
+  # If luci-auth is not logged in, fallback to normal execution.
+  if b'Not logged in.' in p.stderr:
+    return _run_subprocess(cmd, interactive=True)
+
+  if p.stdout:
+    print(p.stdout.decode('utf-8'))
+
+  if p.stderr:
+    print(p.stderr.decode('utf-8'), file=sys.stderr)
+
+  return p
 
 
 def luci_login():
@@ -182,30 +194,7 @@ def _luci_auth_cmd(luci_cmd, wrapped_cmds=None, interactive=False):
   if wrapped_cmds:
     cmd += ['--'] + wrapped_cmds
 
-  if interactive:
-    return _run_subprocess(cmd, interactive=True, env=_enable_luci_auth_ui())
-
-  p = _run_subprocess(cmd, env=_enable_luci_auth_ui())
-
-  # If luci-auth is not logged in.
-  if b'Not logged in.' in p.stderr:
-    print('Not logged in.\n')
-    print('Login by running:')
-    print('\t$ gsutil.py config')
-  else:
-    if p.stdout:
-      print(p.stdout.decode('utf-8'))
-
-    if p.stderr:
-      print(p.stderr.decode('utf-8'), file=sys.stderr)
-
-  return p
-
-
-def _enable_luci_auth_ui():
-  """Returns environment variables to enable luci-auth"""
-  # TODO(aravindvasudev): clean up after luci-auth UI is released.
-  return {'LUCI_AUTH_LOGIN_SESSIONS_HOST': 'ci.chromium.org'}
+  return _run_subprocess(cmd, interactive)
 
 
 def _run_subprocess(cmd, interactive=False, env=None):
@@ -229,7 +218,7 @@ def is_boto_present():
 
 def run_gsutil(target, args, clean=False):
   # Redirect gsutil config calls to luci-auth.
-  if os.getenv(GSUTIL_ENABLE_LUCI_AUTH) == '1' and 'config' in args:
+  if os.getenv(GSUTIL_ENABLE_LUCI_AUTH) != '0' and 'config' in args:
     return luci_login().returncode
 
   gsutil_bin = ensure_gsutil(VERSION, target, clean)
@@ -262,7 +251,7 @@ def run_gsutil(target, args, clean=False):
   ] + args_opt + args
 
   # Bypass luci-auth when run within a bot or .boto file is set.
-  if (os.getenv(GSUTIL_ENABLE_LUCI_AUTH) != '1' or _is_luci_context()
+  if (os.getenv(GSUTIL_ENABLE_LUCI_AUTH) == '0' or _is_luci_context()
       or os.getenv('SWARMING_HEADLESS') == '1' or os.getenv('BOTO_CONFIG')
       or os.getenv('AWS_CREDENTIAL_FILE') or is_boto_present()):
     return _run_subprocess(cmd, interactive=True).returncode
