@@ -13,32 +13,6 @@ import sys
 
 import gclient_paths
 
-DEPOT_TOOLS_ROOT = os.path.abspath(os.path.dirname(__file__))
-
-
-def fallbackToLegacyNinja(ninja_args):
-  print(
-      'depot_tools/ninja.py: Fallback to a deprecated legacy ninja binary. '
-      'Note that this ninja binary will be removed soon.\n'
-      'Please install ninja to your project using DEPS. '
-      'If your project does not have DEPS, Please install ninja in your PATH.\n'
-      'See also https://crbug.com/1340825',
-      file=sys.stderr)
-
-  exe_name = ''
-  if sys.platform == 'linux':
-    exe_name = 'ninja-linux64'
-  elif sys.platform == 'darwin':
-    exe_name = 'ninja-mac'
-  elif sys.platform in ['win32', 'cygwin']:
-    exe_name = 'ninja.exe'
-  else:
-    print('depot_tools/ninja.py: %s is not supported platform' % sys.platform)
-    return 1
-
-  ninja_path = os.path.join(DEPOT_TOOLS_ROOT, exe_name)
-  return subprocess.call([ninja_path] + ninja_args)
-
 
 def findNinjaInPath():
   env_path = os.getenv('PATH')
@@ -62,8 +36,14 @@ def fallback(ninja_args):
   if ninja_path:
     return subprocess.call([ninja_path] + ninja_args)
 
-  # TODO(crbug.com/1340825): remove raw binaries from depot_tools.
-  return fallbackToLegacyNinja(ninja_args)
+  print(
+      'depot_tools/ninja.py: Could not find Ninja in the third_party of '
+      'the current project, nor in your PATH.\n'
+      'Please take a following action to install Ninja.\n'
+      '- If your project has DEPS, Add a CIPD Ninja dependency to DEPS.\n'
+      '- Oterweise, Add Ninja to your PATH *after* depot_tools.',
+      file=sys.stderr)
+  return 1
 
 
 def main(args):
