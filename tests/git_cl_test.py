@@ -287,8 +287,8 @@ class TestGitClBasic(unittest.TestCase):
                return_value=('foo', git_cl.DEFAULT_NEW_BRANCH)).start()
     mock.patch('git_cl.GetTargetRef',
                return_value='refs/heads/main').start()
-    mock.patch('git_cl.Changelist._GerritCommitMsgHookCheck',
-               lambda _, offer_removal: None).start()
+    mock.patch('git_cl.Changelist._GerritCommitMsgHookCheck', lambda
+               offer_removal: None).start()
     mock.patch('git_cl.Changelist.GetIssue', return_value=None).start()
     mock.patch('git_cl.Changelist.GetBranch',
                side_effect=SystemExitMock).start()
@@ -1126,8 +1126,8 @@ class TestGitCl(unittest.TestCase):
     mock.patch('git_cl.gerrit_util.CookiesAuthenticator',
               CookiesAuthenticatorMockFactory(
                 same_auth=('git-owner.example.com', '', 'pass'))).start()
-    mock.patch('git_cl.Changelist._GerritCommitMsgHookCheck',
-              lambda _, offer_removal: None).start()
+    mock.patch('git_cl.Changelist._GerritCommitMsgHookCheck', lambda
+               offer_removal: None).start()
     mock.patch('git_cl.Changelist.GetMostRecentPatchset', lambda _, update:
                patchset).start()
     mock.patch('git_cl.gclient_utils.RunEditor',
@@ -3846,6 +3846,7 @@ class ChangelistTest(unittest.TestCase):
     with self.assertRaises(SystemExitMock):
       cl.PrepareCherryPickSquashedCommit(options)
 
+  @mock.patch('git_cl.Settings.GetDefaultCCList', return_value=[])
   @mock.patch('git_cl.Changelist.GetAffectedFiles', return_value=[])
   @mock.patch('git_cl.GenerateGerritChangeId', return_value='1a2b3c')
   @mock.patch('git_cl.Changelist.GetIssue', return_value=None)
@@ -3878,7 +3879,7 @@ class ChangelistTest(unittest.TestCase):
     reviewers, ccs, change_desc = cl._PrepareChange(options, parent,
                                                     latest_tree)
     self.assertEqual(reviewers, ['horse@apple.farm'])
-    self.assertEqual(ccs, ['chicken@bok.farm', 'cow2@moo.farm'])
+    self.assertEqual(ccs, ['cow@moo.farm', 'chicken@bok.farm', 'cow2@moo.farm'])
     self.assertEqual(change_desc._description_lines, [
         'AH!', 'CC=cow2@moo.farm', 'R=horse@apple.farm', '', 'Change-Id: 1a2b3c'
     ])
@@ -3892,7 +3893,6 @@ class ChangelistTest(unittest.TestCase):
                                         description=desc,
                                         all_files=False)
 
-  @mock.patch('git_cl.Settings.GetDefaultCCList', return_value=[])
   @mock.patch('git_cl.Changelist.GetAffectedFiles', return_value=[])
   @mock.patch('git_cl.Changelist.GetIssue', return_value='123')
   @mock.patch('git_cl.ChangeDescription.prompt')
@@ -3931,7 +3931,7 @@ class ChangelistTest(unittest.TestCase):
     reviewers, ccs, change_desc = cl._PrepareChange(options, parent,
                                                     latest_tree)
     self.assertEqual(reviewers, ['horse@apple.farm'])
-    self.assertEqual(ccs, ['cow@moo.farm', 'chicken@bok.farm', 'cow2@moo.farm'])
+    self.assertEqual(ccs, ['chicken@bok.farm', 'cow2@moo.farm'])
     self.assertEqual(change_desc._description_lines, [
         'AH!', 'CC=cow2@moo.farm', 'R=horse@apple.farm', '',
         'Change-Id: 123456789'

@@ -1793,9 +1793,9 @@ class Changelist(object):
 
     # Add ccs
     ccs = []
-    # Add default, watchlist, presubmit ccs if this is an existing change
+    # Add default, watchlist, presubmit ccs if this is the initial upload
     # and CL is not private and auto-ccing has not been disabled.
-    if self.GetIssue() and not (options.private and options.no_autocc):
+    if not options.private and not options.no_autocc and not self.GetIssue():
       ccs = self.GetCCList().split(',')
       if len(ccs) > 100:
         lsc = ('https://chromium.googlesource.com/chromium/src/+/HEAD/docs/'
@@ -2743,7 +2743,7 @@ class Changelist(object):
                        change_desc, branch):
     """Upload the current branch to Gerrit."""
     if options.squash:
-      self._GerritCommitMsgHookCheck(offer_removal=not options.force)
+      Changelist._GerritCommitMsgHookCheck(offer_removal=not options.force)
       external_parent = None
       if self.GetIssue():
         # User requested to change description
@@ -2815,9 +2815,9 @@ class Changelist(object):
 
     reviewers = sorted(change_desc.get_reviewers())
     cc = []
-    # Add CCs from WATCHLISTS and rietveld.cc git config unless this is
-    # the initial upload, the CL is private, or auto-CCing has ben disabled.
-    if not (self.GetIssue() or options.private or options.no_autocc):
+    # Add default, watchlist, presubmit ccs if this is the initial upload
+    # and CL is not private and auto-ccing has not been disabled.
+    if not options.private and not options.no_autocc and not self.GetIssue():
       cc = self.GetCCList().split(',')
     if len(cc) > 100:
       lsc = ('https://chromium.googlesource.com/chromium/src/+/HEAD/docs/'
@@ -4740,9 +4740,6 @@ def CMDupload(parser, args):
   parser.add_option('--no-python2-post-upload-hooks',
                     action='store_true',
                     help='Only run post-upload hooks in Python 3.')
-  parser.add_option('--stacked-exp',
-                    action='store_true',
-                    help=optparse.SUPPRESS_HELP)
   # TODO(b/265929888): Add --wip option of --cl-status option.
 
   orig_args = args
