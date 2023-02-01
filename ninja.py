@@ -67,7 +67,12 @@ def main(args):
   # Get gclient root + src.
   primary_solution_path = gclient_paths.GetPrimarySolutionPath()
   gclient_root_path = gclient_paths.FindGclientRoot(os.getcwd())
-  for base_path in [primary_solution_path, gclient_root_path]:
+  gclient_src_root_path = None
+  if gclient_root_path:
+    gclient_src_root_path = os.path.join(gclient_root_path, 'src')
+
+  for base_path in set(
+      [primary_solution_path, gclient_root_path, gclient_src_root_path]):
     if not base_path:
       continue
     ninja_path = os.path.join(base_path, 'third_party', 'ninja',
