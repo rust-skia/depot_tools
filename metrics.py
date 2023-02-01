@@ -32,6 +32,9 @@ UPLOAD_SCRIPT = os.path.join(DEPOT_TOOLS, 'upload_metrics.py')
 
 DEFAULT_COUNTDOWN = 10
 
+# TODO(b/265929888): Remove this variable when dogfood is over.
+DEPOT_TOOLS_ENV = ['DOGFOOD_STACKED_CHANGES']
+
 INVALID_CONFIG_WARNING = (
     'WARNING: Your metrics.cfg file was invalid or nonexistent. A new one will '
     'be created.'
@@ -225,6 +228,12 @@ class MetricsCollector(object):
     self._collecting_metrics = True
     self.add('metrics_version', metrics_utils.CURRENT_VERSION)
     self.add('command', command_name)
+    environment_variables = [
+        '%s=%s' % (env, os.environ.get(env)) for env in DEPOT_TOOLS_ENV
+        if env in os.environ
+    ]
+    if environment_variables:
+      self.add('env_variables', ','.join(environment_variables))
     try:
       start = time.time()
       result = func(*args, **kwargs)
