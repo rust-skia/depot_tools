@@ -230,7 +230,7 @@ class MetricsCollector(object):
     self.add('command', command_name)
     for env in DEPOT_TOOLS_ENV:
       if env in os.environ:
-        self.add_repeated('env_variables', {
+        self.add_repeated('env_vars', {
             'name': env,
             'value': os.environ.get(env)
         })
