@@ -228,12 +228,13 @@ class MetricsCollector(object):
     self._collecting_metrics = True
     self.add('metrics_version', metrics_utils.CURRENT_VERSION)
     self.add('command', command_name)
-    environment_variables = [
-        '%s=%s' % (env, os.environ.get(env)) for env in DEPOT_TOOLS_ENV
-        if env in os.environ
-    ]
-    if environment_variables:
-      self.add('env_variables', ','.join(environment_variables))
+    for env in DEPOT_TOOLS_ENV:
+      if env in os.environ:
+        self.add_repeated('env_variables', {
+            'name': env,
+            'value': os.environ.get(env)
+        })
+
     try:
       start = time.time()
       result = func(*args, **kwargs)
