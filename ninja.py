@@ -53,7 +53,7 @@ def main(args):
   # we need to split the argument. This means that arguments containing actual
   # spaces are not supported by ninja.bat, but that is not a real limitation.
   if (sys.platform.startswith('win') and len(args) == 2):
-    args = args[:1] + args[1].split(' ')
+    args = args[:1] + args[1].split()
 
   # macOS's python sets CPATH, LIBRARY_PATH, SDKROOT implicitly.
   # https://openradar.appspot.com/radar?id=5608755232243712
