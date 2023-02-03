@@ -171,10 +171,10 @@ def luci_context(cmd):
     return _run_subprocess(cmd, interactive=True)
 
   if p.stdout:
-    print(p.stdout.decode('utf-8'))
+    print(p.stdout.decode('utf-8'), end='')
 
   if p.stderr:
-    print(p.stderr.decode('utf-8'), file=sys.stderr)
+    print(p.stderr.decode('utf-8'), file=sys.stderr, end='')
 
   return p
 
