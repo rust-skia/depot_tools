@@ -66,10 +66,6 @@ chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d3
 infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:f24b71a9d773a5c6ab675af7a48662d06bed57f9
 infra/goma/client/${os=mac}-${arch} git_revision:f24b71a9d773a5c6ab675af7a48662d06bed57f9
 
-# ninja
-infra/3pp/tools/ninja/${os=linux,windows}-${arch=amd64} version:2@1.8.2.chromium.3
-infra/3pp/tools/ninja/${os=mac}-${arch} version:2@1.8.2.chromium.3
-
 # dirmd, a tool to work with DIR_METADATA files
 infra/tools/dirmd/${platform} git_revision:05bd91859e2bfe4263bd21ed75d975af8d5144a0
 
