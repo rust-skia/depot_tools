@@ -146,8 +146,11 @@ class CookiesAuthenticator(Authenticator):
     assert not host.startswith('http')
     # Assume *.googlesource.com pattern.
     parts = host.split('.')
-    if not parts[0].endswith('-review'):
-      parts[0] += '-review'
+
+    # remove -review suffix if present.
+    if parts[0].endswith('-review'):
+      parts[0] = parts[0][:-len('-review')]
+
     return 'https://%s/new-password' % ('.'.join(parts))
 
   @classmethod

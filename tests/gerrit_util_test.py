@@ -105,20 +105,19 @@ class CookiesAuthenticatorTest(unittest.TestCase):
 
   def testGetNewPasswordUrl(self):
     auth = gerrit_util.CookiesAuthenticator()
+    self.assertEqual('https://chromium.googlesource.com/new-password',
+                     auth.get_new_password_url('chromium.googlesource.com'))
     self.assertEqual(
-        'https://chromium-review.googlesource.com/new-password',
-        auth.get_new_password_url('chromium.googlesource.com'))
-    self.assertEqual(
-        'https://chrome-internal-review.googlesource.com/new-password',
+        'https://chrome-internal.googlesource.com/new-password',
         auth.get_new_password_url('chrome-internal-review.googlesource.com'))
 
   def testGetNewPasswordMessage(self):
     auth = gerrit_util.CookiesAuthenticator()
     self.assertIn(
-        'https://chromium-review.googlesource.com/new-password',
+        'https://chromium.googlesource.com/new-password',
         auth.get_new_password_message('chromium-review.googlesource.com'))
     self.assertIn(
-        'https://chrome-internal-review.googlesource.com/new-password',
+        'https://chrome-internal.googlesource.com/new-password',
         auth.get_new_password_message('chrome-internal.googlesource.com'))
 
   def testGetGitcookiesPath(self):

@@ -2329,7 +2329,7 @@ class TestGitCl(unittest.TestCase):
         'These are read from ~%(sep)s.gitcookies '
         '(or legacy ~%(sep)s%(netrc)s)\n'
         'You can (re)generate your credentials by visiting '
-        'https://chromium-review.googlesource.com/new-password\n' % {
+        'https://chromium.googlesource.com/new-password\n' % {
             'sep': os.sep,
             'netrc': NETRC_FILENAME,
         }, sys.stderr.getvalue())

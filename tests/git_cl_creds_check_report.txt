@@ -19,6 +19,6 @@
 
   You can manually remove corresponding lines in your ~%(sep)s.gitcookies file and visit the following URLs with correct account to generate correct credential lines:
 
-    https://conflict-review.googlesource.com/new-password
-    https://gpartial-review.googlesource.com/new-password
-    https://partial-review.googlesource.com/new-password
+    https://conflict.googlesource.com/new-password
+    https://gpartial.googlesource.com/new-password
+    https://partial.googlesource.com/new-password
