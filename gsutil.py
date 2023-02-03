@@ -187,9 +187,6 @@ def luci_login():
 
 def _luci_auth_cmd(luci_cmd, wrapped_cmds=None, interactive=False):
   """Helper to call luci-auth command."""
-  print('Using luci-auth login since OOB is deprecated.')
-  print('Override luci-auth by setting `BOTO_CONFIG` in your env.\n')
-
   cmd = ['luci-auth', luci_cmd, '-scopes', ' '.join(LUCI_AUTH_SCOPES)]
   if wrapped_cmds:
     cmd += ['--'] + wrapped_cmds
