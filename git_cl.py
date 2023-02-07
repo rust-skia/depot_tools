@@ -1001,6 +1001,7 @@ _CommentSummary = collections.namedtuple(
                         'approval', 'disapproval'])
 
 
+# TODO(b/265929888): Change `parent` to `pushed_commit_base`.
 _NewUpload = collections.namedtuple('NewUpload', [
     'reviewers', 'ccs', 'commit_to_push', 'new_last_uploaded_commit', 'parent',
     'change_desc'
@@ -1673,23 +1674,9 @@ class Changelist(object):
     # branch/change.
     return refspec_opts
 
-  def PrepareSquashedCommit(self, options, parent=None, end_commit=None):
-    # type: (optparse.Values, Optional[str], Optional[str]) -> _NewUpload()
+  def PrepareSquashedCommit(self, options, parent, end_commit=None):
+    # type: (optparse.Values, str, Optional[str]) -> _NewUpload()
     """Create a squashed commit to upload."""
-    if parent is None:
-      origin, upstream_branch_ref = self.FetchUpstreamTuple(self.GetBranch())
-      upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
-      if origin == '.':
-        # upstream is another local branch.
-        # Assume we want to upload from upstream's last upload.
-        parent = scm.GIT.GetBranchConfig(settings.GetRoot(), upstream_branch,
-                                         GERRIT_SQUASH_HASH_CONFIG_KEY)
-        assert parent, ('upstream branch %s not configured correctly. '
-                        'Could not fetch latest gerrit upload from git '
-                        'config.')
-      else:
-        # upstream is the root of the tree.
-        parent = self.GetCommonAncestorWithUpstream()
 
     if end_commit is None:
       end_commit = RunGit(['rev-parse', self.branchref]).strip()
@@ -1706,40 +1693,38 @@ class Changelist(object):
     return _NewUpload(reviewers, ccs, commit_to_push, end_commit, parent,
                       change_desc)
 
-  def PrepareCherryPickSquashedCommit(self, options):
-    # type: (optparse.Values) -> _NewUpload()
+  def PrepareCherryPickSquashedCommit(self, options, parent):
+    # type: (optparse.Values, str) -> _NewUpload()
     """Create a commit cherry-picked on parent to push."""
 
-    parent = self.GetCommonAncestorWithUpstream()
-    reviewers, ccs, change_desc = self._PrepareChange(options, parent,
+    # The `parent` is what we will cherry-pick on top of.
+    # The `cherry_pick_base` is the beginning range of what
+    # we are cherry-picking.
+    cherry_pick_base = self.GetCommonAncestorWithUpstream()
+    reviewers, ccs, change_desc = self._PrepareChange(options, cherry_pick_base,
                                                       self.branchref)
 
     new_upload_hash = RunGit(['rev-parse', self.branchref]).strip()
     latest_tree = RunGit(['rev-parse', self.branchref + ':']).strip()
     with gclient_utils.temporary_file() as desc_tempfile:
       gclient_utils.FileWrite(desc_tempfile, change_desc.description)
-      commit_to_cp = RunGit(
-          ['commit-tree', latest_tree, '-p', parent, '-F',
-           desc_tempfile]).strip()
+      commit_to_cp = RunGit([
+          'commit-tree', latest_tree, '-p', cherry_pick_base, '-F',
+          desc_tempfile
+      ]).strip()
 
-    _, upstream_branch_ref = self.FetchUpstreamTuple(self.GetBranch())
-
-    upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
-    upstream_squashed_upload = scm.GIT.GetBranchConfig(
-        settings.GetRoot(), upstream_branch, GERRIT_SQUASH_HASH_CONFIG_KEY)
-
-    RunGit(['checkout', '-q', upstream_squashed_upload])
+    RunGit(['checkout', '-q', parent])
     ret, _out = RunGitWithCode(['cherry-pick', commit_to_cp])
     if ret:
       RunGit(['cherry-pick', '--abort'])
       RunGit(['checkout', '-q', self.branch])
       DieWithError('Could not cleanly cherry-pick')
 
-    commit_to_push = RunGit(['rev-parse', 'HEAD'])
+    commit_to_push = RunGit(['rev-parse', 'HEAD']).strip()
     RunGit(['checkout', '-q', self.branch])
 
-    return _NewUpload(reviewers, ccs, commit_to_push, new_upload_hash, parent,
-                      change_desc)
+    return _NewUpload(reviewers, ccs, commit_to_push, new_upload_hash,
+                      cherry_pick_base, change_desc)
 
   def _PrepareChange(self, options, parent, end_commit):
     # type: (optparse.Values, str, str) ->
@@ -4836,8 +4821,27 @@ def UploadAllSquashed(options, orig_args):
     new_upload = cls[0].PrepareCherryPickSquashedCommit(options, parent)
     uploads_by_cl.append((cls[0], new_upload))
   else:
-    parent = None
     ordered_cls = list(reversed(cls))
+
+    parent = None
+    origin = '.'
+    cl = ordered_cls[0]
+    branch = cl.GetBranch()
+    while origin == '.':
+      # Search for cl's closest ancestor with a gerrit hash.
+      origin, upstream_branch_ref = Changelist.FetchUpstreamTuple(branch)
+      if origin == '.':
+        upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
+        parent = scm.GIT.GetBranchConfig(settings.GetRoot(), upstream_branch,
+                                         GERRIT_SQUASH_HASH_CONFIG_KEY)
+        if parent:
+          break
+        branch = upstream_branch
+    else:
+      # Either the root of the tree is the cl's direct parent and the while
+      # loop above only found empty branches between cl and the root of the
+      # tree.
+      parent = cl.GetCommonAncestorWithUpstream()
 
     for i, cl in enumerate(ordered_cls):
       # If we're in the middle of the stack, set end_commit to downstream's
@@ -4847,10 +4851,9 @@ def UploadAllSquashed(options, orig_args):
       else:
         child_base_commit = None
       new_upload = cl.PrepareSquashedCommit(options,
-                                            parent=parent,
+                                            parent,
                                             end_commit=child_base_commit)
       uploads_by_cl.append((cl, new_upload))
-
       parent = new_upload.commit_to_push
 
   # Create refspec options
@@ -4908,6 +4911,7 @@ def _UploadAllPrecheck(options, orig_args):
   branch_ref = None
   cls = []
   must_upload_upstream = False
+  first_pass = True
 
   Changelist._GerritCommitMsgHookCheck(offer_removal=not options.force)
 
@@ -4920,27 +4924,41 @@ def _UploadAllPrecheck(options, orig_args):
           (_MAX_STACKED_BRANCHES_UPLOAD))
 
     cl = Changelist(branchref=branch_ref)
-    cls.append(cl)
 
+    # Only add CL if it has anything to commit.
+    base_commit = cl.GetCommonAncestorWithUpstream()
+    end_commit = RunGit(['rev-parse', cl.GetBranchRef()]).strip()
+
+    diff = RunGitSilent(['diff', '%s..%s' % (base_commit, end_commit)])
+    if diff:
+      cls.append(cl)
+      if (not first_pass and
+          cl._GitGetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY) is None):
+        # We are mid-stack and the user must upload their upstream branches.
+        must_upload_upstream = True
+    elif first_pass:  # The current branch has nothing to commit. Exit.
+      DieWithError('Branch %s has nothing to commit' % cl.GetBranch())
+    # Else: A mid-stack branch has nothing to commit. We do not add it to cls.
+    first_pass = False
+
+    # Cases below determine if we should continue to traverse up the tree.
     origin, upstream_branch_ref = Changelist.FetchUpstreamTuple(cl.GetBranch())
-    upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
     branch_ref = upstream_branch_ref  # set branch for next run.
+
+    upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
+    upstream_last_upload = scm.GIT.GetBranchConfig(settings.GetRoot(),
+                                                   upstream_branch,
+                                                   LAST_UPLOAD_HASH_CONFIG_KEY)
 
     # Case 1: We've reached the beginning of the tree.
     if origin != '.':
       break
 
-    upstream_last_upload = scm.GIT.GetBranchConfig(settings.GetRoot(),
-                                                   upstream_branch,
-                                                   LAST_UPLOAD_HASH_CONFIG_KEY)
-
     # Case 2: If any upstream branches have never been uploaded,
-    # the user MUST upload them.
+    # the user MUST upload them unless they are empty. Continue to
+    # next loop to add upstream if it is not empty.
     if not upstream_last_upload:
-      must_upload_upstream = True
       continue
-
-    base_commit = cl.GetCommonAncestorWithUpstream()
 
     # Case 3: If upstream's last_upload == cl.base_commit we do
     # not need to upload any more upstreams from this point on.
@@ -4973,17 +4991,18 @@ def _UploadAllPrecheck(options, orig_args):
   cherry_pick = False
   if len(cls) > 1:
     message = ''
+    branches = ', '.join([cl.branch for cl in cls])
     if len(orig_args):
       message = ('options %s will be used for all uploads.\n' % orig_args)
     if must_upload_upstream:
       confirm_or_exit('\n' + message +
-                      'There are upstream branches that must be uploaded.\n')
+                      'Branches `%s` must be uploaded.\n' % branches)
     else:
       answer = gclient_utils.AskForData(
           '\n' + message +
           'Press enter to update branches %s.\nOr type `n` to upload only '
           '`%s` cherry-picked on %s\'s last upload:' %
-          ([cl.branch for cl in cls], cls[0].branch, cls[1].branch))
+          (branches, cls[0].branch, cls[1].branch))
       if answer.lower() == 'n':
         cherry_pick = True
   return cls, cherry_pick
