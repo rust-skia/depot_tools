@@ -22,6 +22,7 @@ TEST_CONFIGS = [
   'catapult',
   'celab',
   'crashpad',
+  'crossbench',
   'custom_tabs_client',
   'dart',
   'dawn',

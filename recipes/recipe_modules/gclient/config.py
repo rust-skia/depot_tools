@@ -526,3 +526,10 @@ def gerrit_plugins_tricium(c):
   s.name = 'gerrit_plugins_tricium'
   s.url = ChromiumGitURL(c, 'infra', 'gerrit-plugins', 'tricium.git')
   c.got_revision_mapping['gerrit_plugins_tricium'] = 'got_revision'
+
+@config_ctx()
+def crossbench(c):
+  soln = c.solutions.add()
+  soln.name = 'crossbench'
+  soln.url = 'https://chromium.googlesource.com/crossbench'
+  c.got_revision_mapping['crossbench'] = 'got_revision'
