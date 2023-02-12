@@ -1784,6 +1784,11 @@ def CheckVPythonSpec(input_api, output_api, file_filter=None):
   return commands
 
 
+# The GFE limit is 32 MiB. Give 2KiB of buffer for metadata that are not in
+# the config content.
+_CONFIG_SIZE_LIMIT_PER_REQUEST = 32 * 1024 * 1024 - 2 * 1024
+
+
 def CheckChangedLUCIConfigs(input_api, output_api):
   import collections
   import base64
@@ -1875,14 +1880,16 @@ def CheckChangedLUCIConfigs(input_api, output_api):
               '\n'.join(f.NewContents()).encode('utf-8')).decode('utf-8')
         })
   outputs = []
-  for cs, f in cs_to_files.items():
-    try:
-      # TODO(myjang): parallelize
-      res = request(
-          'validate-config', body={'config_set': cs, 'files': f})
-    except input_api.urllib_error.HTTPError as e:
-      return [output_api.PresubmitError(
-          'Validation request to luci-config failed', long_text=str(e))]
+
+  def do_one_validation(config_set, files):
+    if not files:
+      return
+    res = request('validate-config',
+                  body={
+                      'config_set': config_set,
+                      'files': files,
+                  })
+
     for msg in res.get('messages', []):
       sev = msg['severity']
       if sev == 'WARNING':
@@ -1892,8 +1899,43 @@ def CheckChangedLUCIConfigs(input_api, output_api):
       else:
         out_f = output_api.PresubmitNotifyResult
       outputs.append(
-          out_f('Config validation for %s: %s' % ([str(obj['path'])
-                                                   for obj in f], msg['text'])))
+          out_f('Config validation for %s: %s' %
+                ([str(file['path']) for file in files], msg['text'])))
+
+  for cs, files in cs_to_files.items():
+    # make the first pass to ensure none of the config standalone exceeds the
+    # size limit.
+    for f in files:
+      if len(f['content']) > _CONFIG_SIZE_LIMIT_PER_REQUEST:
+        return [
+            output_api.PresubmitError(
+                ('File %s grows too large, it is now ~%.2f MiB. '
+                 'The limit is %.2f MiB') % f['path'],
+                len(f['content']) / (1024 * 1024),
+                _CONFIG_SIZE_LIMIT_PER_REQUEST / (1024 * 1024))
+        ]
+
+    # Split the request for the same config set into smaller requests so that
+    # the config content size in each request does not exceed
+    # _CONFIG_SIZE_LIMIT_PER_REQUEST.
+    startIdx = 0
+    curSize = 0
+    for idx, f in enumerate(files):
+      content = f['content']
+      if curSize + len(content) > _CONFIG_SIZE_LIMIT_PER_REQUEST:
+        try:
+          do_one_validation(cs, files[startIdx:idx])
+        except input_api.urllib_error.HTTPError as e:
+          return [
+              output_api.PresubmitError(
+                  'Validation request to luci-config failed', long_text=str(e))
+          ]
+
+        curSize = 0
+        startIdx = idx
+      curSize += len(content)
+    do_one_validation(cs, files[startIdx:])  # validate all the remaining config
+
   return outputs
 
 
