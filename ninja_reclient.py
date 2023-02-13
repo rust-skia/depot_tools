@@ -58,6 +58,56 @@ def stop_reproxy(reclient_cfg, reclient_bin_dir):
   ])
 
 
+def find_rel_ninja_out_dir(args):
+  # Ninja uses getopt_long, which allow to intermix non-option arguments.
+  # To leave non supported parameters untouched, we do not use getopt.
+  for index, arg in enumerate(args[1:]):
+    if arg == '-C':
+      # + 1 to get the next argument and +1 because we trimmed off args[0]
+      return args[index + 2]
+    if arg.startswith('-C'):
+      # Support -Cout/Default
+      return arg[2:]
+  return '.'
+
+
+def set_reproxy_path_flags(out_dir):
+  """Helper to setup the logs and cache directories for reclient
+
+  Creates the following directory structure:
+  out_dir/
+    .reproxy_tmp/
+      logs/
+      cache/
+
+  The following env vars are set if not already set:
+    RBE_output_dir=out_dir/.reproxy_tmp/logs
+    RBE_proxy_log_dir=out_dir/.reproxy_tmp/logs
+    RBE_log_dir=out_dir/.reproxy_tmp/logs
+    RBE_cache_dir=out_dir/.reproxy_tmp/cache
+  *Nix Only:
+    RBE_server_address=unix://out_dir/.reproxy_tmp/reproxy.sock
+  Windows Only:
+    RBE_server_address=pipe://out_dir/.reproxy_tmp/reproxy.pipe
+  """
+  tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
+  os.makedirs(tmp_dir, exist_ok=True)
+  log_dir = os.path.join(tmp_dir, 'logs')
+  os.makedirs(log_dir, exist_ok=True)
+  os.environ.setdefault("RBE_output_dir", log_dir)
+  os.environ.setdefault("RBE_proxy_log_dir", log_dir)
+  os.environ.setdefault("RBE_log_dir", log_dir)
+  cache_dir = os.path.join(tmp_dir, 'cache')
+  os.makedirs(cache_dir, exist_ok=True)
+  os.environ.setdefault("RBE_cache_dir", cache_dir)
+  if sys.platform.startswith('win'):
+    os.environ.setdefault("RBE_server_address",
+                          "pipe://%s/reproxy.pipe" % tmp_dir)
+  else:
+    os.environ.setdefault("RBE_server_address",
+                          "unix://%s/reproxy.sock" % tmp_dir)
+
+
 def main(argv):
   # If use_remoteexec is set, but the reclient binaries or configs don't
   # exist, display an error message and stop.  Otherwise, the build will
@@ -74,6 +124,11 @@ def main(argv):
            "reclient are not yet supported.  Try regenerating your "
            "build with use_goma in place of use_remoteexec for now."),
           file=sys.stderr)
+    return 1
+  try:
+    set_reproxy_path_flags(find_rel_ninja_out_dir(argv))
+  except OSError:
+    print("Error creating reproxy_tmp in output dir", file=sys.stderr)
     return 1
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
   if reproxy_ret_code != 0:

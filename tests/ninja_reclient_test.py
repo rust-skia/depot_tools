@@ -36,6 +36,7 @@ class NinjaReclientTest(trial_dir.TestCase):
     os.chdir(self.previous_dir)
     super(NinjaReclientTest, self).tearDown()
 
+  @unittest.mock.patch.dict(os.environ, {})
   @unittest.mock.patch('subprocess.call', return_value=0)
   @unittest.mock.patch('ninja.main', return_value=0)
   def test_ninja_reclient(self, mock_ninja, mock_call):
@@ -49,6 +50,32 @@ class NinjaReclientTest(trial_dir.TestCase):
     argv = ["ninja_reclient.py", "-C", "out/a", "chrome"]
 
     self.assertEqual(0, ninja_reclient.main(argv))
+
+    self.assertTrue(
+        os.path.isdir(os.path.join(self.root_dir, "out", "a", ".reproxy_tmp")))
+    self.assertTrue(
+        os.path.isdir(
+            os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "cache")))
+    self.assertTrue(
+        os.path.isdir(
+            os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs")))
+    self.assertEqual(
+        os.environ.get('RBE_output_dir'),
+        os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs"))
+    self.assertEqual(
+        os.environ.get('RBE_proxy_log_dir'),
+        os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs"))
+    self.assertEqual(
+        os.environ.get('RBE_cache_dir'),
+        os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "cache"))
+    if sys.platform.startswith('win'):
+      self.assertEqual(
+          os.environ.get('RBE_server_address'), "pipe://%s/reproxy.pipe" %
+          os.path.join(self.root_dir, "out", "a", ".reproxy_tmp"))
+    else:
+      self.assertEqual(
+          os.environ.get('RBE_server_address'), "unix://%s/reproxy.sock" %
+          os.path.join(self.root_dir, "out", "a", ".reproxy_tmp"))
 
     mock_ninja.assert_called_once_with(argv)
     mock_call.assert_has_calls([
