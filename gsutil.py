@@ -37,9 +37,6 @@ IS_WINDOWS = os.name == 'nt'
 
 VERSION = '4.68'
 
-# Environment variable to enable LUCI auth feature.
-GSUTIL_ENABLE_LUCI_AUTH = 'GSUTIL_ENABLE_LUCI_AUTH'
-
 # Google OAuth Context required by gsutil.
 LUCI_AUTH_SCOPES = [
     'https://www.googleapis.com/auth/devstorage.full_control',
@@ -215,7 +212,7 @@ def is_boto_present():
 
 def run_gsutil(target, args, clean=False):
   # Redirect gsutil config calls to luci-auth.
-  if os.getenv(GSUTIL_ENABLE_LUCI_AUTH) != '0' and 'config' in args:
+  if 'config' in args:
     return luci_login().returncode
 
   gsutil_bin = ensure_gsutil(VERSION, target, clean)
@@ -248,9 +245,9 @@ def run_gsutil(target, args, clean=False):
   ] + args_opt + args
 
   # Bypass luci-auth when run within a bot or .boto file is set.
-  if (os.getenv(GSUTIL_ENABLE_LUCI_AUTH) == '0' or _is_luci_context()
-      or os.getenv('SWARMING_HEADLESS') == '1' or os.getenv('BOTO_CONFIG')
-      or os.getenv('AWS_CREDENTIAL_FILE') or is_boto_present()):
+  if (_is_luci_context() or os.getenv('SWARMING_HEADLESS') == '1'
+      or os.getenv('BOTO_CONFIG') or os.getenv('AWS_CREDENTIAL_FILE')
+      or is_boto_present()):
     return _run_subprocess(cmd, interactive=True).returncode
 
   return luci_context(cmd).returncode
