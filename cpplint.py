@@ -418,6 +418,231 @@ _CPP_HEADERS = frozenset([
     'cwctype',
     ])
 
+# List of functions from <type_traits>.  See [meta.type.synop]
+_TYPE_TRAITS = [
+    # 23.15.3, helper class
+    'integral_constant',
+    # 23.15.4.1, primary type categories
+    'is_void',
+    'is_null_pointer',
+    'is_integral',
+    'is_floating_point',
+    'is_array',
+    'is_pointer',
+    'is_lvalue_reference',
+    'is_rvalue_reference',
+    'is_member_object_pointer',
+    'is_member_function_pointer',
+    'is_enum',
+    'is_union',
+    'is_class',
+    'is_function',
+    # 23.15.4.2, composite type categories
+    'is_reference',
+    'is_arithmetic',
+    'is_fundamental',
+    'is_object',
+    'is_scalar',
+    'is_compound',
+    'is_member_pointer',
+    # 23.15.4.3, type properties
+    'is_const',
+    'is_volatile',
+    'is_trivial',
+    'is_trivially_copyable',
+    'is_standard_layout',
+    'is_pod',
+    'is_empty',
+    'is_polymorphic',
+    'is_abstract',
+    'is_final',
+    'is_aggregate',
+    'is_signed',
+    'is_unsigned',
+    'is_constructible',
+    'is_default_constructible',
+    'is_copy_constructible',
+    'is_move_constructible',
+    'is_assignable',
+    'is_copy_assignable',
+    'is_move_assignable',
+    'is_swappable_with',
+    'is_swappable',
+    'is_destructible',
+    'is_trivially_constructible',
+    'is_trivially_default_constructible',
+    'is_trivially_copy_constructible',
+    'is_trivially_move_constructible',
+    'is_trivially_assignable',
+    'is_trivially_copy_assignable',
+    'is_trivially_move_assignable',
+    'is_trivially_destructible',
+    'is_nothrow_constructible',
+    'is_nothrow_default_constructible',
+    'is_nothrow_copy_constructible',
+    'is_nothrow_move_constructible',
+    'is_nothrow_assignable',
+    'is_nothrow_copy_assignable',
+    'is_nothrow_move_assignable',
+    'is_nothrow_swappable_with',
+    'is_nothrow_swappable',
+    'is_nothrow_destructible',
+    'has_virtual_destructor',
+    'has_unique_object_representations',
+    # 23.15.5, type property queries
+    'alignment_of',
+    'rank',
+    'extent',
+    # 23.15.6, type relations
+    'is_same',
+    'is_base_of',
+    'is_convertible',
+    'is_invocable',
+    'is_invocable_r',
+    'is_nothrow_invocable',
+    'is_nothrow_invocable_r',
+    # 23.15.7.1, const-volatile modifications
+    'remove_const',
+    'remove_volatile',
+    'remove_cv',
+    'add_const',
+    'add_volatile',
+    'add_cv',
+    'remove_const_t',
+    'remove_volatile_t',
+    'remove_cv_t',
+    'add_const_t',
+    'add_volatile_t',
+    'add_cv_t',
+    # 23.15.7.2, reference modifications
+    'remove_reference',
+    'add_lvalue_reference',
+    'add_rvalue_reference',
+    'remove_reference_t',
+    'add_lvalue_reference_t',
+    'add_rvalue_reference_t',
+    # 23.15.7.3, sign modifications
+    'make_signed',
+    'make_unsigned',
+    'make_signed_t',
+    'make_unsigned_t',
+    # 23.15.7.4, array modifications
+    'remove_extent',
+    'remove_all_extents',
+    'remove_extent_t',
+    'remove_all_extents_t',
+    # 23.15.7.5, pointer modifications
+    'remove_pointer',
+    'add_pointer',
+    'remove_pointer_t',
+    'add_pointer_t',
+    # 23.15.7.6, other transformations
+    'aligned_storage',
+    'aligned_union',
+    'decay',
+    'enable_if',
+    'conditional',
+    'common_type',
+    'underlying_type',
+    'invoke_result',
+    'aligned_storage_t',
+    'aligned_union_t',
+    'decay_t',
+    'enable_if_t',
+    'conditional_t',
+    'common_type_t',
+    'underlying_type_t',
+    'invoke_result_t',
+    'void_t',
+    # 23.15.8, logical operator traits
+    'conjunction',
+    'disjunction',
+    'negation',
+    # 23.15.4.1, primary type categories
+    'is_void_v',
+    'is_null_pointer_v',
+    'is_integral_v',
+    'is_floating_point_v',
+    'is_array_v',
+    'is_pointer_v',
+    'is_lvalue_reference_v',
+    'is_rvalue_reference_v',
+    'is_member_object_pointer_v',
+    'is_member_function_pointer_v',
+    'is_enum_v',
+    'is_union_v',
+    'is_class_v',
+    'is_function_v',
+    # 23.15.4.2, composite type categories
+    'is_reference_v',
+    'is_arithmetic_v',
+    'is_fundamental_v',
+    'is_object_v',
+    'is_scalar_v',
+    'is_compound_v',
+    'is_member_pointer_v',
+    # 23.15.4.3, type properties
+    'is_const_v',
+    'is_volatile_v',
+    'is_trivial_v',
+    'is_trivially_copyable_v',
+    'is_standard_layout_v',
+    'is_pod_v',
+    'is_empty_v',
+    'is_polymorphic_v',
+    'is_abstract_v',
+    'is_final_v',
+    'is_aggregate_v',
+    'is_signed_v',
+    'is_unsigned_v',
+    'is_constructible_v',
+    'is_default_constructible_v',
+    'is_copy_constructible_v',
+    'is_move_constructible_v',
+    'is_assignable_v',
+    'is_copy_assignable_v',
+    'is_move_assignable_v',
+    'is_swappable_with_v',
+    'is_swappable_v',
+    'is_destructible_v',
+    'is_trivially_constructible_v',
+    'is_trivially_default_constructible_v',
+    'is_trivially_copy_constructible_v',
+    'is_trivially_move_constructible_v',
+    'is_trivially_assignable_v',
+    'is_trivially_copy_assignable_v',
+    'is_trivially_move_assignable_v',
+    'is_trivially_destructible_v',
+    'is_nothrow_constructible_v',
+    'is_nothrow_default_constructible_v',
+    'is_nothrow_copy_constructible_v',
+    'is_nothrow_move_constructible_v',
+    'is_nothrow_assignable_v',
+    'is_nothrow_copy_assignable_v',
+    'is_nothrow_move_assignable_v',
+    'is_nothrow_swappable_with_v',
+    'is_nothrow_swappable_v',
+    'is_nothrow_destructible_v',
+    'has_virtual_destructor_v',
+    'has_unique_object_representations_v',
+    # 23.15.5, type property queries
+    'alignment_of_v',
+    'rank_v',
+    'extent_v',
+    'is_same_v',
+    'is_base_of_v',
+    'is_convertible_v',
+    'is_invocable_v',
+    'is_invocable_r_v',
+    'is_nothrow_invocable_v',
+    'is_nothrow_invocable_r_v',
+    # 23.15.8, logical operator traits
+    'conjunction_v',
+    'disjunction_v',
+    'negation_v',
+]
+_TYPE_TRAITS_RE = re.compile(r'\b::(?:' + ('|'.join(_TYPE_TRAITS)) + ')<')
+
 # Type names
 _TYPES = re.compile(
     r'^(?:'
@@ -3832,10 +4057,10 @@ def CheckTrailingSemicolon(filename, clean_lines, linenum, error):
   line = clean_lines.elided[linenum]
 
   # Block bodies should not be followed by a semicolon.  Due to C++11
-  # brace initialization, there are more places where semicolons are
-  # required than not, so we use an allowlist approach to check these
-  # rather than a blocklist.  These are the places where "};" should
-  # be replaced by just "}":
+  # brace initialization and C++20 concepts, there are more places
+  # where semicolons are required than not.  Places that are
+  # recognized as true positives are listed below.
+  #
   # 1. Some flavor of block following closing parenthesis:
   #    for (;;) {};
   #    while (...) {};
@@ -3903,6 +4128,10 @@ def CheckTrailingSemicolon(filename, clean_lines, linenum, error):
     #  - Lambdas
     #  - alignas specifier with anonymous structs
     #  - decltype
+    #  - Type casts with parentheses, e.g.: var = (Type){value};
+    #  - Return type casts with parentheses, e.g.: return (Type){value};
+    #  - Function pointers with initializer list, e.g.: int (*f)(){};
+    #  - Requires expression, e.g. C = requires(){};
     closing_brace_pos = match.group(1).rfind(')')
     opening_parenthesis = ReverseCloseExpression(
         clean_lines, linenum, closing_brace_pos)
@@ -3910,15 +4139,17 @@ def CheckTrailingSemicolon(filename, clean_lines, linenum, error):
       line_prefix = opening_parenthesis[0][0:opening_parenthesis[2]]
       macro = Search(r'\b([A-Z_][A-Z0-9_]*)\s*$', line_prefix)
       func = Match(r'^(.*\])\s*$', line_prefix)
-      if ((macro and
-           macro.group(1) not in (
-               'TEST', 'TEST_F', 'MATCHER', 'MATCHER_P', 'TYPED_TEST',
-               'EXCLUSIVE_LOCKS_REQUIRED', 'SHARED_LOCKS_REQUIRED',
-               'LOCKS_EXCLUDED', 'INTERFACE_DEF')) or
-          (func and not Search(r'\boperator\s*\[\s*\]', func.group(1))) or
-          Search(r'\b(?:struct|union)\s+alignas\s*$', line_prefix) or
-          Search(r'\bdecltype$', line_prefix) or
-          Search(r'\s+=\s*$', line_prefix)):
+      if ((macro and macro.group(1) not in
+           ('TEST', 'TEST_F', 'MATCHER', 'MATCHER_P', 'TYPED_TEST',
+            'EXCLUSIVE_LOCKS_REQUIRED', 'SHARED_LOCKS_REQUIRED',
+            'LOCKS_EXCLUDED', 'INTERFACE_DEF'))
+          or (func and not Search(r'\boperator\s*\[\s*\]', func.group(1)))
+          or Search(r'\b(?:struct|union)\s+alignas\s*$', line_prefix)
+          or Search(r'\b(decltype|requires)$', line_prefix)
+          or Search(r'(?:\s+=|\breturn)\s*$', line_prefix)
+          or (Match(r'^\s*$', line_prefix) and Search(
+              r'(?:\s+=|\breturn)\s*$', clean_lines.elided[linenum - 1]))
+          or Search(r'\(\*\w+\)$', line_prefix)):
         match = None
     if (match and
         opening_parenthesis[1] > 1 and
@@ -5285,14 +5516,15 @@ def ExpectingFunctionArgs(clean_lines, linenum):
     of function types.
   """
   line = clean_lines.elided[linenum]
-  return (Match(r'^\s*MOCK_(CONST_)?METHOD\d+(_T)?\(', line) or
-          (linenum >= 2 and
-           (Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\((?:\S+,)?\s*$',
-                  clean_lines.elided[linenum - 1]) or
-            Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\(\s*$',
-                  clean_lines.elided[linenum - 2]) or
-            Search(r'\bstd::m?function\s*\<\s*$',
-                   clean_lines.elided[linenum - 1]))))
+  return (Match(r'^\s*MOCK_(CONST_)?METHOD\d+(_T)?\(', line)
+          or _TYPE_TRAITS_RE.search(line)
+          or (linenum >= 2 and
+              (Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\((?:\S+,)?\s*$',
+                     clean_lines.elided[linenum - 1])
+               or Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\(\s*$',
+                        clean_lines.elided[linenum - 2])
+               or Search(r'\b(::function|base::FunctionRef)\s*\<\s*$',
+                         clean_lines.elided[linenum - 1]))))
 
 
 _HEADERS_CONTAINING_TEMPLATES = (

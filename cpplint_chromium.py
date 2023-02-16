@@ -31,7 +31,9 @@ import re
 
 # Matches Foo *foo declarations.
 _RE_PATTERN_POINTER_DECLARATION_WHITESPACE = re.compile(
-    r'\s*\w+(?<!\breturn|\bdelete)\s+(?P<pointer_operator>\*|\&)\w+')
+    r'\s*\w+((?<!\breturn|\bdelete)(?<!\bco_return))\s+'
+    r'(?P<pointer_operator>\*|\&)\w+')
+
 
 def CheckPointerDeclarationWhitespace(filename, clean_lines, linenum, error):
   """Checks for Foo *foo declarations.
