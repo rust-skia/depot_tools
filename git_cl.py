@@ -4908,6 +4908,10 @@ def _UploadAllPrecheck(options, orig_args):
       since their last upload and a boolean of whether the user wants to
       cherry-pick and upload the current branch instead of uploading all cls.
   """
+  cl = Changelist()
+  if cl.GetBranch() is None:
+    DieWithError('Can\'t upload from detached HEAD state. Get on a branch!')
+
   branch_ref = None
   cls = []
   must_upload_upstream = False

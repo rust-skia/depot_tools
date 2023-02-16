@@ -1692,7 +1692,9 @@ class TestGitCl(unittest.TestCase):
         'current', 'upstream3', 'blank3', 'blank2', 'upstream2', 'blank1',
         'upstream1', 'origin/main'
     ]
-    mockGetBranchRef.side_effect = ['refs/heads/%s' % b for b in branches]
+    mockGetBranchRef.side_effect = (
+        ['refs/heads/current'] +  # detached HEAD check
+        ['refs/heads/%s' % b for b in branches])
     mockGetCommonAncestorWithUpstream.side_effect = [
         'commit3.5',
         'commit3.5',
@@ -1808,7 +1810,9 @@ class TestGitCl(unittest.TestCase):
 
     mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
     branches = ['current', 'upstream3', 'main']
-    mockGetBranchRef.side_effect = ['refs/heads/%s' % b for b in branches]
+    mockGetBranchRef.side_effect = (
+        ['refs/heads/current'] +  # detached HEAD check
+        ['refs/heads/%s' % b for b in branches])
 
     mockGetCommonAncestorWithUpstream.side_effect = ['commit3.5', 'commit0.5']
     mockFetchUpstreamTuple.side_effect = [('.', 'refs/heads/upstream3'),
@@ -1864,7 +1868,12 @@ class TestGitCl(unittest.TestCase):
     orig_args = ['--preserve-tryjobs', '--chicken']
 
     mockGetRemoteBranch.return_value = ('origin', 'refs/remotes/origin/main')
-    mockGetBranchRef.side_effect = ['refs/heads/current', 'refs/heads/main']
+    mockGetBranchRef.side_effect = [
+        'refs/heads/current',  # detached HEAD check
+        'refs/heads/current',  # call within while loop
+        'refs/heads/main',
+        'refs/heads/main'
+    ]
     mockGetCommonAncestorWithUpstream.return_value = 'commit3.5'
     mockFetchUpstreamTuple.return_value = ('', 'refs/heads/main')
     mockIsAncestor.return_value = True
@@ -1888,6 +1897,12 @@ class TestGitCl(unittest.TestCase):
     mockRunGitSilent.return_value = ''
     with self.assertRaises(SystemExitMock):
       git_cl._UploadAllPrecheck(options, orig_args)
+
+  @mock.patch('scm.GIT.GetBranchRef', return_value=None)
+  def test_upload_all_precheck_detached_HEAD(self, mockGetBranchRef):
+
+    with self.assertRaises(SystemExitMock):
+      git_cl._UploadAllPrecheck(optparse.Values(), [])
 
   @mock.patch('git_cl.RunGit')
   @mock.patch('git_cl.CMDupload')
