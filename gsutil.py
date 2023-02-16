@@ -147,6 +147,9 @@ def ensure_gsutil(version, target, clean):
 
 def _is_luci_context():
   """Returns True if the script is run within luci-context"""
+  if os.getenv('SWARMING_HEADLESS') == '1':
+    return True
+
   luci_context_env = os.getenv('LUCI_CONTEXT')
   if not luci_context_env:
     return False
@@ -167,12 +170,7 @@ def luci_context(cmd):
   if b'Not logged in.' in p.stderr:
     return _run_subprocess(cmd, interactive=True)
 
-  if p.stdout:
-    print(p.stdout.decode('utf-8'), end='')
-
-  if p.stderr:
-    print(p.stderr.decode('utf-8'), file=sys.stderr, end='')
-
+  _print_subprocess_result(p)
   return p
 
 
@@ -205,9 +203,20 @@ def _run_subprocess(cmd, interactive=False, env=None):
   return subprocess.run(cmd, **kwargs)
 
 
+def _print_subprocess_result(p):
+  """Prints the subprocess result to stdout & stderr."""
+  if p.stdout:
+    sys.stdout.buffer.write(p.stdout)
+
+  if p.stderr:
+    sys.stderr.buffer.write(p.stderr)
+
+
 def is_boto_present():
   """Returns true if the .boto file is present in the default path."""
-  return os.path.isfile(os.path.join(os.path.expanduser('~'), '.boto'))
+  return os.getenv('BOTO_CONFIG') or os.getenv(
+      'AWS_CREDENTIAL_FILE') or os.path.isfile(
+          os.path.join(os.path.expanduser('~'), '.boto'))
 
 
 def run_gsutil(target, args, clean=False):
@@ -244,12 +253,27 @@ def run_gsutil(target, args, clean=False):
       gsutil_bin
   ] + args_opt + args
 
-  # Bypass luci-auth when run within a bot or .boto file is set.
-  if (_is_luci_context() or os.getenv('SWARMING_HEADLESS') == '1'
-      or os.getenv('BOTO_CONFIG') or os.getenv('AWS_CREDENTIAL_FILE')
-      or is_boto_present()):
+  # When .boto is present, try without additional wrappers and handle specific
+  # errors.
+  if is_boto_present():
+    p = _run_subprocess(cmd)
+
+    # Notify user that their .boto file might be outdated.
+    if b'Your credentials are invalid.' in p.stderr:
+      print(
+          'Warning: You might have an outdated .boto file. If this issue '
+          'persists after running `gsutil.py config`, try removing your '
+          '.boto file.',
+          file=sys.stderr)
+
+    _print_subprocess_result(p)
+    return p.returncode
+
+  # Skip wrapping commands if luci-auth is already being
+  if _is_luci_context():
     return _run_subprocess(cmd, interactive=True).returncode
 
+  # Wrap gsutil with luci-auth context.
   return luci_context(cmd).returncode
 
 
