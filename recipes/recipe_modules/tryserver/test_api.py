@@ -31,3 +31,18 @@ class TryserverTestApi(recipe_test_api.RecipeTestApi):
     """
     output = self.m.raw_io.stream_output('\n'.join(files))
     return self.override_step_data(step_name, output)
+
+  def get_footers(self, footers, step_name='parse description'):
+    """Override test data for the `get_footers` method.
+
+    Args:
+      footers: A dict containing key/value pairs for footers to return. To be
+          accurate to git_footers.py's actual behavior, values should be lists.
+
+    Example:
+      yield api.test(
+          'my_test',
+          api.tryserver.get_footers({'Footer-Key': ['footer_value']}))
+    """
+    output = self.m.json.output(footers)
+    return self.override_step_data(step_name, output)
