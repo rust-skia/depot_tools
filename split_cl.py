@@ -248,8 +248,10 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
       if answer.lower() != 'y':
         return 0
 
-    # Verify that the description contains a bug link.
-    bug_pattern = re.compile(r"^Bug:\s*[0-9]+", re.MULTILINE)
+    # Verify that the description contains a bug link. Examples:
+    #   Bug: 123
+    #   Bug: chromium:456
+    bug_pattern = re.compile(r"^Bug:\s*(?:[a-zA-Z]+:)?[0-9]+", re.MULTILINE)
     matches = re.findall(bug_pattern, description)
     answer = 'y'
     if not matches:
