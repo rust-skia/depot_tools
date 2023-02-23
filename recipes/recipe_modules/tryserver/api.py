@@ -92,6 +92,7 @@ class TryserverApi(recipe_api.RecipeApi):
     Populated iff gerrit_change is populated.
     Is a dictionary with keys like "name".
     """
+    self._ensure_gerrit_change_info()
     return self._gerrit_change_owner
 
   @property

@@ -2,7 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from recipe_engine import post_process
+from recipe_engine.post_process import (DropExpectation, StatusSuccess,
+                                        SummaryMarkdown)
 
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
@@ -54,7 +55,8 @@ def GenTests(api):
           'gclient recursively git diff all DEPS',
           api.gclient.diff_deps_test_data(test_files),
       ),
-      api.post_process(post_process.StatusSuccess),
+      api.post_process(StatusSuccess),
+      api.post_process(DropExpectation),
   )
 
   yield api.test(
@@ -65,8 +67,14 @@ def GenTests(api):
           'gclient recursively git diff all DEPS',
           api.gclient.diff_deps_test_data(no_test_files),
       ),
-      api.expect_exception('DepsDiffException')
+      api.expect_exception('DepsDiffException'),
+      api.post_process(
+          SummaryMarkdown,
+          "Uncaught Exception: DepsDiffException('Unexpected result: autoroll "
+          "diff found 0 files changed')"),
+      api.post_process(DropExpectation),
   )
+
   yield api.test(
       'dont have revision yet',
       api.buildbucket.try_build(),
@@ -75,8 +83,14 @@ def GenTests(api):
           'gclient recursively git diff all DEPS',
           api.raw_io.stream_output_text('fatal: bad object abcdef1234567890'),
       ),
-      api.expect_exception('DepsDiffException')
+      api.expect_exception('DepsDiffException'),
+      api.post_process(
+          SummaryMarkdown,
+          "Uncaught Exception: DepsDiffException('Couldn't checkout previous "
+          "ref: fatal: bad object abcdef1234567890')"),
+      api.post_process(DropExpectation),
   )
+
   yield api.test(
       'windows',
       api.buildbucket.try_build(),
@@ -86,5 +100,6 @@ def GenTests(api):
           'gclient recursively git diff all DEPS',
           api.gclient.diff_deps_test_data(test_files),
       ),
-      api.post_process(post_process.StatusSuccess),
+      api.post_process(StatusSuccess),
+      api.post_process(DropExpectation),
   )
