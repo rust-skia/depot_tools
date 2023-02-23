@@ -1737,19 +1737,58 @@ def CheckForCommitObjects(input_api, output_api):
           ['git', 'ls-tree', '-r', '--full-tree', 'HEAD'],
           cwd=input_api.PresubmitLocalPath()
         ).decode('utf8')
-  tree_entries = full_tree.split('\n')
-  tree_entries = [x for x in tree_entries if len(x) > 0]
-  tree_entries = map(parse_tree_entry, tree_entries)
-  bad_tree_entries = [x for x in tree_entries if x[1] == 'commit']
-  bad_tree_entries = [x[3] for x in bad_tree_entries]
-  if len(bad_tree_entries) > 0:
-    return [output_api.PresubmitError(
-      'Commit objects present within tree.\n'
-      'This may be due to submodule-related interactions; the presence of a\n'
-      'commit object in the tree may lead to odd situations where files are\n'
-      'inconsistently checked-out. Remove these commit entries and validate\n'
-      'your changeset again:\n',
-      bad_tree_entries)]
+  # deps_entry holds tree entry for the root DEPS file.
+  deps_entry = None
+  # commit_tree_entries holds all commit entries (ie gitlink, submodule record).
+  commit_tree_entries = []
+  for entry in full_tree.strip().split('\n'):
+    tree_entry = parse_tree_entry(entry)
+    if tree_entry[1] == 'commit':
+      commit_tree_entries.append(tree_entry)
+    if tree_entry[3] == 'DEPS':
+      deps_entry = tree_entry
+
+  if len(commit_tree_entries) > 0:
+    if not deps_entry:
+      # No DEPS file, carry on!
+      return []
+
+    # This gets DEPS file from HEAD (the same as local DEPS file if there's no
+    # modification).
+    deps_content = input_api.subprocess.check_output(
+        ['git', 'cat-file', 'blob', deps_entry[2]],
+        cwd=input_api.PresubmitLocalPath()).decode('utf8')
+
+    if 'use_git_submodules' in deps_content:
+      # git submodule is source of truth, so no further action needed.
+      return []
+
+    if not 'SUBMODULE_MIGRATION' in deps_content:
+      commit_tree_entries = [x[3] for x in commit_tree_entries]
+      return [
+          output_api.PresubmitError(
+              'Commit objects present within tree.\n'
+              'This may be due to submodule-related interactions;\n'
+              'the presence of a commit object in the tree may lead to odd\n'
+              'situations where files are inconsistently checked-out.\n'
+              'Remove these commit entries and validate your changeset '
+              'again:\n', commit_tree_entries)
+      ]
+
+    mismatch_entries = []
+    for commit_tree_entry in commit_tree_entries:
+      # Search for commit hashes in DEPS file - they must be present
+      if commit_tree_entry[2] not in deps_content:
+        mismatch_entries.append(commit_tree_entry[3])
+    if mismatch_entries:
+      return [
+          output_api.PresubmitError(
+              'DEPS file indicates git submodule migration is in progress,\n'
+              'but the commit objects do not match DEPS entries.\n'
+              'Update the following commit objects or DEPS entries:\n',
+              mismatch_entries)
+      ]
+
   return []
 
 
