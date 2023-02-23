@@ -3871,10 +3871,6 @@ def upload_branch_deps(cl, args, force=False):
     print('There are no dependent local branches for %s' % root_branch)
     return 0
 
-  if not force:
-    confirm_or_exit('This command will checkout all dependent branches and run '
-                    '"git cl upload".', action='continue')
-
   # Record all dependents that failed to upload.
   failures = {}
   # Go through all dependents, checkout the branch and upload.

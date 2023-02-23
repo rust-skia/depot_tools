@@ -1945,11 +1945,6 @@ class TestGitCl(unittest.TestCase):
     ret = git_cl.upload_branch_deps(MockChangelist(), [])
     # CMDupload should have been called 5 times because of 5 dependent branches.
     self.assertEqual(5, len(git_cl.CMDupload.mock_calls))
-    self.assertIn(
-        'This command will checkout all dependent branches '
-        'and run "git cl upload". Press Enter to continue, '
-        'or Ctrl+C to abort',
-        sys.stdout.getvalue())
     self.assertEqual(0, ret)
 
   def test_gerrit_change_id(self):
