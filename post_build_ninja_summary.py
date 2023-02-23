@@ -206,7 +206,7 @@ def GetExtension(target, extra_patterns):
   return extension
 
 
-def SummarizeEntries(entries, extra_step_types):
+def SummarizeEntries(entries, extra_step_types, elapsed_time_sorting):
     """Print a summary of the passed in list of Target objects."""
 
     # Create a list that is in order by time stamp and has entries for the
@@ -271,9 +271,12 @@ def SummarizeEntries(entries, extra_step_types):
             'untrustworthy. Length = %.3f, weighted total = %.3f' % (
             length, weighted_total))
 
-    # Print the slowest build steps (by weighted time).
+    # Print the slowest build steps:
     print('    Longest build steps:')
-    entries.sort(key=lambda x: x.WeightedDuration())
+    if elapsed_time_sorting:
+      entries.sort(key=lambda x: x.Duration())
+    else:
+      entries.sort(key=lambda x: x.WeightedDuration())
     for target in entries[-long_count:]:
       print('      %8.1f weighted s to build %s (%.1f s elapsed time)' % (
             target.WeightedDuration(),
@@ -293,9 +296,13 @@ def SummarizeEntries(entries, extra_step_types):
 
     print('    Time by build-step type:')
     # Copy to a list with extension name and total time swapped, to (time, ext)
-    weighted_time_by_ext_sorted = sorted((y, x) for (x, y) in
-                                          weighted_time_by_ext.items())
-    # Print the slowest build target types (by weighted time):
+    if elapsed_time_sorting:
+      weighted_time_by_ext_sorted = sorted((y, x) for (x, y) in
+                                            time_by_ext.items())
+    else:
+      weighted_time_by_ext_sorted = sorted((y, x) for (x, y) in
+                                            weighted_time_by_ext.items())
+    # Print the slowest build target types:
     for time, extension in weighted_time_by_ext_sorted[-long_ext_count:]:
         print('      %8.1f s weighted time to generate %d %s files '
                '(%1.1f s elapsed time sum)' % (time, count_by_ext[extension],
@@ -317,6 +324,12 @@ def main():
         '-s',
         '--step-types',
         help='semicolon separated fnmatch patterns for build-step grouping')
+    parser.add_argument(
+        '-e',
+        '--elapsed_time_sorting',
+        default=False,
+        action='store_true',
+        help='Sort output by elapsed time instead of weighted time')
     parser.add_argument('--log-file',
                         help="specific ninja log file to analyze.")
     args, _extra_args = parser.parse_known_args()
@@ -337,7 +350,7 @@ def main():
     try:
       with open(log_file, 'r') as log:
         entries = ReadTargets(log, False)
-        SummarizeEntries(entries, args.step_types)
+        SummarizeEntries(entries, args.step_types, args.elapsed_time_sorting)
     except IOError:
       print('Log file %r not found, no build summary created.' % log_file)
       return errno.ENOENT
