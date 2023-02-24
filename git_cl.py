@@ -4762,7 +4762,7 @@ def CMDupload(parser, args):
     # Load default for user, repo, squash=true, in this order.
     options.squash = settings.GetSquashGerritUploads()
 
-  if os.environ.get('DOGFOOD_STACKED_CHANGES') == '1':
+  if options.squash and os.environ.get('DOGFOOD_STACKED_CHANGES') == '1':
     if options.dependencies:
       parser.error('--dependencies is not available for this workflow.')
 
