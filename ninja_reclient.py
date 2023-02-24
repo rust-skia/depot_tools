@@ -136,9 +136,11 @@ def main(argv):
   try:
     return ninja.main(argv)
   except KeyboardInterrupt:
+    print("Caught User Interrupt", file=sys.stderr)
     # Suppress python stack trace if ninja is interrupted
     return 1
   finally:
+    print("Shutting down reproxy...", file=sys.stderr)
     stop_reproxy(reclient_cfg, reclient_bin_dir)
 
 
