@@ -520,6 +520,7 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
       'java': 100,
       # This is specifically for Android's handwritten makefiles (Android.mk).
       'mk': 200,
+      'rs': 100,
       '': maxlen,
   }
 
