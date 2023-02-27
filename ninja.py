@@ -41,7 +41,7 @@ def fallback(ninja_args):
       'the current project, nor in your PATH.\n'
       'Please take a following action to install Ninja.\n'
       '- If your project has DEPS, Add a CIPD Ninja dependency to DEPS.\n'
-      '- Oterweise, Add Ninja to your PATH *after* depot_tools.',
+      '- Otherwise, add Ninja to your PATH *after* depot_tools.',
       file=sys.stderr)
   return 1
 
