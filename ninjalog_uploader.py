@@ -75,8 +75,8 @@ def ParseGNArgs(gn_args):
 def GetBuildTargetFromCommandLine(cmdline):
   """Get build targets from commandline."""
 
-  # Skip argv0.
-  idx = 1
+  # Skip argv0, argv1: ['/path/to/python3', '/path/to/depot_tools/ninja.py']
+  idx = 2
 
   # Skipping all args that involve these flags, and taking all remaining args
   # as targets.
