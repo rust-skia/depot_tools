@@ -3,7 +3,7 @@
 # [VPYTHON:BEGIN]
 # wheel: <
 #   name: "infra/python/wheels/yapf-py2_py3"
-#   version: "version:0.29.1"
+#   version: "version:0.31.0"
 # >
 # wheel: <
 #   name: "infra/python/wheels/futures-py2_py3"
