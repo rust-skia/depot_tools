@@ -197,6 +197,10 @@ def main():
     # Disable logging.
     logging.disable(logging.CRITICAL)
 
+  if True:  # This is for unreachable code lint warning.
+    # TODO(b/270907050): disable log collection temporarily.
+    return 0
+
   if not IsGoogler():
     return 0
 
