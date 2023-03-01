@@ -1,7 +1,6 @@
 # Copyright (c) 2012 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
 """SCM-specific utility classes."""
 
 import distutils.version
@@ -17,9 +16,8 @@ import subprocess2
 
 
 def ValidateEmail(email):
-  return (
-      re.match(r"^[a-zA-Z0-9._%\-+]+@[a-zA-Z0-9._%-]+.[a-zA-Z]{2,6}$", email)
-      is not None)
+  return (re.match(r"^[a-zA-Z0-9._%\-+]+@[a-zA-Z0-9._%-]+.[a-zA-Z]{2,6}$",
+                   email) is not None)
 
 
 def GetCasedPath(path):
@@ -32,12 +30,12 @@ def GetCasedPath(path):
       if i == 0:
         # Skip drive letter.
         continue
-      subpath = '\\'.join(paths[:i+1])
+      subpath = '\\'.join(paths[:i + 1])
       prev = len('\\'.join(paths[:i]))
       # glob.glob will return the cased path for the last item only. This is why
       # we are calling it in a loop. Extract the data we want and put it back
       # into the list.
-      paths[i] = glob.glob(subpath + '*')[0][prev+1:len(subpath)]
+      paths[i] = glob.glob(subpath + '*')[0][prev + 1:len(subpath)]
     path = '\\'.join(paths)
   return path
 
@@ -73,11 +71,10 @@ def determine_scm(root):
     return 'git'
 
   try:
-    subprocess2.check_call(
-        ['git', 'rev-parse', '--show-cdup'],
-        stdout=subprocess2.DEVNULL,
-        stderr=subprocess2.DEVNULL,
-        cwd=root)
+    subprocess2.check_call(['git', 'rev-parse', '--show-cdup'],
+                           stdout=subprocess2.DEVNULL,
+                           stderr=subprocess2.DEVNULL,
+                           cwd=root)
     return 'git'
   except (OSError, subprocess2.CalledProcessError):
     return None
@@ -113,8 +110,11 @@ class GIT(object):
   @staticmethod
   def Capture(args, cwd=None, strip_out=True, **kwargs):
     env = GIT.ApplyEnvVars(kwargs)
-    output = subprocess2.check_output(
-        ['git'] + args, cwd=cwd, stderr=subprocess2.PIPE, env=env, **kwargs)
+    output = subprocess2.check_output(['git'] + args,
+                                      cwd=cwd,
+                                      stderr=subprocess2.PIPE,
+                                      env=env,
+                                      **kwargs)
     output = output.decode('utf-8', 'replace')
     return output.strip() if strip_out else output
 
@@ -144,8 +144,8 @@ class GIT(object):
         # these 2 branches instead diffing to upstream.
         m = re.match(r'^(\w)+\t(.+)$', statusline)
         if not m:
-          raise gclient_utils.Error(
-              'status currently unsupported: %s' % statusline)
+          raise gclient_utils.Error('status currently unsupported: %s' %
+                                    statusline)
         # Only grab the first letter.
         results.append(('%s      ' % m.group(1)[0], m.group(2)))
     return results
@@ -343,7 +343,10 @@ class GIT(object):
       return ''
 
   @staticmethod
-  def GenerateDiff(cwd, branch=None, branch_head='HEAD', full_move=False,
+  def GenerateDiff(cwd,
+                   branch=None,
+                   branch_head='HEAD',
+                   full_move=False,
                    files=None):
     """Diffs against the upstream branch or optionally another branch.
 
@@ -351,9 +354,10 @@ class GIT(object):
     files, usually in the prospect to apply the patch for a try job."""
     if not branch:
       branch = GIT.GetUpstreamBranch(cwd)
-    command = ['-c', 'core.quotePath=false', 'diff',
-               '-p', '--no-color', '--no-prefix', '--no-ext-diff',
-               branch + "..." + branch_head]
+    command = [
+        '-c', 'core.quotePath=false', 'diff', '-p', '--no-color', '--no-prefix',
+        '--no-ext-diff', branch + "..." + branch_head
+    ]
     if full_move:
       command.append('--no-renames')
     else:
@@ -367,7 +371,7 @@ class GIT(object):
       # In the case of added files, replace /dev/null with the path to the
       # file being added.
       if diff[i].startswith('--- /dev/null'):
-        diff[i] = '--- %s' % diff[i+1][4:]
+        diff[i] = '--- %s' % diff[i + 1][4:]
     return ''.join(diff)
 
   @staticmethod
@@ -375,8 +379,10 @@ class GIT(object):
     """Returns the list of modified files between two branches."""
     if not branch:
       branch = GIT.GetUpstreamBranch(cwd)
-    command = ['-c', 'core.quotePath=false', 'diff',
-               '--name-only', branch + "..." + branch_head]
+    command = [
+        '-c', 'core.quotePath=false', 'diff', '--name-only',
+        branch + "..." + branch_head
+    ]
     return GIT.Capture(command, cwd=cwd).splitlines(False)
 
   @staticmethod

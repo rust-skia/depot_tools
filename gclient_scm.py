@@ -28,7 +28,7 @@ except ImportError:  # For Py3 compatibility
 import gclient_utils
 import gerrit_util
 import git_cache
-import scm
+from lib import scm
 import shutil
 import subprocess2
 

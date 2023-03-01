@@ -8,7 +8,7 @@ import fix_encoding
 import gerrit_util
 import git_common
 import metrics
-import scm
+from lib import scm
 import sys
 import logging
 from six.moves import urllib

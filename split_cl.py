@@ -16,7 +16,7 @@ import tempfile
 
 import gclient_utils
 import git_footers
-import scm
+from lib import scm
 
 import git_common as git
 

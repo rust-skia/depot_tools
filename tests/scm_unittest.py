@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from testing_support import fake_repos
 
-import scm
+from lib import scm
 import subprocess2
 
 
@@ -32,13 +32,13 @@ class GitWrapperTestCase(unittest.TestCase):
     super(GitWrapperTestCase, self).setUp()
     self.root_dir = '/foo/bar'
 
-  @mock.patch('scm.GIT.Capture')
+  @mock.patch('lib.scm.GIT.Capture')
   def testGetEmail(self, mockCapture):
     mockCapture.return_value = 'mini@me.com'
     self.assertEqual(scm.GIT.GetEmail(self.root_dir), 'mini@me.com')
     mockCapture.assert_called_with(['config', 'user.email'], cwd=self.root_dir)
 
-  @mock.patch('scm.GIT.Capture')
+  @mock.patch('lib.scm.GIT.Capture')
   def testAssertVersion(self, mockCapture):
     cases = [
         ('1.7', True),
@@ -99,7 +99,7 @@ class GitWrapperTestCase(unittest.TestCase):
       r = scm.GIT.RemoteRefToRef(k, remote)
       self.assertEqual(r, v, msg='%s -> %s, expected %s' % (k, r, v))
 
-  @mock.patch('scm.GIT.Capture')
+  @mock.patch('lib.scm.GIT.Capture')
   @mock.patch('os.path.exists', lambda _:True)
   def testGetRemoteHeadRefLocal(self, mockCapture):
     mockCapture.side_effect = ['refs/remotes/origin/main']
@@ -107,7 +107,7 @@ class GitWrapperTestCase(unittest.TestCase):
                      scm.GIT.GetRemoteHeadRef('foo', 'proto://url', 'origin'))
     self.assertEqual(mockCapture.call_count, 1)
 
-  @mock.patch('scm.GIT.Capture')
+  @mock.patch('lib.scm.GIT.Capture')
   @mock.patch('os.path.exists', lambda _: True)
   def testGetRemoteHeadRefLocalUpdateHead(self, mockCapture):
     mockCapture.side_effect = [
@@ -119,7 +119,7 @@ class GitWrapperTestCase(unittest.TestCase):
                      scm.GIT.GetRemoteHeadRef('foo', 'proto://url', 'origin'))
     self.assertEqual(mockCapture.call_count, 3)
 
-  @mock.patch('scm.GIT.Capture')
+  @mock.patch('lib.scm.GIT.Capture')
   @mock.patch('os.path.exists', lambda _:True)
   def testGetRemoteHeadRefRemote(self, mockCapture):
     mockCapture.side_effect = [
@@ -215,12 +215,12 @@ class RealGitTest(fake_repos.FakeReposTestBase):
     self.assertEqual(
         (None, None), scm.GIT.FetchUpstreamTuple(self.cwd))
 
-  @mock.patch('scm.GIT.GetRemoteBranches', return_value=['origin/main'])
+  @mock.patch('lib.scm.GIT.GetRemoteBranches', return_value=['origin/main'])
   def testFetchUpstreamTuple_GuessOriginMaster(self, _mockGetRemoteBranches):
     self.assertEqual(('origin', 'refs/heads/main'),
                      scm.GIT.FetchUpstreamTuple(self.cwd))
 
-  @mock.patch('scm.GIT.GetRemoteBranches',
+  @mock.patch('lib.scm.GIT.GetRemoteBranches',
               return_value=['origin/master', 'origin/main'])
   def testFetchUpstreamTuple_GuessOriginMain(self, _mockGetRemoteBranches):
     self.assertEqual(('origin', 'refs/heads/main'),
@@ -235,7 +235,7 @@ class RealGitTest(fake_repos.FakeReposTestBase):
     scm.GIT.SetConfig(self.cwd, 'rietveld.upstream-branch')
     scm.GIT.SetConfig(self.cwd, 'rietveld.upstream-remote')
 
-  @mock.patch('scm.GIT.GetBranch', side_effect=callError())
+  @mock.patch('lib.scm.GIT.GetBranch', side_effect=callError())
   def testFetchUpstreamTuple_NotOnBranch(self, _mockGetBranch):
     scm.GIT.SetConfig(self.cwd, 'rietveld.upstream-branch', 'rietveld-upstream')
     scm.GIT.SetConfig(self.cwd, 'rietveld.upstream-remote', 'rietveld-remote')

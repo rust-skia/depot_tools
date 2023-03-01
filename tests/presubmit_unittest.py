@@ -45,9 +45,10 @@ import json
 import owners_client
 import presubmit_support as presubmit
 import rdb_wrapper
-import scm
+from lib import scm
 import subprocess2 as subprocess
 from lib import utils
+from lib import change as libchange
 
 
 # Shortcut.
@@ -183,7 +184,7 @@ index fe3de7b..54ae6e1 100755
     self.fake_change = FakeChange(self)
     self.rdb_client = mock.MagicMock()
 
-    mock.patch('gclient_utils.FileRead').start()
+    mock.patch('lib.utils.FileRead').start()
     mock.patch('gclient_utils.FileWrite').start()
     mock.patch('json.load').start()
     mock.patch('multiprocessing.cpu_count', lambda: 2)
@@ -201,8 +202,8 @@ index fe3de7b..54ae6e1 100755
     mock.patch('presubmit_support.time_time', return_value=0).start()
     mock.patch('presubmit_support.warn').start()
     mock.patch('random.randint').start()
-    mock.patch('scm.GIT.GenerateDiff').start()
-    mock.patch('scm.determine_scm').start()
+    mock.patch('lib.scm.GIT.GenerateDiff').start()
+    mock.patch('lib.scm.determine_scm').start()
     mock.patch('subprocess2.Popen').start()
     mock.patch('sys.stderr', StringIO()).start()
     mock.patch('sys.stdout', StringIO()).start()
@@ -232,7 +233,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     self.assertEqual(canned.CheckOwners, orig)
 
   def testTagLineRe(self):
-    m = presubmit.Change.TAG_LINE_RE.match(' BUG =1223, 1445  \t')
+    m = libchange.Change.TAG_LINE_RE.match(' BUG =1223, 1445  \t')
     self.assertIsNotNone(m)
     self.assertEqual(m.group('key'), 'BUG')
     self.assertEqual(m.group('value'), '1223, 1445')
@@ -347,15 +348,14 @@ class PresubmitUnittest(PresubmitTestsBase):
 
     scm.GIT.GenerateDiff.return_value = '\n'.join(unified_diff)
 
-    change = presubmit.GitChange(
-        'mychange',
-        '\n'.join(description_lines),
-        self.fake_root_dir,
-        files,
-        0,
-        0,
-        None,
-        upstream=None)
+    change = libchange.GitChange('mychange',
+                                 '\n'.join(description_lines),
+                                 self.fake_root_dir,
+                                 files,
+                                 0,
+                                 0,
+                                 None,
+                                 upstream=None)
     self.assertIsNotNone(change.Name() == 'mychange')
     self.assertIsNotNone(change.DescriptionText() ==
                     'Hello there\nthis is a change\nand some more regular text')
@@ -411,14 +411,8 @@ class PresubmitUnittest(PresubmitTestsBase):
 
   def testInvalidChange(self):
     with self.assertRaises(AssertionError):
-      presubmit.GitChange(
-          'mychange',
-          'description',
-          self.fake_root_dir,
-          ['foo/blat.cc', 'bar'],
-          0,
-          0,
-          None)
+      libchange.GitChange('mychange', 'description', self.fake_root_dir,
+                          ['foo/blat.cc', 'bar'], 0, 0, None)
 
   def testExecPresubmitScript(self):
     description_lines = ('Hello there',
@@ -429,14 +423,8 @@ class PresubmitUnittest(PresubmitTestsBase):
     ]
     fake_presubmit = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
 
-    change = presubmit.Change(
-        'mychange',
-        '\n'.join(description_lines),
-        self.fake_root_dir,
-        files,
-        0,
-        0,
-        None)
+    change = libchange.Change('mychange', '\n'.join(description_lines),
+                              self.fake_root_dir, files, 0, 0, None)
     executer = presubmit.PresubmitExecuter(
         change, False, None, presubmit.GerritAccessor())
     self.assertFalse(executer.ExecPresubmitScript('', fake_presubmit))
@@ -484,7 +472,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     description_lines = ('Hello there', 'this is a change', 'BUG=123')
     files = [['A', 'foo\\blat.cc']]
     fake_presubmit = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
-    change = presubmit.Change('mychange', '\n'.join(description_lines),
+    change = libchange.Change('mychange', '\n'.join(description_lines),
                               self.fake_root_dir, files, 0, 0, None)
     executer = presubmit.PresubmitExecuter(
         change, True, None, presubmit.GerritAccessor())
@@ -584,7 +572,7 @@ class PresubmitUnittest(PresubmitTestsBase):
   def testDoPostUploadExecuter(self):
     os.path.isfile.side_effect = lambda f: 'PRESUBMIT.py' in f
     os.listdir.return_value = ['PRESUBMIT.py']
-    gclient_utils.FileRead.return_value = self.presubmit_text
+    utils.FileRead.return_value = self.presubmit_text
     change = self.ExampleChange()
     self.assertEqual(
         0,
@@ -603,7 +591,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     path = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
     os.path.isfile.side_effect = lambda f: f == path
     os.listdir.return_value = ['PRESUBMIT.py']
-    gclient_utils.FileRead.return_value = self.presubmit_text
+    utils.FileRead.return_value = self.presubmit_text
     change = self.ExampleChange(extra_lines=['PROMPT_WARNING=yes'])
     self.assertEqual(
         0,
@@ -621,7 +609,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     path = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
     os.path.isfile.side_effect = lambda f: f == path
     os.listdir.return_value = ['PRESUBMIT.py']
-    gclient_utils.FileRead.return_value = self.presubmit_text
+    utils.FileRead.return_value = self.presubmit_text
     change = self.ExampleChange(extra_lines=['ERROR=yes'])
     self.assertEqual(
         1,
@@ -649,7 +637,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     os.path.isfile.side_effect = lambda f: f in [root_path, haspresubmit_path]
     os.listdir.return_value = ['PRESUBMIT.py']
 
-    gclient_utils.FileRead.return_value = self.presubmit_text
+    utils.FileRead.return_value = self.presubmit_text
 
     # Make a change which will have no warnings.
     change = self.ExampleChange(extra_lines=['STORY=http://tracker/123'])
@@ -758,7 +746,7 @@ def CheckChangeOnCommit(input_api, output_api):
     os.listdir.return_value = ['PRESUBMIT.py']
     random.randint.return_value = 1
 
-    gclient_utils.FileRead.return_value = self.presubmit_text
+    utils.FileRead.return_value = self.presubmit_text
 
     # Make a change with a single warning.
     change = self.ExampleChange(extra_lines=['PROMPT_WARNING=yes'])
@@ -793,7 +781,7 @@ def CheckChangeOnCommit(input_api, output_api):
     os.path.isfile.side_effect = (
         lambda f: f in [presubmit_path, haspresubmit_path])
     os.listdir.return_value = ['PRESUBMIT.py']
-    gclient_utils.FileRead.return_value = self.presubmit_text
+    utils.FileRead.return_value = self.presubmit_text
     random.randint.return_value = 1
 
     change = self.ExampleChange(extra_lines=['PROMPT_WARNING=yes'])
@@ -818,7 +806,7 @@ def CheckChangeOnCommit(input_api, output_api):
     os.path.isfile.side_effect = (
         lambda f: f in [presubmit_path, haspresubmit_path])
     os.listdir.return_value = ['PRESUBMIT.py']
-    gclient_utils.FileRead.return_value = self.presubmit_text
+    utils.FileRead.return_value = self.presubmit_text
     random.randint.return_value = 1
 
     change = self.ExampleChange(extra_lines=['ERROR=yes'])
@@ -876,14 +864,13 @@ def CheckChangeOnCommit(input_api, output_api):
     files = [
       ['A', os.path.join('haspresubmit', 'blat.cc')],
     ]
-    return presubmit.Change(
-        name='mychange',
-        description='\n'.join(description_lines),
-        local_root=self.fake_root_dir,
-        files=files,
-        issue=0,
-        patchset=0,
-        author=None)
+    return libchange.Change(name='mychange',
+                            description='\n'.join(description_lines),
+                            local_root=self.fake_root_dir,
+                            files=files,
+                            issue=0,
+                            patchset=0,
+                            author=None)
 
   def testMergeMasters(self):
     merge = presubmit._MergeMasters
@@ -911,7 +898,7 @@ def CheckChangeOnCommit(input_api, output_api):
   def testMainPostUpload(self):
     os.path.isfile.side_effect = lambda f: 'PRESUBMIT.py' in f
     os.listdir.return_value = ['PRESUBMIT.py']
-    gclient_utils.FileRead.return_value = (
+    utils.FileRead.return_value = (
         'USE_PYTHON3 = ' + str(sys.version_info.major == 3) + '\n'
         'def PostUploadHook(gerrit, change, output_api):\n'
         '  return ()\n')
@@ -924,7 +911,7 @@ def CheckChangeOnCommit(input_api, output_api):
 
   @mock.patch('lib.utils.ListRelevantFilesInSourceCheckout')
   def testMainUnversioned(self, *_mocks):
-    gclient_utils.FileRead.return_value = ''
+    utils.FileRead.return_value = ''
     scm.determine_scm.return_value = None
     utils.ListRelevantFilesInSourceCheckout.return_value = [
         os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
@@ -936,7 +923,7 @@ def CheckChangeOnCommit(input_api, output_api):
 
   @mock.patch('lib.utils.ListRelevantFilesInSourceCheckout')
   def testMainUnversionedChecksFail(self, *_mocks):
-    gclient_utils.FileRead.return_value = (
+    utils.FileRead.return_value = (
         'USE_PYTHON3 = ' + str(sys.version_info.major == 3) + '\n'
         'def CheckChangeOnUpload(input_api, output_api):\n'
         '  return [output_api.PresubmitError("!!")]\n')
@@ -962,23 +949,22 @@ def CheckChangeOnCommit(input_api, output_api):
         'presubmit_unittest.py: error: <files> is not optional for unversioned '
         'directories.\n')
 
-  @mock.patch('presubmit_support.Change', mock.Mock())
+  @mock.patch('lib.change.Change', mock.Mock())
   def testParseChange_Files(self):
     presubmit._parse_files.return_value=[('M', 'random_file.txt')]
     scm.determine_scm.return_value = None
     options = mock.Mock(all_files=False, source_controlled_only = False)
 
     change = presubmit._parse_change(None, options)
-    self.assertEqual(presubmit.Change.return_value, change)
-    presubmit.Change.assert_called_once_with(
-        options.name,
-        options.description,
-        options.root,
-        [('M', 'random_file.txt')],
-        options.issue,
-        options.patchset,
-        options.author,
-        upstream=options.upstream)
+    self.assertEqual(libchange.Change.return_value, change)
+    libchange.Change.assert_called_once_with(options.name,
+                                             options.description,
+                                             options.root,
+                                             [('M', 'random_file.txt')],
+                                             options.issue,
+                                             options.patchset,
+                                             options.author,
+                                             upstream=options.upstream)
     presubmit._parse_files.assert_called_once_with(
         options.files, options.recursive)
 
@@ -1004,65 +990,63 @@ def CheckChangeOnCommit(input_api, output_api):
     parser.error.assert_called_once_with(
         '<files> cannot be specified when --all-files is set.')
 
-  @mock.patch('presubmit_support.GitChange', mock.Mock())
+  @mock.patch('lib.change.GitChange', mock.Mock())
   def testParseChange_FilesAndGit(self):
     scm.determine_scm.return_value = 'git'
     presubmit._parse_files.return_value = [('M', 'random_file.txt')]
     options = mock.Mock(all_files=False, source_controlled_only = False)
 
     change = presubmit._parse_change(None, options)
-    self.assertEqual(presubmit.GitChange.return_value, change)
-    presubmit.GitChange.assert_called_once_with(
-        options.name,
-        options.description,
-        options.root,
-        [('M', 'random_file.txt')],
-        options.issue,
-        options.patchset,
-        options.author,
-        upstream=options.upstream)
+    self.assertEqual(libchange.GitChange.return_value, change)
+    libchange.GitChange.assert_called_once_with(options.name,
+                                                options.description,
+                                                options.root,
+                                                [('M', 'random_file.txt')],
+                                                options.issue,
+                                                options.patchset,
+                                                options.author,
+                                                upstream=options.upstream)
     presubmit._parse_files.assert_called_once_with(
         options.files, options.recursive)
 
-  @mock.patch('presubmit_support.GitChange', mock.Mock())
-  @mock.patch('scm.GIT.CaptureStatus', mock.Mock())
+  @mock.patch('lib.change.GitChange', mock.Mock())
+  @mock.patch('lib.scm.GIT.CaptureStatus', mock.Mock())
   def testParseChange_NoFilesAndGit(self):
     scm.determine_scm.return_value = 'git'
     scm.GIT.CaptureStatus.return_value = [('A', 'added.txt')]
     options = mock.Mock(all_files=False, files=[])
 
     change = presubmit._parse_change(None, options)
-    self.assertEqual(presubmit.GitChange.return_value, change)
-    presubmit.GitChange.assert_called_once_with(
-        options.name,
-        options.description,
-        options.root,
-        [('A', 'added.txt')],
-        options.issue,
-        options.patchset,
-        options.author,
-        upstream=options.upstream)
+    self.assertEqual(libchange.GitChange.return_value, change)
+    libchange.GitChange.assert_called_once_with(options.name,
+                                                options.description,
+                                                options.root,
+                                                [('A', 'added.txt')],
+                                                options.issue,
+                                                options.patchset,
+                                                options.author,
+                                                upstream=options.upstream)
     scm.GIT.CaptureStatus.assert_called_once_with(
         options.root, options.upstream)
 
-  @mock.patch('presubmit_support.GitChange', mock.Mock())
-  @mock.patch('scm.GIT.GetAllFiles', mock.Mock())
+  @mock.patch('lib.change.GitChange', mock.Mock())
+  @mock.patch('lib.scm.GIT.GetAllFiles', mock.Mock())
   def testParseChange_AllFilesAndGit(self):
     scm.determine_scm.return_value = 'git'
     scm.GIT.GetAllFiles.return_value = ['foo.txt', 'bar.txt']
     options = mock.Mock(all_files=True, files=[])
 
     change = presubmit._parse_change(None, options)
-    self.assertEqual(presubmit.GitChange.return_value, change)
-    presubmit.GitChange.assert_called_once_with(
-        options.name,
-        options.description,
-        options.root,
-        [('M', 'foo.txt'), ('M', 'bar.txt')],
-        options.issue,
-        options.patchset,
-        options.author,
-        upstream=options.upstream)
+    self.assertEqual(libchange.GitChange.return_value, change)
+    libchange.GitChange.assert_called_once_with(options.name,
+                                                options.description,
+                                                options.root,
+                                                [('M', 'foo.txt'),
+                                                 ('M', 'bar.txt')],
+                                                options.issue,
+                                                options.patchset,
+                                                options.author,
+                                                upstream=options.upstream)
     scm.GIT.GetAllFiles.assert_called_once_with(options.root)
 
   def testParseGerritOptions_NoGerritUrl(self):
@@ -1198,14 +1182,9 @@ class InputApiUnittest(PresubmitTestsBase):
     os.path.isfile.side_effect = lambda f: f in known_files
     presubmit.scm.GIT.GenerateDiff.return_value = '\n'.join(diffs)
 
-    change = presubmit.GitChange(
-        'mychange',
-        '\n'.join(description_lines),
-        self.fake_root_dir,
-        [[f[0], f[1]] for f in files],
-        0,
-        0,
-        None)
+    change = libchange.GitChange('mychange', '\n'.join(description_lines),
+                                 self.fake_root_dir,
+                                 [[f[0], f[1]] for f in files], 0, 0, None)
     input_api = presubmit.InputApi(
         change,
         os.path.join(self.fake_root_dir, 'foo', 'PRESUBMIT.py'),
@@ -1251,14 +1230,9 @@ class InputApiUnittest(PresubmitTestsBase):
         for _, f in files]
     os.path.isfile.side_effect = lambda f: f in known_files
 
-    change = presubmit.GitChange(
-        'mychange',
-        'description\nlines\n',
-        self.fake_root_dir,
-        [[f[0], f[1]] for f in files],
-        0,
-        0,
-        None)
+    change = libchange.GitChange('mychange', 'description\nlines\n',
+                                 self.fake_root_dir,
+                                 [[f[0], f[1]] for f in files], 0, 0, None)
     input_api = presubmit.InputApi(
         change,
         os.path.join(self.fake_root_dir, 'foo', 'PRESUBMIT.py'),
@@ -1275,7 +1249,8 @@ class InputApiUnittest(PresubmitTestsBase):
 
   def testDefaultFilesToCheckFilesToSkipFilters(self):
     def f(x):
-      return presubmit.AffectedFile(x, 'M', self.fake_root_dir, None)
+      return libchange.AffectedFile(x, 'M', self.fake_root_dir, None)
+
     files = [
       (
         [
@@ -1380,8 +1355,8 @@ class InputApiUnittest(PresubmitTestsBase):
       for _, item in files]
     os.path.isfile.side_effect = lambda f: f in known_files
 
-    change = presubmit.GitChange(
-        'mychange', '', self.fake_root_dir, files, 0, 0, None)
+    change = libchange.GitChange('mychange', '', self.fake_root_dir, files, 0,
+                                 0, None)
     input_api = presubmit.InputApi(
         change,
         os.path.join(self.fake_root_dir, 'PRESUBMIT.py'),
@@ -1400,8 +1375,8 @@ class InputApiUnittest(PresubmitTestsBase):
       for _, item in files]
     os.path.isfile.side_effect = lambda f: f in known_files
 
-    change = presubmit.GitChange(
-        'mychange', '', self.fake_root_dir, files, 0, 0, None)
+    change = libchange.GitChange('mychange', '', self.fake_root_dir, files, 0,
+                                 0, None)
     input_api = presubmit.InputApi(
         change, os.path.join(self.fake_root_dir, 'PRESUBMIT.py'), False, None,
         False)
@@ -1426,8 +1401,8 @@ class InputApiUnittest(PresubmitTestsBase):
       ['M', os.path.join('elsewhere', 'ouf.cc')],
     ]
 
-    change = presubmit.Change(
-        'mychange', '', self.fake_root_dir, files, 0, 0, None)
+    change = libchange.Change('mychange', '', self.fake_root_dir, files, 0, 0,
+                              None)
     affected_files = change.AffectedFiles()
     # Validate that normpath strips trailing path separators.
     self.assertEqual('isdir', normpath('isdir/'))
@@ -1461,8 +1436,8 @@ class InputApiUnittest(PresubmitTestsBase):
         utils.normpath(os.path.join(self.fake_root_dir, 'isdir', 'blat.cc')))
 
   def testDeprecated(self):
-    change = presubmit.Change(
-        'mychange', '', self.fake_root_dir, [], 0, 0, None)
+    change = libchange.Change('mychange', '', self.fake_root_dir, [], 0, 0,
+                              None)
     api = presubmit.InputApi(
         change,
         os.path.join(self.fake_root_dir, 'foo', 'PRESUBMIT.py'), True,
@@ -1471,8 +1446,8 @@ class InputApiUnittest(PresubmitTestsBase):
 
   def testReadFileStringDenied(self):
 
-    change = presubmit.Change(
-        'foo', 'foo', self.fake_root_dir, [('M', 'AA')], 0, 0, None)
+    change = libchange.Change('foo', 'foo', self.fake_root_dir, [('M', 'AA')],
+                              0, 0, None)
     input_api = presubmit.InputApi(
         change, os.path.join(self.fake_root_dir, '/p'), False,
         None, False)
@@ -1482,31 +1457,35 @@ class InputApiUnittest(PresubmitTestsBase):
     path = os.path.join(self.fake_root_dir, 'AA/boo')
     presubmit.gclient_utils.FileRead.return_code = None
 
-    change = presubmit.Change(
-        'foo', 'foo', self.fake_root_dir, [('M', 'AA')], 0, 0, None)
+    change = libchange.Change('foo', 'foo', self.fake_root_dir, [('M', 'AA')],
+                              0, 0, None)
     input_api = presubmit.InputApi(
         change, os.path.join(self.fake_root_dir, '/p'), False,
         None, False)
     input_api.ReadFile(path, 'x')
 
   def testReadFileAffectedFileDenied(self):
-    fileobj = presubmit.AffectedFile('boo', 'M', 'Unrelated',
+    fileobj = libchange.AffectedFile('boo',
+                                     'M',
+                                     'Unrelated',
                                      diff_cache=mock.Mock())
 
-    change = presubmit.Change(
-        'foo', 'foo', self.fake_root_dir, [('M', 'AA')], 0, 0, None)
+    change = libchange.Change('foo', 'foo', self.fake_root_dir, [('M', 'AA')],
+                              0, 0, None)
     input_api = presubmit.InputApi(
         change, os.path.join(self.fake_root_dir, '/p'), False,
         None, False)
     self.assertRaises(IOError, input_api.ReadFile, fileobj, 'x')
 
   def testReadFileAffectedFileAccepted(self):
-    fileobj = presubmit.AffectedFile('AA/boo', 'M', self.fake_root_dir,
+    fileobj = libchange.AffectedFile('AA/boo',
+                                     'M',
+                                     self.fake_root_dir,
                                      diff_cache=mock.Mock())
     presubmit.gclient_utils.FileRead.return_code = None
 
-    change = presubmit.Change(
-        'foo', 'foo', self.fake_root_dir, [('M', 'AA')], 0, 0, None)
+    change = libchange.Change('foo', 'foo', self.fake_root_dir, [('M', 'AA')],
+                              0, 0, None)
     input_api = presubmit.InputApi(
         change, os.path.join(self.fake_root_dir, '/p'), False,
         None, False)
@@ -1581,25 +1560,25 @@ class OutputApiUnittest(PresubmitTestsBase):
 
 class AffectedFileUnittest(PresubmitTestsBase):
   def testAffectedFile(self):
-    gclient_utils.FileRead.return_value = 'whatever\ncookie'
-    af = presubmit.GitAffectedFile('foo/blat.cc', 'M', self.fake_root_dir, None)
+    utils.FileRead.return_value = 'whatever\ncookie'
+    af = libchange.GitAffectedFile('foo/blat.cc', 'M', self.fake_root_dir, None)
     self.assertEqual(utils.normpath('foo/blat.cc'), af.LocalPath())
     self.assertEqual('M', af.Action())
     self.assertEqual(['whatever', 'cookie'], af.NewContents())
 
   def testAffectedFileNotExists(self):
     notfound = 'notfound.cc'
-    gclient_utils.FileRead.side_effect = IOError
-    af = presubmit.AffectedFile(notfound, 'A', self.fake_root_dir, None)
+    utils.FileRead.side_effect = IOError
+    af = libchange.AffectedFile(notfound, 'A', self.fake_root_dir, None)
     self.assertEqual([], af.NewContents())
 
   def testIsTestableFile(self):
     files = [
-        presubmit.GitAffectedFile('foo/blat.txt', 'M', self.fake_root_dir,
+        libchange.GitAffectedFile('foo/blat.txt', 'M', self.fake_root_dir,
                                   None),
-        presubmit.GitAffectedFile('foo/binary.blob', 'M', self.fake_root_dir,
+        libchange.GitAffectedFile('foo/binary.blob', 'M', self.fake_root_dir,
                                   None),
-        presubmit.GitAffectedFile('blat/flop.txt', 'D', self.fake_root_dir,
+        libchange.GitAffectedFile('blat/flop.txt', 'D', self.fake_root_dir,
                                   None)
     ]
     blat = os.path.join('foo', 'blat.txt')
@@ -1615,14 +1594,14 @@ class AffectedFileUnittest(PresubmitTestsBase):
 
 class ChangeUnittest(PresubmitTestsBase):
   def testAffectedFiles(self):
-    change = presubmit.Change(
-        '', '', self.fake_root_dir, [('Y', 'AA')], 3, 5, '')
+    change = libchange.Change('', '', self.fake_root_dir, [('Y', 'AA')], 3, 5,
+                              '')
     self.assertEqual(1, len(change.AffectedFiles()))
     self.assertEqual('Y', change.AffectedFiles()[0].Action())
 
   def testSetDescriptionText(self):
-    change = presubmit.Change(
-        '', 'foo\nDRU=ro', self.fake_root_dir, [], 3, 5, '')
+    change = libchange.Change('', 'foo\nDRU=ro', self.fake_root_dir, [], 3, 5,
+                              '')
     self.assertEqual('foo', change.DescriptionText())
     self.assertEqual('foo\nDRU=ro', change.FullDescriptionText())
     self.assertEqual({'DRU': 'ro'}, change.tags)
@@ -1633,28 +1612,28 @@ class ChangeUnittest(PresubmitTestsBase):
     self.assertEqual({'WHIZ': 'bang', 'FOO': 'baz'}, change.tags)
 
   def testAddDescriptionFooter(self):
-    change = presubmit.Change(
-        '', 'foo\nDRU=ro\n\nChange-Id: asdf', self.fake_root_dir, [], 3, 5, '')
+    change = libchange.Change('', 'foo\nDRU=ro\n\nChange-Id: asdf',
+                              self.fake_root_dir, [], 3, 5, '')
     change.AddDescriptionFooter('my-footer', 'my-value')
     self.assertEqual(
         'foo\nDRU=ro\n\nChange-Id: asdf\nMy-Footer: my-value',
         change.FullDescriptionText())
 
   def testAddDescriptionFooter_NoPreviousFooters(self):
-    change = presubmit.Change(
-        '', 'foo\nDRU=ro', self.fake_root_dir, [], 3, 5, '')
+    change = libchange.Change('', 'foo\nDRU=ro', self.fake_root_dir, [], 3, 5,
+                              '')
     change.AddDescriptionFooter('my-footer', 'my-value')
     self.assertEqual(
         'foo\nDRU=ro\n\nMy-Footer: my-value', change.FullDescriptionText())
 
   def testAddDescriptionFooter_InvalidFooter(self):
-    change = presubmit.Change(
-        '', 'foo\nDRU=ro', self.fake_root_dir, [], 3, 5, '')
+    change = libchange.Change('', 'foo\nDRU=ro', self.fake_root_dir, [], 3, 5,
+                              '')
     with self.assertRaises(ValueError):
       change.AddDescriptionFooter('invalid.characters in:the', 'footer key')
 
   def testGitFootersFromDescription(self):
-    change = presubmit.Change(
+    change = libchange.Change(
         '', 'foo\n\nChange-Id: asdf\nBug: 1\nBug: 2\nNo-Try: True',
         self.fake_root_dir, [], 0, 0, '')
     self.assertEqual({
@@ -1664,48 +1643,45 @@ class ChangeUnittest(PresubmitTestsBase):
       }, change.GitFootersFromDescription())
 
   def testGitFootersFromDescription_NoFooters(self):
-    change = presubmit.Change('', 'foo', self.fake_root_dir, [], 0, 0, '')
+    change = libchange.Change('', 'foo', self.fake_root_dir, [], 0, 0, '')
     self.assertEqual({}, change.GitFootersFromDescription())
 
   def testBugFromDescription_FixedAndBugGetDeduped(self):
-    change = presubmit.Change(
-        '', 'foo\n\nChange-Id: asdf\nBug: 1, 2\nFixed:2, 1 ',
-        self.fake_root_dir, [], 0, 0, '')
+    change = libchange.Change('',
+                              'foo\n\nChange-Id: asdf\nBug: 1, 2\nFixed:2, 1 ',
+                              self.fake_root_dir, [], 0, 0, '')
     self.assertEqual(['1', '2'], change.BugsFromDescription())
     self.assertEqual('1,2', change.BUG)
 
   def testBugsFromDescription_MixedTagsAndFooters(self):
-    change = presubmit.Change(
-        '', 'foo\nBUG=2,1\n\nChange-Id: asdf\nBug: 3, 6',
-        self.fake_root_dir, [], 0, 0, '')
+    change = libchange.Change('', 'foo\nBUG=2,1\n\nChange-Id: asdf\nBug: 3, 6',
+                              self.fake_root_dir, [], 0, 0, '')
     self.assertEqual(['1', '2', '3', '6'], change.BugsFromDescription())
     self.assertEqual('1,2,3,6', change.BUG)
 
   def testBugsFromDescription_MultipleFooters(self):
-    change = presubmit.Change(
+    change = libchange.Change(
         '', 'foo\n\nChange-Id: asdf\nBug: 1\nBug:4,  6\nFixed: 7',
         self.fake_root_dir, [], 0, 0, '')
     self.assertEqual(['1', '4', '6', '7'], change.BugsFromDescription())
     self.assertEqual('1,4,6,7', change.BUG)
 
   def testBugFromDescription_OnlyFixed(self):
-    change = presubmit.Change(
-        '', 'foo\n\nChange-Id: asdf\nFixed:1, 2',
-        self.fake_root_dir, [], 0, 0, '')
+    change = libchange.Change('', 'foo\n\nChange-Id: asdf\nFixed:1, 2',
+                              self.fake_root_dir, [], 0, 0, '')
     self.assertEqual(['1', '2'], change.BugsFromDescription())
     self.assertEqual('1,2', change.BUG)
 
   def testReviewersFromDescription(self):
-    change = presubmit.Change(
-        '', 'foo\nR=foo,bar\n\nChange-Id: asdf\nR: baz',
-        self.fake_root_dir, [], 0, 0, '')
+    change = libchange.Change('', 'foo\nR=foo,bar\n\nChange-Id: asdf\nR: baz',
+                              self.fake_root_dir, [], 0, 0, '')
     self.assertEqual(['bar', 'foo'], change.ReviewersFromDescription())
     self.assertEqual('bar,foo', change.R)
 
   def testTBRsFromDescription(self):
-    change = presubmit.Change(
-        '', 'foo\nTBR=foo,bar\n\nChange-Id: asdf\nTBR: baz',
-        self.fake_root_dir, [], 0, 0, '')
+    change = libchange.Change('',
+                              'foo\nTBR=foo,bar\n\nChange-Id: asdf\nTBR: baz',
+                              self.fake_root_dir, [], 0, 0, '')
     self.assertEqual(['bar', 'baz', 'foo'], change.TBRsFromDescription())
     self.assertEqual('bar,baz,foo', change.TBR)
 
@@ -1756,11 +1732,11 @@ class CannedChecksUnittest(PresubmitTestsBase):
 
   def DescriptionTest(self, check, description1, description2, error_type,
                       committing):
-    change1 = presubmit.Change(
-        'foo1', description1, self.fake_root_dir, None, 0, 0, None)
+    change1 = libchange.Change('foo1', description1, self.fake_root_dir, None,
+                               0, 0, None)
     input_api1 = self.MockInputApi(change1, committing)
-    change2 = presubmit.Change(
-        'foo2', description2, self.fake_root_dir, None, 0, 0, None)
+    change2 = libchange.Change('foo2', description2, self.fake_root_dir, None,
+                               0, 0, None)
     input_api2 = self.MockInputApi(change2, committing)
 
     results1 = check(input_api1, presubmit.OutputApi)
@@ -1781,10 +1757,10 @@ class CannedChecksUnittest(PresubmitTestsBase):
         content2_path: file path for content2.
         error_type: the type of the error expected for content2.
     """
-    change1 = presubmit.Change(
-        'foo1', 'foo1\n', self.fake_root_dir, None, 0, 0, None)
+    change1 = libchange.Change('foo1', 'foo1\n', self.fake_root_dir, None, 0, 0,
+                               None)
     input_api1 = self.MockInputApi(change1, False)
-    affected_file1 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file1 = mock.MagicMock(libchange.GitAffectedFile)
     input_api1.AffectedFiles.return_value = [affected_file1]
     affected_file1.LocalPath.return_value = content1_path
     affected_file1.NewContents.return_value = [
@@ -1801,11 +1777,11 @@ class CannedChecksUnittest(PresubmitTestsBase):
         (43, 'hfoo'),
         (23, 'ifoo')]
 
-    change2 = presubmit.Change(
-        'foo2', 'foo2\n', self.fake_root_dir, None, 0, 0, None)
+    change2 = libchange.Change('foo2', 'foo2\n', self.fake_root_dir, None, 0, 0,
+                               None)
     input_api2 = self.MockInputApi(change2, False)
 
-    affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file2 = mock.MagicMock(libchange.GitAffectedFile)
     input_api2.AffectedFiles.return_value = [affected_file2]
     affected_file2.LocalPath.return_value = content2_path
     affected_file2.NewContents.return_value = [
@@ -1837,10 +1813,10 @@ class CannedChecksUnittest(PresubmitTestsBase):
       content: Python source which is expected to pass or fail the test.
       should_pass: True iff the test should pass, False otherwise.
     """
-    change = presubmit.Change('foo1', 'foo1\n', self.fake_root_dir, None, 0, 0,
+    change = libchange.Change('foo1', 'foo1\n', self.fake_root_dir, None, 0, 0,
                               None)
     input_api = self.MockInputApi(change, False)
-    affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file = mock.MagicMock(libchange.GitAffectedFile)
     input_api.AffectedFiles.return_value = [affected_file]
     affected_file.LocalPath.return_value = 'foo.py'
     affected_file.NewContents.return_value = content.splitlines()
@@ -1855,16 +1831,16 @@ class CannedChecksUnittest(PresubmitTestsBase):
                         presubmit.OutputApi.PresubmitPromptWarning)
 
   def ReadFileTest(self, check, content1, content2, error_type):
-    change1 = presubmit.Change(
-        'foo1', 'foo1\n', self.fake_root_dir, None, 0, 0, None)
+    change1 = libchange.Change('foo1', 'foo1\n', self.fake_root_dir, None, 0, 0,
+                               None)
     input_api1 = self.MockInputApi(change1, False)
-    affected_file1 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file1 = mock.MagicMock(libchange.GitAffectedFile)
     input_api1.AffectedSourceFiles.return_value = [affected_file1]
     input_api1.ReadFile.return_value = content1
-    change2 = presubmit.Change(
-        'foo2', 'foo2\n', self.fake_root_dir, None, 0, 0, None)
+    change2 = libchange.Change('foo2', 'foo2\n', self.fake_root_dir, None, 0, 0,
+                               None)
     input_api2 = self.MockInputApi(change2, False)
-    affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file2 = mock.MagicMock(libchange.GitAffectedFile)
     input_api2.AffectedSourceFiles.return_value = [affected_file2]
     input_api2.ReadFile.return_value = content2
     affected_file2.LocalPath.return_value = 'bar.cc'
@@ -1959,10 +1935,10 @@ class CannedChecksUnittest(PresubmitTestsBase):
   @mock.patch('git_cl.Changelist')
   @mock.patch('auth.Authenticator')
   def testCannedCheckChangedLUCIConfigs(self, mockGetAuth, mockChangelist):
-    affected_file1 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file1 = mock.MagicMock(libchange.GitAffectedFile)
     affected_file1.LocalPath.return_value = 'foo.cfg'
     affected_file1.NewContents.return_value = ['test', 'foo']
-    affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file2 = mock.MagicMock(libchange.GitAffectedFile)
     affected_file2.LocalPath.return_value = 'bar.cfg'
     affected_file2.NewContents.return_value = ['test', 'bar']
 
@@ -1981,8 +1957,8 @@ class CannedChecksUnittest(PresubmitTestsBase):
     mockChangelist().GetRemoteBranch.return_value = ('remote', branch)
     mockChangelist().GetRemoteUrl.return_value = host
 
-    change1 = presubmit.Change(
-      'foo', 'foo1', self.fake_root_dir, None, 0, 0, None)
+    change1 = libchange.Change('foo', 'foo1', self.fake_root_dir, None, 0, 0,
+                               None)
     input_api = self.MockInputApi(change1, False)
     affected_files = (affected_file1, affected_file2)
 
@@ -2000,17 +1976,17 @@ class CannedChecksUnittest(PresubmitTestsBase):
                      presubmit.OutputApi.PresubmitPromptWarning)
 
     # Make sure makefiles are ignored.
-    change1 = presubmit.Change(
-        'foo1', 'foo1\n', self.fake_root_dir, None, 0, 0, None)
+    change1 = libchange.Change('foo1', 'foo1\n', self.fake_root_dir, None, 0, 0,
+                               None)
     input_api1 = self.MockInputApi(change1, False)
-    affected_file1 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file1 = mock.MagicMock(libchange.GitAffectedFile)
     affected_file1.LocalPath.return_value = 'foo.cc'
-    affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file2 = mock.MagicMock(libchange.GitAffectedFile)
     affected_file2.LocalPath.return_value = 'foo/Makefile'
-    affected_file3 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file3 = mock.MagicMock(libchange.GitAffectedFile)
     affected_file3.LocalPath.return_value = 'makefile'
     # Only this one will trigger.
-    affected_file4 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file4 = mock.MagicMock(libchange.GitAffectedFile)
     affected_file1.LocalPath.return_value = 'foo.cc'
     affected_file1.NewContents.return_value = ['yo, ']
     affected_file4.LocalPath.return_value = 'makefile.foo'
@@ -2232,10 +2208,10 @@ the current line as well!
                     expected_result,
                     new_file=False,
                     **kwargs):
-    change = mock.MagicMock(presubmit.GitChange)
+    change = mock.MagicMock(libchange.GitChange)
     change.scm = 'svn'
     input_api = self.MockInputApi(change, committing)
-    affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file = mock.MagicMock(libchange.GitAffectedFile)
     if new_file:
       affected_file.Action.return_value = 'A'
     input_api.AffectedSourceFiles.return_value = [affected_file]
@@ -2518,12 +2494,12 @@ the current line as well!
     self.checkstdout('')
 
   def GetInputApiWithFiles(self, files):
-    change = mock.MagicMock(presubmit.Change)
-    change.AffectedFiles = lambda *a, **kw: (
-        presubmit.Change.AffectedFiles(change, *a, **kw))
+    change = mock.MagicMock(libchange.Change)
+    change.AffectedFiles = lambda *a, **kw: (libchange.Change.AffectedFiles(
+        change, *a, **kw))
     change._affected_files = []
     for path, (action, contents) in files.items():
-      affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+      affected_file = mock.MagicMock(libchange.GitAffectedFile)
       affected_file.AbsoluteLocalPath.return_value = path
       affected_file.LocalPath.return_value = path
       affected_file.Action.return_value = action
@@ -2658,7 +2634,7 @@ the current line as well!
       "reviewers": {"REVIEWER": [{u'email': a}] for a in approvers},
     }
 
-    change = mock.MagicMock(presubmit.Change)
+    change = mock.MagicMock(libchange.Change)
     change.OriginalOwnersFiles.return_value = {}
     change.RepositoryRoot.return_value = None
     change.ReviewersFromDescription.return_value = manually_specified_reviewers
@@ -2668,7 +2644,7 @@ the current line as well!
 
     affected_files = []
     for f in modified_files:
-      affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+      affected_file = mock.MagicMock(libchange.GitAffectedFile)
       affected_file.LocalPath.return_value = f
       affected_files.append(affected_file)
     change.AffectedFiles.return_value = affected_files
@@ -2707,8 +2683,8 @@ the current line as well!
   @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTests(self):
     io.open().readline.return_value = ''
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
@@ -2753,8 +2729,8 @@ the current line as well!
   @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsWithTimer(self):
     io.open().readline.return_value = ''
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.thread_pool.timeout = 100
@@ -2779,8 +2755,8 @@ the current line as well!
   @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsWithTimerTimesOut(self):
     io.open().readline.return_value = ''
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.thread_pool.timeout = 100
@@ -2813,8 +2789,8 @@ the current line as well!
   @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsPython3(self):
     io.open().readline.return_value = '#!/usr/bin/env python3'
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
@@ -2869,8 +2845,8 @@ the current line as well!
   @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsDontRunOnPython2(self):
     io.open().readline.return_value = '#!/usr/bin/env python3'
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
@@ -2913,8 +2889,8 @@ the current line as well!
   @mock.patch('io.open', mock.mock_open())
   def testCannedRunUnitTestsDontRunOnPython3(self):
     io.open().readline.return_value = '#!/usr/bin/env python3'
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.PresubmitLocalPath.return_value = self.fake_root_dir
@@ -2955,8 +2931,8 @@ the current line as well!
     self.checkstdout('')
 
   def testCannedRunUnitTestsInDirectory(self):
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
     input_api.verbose = True
     input_api.logging = mock.MagicMock(logging)
@@ -2988,10 +2964,10 @@ the current line as well!
 
   def testPanProjectChecks(self):
     # Make sure it accepts both list and tuples.
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('foo1', 'description1', self.fake_root_dir, None,
+                              0, 0, None)
     input_api = self.MockInputApi(change, False)
-    affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file = mock.MagicMock(libchange.GitAffectedFile)
     input_api.AffectedFiles.return_value = [affected_file]
     affected_file.NewContents.return_value = 'Hey!\nHo!\nHey!\nHo!\n\n'
     # CheckChangeHasNoTabs() calls _FindNewViolationsOfRule() which calls
@@ -3088,13 +3064,13 @@ the current line as well!
     ])
 
   def testCannedCheckVPythonSpec(self):
-    change = presubmit.Change('a', 'b', self.fake_root_dir, None, 0, 0, None)
+    change = libchange.Change('a', 'b', self.fake_root_dir, None, 0, 0, None)
     input_api = self.MockInputApi(change, False)
     affected_filenames = ['/path1/to/.vpython', '/path1/to/.vpython3']
     affected_files = []
 
     for filename in affected_filenames:
-      affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+      affected_file = mock.MagicMock(libchange.GitAffectedFile)
       affected_file.AbsoluteLocalPath.return_value = filename
       affected_files.append(affected_file)
     input_api.AffectedTestableFiles.return_value = affected_files
