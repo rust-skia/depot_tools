@@ -50,6 +50,7 @@ import presubmit_canned_checks
 import rdb_wrapper
 import scm
 import subprocess2 as subprocess  # Exposed through the API.
+from lib import utils
 
 if sys.version_info.major == 2:
   # TODO(1009814): Expose urllib2 only through urllib_request and urllib_error
@@ -68,6 +69,9 @@ _ASKED_FOR_FEEDBACK = False
 # Set if super-verbose mode is requested, for tracking where presubmit messages
 # are coming from.
 _SHOW_CALLSTACKS = False
+
+_PRESUBMIT_FILE_REGEX = r'PRESUBMIT.*\.py$'
+_PRESUBMIT_FILE_EXCLUDE = r'PRESUBMIT_test'
 
 
 def time_time():
@@ -283,16 +287,6 @@ class ThreadPool(object):
         worker.join()
 
     return self._messages
-
-
-def normpath(path):
-  '''Version of os.path.normpath that also changes backward slashes to
-  forward slashes when not running on Windows.
-  '''
-  # This is safe to always do because the Windows version of os.path.normpath
-  # will replace forward slashes with backward slashes.
-  path = path.replace(os.sep, '/')
-  return os.path.normpath(path)
 
 
 def _RightHandSideLinesImpl(affected_files):
@@ -729,15 +723,17 @@ class InputApi(object):
     script, or subdirectories thereof. Note that files are listed using the OS
     path separator, so backslashes are used as separators on Windows.
     """
-    dir_with_slash = normpath(self.PresubmitLocalPath())
+    dir_with_slash = utils.normpath(self.PresubmitLocalPath())
     # normpath strips trailing path separators, so the trailing separator has to
     # be added after the normpath call.
     if len(dir_with_slash) > 0:
       dir_with_slash += os.path.sep
 
-    return list(filter(
-        lambda x: normpath(x.AbsoluteLocalPath()).startswith(dir_with_slash),
-        self.change.AffectedFiles(include_deletes, file_filter)))
+    return list(
+        filter(
+            lambda x: utils.normpath(x.AbsoluteLocalPath()).startswith(
+                dir_with_slash),
+            self.change.AffectedFiles(include_deletes, file_filter)))
 
   def LocalPaths(self):
     """Returns local paths of input_api.AffectedFiles()."""
@@ -958,7 +954,7 @@ class _GitDiffCache(_DiffCache):
           current_diff.append(x)
 
       self._diffs_by_file = dict(
-        (normpath(path), ''.join(diff)) for path, diff in diffs.items())
+          (utils.normpath(path), ''.join(diff)) for path, diff in diffs.items())
 
     if path not in self._diffs_by_file:
       # SCM didn't have any diff on this file. It could be that the file was not
@@ -997,7 +993,7 @@ class AffectedFile(object):
     because presubmit checks are run with CWD=PresubmitLocalPath() (which is
     often != client root).
     """
-    return normpath(self._path)
+    return utils.normpath(self._path)
 
   def AbsoluteLocalPath(self):
     """Returns the absolute path of this file on the local disk.
@@ -1358,59 +1354,6 @@ class GitChange(Change):
         cwd=root).decode('utf-8', 'ignore').splitlines()
 
 
-def ListRelevantPresubmitFiles(files, root):
-  """Finds all presubmit files that apply to a given set of source files.
-
-  If inherit-review-settings-ok is present right under root, looks for
-  PRESUBMIT.py in directories enclosing root.
-
-  Args:
-    files: An iterable container containing file paths.
-    root: Path where to stop searching.
-
-  Return:
-    List of absolute paths of the existing PRESUBMIT.py scripts.
-  """
-  files = [normpath(os.path.join(root, f)) for f in files]
-
-  # List all the individual directories containing files.
-  directories = {os.path.dirname(f) for f in files}
-
-  # Ignore root if inherit-review-settings-ok is present.
-  if os.path.isfile(os.path.join(root, 'inherit-review-settings-ok')):
-    root = None
-
-  # Collect all unique directories that may contain PRESUBMIT.py.
-  candidates = set()
-  for directory in directories:
-    while True:
-      if directory in candidates:
-        break
-      candidates.add(directory)
-      if directory == root:
-        break
-      parent_dir = os.path.dirname(directory)
-      if parent_dir == directory:
-        # We hit the system root directory.
-        break
-      directory = parent_dir
-
-  # Look for PRESUBMIT.py in all candidate directories.
-  results = []
-  for directory in sorted(list(candidates)):
-    try:
-      for f in os.listdir(directory):
-        p = os.path.join(directory, f)
-        if os.path.isfile(p) and re.match(
-            r'PRESUBMIT.*\.py$', f) and not f.startswith('PRESUBMIT_test'):
-          results.append(p)
-    except OSError:
-      pass
-
-  logging.debug('Presubmit files: %s', ','.join(results))
-  return results
-
-
 class GetPostUploadExecuter(object):
   def __init__(self, change, gerrit_obj, use_python3):
     """
@@ -1491,15 +1434,16 @@ def DoPostUploadExecuter(change, gerrit_obj, verbose, use_python3=False):
   """
   python_version = 'Python %s' % sys.version_info.major
   sys.stdout.write('Running %s post upload checks ...\n' % python_version)
-  presubmit_files = ListRelevantPresubmitFiles(
-      change.LocalPaths(), change.RepositoryRoot())
+  presubmit_files = utils.ListRelevantFilesInSourceCheckout(
+      change.LocalPaths(), change.RepositoryRoot(), _PRESUBMIT_FILE_REGEX,
+      _PRESUBMIT_FILE_EXCLUDE)
   if not presubmit_files and verbose:
     sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
   results = []
   executer = GetPostUploadExecuter(change, gerrit_obj, use_python3)
   # The root presubmit file should be executed after the ones in subdirectories.
   # i.e. the specific post upload hooks should run before the general ones.
-  # Thus, reverse the order provided by ListRelevantPresubmitFiles.
+  # Thus, reverse the order.
   presubmit_files.reverse()
 
   for filename in presubmit_files:
@@ -1771,8 +1715,9 @@ def DoPresubmitChecks(change,
       sys.stdout.write('Running %s presubmit upload checks ...\n' %
                        python_version)
     start_time = time_time()
-    presubmit_files = ListRelevantPresubmitFiles(
-        change.AbsoluteLocalPaths(), change.RepositoryRoot())
+    presubmit_files = utils.ListRelevantFilesInSourceCheckout(
+        change.AbsoluteLocalPaths(), change.RepositoryRoot(),
+        _PRESUBMIT_FILE_REGEX, _PRESUBMIT_FILE_EXCLUDE)
     if not presubmit_files and verbose:
       sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
     results = []
@@ -2123,7 +2068,6 @@ def main(argv=None):
           options.use_python3,
           options.no_diffs)
   except PresubmitFailure as e:
-    import utils
     print(e, file=sys.stderr)
     print('Maybe your depot_tools is out of date?', file=sys.stderr)
     print('depot_tools version: %s' % utils.depot_tools_version(),

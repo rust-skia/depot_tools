@@ -47,6 +47,7 @@ import presubmit_support as presubmit
 import rdb_wrapper
 import scm
 import subprocess2 as subprocess
+from lib import utils
 
 
 # Shortcut.
@@ -220,7 +221,6 @@ index fe3de7b..54ae6e1 100755
 class PresubmitUnittest(PresubmitTestsBase):
   """General presubmit_support.py tests (excluding InputApi and OutputApi)."""
 
-  _INHERIT_SETTINGS = 'inherit-review-settings-ok'
   fake_root_dir = '/foo/bar'
 
   def testCannedCheckFilter(self):
@@ -230,78 +230,6 @@ class PresubmitUnittest(PresubmitTestsBase):
       self.assertNotEqual(canned.CheckOwners, orig)
       self.assertEqual(canned.CheckOwners(None, None), [])
     self.assertEqual(canned.CheckOwners, orig)
-
-  def testListRelevantPresubmitFiles(self):
-    files = [
-        'blat.cc',
-        os.path.join('foo', 'haspresubmit', 'yodle', 'smart.h'),
-        os.path.join('moo', 'mat', 'gat', 'yo.h'),
-        os.path.join('foo', 'luck.h'),
-    ]
-
-    known_files = [
-        os.path.join(self.fake_root_dir, 'PRESUBMIT.py'),
-        os.path.join(self.fake_root_dir, 'foo', 'haspresubmit', 'PRESUBMIT.py'),
-        os.path.join(
-            self.fake_root_dir, 'foo', 'haspresubmit', 'yodle', 'PRESUBMIT.py'),
-    ]
-    os.path.isfile.side_effect = lambda f: f in known_files
-
-    dirs_with_presubmit = [
-        self.fake_root_dir,
-        os.path.join(self.fake_root_dir, 'foo', 'haspresubmit'),
-        os.path.join(self.fake_root_dir, 'foo', 'haspresubmit', 'yodle'),
-    ]
-    os.listdir.side_effect = (
-        lambda d: ['PRESUBMIT.py'] if d in dirs_with_presubmit else [])
-
-    presubmit_files = presubmit.ListRelevantPresubmitFiles(
-        files, self.fake_root_dir)
-    self.assertEqual(presubmit_files, known_files)
-
-  def testListUserPresubmitFiles(self):
-    files = ['blat.cc',]
-
-    os.path.isfile.side_effect = lambda f: 'PRESUBMIT' in f
-    os.listdir.return_value = [
-        'PRESUBMIT.py', 'PRESUBMIT_test.py', 'PRESUBMIT-user.py']
-
-    presubmit_files = presubmit.ListRelevantPresubmitFiles(
-        files, self.fake_root_dir)
-    self.assertEqual(presubmit_files, [
-        os.path.join(self.fake_root_dir, 'PRESUBMIT.py'),
-        os.path.join(self.fake_root_dir, 'PRESUBMIT-user.py'),
-    ])
-
-  def testListRelevantPresubmitFilesInheritSettings(self):
-    sys_root_dir = self._OS_SEP
-    root_dir = os.path.join(sys_root_dir, 'foo', 'bar')
-    inherit_path = os.path.join(root_dir, self._INHERIT_SETTINGS)
-    files = [
-        'test.cc',
-        os.path.join('moo', 'test2.cc'),
-        os.path.join('zoo', 'test3.cc')
-    ]
-
-    known_files = [
-        inherit_path,
-        os.path.join(sys_root_dir, 'foo', 'PRESUBMIT.py'),
-        os.path.join(sys_root_dir, 'foo', 'bar', 'moo', 'PRESUBMIT.py'),
-    ]
-    os.path.isfile.side_effect = lambda f: f in known_files
-
-    dirs_with_presubmit = [
-        os.path.join(sys_root_dir, 'foo'),
-        os.path.join(sys_root_dir, 'foo', 'bar','moo'),
-    ]
-    os.listdir.side_effect = (
-        lambda d: ['PRESUBMIT.py'] if d in dirs_with_presubmit else [])
-
-    presubmit_files = presubmit.ListRelevantPresubmitFiles(files, root_dir)
-    self.assertEqual(presubmit_files, [
-        os.path.join(sys_root_dir, 'foo', 'PRESUBMIT.py'),
-        os.path.join(sys_root_dir, 'foo', 'bar', 'moo', 'PRESUBMIT.py')
-    ])
 
   def testTagLineRe(self):
     m = presubmit.Change.TAG_LINE_RE.match(' BUG =1223, 1445  \t')
@@ -994,11 +922,11 @@ def CheckChangeOnCommit(input_api, output_api):
         presubmit.main(
             ['--root', self.fake_root_dir, 'random_file.txt', '--post_upload']))
 
-  @mock.patch('presubmit_support.ListRelevantPresubmitFiles')
+  @mock.patch('lib.utils.ListRelevantFilesInSourceCheckout')
   def testMainUnversioned(self, *_mocks):
     gclient_utils.FileRead.return_value = ''
     scm.determine_scm.return_value = None
-    presubmit.ListRelevantPresubmitFiles.return_value = [
+    utils.ListRelevantFilesInSourceCheckout.return_value = [
         os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
     ]
 
@@ -1006,14 +934,14 @@ def CheckChangeOnCommit(input_api, output_api):
         0,
         presubmit.main(['--root', self.fake_root_dir, 'random_file.txt']))
 
-  @mock.patch('presubmit_support.ListRelevantPresubmitFiles')
+  @mock.patch('lib.utils.ListRelevantFilesInSourceCheckout')
   def testMainUnversionedChecksFail(self, *_mocks):
     gclient_utils.FileRead.return_value = (
         'USE_PYTHON3 = ' + str(sys.version_info.major == 3) + '\n'
         'def CheckChangeOnUpload(input_api, output_api):\n'
         '  return [output_api.PresubmitError("!!")]\n')
     scm.determine_scm.return_value = None
-    presubmit.ListRelevantPresubmitFiles.return_value = [
+    utils.ListRelevantFilesInSourceCheckout.return_value = [
         os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
     ]
 
@@ -1285,26 +1213,22 @@ class InputApiUnittest(PresubmitTestsBase):
     # Doesn't filter much
     got_files = input_api.AffectedFiles()
     self.assertEqual(len(got_files), 7)
-    self.assertEqual(got_files[0].LocalPath(), presubmit.normpath(files[0][1]))
-    self.assertEqual(got_files[1].LocalPath(), presubmit.normpath(files[1][1]))
-    self.assertEqual(got_files[2].LocalPath(), presubmit.normpath(files[2][1]))
-    self.assertEqual(got_files[3].LocalPath(), presubmit.normpath(files[3][1]))
-    self.assertEqual(got_files[4].LocalPath(), presubmit.normpath(files[4][1]))
-    self.assertEqual(got_files[5].LocalPath(), presubmit.normpath(files[5][1]))
-    self.assertEqual(got_files[6].LocalPath(), presubmit.normpath(files[6][1]))
+    self.assertEqual(got_files[0].LocalPath(), utils.normpath(files[0][1]))
+    self.assertEqual(got_files[1].LocalPath(), utils.normpath(files[1][1]))
+    self.assertEqual(got_files[2].LocalPath(), utils.normpath(files[2][1]))
+    self.assertEqual(got_files[3].LocalPath(), utils.normpath(files[3][1]))
+    self.assertEqual(got_files[4].LocalPath(), utils.normpath(files[4][1]))
+    self.assertEqual(got_files[5].LocalPath(), utils.normpath(files[5][1]))
+    self.assertEqual(got_files[6].LocalPath(), utils.normpath(files[6][1]))
     # Ignores weird because of check_list, third_party because of skip_list,
     # binary isn't a text file and being deleted doesn't exist. The rest is
     # outside foo/.
     rhs_lines = list(input_api.RightHandSideLines(None))
     self.assertEqual(len(rhs_lines), 14)
-    self.assertEqual(rhs_lines[0][0].LocalPath(),
-                     presubmit.normpath(files[0][1]))
-    self.assertEqual(rhs_lines[3][0].LocalPath(),
-                     presubmit.normpath(files[0][1]))
-    self.assertEqual(rhs_lines[7][0].LocalPath(),
-                     presubmit.normpath(files[4][1]))
-    self.assertEqual(rhs_lines[13][0].LocalPath(),
-                     presubmit.normpath(files[4][1]))
+    self.assertEqual(rhs_lines[0][0].LocalPath(), utils.normpath(files[0][1]))
+    self.assertEqual(rhs_lines[3][0].LocalPath(), utils.normpath(files[0][1]))
+    self.assertEqual(rhs_lines[7][0].LocalPath(), utils.normpath(files[4][1]))
+    self.assertEqual(rhs_lines[13][0].LocalPath(), utils.normpath(files[4][1]))
 
   def testInputApiFilterSourceFile(self):
     files = [
@@ -1344,10 +1268,10 @@ class InputApiUnittest(PresubmitTestsBase):
     got_files = input_api.AffectedSourceFiles(None)
     self.assertEqual(len(got_files), 4)
     # blat.cc, another.h, WebKit.cpp, and blink.cc remain.
-    self.assertEqual(got_files[0].LocalPath(), presubmit.normpath(files[0][1]))
-    self.assertEqual(got_files[1].LocalPath(), presubmit.normpath(files[4][1]))
-    self.assertEqual(got_files[2].LocalPath(), presubmit.normpath(files[5][1]))
-    self.assertEqual(got_files[3].LocalPath(), presubmit.normpath(files[7][1]))
+    self.assertEqual(got_files[0].LocalPath(), utils.normpath(files[0][1]))
+    self.assertEqual(got_files[1].LocalPath(), utils.normpath(files[4][1]))
+    self.assertEqual(got_files[2].LocalPath(), utils.normpath(files[5][1]))
+    self.assertEqual(got_files[3].LocalPath(), utils.normpath(files[7][1]))
 
   def testDefaultFilesToCheckFilesToSkipFilters(self):
     def f(x):
@@ -1430,8 +1354,7 @@ class InputApiUnittest(PresubmitTestsBase):
     for item in files:
       results = list(filter(input_api.FilterSourceFile, item[0]))
       for i in range(len(results)):
-        self.assertEqual(results[i].LocalPath(),
-                          presubmit.normpath(item[1][i]))
+        self.assertEqual(results[i].LocalPath(), utils.normpath(item[1][i]))
       # Same number of expected results.
       self.assertEqual(sorted([f.LocalPath().replace(os.sep, '/')
                                 for f in results]),
@@ -1491,7 +1414,7 @@ class InputApiUnittest(PresubmitTestsBase):
     self.assertEqual(got_files[1].LocalPath(), 'eecaee')
 
   def testGetAbsoluteLocalPath(self):
-    normpath = presubmit.normpath
+    normpath = utils.normpath
     # Regression test for bug of presubmit stuff that relies on invoking
     # SVN (e.g. to get mime type of file) not working unless gcl invoked
     # from the client root (e.g. if you were at 'src' and did 'cd base' before
@@ -1512,13 +1435,11 @@ class InputApiUnittest(PresubmitTestsBase):
     self.assertEqual(affected_files[0].LocalPath(), normpath('isdir'))
     self.assertEqual(affected_files[1].LocalPath(), normpath('isdir/blat.cc'))
     # Absolute paths should be prefixed
-    self.assertEqual(
-        affected_files[0].AbsoluteLocalPath(),
-        presubmit.normpath(os.path.join(self.fake_root_dir, 'isdir')))
+    self.assertEqual(affected_files[0].AbsoluteLocalPath(),
+                     utils.normpath(os.path.join(self.fake_root_dir, 'isdir')))
     self.assertEqual(
         affected_files[1].AbsoluteLocalPath(),
-        presubmit.normpath(os.path.join(
-            self.fake_root_dir, 'isdir/blat.cc')))
+        utils.normpath(os.path.join(self.fake_root_dir, 'isdir/blat.cc')))
 
     # New helper functions need to work
     paths_from_change = change.AbsoluteLocalPaths()
@@ -1530,17 +1451,14 @@ class InputApiUnittest(PresubmitTestsBase):
         is_committing=True, gerrit_obj=None, verbose=False)
     paths_from_api = api.AbsoluteLocalPaths()
     self.assertEqual(len(paths_from_api), 1)
-    self.assertEqual(
-        paths_from_change[0],
-        presubmit.normpath(os.path.join(self.fake_root_dir, 'isdir')))
+    self.assertEqual(paths_from_change[0],
+                     utils.normpath(os.path.join(self.fake_root_dir, 'isdir')))
     self.assertEqual(
         paths_from_change[1],
-        presubmit.normpath(os.path.join(self.fake_root_dir, 'isdir',
-                                        'blat.cc')))
+        utils.normpath(os.path.join(self.fake_root_dir, 'isdir', 'blat.cc')))
     self.assertEqual(
         paths_from_api[0],
-        presubmit.normpath(os.path.join(self.fake_root_dir, 'isdir',
-                                        'blat.cc')))
+        utils.normpath(os.path.join(self.fake_root_dir, 'isdir', 'blat.cc')))
 
   def testDeprecated(self):
     change = presubmit.Change(
@@ -1665,7 +1583,7 @@ class AffectedFileUnittest(PresubmitTestsBase):
   def testAffectedFile(self):
     gclient_utils.FileRead.return_value = 'whatever\ncookie'
     af = presubmit.GitAffectedFile('foo/blat.cc', 'M', self.fake_root_dir, None)
-    self.assertEqual(presubmit.normpath('foo/blat.cc'), af.LocalPath())
+    self.assertEqual(utils.normpath('foo/blat.cc'), af.LocalPath())
     self.assertEqual('M', af.Action())
     self.assertEqual(['whatever', 'cookie'], af.NewContents())
 
