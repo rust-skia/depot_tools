@@ -49,12 +49,12 @@ def CheckPylint(input_api, output_api):
   ]
   files_to_skip = list(input_api.DEFAULT_FILES_TO_SKIP)
   if os.path.exists('.gitignore'):
-    with open('.gitignore') as fh:
+    with open('.gitignore', encoding='utf-8') as fh:
       lines = [l.strip() for l in fh.readlines()]
       files_to_skip.extend([fnmatch.translate(l) for l in lines if
                          l and not l.startswith('#')])
   if os.path.exists('.git/info/exclude'):
-    with open('.git/info/exclude') as fh:
+    with open('.git/info/exclude', encoding='utf-8') as fh:
       lines = [l.strip() for l in fh.readlines()]
       files_to_skip.extend([fnmatch.translate(l) for l in lines if
                          l and not l.startswith('#')])
