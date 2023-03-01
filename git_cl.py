@@ -163,6 +163,13 @@ assert len(_KNOWN_GERRIT_TO_SHORT_URLS) == len(
 _MAX_STACKED_BRANCHES_UPLOAD = 20
 
 
+# Repo prefixes that are enrolled in the stacked changes dogfood.
+DOGFOOD_STACKED_CHANGES_REPOS = [
+    'chromium.googlesource.com/infra/',
+    'chrome-internal.googlesource.com/infra/'
+]
+
+
 class GitPushError(Exception):
   pass
 
@@ -4777,7 +4784,31 @@ def CMDupload(parser, args):
     # Load default for user, repo, squash=true, in this order.
     options.squash = settings.GetSquashGerritUploads()
 
-  if options.squash and os.environ.get('DOGFOOD_STACKED_CHANGES') == '1':
+  cl = Changelist(branchref=options.target_branch)
+
+  # Warm change details cache now to avoid RPCs later, reducing latency for
+  # developers.
+  if cl.GetIssue():
+    cl._GetChangeDetail(
+        ['DETAILED_ACCOUNTS', 'CURRENT_REVISION', 'CURRENT_COMMIT', 'LABELS'])
+
+  if options.retry_failed and not cl.GetIssue():
+    print('No previous patchsets, so --retry-failed has no effect.')
+    options.retry_failed = False
+
+  remote = cl.GetRemoteUrl()
+  dogfood_stacked_changes = (os.environ.get('DOGFOOD_STACKED_CHANGES')
+                             not in ['1', '0']
+                             and any(repo in remote
+                                     for repo in DOGFOOD_STACKED_CHANGES_REPOS))
+
+  if dogfood_stacked_changes:
+    print('This repo has been enrolled in the stacked changes dogfood. '
+          'To opt-out use `export DOGFOOD_STACKED_CHANGES=0`. '
+          'File bugs at https://bit.ly/3Y6opoI')
+
+  if options.squash and (dogfood_stacked_changes
+                         or os.environ.get('DOGFOOD_STACKED_CHANGES') == '1'):
     if options.dependencies:
       parser.error('--dependencies is not available for this workflow.')
 
@@ -4791,17 +4822,6 @@ def CMDupload(parser, args):
 
   if options.cherry_pick_stacked:
     parser.error('--cherry-pick-stacked is not available for this workflow.')
-
-  cl = Changelist(branchref=options.target_branch)
-  # Warm change details cache now to avoid RPCs later, reducing latency for
-  # developers.
-  if cl.GetIssue():
-    cl._GetChangeDetail(
-        ['DETAILED_ACCOUNTS', 'CURRENT_REVISION', 'CURRENT_COMMIT', 'LABELS'])
-
-  if options.retry_failed and not cl.GetIssue():
-    print('No previous patchsets, so --retry-failed has no effect.')
-    options.retry_failed = False
 
   # cl.GetMostRecentPatchset uses cached information, and can return the last
   # patchset before upload. Calling it here makes it clear that it's the
