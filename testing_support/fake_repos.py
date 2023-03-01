@@ -26,7 +26,7 @@ import time
 # trial_dir must be first for non-system libraries.
 from testing_support import trial_dir
 import gclient_utils
-from lib import scm
+import scm
 import subprocess2
 
 DEFAULT_BRANCH = 'main'

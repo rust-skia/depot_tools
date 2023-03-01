@@ -641,7 +641,7 @@ class ManagedGitWrapperTestCaseMock(unittest.TestCase):
     mock.patch('sys.stdout', StringIO()).start()
     self.addCleanup(mock.patch.stopall)
 
-  @mock.patch('lib.scm.GIT.IsValidRevision')
+  @mock.patch('scm.GIT.IsValidRevision')
   @mock.patch('os.path.isdir', lambda _: True)
   def testGetUsableRevGit(self, mockIsValidRevision):
     # pylint: disable=no-member

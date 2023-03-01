@@ -45,7 +45,9 @@ import metrics_utils
 import owners_client
 import owners_finder
 import presubmit_canned_checks
+import presubmit_support
 import rustfmt
+import scm
 import setup_color
 import split_cl
 import subcommand
@@ -53,7 +55,7 @@ import subprocess2
 import swift_format
 import watchlists
 
-from lib import change, scm, utils
+from lib import utils
 from third_party import six
 from six.moves import urllib
 
@@ -3313,8 +3315,8 @@ class ChangeDescription(object):
       separator = []  # No need for separator if there are no gerrit_footers.
 
     prev_line = top_lines[-1] if top_lines else ''
-    if (not change.Change.TAG_LINE_RE.match(prev_line)
-        or not change.Change.TAG_LINE_RE.match(line)):
+    if (not presubmit_support.Change.TAG_LINE_RE.match(prev_line) or
+        not presubmit_support.Change.TAG_LINE_RE.match(line)):
       top_lines.append('')
     top_lines.append(line)
     self._description_lines = top_lines + separator + gerrit_footers

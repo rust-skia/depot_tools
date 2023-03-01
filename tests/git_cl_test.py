@@ -44,7 +44,7 @@ import git_common
 import git_footers
 import git_new_branch
 import owners_client
-from lib import scm
+import scm
 import subprocess2
 
 NETRC_FILENAME = '_netrc' if sys.platform == 'win32' else '.netrc'
@@ -629,17 +629,18 @@ class TestGitCl(unittest.TestCase):
     mock.patch('sys.exit', side_effect=SystemExitMock).start()
     mock.patch('git_cl.Settings.GetRoot', return_value='').start()
     self.mockGit = GitMocks()
-    mock.patch('lib.scm.GIT.GetBranchRef', self.mockGit.GetBranchRef).start()
-    mock.patch('lib.scm.GIT.GetConfig', self.mockGit.GetConfig).start()
-    mock.patch('lib.scm.GIT.ResolveCommit', return_value='hash').start()
-    mock.patch('lib.scm.GIT.IsValidRevision', return_value=True).start()
-    mock.patch('lib.scm.GIT.SetConfig', self.mockGit.SetConfig).start()
+    mock.patch('scm.GIT.GetBranchRef', self.mockGit.GetBranchRef).start()
+    mock.patch('scm.GIT.GetConfig', self.mockGit.GetConfig).start()
+    mock.patch('scm.GIT.ResolveCommit', return_value='hash').start()
+    mock.patch('scm.GIT.IsValidRevision', return_value=True).start()
+    mock.patch('scm.GIT.SetConfig', self.mockGit.SetConfig).start()
     mock.patch(
         'git_new_branch.create_new_branch', self.mockGit.NewBranch).start()
-    mock.patch('lib.scm.GIT.FetchUpstreamTuple',
-               return_value=('origin', 'refs/heads/main')).start()
-    mock.patch('lib.scm.GIT.CaptureStatus',
-               return_value=[('M', 'foo.txt')]).start()
+    mock.patch(
+        'scm.GIT.FetchUpstreamTuple',
+        return_value=('origin', 'refs/heads/main')).start()
+    mock.patch(
+        'scm.GIT.CaptureStatus', return_value=[('M', 'foo.txt')]).start()
     # It's important to reset settings to not have inter-tests interference.
     git_cl.settings = None
     self.addCleanup(mock.patch.stopall)
@@ -1764,9 +1765,9 @@ class TestGitCl(unittest.TestCase):
   @mock.patch('git_cl.Changelist._GitGetBranchConfigValue')
   @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
   @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
-  @mock.patch('lib.scm.GIT.GetBranchRef')
+  @mock.patch('scm.GIT.GetBranchRef')
   @mock.patch('git_cl.Changelist.GetRemoteBranch')
-  @mock.patch('lib.scm.GIT.IsAncestor')
+  @mock.patch('scm.GIT.IsAncestor')
   @mock.patch('gclient_utils.AskForData')
   def test_upload_all_precheck_long_chain(
       self, mockAskForData, mockIsAncestor, mockGetRemoteBranch,
@@ -1845,9 +1846,9 @@ class TestGitCl(unittest.TestCase):
   @mock.patch('git_cl.Changelist._GitGetBranchConfigValue')
   @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
   @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
-  @mock.patch('lib.scm.GIT.GetBranchRef')
+  @mock.patch('scm.GIT.GetBranchRef')
   @mock.patch('git_cl.Changelist.GetRemoteBranch')
-  @mock.patch('lib.scm.GIT.IsAncestor')
+  @mock.patch('scm.GIT.IsAncestor')
   @mock.patch('gclient_utils.AskForData')
   def test_upload_all_precheck_options_must_upload(
       self, mockAskForData, mockIsAncestor, mockGetRemoteBranch,
@@ -1918,8 +1919,8 @@ class TestGitCl(unittest.TestCase):
   @mock.patch('git_cl.Changelist._GitGetBranchConfigValue')
   @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
   @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
-  @mock.patch('lib.scm.GIT.GetBranchRef')
-  @mock.patch('lib.scm.GIT.IsAncestor')
+  @mock.patch('scm.GIT.GetBranchRef')
+  @mock.patch('scm.GIT.IsAncestor')
   @mock.patch('gclient_utils.AskForData')
   def test_upload_all_precheck_must_rebase(
       self, mockAskForData, mockIsAncestor, mockGetBranchRef,
@@ -1956,9 +1957,9 @@ class TestGitCl(unittest.TestCase):
   @mock.patch('git_cl.Changelist._GitGetBranchConfigValue')
   @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
   @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
-  @mock.patch('lib.scm.GIT.GetBranchRef')
+  @mock.patch('scm.GIT.GetBranchRef')
   @mock.patch('git_cl.Changelist.GetRemoteBranch')
-  @mock.patch('lib.scm.GIT.IsAncestor')
+  @mock.patch('scm.GIT.IsAncestor')
   @mock.patch('gclient_utils.AskForData')
   def test_upload_all_precheck_hit_main(self, mockAskForData, mockIsAncestor,
                                         mockGetRemoteBranch, mockGetBranchRef,
@@ -2051,9 +2052,9 @@ class TestGitCl(unittest.TestCase):
   @mock.patch('git_cl.Changelist._GitGetBranchConfigValue')
   @mock.patch('git_cl.Changelist.FetchUpstreamTuple')
   @mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream')
-  @mock.patch('lib.scm.GIT.GetBranchRef')
+  @mock.patch('scm.GIT.GetBranchRef')
   @mock.patch('git_cl.Changelist.GetRemoteBranch')
-  @mock.patch('lib.scm.GIT.IsAncestor')
+  @mock.patch('scm.GIT.IsAncestor')
   @mock.patch('gclient_utils.AskForData')
   def test_upload_all_precheck_one_change(
       self, mockAskForData, mockIsAncestor, mockGetRemoteBranch,
@@ -2097,7 +2098,7 @@ class TestGitCl(unittest.TestCase):
     with self.assertRaises(SystemExitMock):
       git_cl._UploadAllPrecheck(options, orig_args)
 
-  @mock.patch('lib.scm.GIT.GetBranchRef', return_value=None)
+  @mock.patch('scm.GIT.GetBranchRef', return_value=None)
   def test_upload_all_precheck_detached_HEAD(self, mockGetBranchRef):
 
     with self.assertRaises(SystemExitMock):
@@ -2446,7 +2447,7 @@ class TestGitCl(unittest.TestCase):
         scm.GIT.GetBranchConfig('', branch, 'gerritserver'))
 
   def _patch_common(self, git_short_host='chromium'):
-    mock.patch('lib.scm.GIT.ResolveCommit', return_value='deadbeef').start()
+    mock.patch('scm.GIT.ResolveCommit', return_value='deadbeef').start()
     self.mockGit.config['remote.origin.url'] = (
         'https://%s.googlesource.com/my/repo' % git_short_host)
     gerrit_util.GetChangeDetail.return_value = {
@@ -3642,8 +3643,8 @@ class ChangelistTest(unittest.TestCase):
     self.addCleanup(mock.patch.stopall)
     self.temp_count = 0
     self.mockGit = GitMocks()
-    mock.patch('lib.scm.GIT.GetConfig', self.mockGit.GetConfig).start()
-    mock.patch('lib.scm.GIT.SetConfig', self.mockGit.SetConfig).start()
+    mock.patch('scm.GIT.GetConfig', self.mockGit.GetConfig).start()
+    mock.patch('scm.GIT.SetConfig', self.mockGit.SetConfig).start()
 
   def testRunHook(self):
     expected_results = {
@@ -5203,7 +5204,7 @@ class CMDStatusTestCase(CMDTestCaseBase):
   @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
   @mock.patch('git_cl.Settings.GetRoot', return_value='')
   @mock.patch('git_cl.Settings.IsStatusCommitOrderByDate', return_value=False)
-  @mock.patch('lib.scm.GIT.GetBranch', return_value='a')
+  @mock.patch('scm.GIT.GetBranch', return_value='a')
   def testStatus(self, *_mocks):
     self.assertEqual(0, git_cl.main(['status', '--no-branch-color']))
     self.maxDiff = None
@@ -5227,7 +5228,7 @@ class CMDStatusTestCase(CMDTestCaseBase):
   @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
   @mock.patch('git_cl.Settings.GetRoot', return_value='')
   @mock.patch('git_cl.Settings.IsStatusCommitOrderByDate', return_value=False)
-  @mock.patch('lib.scm.GIT.GetBranch', return_value='a')
+  @mock.patch('scm.GIT.GetBranch', return_value='a')
   def testStatusByDate(self, *_mocks):
     self.assertEqual(
         0, git_cl.main(['status', '--no-branch-color', '--date-order']))
@@ -5252,7 +5253,7 @@ class CMDStatusTestCase(CMDTestCaseBase):
   @mock.patch('git_cl.get_cl_statuses', _mock_get_cl_statuses)
   @mock.patch('git_cl.Settings.GetRoot', return_value='')
   @mock.patch('git_cl.Settings.IsStatusCommitOrderByDate', return_value=True)
-  @mock.patch('lib.scm.GIT.GetBranch', return_value='a')
+  @mock.patch('scm.GIT.GetBranch', return_value='a')
   def testStatusByDate(self, *_mocks):
     self.assertEqual(
         0, git_cl.main(['status', '--no-branch-color']))

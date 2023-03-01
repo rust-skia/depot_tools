@@ -38,8 +38,6 @@ else:
   import queue
   import urllib.parse as urlparse
 
-from lib import utils
-
 
 # Git wrapper retries on a transient error, and some callees do retries too,
 # such as GitWrapper.update (doing clone). One retry attempt should be
@@ -214,14 +212,19 @@ def AskForData(message):
     sys.exit(1)
 
 
-# TODO(sokcevic): remove the usage of this
 def FileRead(filename, mode='rbU'):
-  return utils.FileRead(filename, mode)
+  # mode is ignored now; we always return unicode strings.
+  with open(filename, mode='rb') as f:
+    s = f.read()
+  try:
+    return s.decode('utf-8', 'replace')
+  except (UnicodeDecodeError, AttributeError):
+    return s
 
 
-# TODO(sokcevic): remove the usage of this
 def FileWrite(filename, content, mode='w', encoding='utf-8'):
-  return utils.FileWrite(filename, content, mode, encoding)
+  with codecs.open(filename, mode=mode, encoding=encoding) as f:
+    f.write(content)
 
 
 @contextlib.contextmanager

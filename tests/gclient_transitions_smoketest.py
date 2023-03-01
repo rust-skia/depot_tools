@@ -19,7 +19,7 @@ import gclient_smoketest_base
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
 
-from lib import scm
+import scm
 from testing_support import fake_repos
 
 

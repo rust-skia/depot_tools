@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import re
 import os
-from lib import scm
+import scm
 import subprocess2
 import sys
 
