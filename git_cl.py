@@ -4846,8 +4846,13 @@ def UploadAllSquashed(options, orig_args):
       origin, upstream_branch_ref = Changelist.FetchUpstreamTuple(branch)
       if origin == '.':
         upstream_branch = scm.GIT.ShortBranchName(upstream_branch_ref)
-        parent = scm.GIT.GetBranchConfig(settings.GetRoot(), upstream_branch,
-                                         GERRIT_SQUASH_HASH_CONFIG_KEY)
+
+        # Support the `git merge` and `git pull` workflow.
+        if upstream_branch in ['master', 'main']:
+          parent = cl.GetCommonAncestorWithUpstream()
+        else:
+          parent = scm.GIT.GetBranchConfig(settings.GetRoot(), upstream_branch,
+                                           GERRIT_SQUASH_HASH_CONFIG_KEY)
         if parent:
           break
         branch = upstream_branch
