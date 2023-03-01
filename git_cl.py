@@ -4722,6 +4722,15 @@ def CMDupload(parser, args):
   parser.add_option('--no-python2-post-upload-hooks',
                     action='store_true',
                     help='Only run post-upload hooks in Python 3.')
+  parser.add_option('--cherry-pick-stacked',
+                    '--cp',
+                    dest='cherry_pick_stacked',
+                    action='store_true',
+                    help='If parent branch has un-uploaded updates, '
+                    'automatically skip parent branches and just upload '
+                    'the current branch cherry-pick on its parent\'s last '
+                    'uploaded commit. Allows users to skip the potential '
+                    'interactive confirmation step.')
   # TODO(b/265929888): Add --wip option of --cl-status option.
 
   orig_args = args
@@ -4767,8 +4776,16 @@ def CMDupload(parser, args):
     if options.dependencies:
       parser.error('--dependencies is not available for this workflow.')
 
+    if options.cherry_pick_stacked:
+      try:
+        orig_args.remove('--cherry-pick-stacked')
+      except ValueError:
+        orig_args.remove('--cp')
     UploadAllSquashed(options, orig_args)
     return 0
+
+  if options.cherry_pick_stacked:
+    parser.error('--cherry-pick-stacked is not available for this workflow.')
 
   cl = Changelist(branchref=options.target_branch)
   # Warm change details cache now to avoid RPCs later, reducing latency for
@@ -4991,21 +5008,31 @@ def _UploadAllPrecheck(options, orig_args):
 
   cherry_pick = False
   if len(cls) > 1:
-    message = ''
+    opt_message = ''
     branches = ', '.join([cl.branch for cl in cls])
     if len(orig_args):
-      message = ('options %s will be used for all uploads.\n' % orig_args)
+      opt_message = ('options %s will be used for all uploads.\n' % orig_args)
     if must_upload_upstream:
-      confirm_or_exit('\n' + message +
-                      'Branches `%s` must be uploaded.\n' % branches)
+      msg = ('At least one parent branch in `%s` has never been uploaded '
+             'and must be uploaded before/with `%s`.\n' %
+             (branches, cls[1].branch))
+      if options.cherry_pick_stacked:
+        DieWithError(msg)
+      if not options.force:
+        confirm_or_exit('\n' + opt_message + msg)
     else:
-      answer = gclient_utils.AskForData(
-          '\n' + message +
-          'Press enter to update branches %s.\nOr type `n` to upload only '
-          '`%s` cherry-picked on %s\'s last upload:' %
-          (branches, cls[0].branch, cls[1].branch))
-      if answer.lower() == 'n':
+      if options.cherry_pick_stacked:
+        print('cherry-picking `%s` on %s\'s last upload' %
+              (cls[0].branch, cls[1].branch))
         cherry_pick = True
+      elif not options.force:
+        answer = gclient_utils.AskForData(
+            '\n' + opt_message +
+            'Press enter to update branches %s.\nOr type `n` to upload only '
+            '`%s` cherry-picked on %s\'s last upload:' %
+            (branches, cls[0].branch, cls[1].branch))
+        if answer.lower() == 'n':
+          cherry_pick = True
   return cls, cherry_pick
 
 
