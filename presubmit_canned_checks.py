@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import io as _io
 import os as _os
+import zlib
 
 from warnings import warn
 _HERE = _os.path.dirname(_os.path.abspath(__file__))
@@ -1824,9 +1825,10 @@ def CheckVPythonSpec(input_api, output_api, file_filter=None):
   return commands
 
 
-# The GFE limit is 32 MiB. Give 2KiB of buffer for metadata that are not in
-# the config content.
-_CONFIG_SIZE_LIMIT_PER_REQUEST = 32 * 1024 * 1024 - 2 * 1024
+# Use this limit to decide whether to split one request into multiple requests.
+# It preemptively prevents configs are too large even after the compression.
+# The GFE limit is 32 MiB and assume the compression ratio > 5:1.
+_CONFIG_SIZE_LIMIT_PER_REQUEST = 5 * 32 * 1024 * 1024
 
 
 def CheckChangedLUCIConfigs(input_api, output_api):
@@ -1873,8 +1875,8 @@ def CheckChangedLUCIConfigs(input_api, output_api):
     req = input_api.urllib_request.Request(api_url)
     req.add_header('Authorization', 'Bearer %s' % acc_tkn.token)
     if body is not None:
-      req.add_header('Content-Type', 'application/json')
-      req.data = json.dumps(body).encode('utf-8')
+      req.data = zlib.compress(json.dumps(body).encode('utf-8'))
+      req.add_header('Content-Type', 'application/json-zlib')
     return json.load(input_api.urllib_request.urlopen(req))
 
   try:
@@ -1950,9 +1952,9 @@ def CheckChangedLUCIConfigs(input_api, output_api):
         return [
             output_api.PresubmitError(
                 ('File %s grows too large, it is now ~%.2f MiB. '
-                 'The limit is %.2f MiB') % f['path'],
-                len(f['content']) / (1024 * 1024),
-                _CONFIG_SIZE_LIMIT_PER_REQUEST / (1024 * 1024))
+                 'The limit is %.2f MiB') %
+                (f['path'], len(f['content']) /
+                 (1024 * 1024), _CONFIG_SIZE_LIMIT_PER_REQUEST / (1024 * 1024)))
         ]
 
     # Split the request for the same config set into smaller requests so that
