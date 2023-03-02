@@ -122,6 +122,22 @@ class NinjalogUploaderTest(unittest.TestCase):
             ['python3', 'ninja.py', '-C', 'out/Release', 'chrome', 'all']),
         ['chrome', 'all'])
 
+  @unittest.skipIf(sys.platform == 'win32', 'posix path test')
+  def test_get_build_target_from_command_line_filter_posix(self):
+    self.assertEqual(
+        ninjalog_uploader.GetBuildTargetFromCommandLine([
+            'python3', 'ninja.py', '-C', 'out/Release', 'chrome', 'all',
+            '/path/to/foo', '-p'
+        ]), ['chrome', 'all'])
+
+  @unittest.skipUnless(sys.platform == 'win32', 'Windows path test')
+  def test_get_build_target_from_command_line_filter_win(self):
+    self.assertEqual(
+        ninjalog_uploader.GetBuildTargetFromCommandLine([
+            'python3', 'ninja.py', '-C', 'out/Release', 'chrome', 'all',
+            'C:\\path\\to\\foo', '-p'
+        ]), ['chrome', 'all'])
+
   def test_get_j_flag(self):
     self.assertEqual(ninjalog_uploader.GetJflag(
         ['ninja']), None)

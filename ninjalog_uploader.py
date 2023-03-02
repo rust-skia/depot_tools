@@ -86,15 +86,26 @@ def GetBuildTargetFromCommandLine(cmdline):
   targets = []
 
   while idx < len(cmdline):
-    if cmdline[idx] in onearg_flags:
+    arg = cmdline[idx]
+    if arg in onearg_flags:
       idx += 2
       continue
 
-    if (cmdline[idx][:2] in onearg_flags or cmdline[idx] in zeroarg_flags):
+    if (arg[:2] in onearg_flags or arg in zeroarg_flags):
       idx += 1
       continue
 
-    targets.append(cmdline[idx])
+    # A target doesn't start with '-'.
+    if arg.startswith('-'):
+      idx += 1
+      continue
+
+    # Avoid uploading absolute paths accidentally. e.g. b/270907050
+    if os.path.isabs(arg):
+      idx += 1
+      continue
+
+    targets.append(arg)
     idx += 1
 
   return targets
