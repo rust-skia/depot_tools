@@ -16,7 +16,6 @@
 # Extensionless tools we want and support scripts.
 /autoninja*                   recipes
 /clang*                       recipes
-/depot-tools-auth             recipes
 /download_from_google_storage recipes
 /fetch                        recipes
 /gclient                      recipes
@@ -36,7 +35,7 @@
 /cbuildbot      recipes
 /cros*          recipes
 
-/support/* recipes
+/lib/* recipes
 
 # TODO: There are some really junky dependencies in here that we should probably
 # move to vpython/cipd.
