@@ -80,7 +80,7 @@ def GetBuildTargetFromCommandLine(cmdline):
 
   # Skipping all args that involve these flags, and taking all remaining args
   # as targets.
-  onearg_flags = ('-C', '-f', '-j', '-k', '-l', '-d', '-t', '-w')
+  onearg_flags = ('-C', '-d', '-f', '-j', '-k', '-l', '-p', '-t', '-w')
   zeroarg_flags = ('--version', '-n', '-v')
 
   targets = []
