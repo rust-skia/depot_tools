@@ -7,6 +7,7 @@ handles the client lifecycle safely. It will automatically start
 reproxy before running ninja and stop reproxy when ninja stops
 for any reason eg. build completes, keyboard interupt etc."""
 
+import hashlib
 import os
 import subprocess
 import sys
@@ -88,7 +89,7 @@ def set_reproxy_path_flags(out_dir):
   *Nix Only:
     RBE_server_address=unix://out_dir/.reproxy_tmp/reproxy.sock
   Windows Only:
-    RBE_server_address=pipe://out_dir/.reproxy_tmp/reproxy.pipe
+    RBE_server_address=pipe://md5(out_dir/.reproxy_tmp)/reproxy.pipe
   """
   tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
   os.makedirs(tmp_dir, exist_ok=True)
@@ -101,8 +102,9 @@ def set_reproxy_path_flags(out_dir):
   os.makedirs(cache_dir, exist_ok=True)
   os.environ.setdefault("RBE_cache_dir", cache_dir)
   if sys.platform.startswith('win'):
+    pipe_dir = hashlib.md5(tmp_dir.encode()).hexdigest()
     os.environ.setdefault("RBE_server_address",
-                          "pipe://%s/reproxy.pipe" % tmp_dir)
+                          "pipe://%s/reproxy.pipe" % pipe_dir)
   else:
     os.environ.setdefault("RBE_server_address",
                           "unix://%s/reproxy.sock" % tmp_dir)

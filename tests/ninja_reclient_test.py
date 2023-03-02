@@ -3,6 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import hashlib
 import os
 import os.path
 import sys
@@ -70,8 +71,10 @@ class NinjaReclientTest(trial_dir.TestCase):
         os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "cache"))
     if sys.platform.startswith('win'):
       self.assertEqual(
-          os.environ.get('RBE_server_address'), "pipe://%s/reproxy.pipe" %
-          os.path.join(self.root_dir, "out", "a", ".reproxy_tmp"))
+          os.environ.get('RBE_server_address'),
+          "pipe://%s/reproxy.pipe" % hashlib.md5(
+              os.path.join(self.root_dir, "out", "a",
+                           ".reproxy_tmp").encode()).hexdigest())
     else:
       self.assertEqual(
           os.environ.get('RBE_server_address'), "unix://%s/reproxy.sock" %
