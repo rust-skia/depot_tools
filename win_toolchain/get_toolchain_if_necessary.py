@@ -26,7 +26,6 @@ import hashlib
 import filecmp
 import json
 import os
-import platform
 import shutil
 import subprocess
 import sys
@@ -257,7 +256,11 @@ def CanAccessToolchainBucket():
   """Checks whether the user has access to gs://chrome-wintoolchain/."""
   gsutil = download_from_google_storage.Gsutil(
       download_from_google_storage.GSUTIL_DEFAULT_PATH, boto_path=None)
-  code, _, _ = gsutil.check_call('ls', 'gs://chrome-wintoolchain/')
+  code, stdout, stderr = gsutil.check_call('ls', 'gs://chrome-wintoolchain/')
+  if code != 0:
+    # Make sure any error messages are made visible to the user.
+    print(stderr, file=sys.stderr, end='')
+    print(stdout, end='')
   return code == 0
 
 
