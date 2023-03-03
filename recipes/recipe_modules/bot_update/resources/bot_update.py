@@ -735,19 +735,7 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
       # Note that the '--' argument is needed to ensure that git treats
       # 'pin or branch' as revision or ref, and not as file/directory which
       # happens to have the exact same name.
-      ref = pin or branch
-      try:
-        git('checkout', '--force', ref, '--', cwd=sln_dir)
-      except SubprocessFailed as e:
-        # TODO(crbug.com/1418866): master->main migration leaves some builders
-        # broken with outdated ref for origin/HEAD in cache. In this case,
-        # reset the ref and retry.
-        if ref != 'refs/remotes/origin/HEAD':
-          raise e
-
-        git('remote', 'set-head', '-a', 'origin', cwd=sln_dir)
-        git('checkout', '--force', ref, '--', cwd=sln_dir)
-
+      git('checkout', '--force', pin or branch, '--', cwd=sln_dir)
       git('clean', '-dff', cwd=sln_dir)
       return
     except SubprocessFailed as e:
