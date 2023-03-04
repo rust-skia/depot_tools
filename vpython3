@@ -34,7 +34,7 @@ then
 fi
 
 
-base_dir=$(dirname "$(realpath "$0")")
+base_dir=$(dirname "$0")
 
 source "$base_dir/cipd_bin_setup.sh"
 cipd_bin_setup &> /dev/null
