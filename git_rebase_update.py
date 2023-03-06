@@ -268,7 +268,7 @@ def main(args=None):
   if opts.current:
     branches_to_rebase.add(git.current_branch())
 
-  skipped, branch_tree = git.get_branch_tree()
+  skipped, branch_tree = git.get_branch_tree(use_limit=not opts.current)
   if branches_to_rebase:
     skipped = set(skipped).intersection(branches_to_rebase)
   for branch in skipped:
@@ -321,7 +321,7 @@ def main(args=None):
       remove_empty_branches(branch_tree)
 
     # return_branch may not be there any more.
-    if return_branch in git.branches():
+    if return_branch in git.branches(use_limit=False):
       git.run('checkout', return_branch)
       git.thaw()
     else:

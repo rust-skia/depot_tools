@@ -502,7 +502,7 @@ def freeze():
   return ' '.join(ret) or None
 
 
-def get_branch_tree():
+def get_branch_tree(use_limit=False):
   """Get the dictionary of {branch: parent}, compatible with topo_iter.
 
   Returns a tuple of (skipped, <branch_tree dict>) where skipped is a set of
@@ -511,7 +511,7 @@ def get_branch_tree():
   skipped = set()
   branch_tree = {}
 
-  for branch in branches():
+  for branch in branches(use_limit=use_limit):
     parent = upstream(branch)
     if not parent:
       skipped.add(branch)
