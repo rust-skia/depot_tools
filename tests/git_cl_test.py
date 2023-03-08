@@ -3690,6 +3690,25 @@ class ChangelistTest(unittest.TestCase):
         '--json_output', '/tmp/fake-temp2',
         '--description_file', '/tmp/fake-temp1',
     ])
+    subprocess2.Popen.assert_any_call([
+        'vpython', 'PRESUBMIT_SUPPORT',
+        '--root', 'root',
+        '--upstream', 'upstream',
+        '--verbose', '--verbose',
+        '--gerrit_url', 'https://chromium-review.googlesource.com',
+        '--gerrit_project', 'project',
+        '--gerrit_branch', 'refs/heads/main',
+        '--author', 'author',
+        '--issue', '123456',
+        '--patchset', '7',
+        '--commit',
+        '--may_prompt',
+        '--parallel',
+        '--all_files',
+        '--no_diffs',
+        '--json_output', '/tmp/fake-temp4',
+        '--description_file', '/tmp/fake-temp3',
+    ])
     gclient_utils.FileWrite.assert_any_call(
         '/tmp/fake-temp1', 'description')
     metrics.collector.add_repeated('sub_commands', {
