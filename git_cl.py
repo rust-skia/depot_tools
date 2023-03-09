@@ -1435,11 +1435,21 @@ class Changelist(object):
             ' was not specified. To enable ResultDB, please run the command'
             ' again with the --realm argument to specify the LUCI realm.')
 
-    return self._RunPresubmit(args,
-                              description,
-                              use_python3=True,
-                              resultdb=resultdb,
-                              realm=realm)
+    py3_results = self._RunPresubmit(args,
+                                     description,
+                                     use_python3=True,
+                                     resultdb=resultdb,
+                                     realm=realm)
+    if py3_results.get('skipped_presubmits', 1) == 0:
+      print('No more presubmits to run - skipping Python 2 presubmits.')
+      return py3_results
+
+    py2_results = self._RunPresubmit(args,
+                                     description,
+                                     use_python3=False,
+                                     resultdb=resultdb,
+                                     realm=realm)
+    return self._MergePresubmitResults(py2_results, py3_results)
 
   def _RunPresubmit(self,
                     args,
@@ -1479,6 +1489,19 @@ class Changelist(object):
         json_results = gclient_utils.FileRead(json_output)
         return json.loads(json_results)
 
+  def _MergePresubmitResults(self, py2_results, py3_results):
+    return {
+        'more_cc': sorted(set(py2_results.get('more_cc', []) +
+                              py3_results.get('more_cc', []))),
+        'errors': (
+            py2_results.get('errors', []) + py3_results.get('errors', [])),
+        'notifications': (
+            py2_results.get('notifications', []) +
+            py3_results.get('notifications', [])),
+        'warnings': (
+            py2_results.get('warnings', []) + py3_results.get('warnings', []))
+    }
+
   def RunPostUploadHook(self, verbose, upstream, description, py3_only):
     args = self._GetCommonPresubmitArgs(verbose, upstream)
     args.append('--post_upload')
@@ -1486,8 +1509,13 @@ class Changelist(object):
     with gclient_utils.temporary_file() as description_file:
       gclient_utils.FileWrite(description_file, description)
       args.extend(['--description_file', description_file])
-      subprocess2.Popen(['vpython3', PRESUBMIT_SUPPORT] + args +
-                        ['--use-python3']).wait()
+      if not py3_only:
+        p_py2 = subprocess2.Popen(['vpython', PRESUBMIT_SUPPORT] + args)
+      p_py3 = subprocess2.Popen(['vpython3', PRESUBMIT_SUPPORT] + args +
+                                ['--use-python3'])
+      if not py3_only:
+        p_py2.wait()
+      p_py3.wait()
 
   def _GetDescriptionForUpload(self, options, git_diff_args, files):
     # type: (optparse.Values, Sequence[str], Sequence[str]
