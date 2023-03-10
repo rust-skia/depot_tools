@@ -2654,8 +2654,8 @@ class Changelist(object):
             'Please examine output above for the reason of the failure.\n'
             'If this is a false positive, you can try to bypass blocked '
             'keyword by using push option '
-            '-o uploadvalidator~skip, e.g.:\n'
-            'git cl upload -o uploadvalidator~skip\n\n'
+            '-o banned-words~skip, e.g.:\n'
+            'git cl upload -o banned-words~skip\n\n'
             'If git-cl is not working correctly, file a bug under the '
             'Infra>SDK component.')
       if 'git push -o nokeycheck' in str(e.stdout):
