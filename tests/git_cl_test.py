@@ -4842,6 +4842,9 @@ class CMDUploadTestCase(CMDTestCaseBase):
     mock.patch(
         'git_cl.Settings.GetSquashGerritUploads',
         return_value=True).start()
+    mock.patch.dict(os.environ, {
+        git_cl.DOGFOOD_STACKED_CHANGES_VAR: "0"
+    }).start()
     self.addCleanup(mock.patch.stopall)
 
   def testWarmUpChangeDetailCache(self):

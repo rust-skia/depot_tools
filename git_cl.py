@@ -162,6 +162,11 @@ assert len(_KNOWN_GERRIT_TO_SHORT_URLS) == len(
 _MAX_STACKED_BRANCHES_UPLOAD = 20
 
 
+# Environment variable to indicate if user is participating in the stcked
+# changes dogfood.
+DOGFOOD_STACKED_CHANGES_VAR = 'DOGFOOD_STACKED_CHANGES'
+
+
 # Repo prefixes that are enrolled in the stacked changes dogfood.
 DOGFOOD_STACKED_CHANGES_REPOS = [
     'chromium.googlesource.com/infra/',
@@ -4796,7 +4801,7 @@ def CMDupload(parser, args):
     options.retry_failed = False
 
   remote = cl.GetRemoteUrl()
-  dogfood_stacked_changes = (os.environ.get('DOGFOOD_STACKED_CHANGES')
+  dogfood_stacked_changes = (os.environ.get(DOGFOOD_STACKED_CHANGES_VAR)
                              not in ['1', '0']
                              and any(repo in remote
                                      for repo in DOGFOOD_STACKED_CHANGES_REPOS))
@@ -4807,7 +4812,7 @@ def CMDupload(parser, args):
           'File bugs at https://bit.ly/3Y6opoI')
 
   if options.squash and (dogfood_stacked_changes
-                         or os.environ.get('DOGFOOD_STACKED_CHANGES') == '1'):
+                         or os.environ.get(DOGFOOD_STACKED_CHANGES_VAR) == '1'):
     if options.dependencies:
       parser.error('--dependencies is not available for this workflow.')
 
