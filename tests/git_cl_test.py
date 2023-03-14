@@ -1560,6 +1560,7 @@ class TestGitCl(unittest.TestCase):
     options.use_commit_queue = options.cq_quick_run = False
     options.hashtags = ['cow']
     options.target_branch = None
+    options.push_options = ['uploadvalidator~skip']
     orig_args = []
 
     mockRunGitPush.return_value = (
@@ -1578,7 +1579,8 @@ class TestGitCl(unittest.TestCase):
         'notify=NONE', 'm=honk_stonk', 'topic=circus', 'hashtag=cow'
     ]
     mockRunGitPush.assert_called_once_with(expected_refspec,
-                                           expected_refspec_opts, mock.ANY)
+                                           expected_refspec_opts, mock.ANY,
+                                           options.push_options)
     mockPostUploadUpdates.assert_called_once_with(options, new_upload, '1234')
 
   @mock.patch('git_cl.Changelist.GetGerritHost',
@@ -1637,6 +1639,7 @@ class TestGitCl(unittest.TestCase):
     options.use_commit_queue = options.cq_quick_run = False
     options.hashtags = ['cow']
     options.target_branch = None
+    options.push_options = ['uploadvalidator~skip']
     orig_args = []
 
     mockRunGitPush.return_value = (
@@ -1661,7 +1664,8 @@ class TestGitCl(unittest.TestCase):
                         'topic=circus,hashtag=cow')
     expected_refspec_opts = ['notify=NONE', 'topic=circus', 'hashtag=cow']
     mockRunGitPush.assert_called_once_with(expected_refspec,
-                                           expected_refspec_opts, mock.ANY)
+                                           expected_refspec_opts, mock.ANY,
+                                           options.push_options)
 
     self.assertEqual(mockPostUploadUpdates.mock_calls, [
         mock.call(options, new_upload_upstream, '1233'),
@@ -1696,6 +1700,7 @@ class TestGitCl(unittest.TestCase):
     options.use_commit_queue = options.cq_quick_run = False
     options.hashtags = ['cow']
     options.target_branch = None
+    options.push_options = ['uploadvalidator~skip']
     orig_args = []
 
     cls = [
@@ -1741,7 +1746,8 @@ class TestGitCl(unittest.TestCase):
         'notify=NONE', 'm=honk_stonk', 'topic=circus', 'hashtag=cow'
     ]
     mockRunGitPush.assert_called_once_with(expected_refspec,
-                                           expected_refspec_opts, mock.ANY)
+                                           expected_refspec_opts, mock.ANY,
+                                           options.push_options)
 
     self.assertEqual(mockPostUploadUpdates.mock_calls,
                      [mock.call(options, new_upload_current, '1233')])
