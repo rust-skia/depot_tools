@@ -6224,10 +6224,16 @@ class OptionParser(optparse.OptionParser):
       settings = Settings()
 
       if metrics.collector.config.should_collect_metrics:
-        # GetViewVCUrl ultimately calls logging method.
-        project_url = settings.GetViewVCUrl().strip('/+')
-        if project_url in metrics_utils.KNOWN_PROJECT_URLS:
-          metrics.collector.add('project_urls', [project_url])
+        try:
+          # GetViewVCUrl ultimately calls logging method.
+          project_url = settings.GetViewVCUrl().strip('/+')
+          if project_url in metrics_utils.KNOWN_PROJECT_URLS:
+            metrics.collector.add('project_urls', [project_url])
+        except subprocess2.CalledProcessError:
+          # Occurs when command is not executed in a git repository
+          # We should not fail here. If the command needs to be executed
+          # in a repo, it will be raised later.
+          pass
 
   def _parse_args(self, args=None):
     # Create an optparse.Values object that will store only the actual passed
