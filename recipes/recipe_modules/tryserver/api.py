@@ -333,8 +333,6 @@ class TryserverApi(recipe_api.RecipeApi):
     """
     self._set_failure_type('TEST_EXPIRED')
 
-  # TODO(crbug.com/1179039): switch the test in examples/full.py to not use
-  # patch_text, and drop the argument entirely from all the get_footer variants.
   def get_footers(self, patch_text=None):
     """Retrieves footers from the patch description.
 
