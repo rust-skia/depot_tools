@@ -680,7 +680,11 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     for d, url in processed_deps.items():
       # normpath is required to allow DEPS to use .. in their
       # dependency local path.
-      rel_deps[os.path.normpath(os.path.join(rel_prefix, d))] = url
+      # We are following the same pattern when use_relative_paths = False,
+      # which uses slashes.
+      rel_deps[os.path.normpath(os.path.join(rel_prefix,
+                                             d)).replace(os.path.sep,
+                                                         '/')] = url
     logging.warning('Updating deps by prepending %s.', rel_prefix)
     return rel_deps
 
@@ -842,8 +846,8 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         logging.warning('Updating recursedeps by prepending %s.', rel_prefix)
         rel_deps = {}
         for depname, options in self.recursedeps.items():
-          rel_deps[
-              os.path.normpath(os.path.join(rel_prefix, depname))] = options
+          rel_deps[os.path.normpath(os.path.join(rel_prefix, depname)).replace(
+              os.path.sep, '/')] = options
         self.recursedeps = rel_deps
     # To get gn_args from another DEPS, that DEPS must be recursed into.
     if self._gn_args_from:

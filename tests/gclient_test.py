@@ -440,11 +440,10 @@ class GclientTest(trial_dir.TestCase):
     write(os.path.join('foo', 'baz', 'fake.txt'),
           "bogus content")
 
-    self.assertEqual([(h.action, h.effective_cwd) for h in self._get_hooks()],
-        [
-            (('tata', 'titi'), self.root_dir),
-            (('fire', 'lazors'), os.path.join(self.root_dir, "foo", "baz"))
-        ])
+    self.assertEqual(
+        [(h.action, h.effective_cwd) for h in self._get_hooks()],
+        [(('tata', 'titi'), self.root_dir),
+         (('fire', 'lazors'), os.path.join(self.root_dir, 'foo/baz'))])
 
   def testTargetOS(self):
     """Verifies that specifying a target_os pulls in all relevant dependencies.
@@ -847,13 +846,11 @@ class GclientTest(trial_dir.TestCase):
     options, _ = gclient.OptionParser().parse_args([])
     obj = gclient.GClient.LoadCurrentConfig(options)
     obj.RunOnDeps('None', [])
-    self.assertEqual(
-        [
-          ('foo', 'svn://example.com/foo'),
-          (os.path.join('foo', 'bar'), 'svn://example.com/bar'),
-          (os.path.join('foo', 'baz'), 'svn://example.com/baz'),
-        ],
-        self._get_processed())
+    self.assertEqual([
+        ('foo', 'svn://example.com/foo'),
+        ('foo/bar', 'svn://example.com/bar'),
+        ('foo/baz', 'svn://example.com/baz'),
+    ], self._get_processed())
 
   def testRecursedepsCustomdepsOverride(self):
     """Verifies gclient overrides deps within recursedeps using custom deps"""
@@ -883,15 +880,12 @@ class GclientTest(trial_dir.TestCase):
     options, _ = gclient.OptionParser().parse_args([])
     obj = gclient.GClient.LoadCurrentConfig(options)
     obj.RunOnDeps('None', [])
-    six.assertCountEqual(
-        self,
-        [
-          ('foo', 'svn://example.com/foo'),
-          (os.path.join('foo', 'bar'), 'svn://example.com/override'),
-          (os.path.join('foo', 'foo', 'bar'), 'svn://example.com/override'),
-          (os.path.join('foo', 'baz'), 'svn://example.com/baz'),
-        ],
-        self._get_processed())
+    six.assertCountEqual(self, [
+        ('foo', 'svn://example.com/foo'),
+        ('foo/bar', 'svn://example.com/override'),
+        ('foo/foo/bar', 'svn://example.com/override'),
+        ('foo/baz', 'svn://example.com/baz'),
+    ], self._get_processed())
 
   def testRelativeRecursion(self):
     """Verifies that nested use_relative_paths is always respected."""
@@ -922,13 +916,11 @@ class GclientTest(trial_dir.TestCase):
     options, _ = gclient.OptionParser().parse_args([])
     obj = gclient.GClient.LoadCurrentConfig(options)
     obj.RunOnDeps('None', [])
-    self.assertEqual(
-        [
-          ('foo', 'svn://example.com/foo'),
-          (os.path.join('foo', 'bar'), 'svn://example.com/bar'),
-          (os.path.join('foo', 'bar', 'baz'), 'svn://example.com/baz'),
-        ],
-        self._get_processed())
+    self.assertEqual([
+        ('foo', 'svn://example.com/foo'),
+        ('foo/bar', 'svn://example.com/bar'),
+        ('foo/bar/baz', 'svn://example.com/baz'),
+    ], self._get_processed())
 
   def testRelativeRecursionInNestedDir(self):
     """Verifies a gotcha of relative recursion where the parent uses relative
@@ -961,13 +953,11 @@ class GclientTest(trial_dir.TestCase):
     options, _ = gclient.OptionParser().parse_args([])
     obj = gclient.GClient.LoadCurrentConfig(options)
     obj.RunOnDeps('None', [])
-    self.assertEqual(
-        [
-          ('foo', 'svn://example.com/foo'),
-          (os.path.join('foo', 'third_party', 'bar'), 'svn://example.com/bar'),
-          (os.path.join('foo', 'third_party', 'baz'), 'svn://example.com/baz'),
-        ],
-        self._get_processed())
+    self.assertEqual([
+        ('foo', 'svn://example.com/foo'),
+        ('foo/third_party/bar', 'svn://example.com/bar'),
+        ('foo/third_party/baz', 'svn://example.com/baz'),
+    ], self._get_processed())
 
   def testRecursedepsAltfile(self):
     """Verifies gclient respects the |recursedeps| var syntax with overridden
