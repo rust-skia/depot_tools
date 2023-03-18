@@ -31,11 +31,13 @@ class FixEncodingTest(unittest.TestCase):
     print(self.text.encode('utf-8'))
     print(self.text.encode('utf-8'), file=sys.stderr)
 
+  @unittest.skipIf(os.name == 'nt', 'Does not work on Windows')
   def test_unicode(self):
     # Make sure printing unicode works.
     print(self.text)
     print(self.text, file=sys.stderr)
 
+  @unittest.skipIf(os.name == 'nt', 'Does not work on Windows')
   def test_default_encoding(self):
     self.assertEqual('utf-8', sys.getdefaultencoding())
 
