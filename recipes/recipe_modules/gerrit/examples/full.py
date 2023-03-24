@@ -94,7 +94,7 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (api.test('basic') +
+  yield (api.test('basic', status="INFRA_FAILURE") +
          api.step_data('gerrit create_gerrit_branch (v8/v8 test)',
                        api.gerrit.make_gerrit_create_branch_response_data()) +
          api.step_data('gerrit create_gerrit_tag (v8/v8 1.0)',

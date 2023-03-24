@@ -122,10 +122,8 @@ def GenTests(api):
           },
       ))
   )
-  yield (
-      api.test('unrecognized_commit_repo') +
-      ci_build(git_repo='https://unrecognized/repo')
-  )
+  yield (api.test('unrecognized_commit_repo', status="INFRA_FAILURE") +
+         ci_build(git_repo='https://unrecognized/repo'))
   yield (
       api.test('bot_update_failure') +
       ci_build() +
@@ -165,28 +163,20 @@ def GenTests(api):
       api.test('refs') +
       api.properties(refs=['+refs/change/1/2/333'])
   )
+  yield (api.test('tryjob_fail', status="INFRA_FAILURE") + try_build() +
+         api.step_data('bot_update', api.json.invalid(None), retcode=1))
+  yield (api.test('tryjob_fail_patch', status="FAILURE") + try_build() +
+         api.properties(fail_patch='apply') +
+         api.step_data('bot_update', retcode=88))
+  yield (api.test('tryjob_fail_patch_download', status="INFRA_FAILURE") +
+         try_build() + api.properties(fail_patch='download') +
+         api.step_data('bot_update', retcode=87))
   yield (
-      api.test('tryjob_fail') +
-      try_build() +
-      api.step_data('bot_update', api.json.invalid(None), retcode=1)
-  )
-  yield (
-      api.test('tryjob_fail_patch') +
-      try_build() +
-      api.properties(fail_patch='apply') +
-      api.step_data('bot_update', retcode=88)
-  )
-  yield (
-      api.test('tryjob_fail_patch_download') +
-      try_build() +
-      api.properties(fail_patch='download') +
-      api.step_data('bot_update', retcode=87)
-  )
-  yield (api.test('tryjob_fail_missing_bot_update_json') + try_build() +
-         api.override_step_data('bot_update', retcode=1) +
-         api.post_process(post_process.ResultReasonRE, 'Infra Failure.*') +
-         api.post_process(post_process.StatusException) +
-         api.post_process(post_process.DropExpectation))
+      api.test('tryjob_fail_missing_bot_update_json', status="INFRA_FAILURE") +
+      try_build() + api.override_step_data('bot_update', retcode=1) +
+      api.post_process(post_process.ResultReasonRE, 'Infra Failure.*') +
+      api.post_process(post_process.StatusException) +
+      api.post_process(post_process.DropExpectation))
   yield (
       api.test('clobber') +
       api.properties(clobber=1)

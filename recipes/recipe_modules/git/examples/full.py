@@ -120,10 +120,8 @@ def GenTests(api):
       api.buildbucket.ci_build(git_ref='refs/foo/bar')
   )
 
-  yield (
-    api.test('can_fail_build') +
-    api.step_data('git status can_fail_build', retcode=1)
-  )
+  yield (api.test('can_fail_build', status="INFRA_FAILURE") +
+         api.step_data('git status can_fail_build', retcode=1))
 
   yield (
     api.test('cannot_fail_build') +
@@ -135,10 +133,8 @@ def GenTests(api):
     api.properties(set_got_revision=True)
   )
 
-  yield (
-    api.test('rebase_failed') +
-    api.step_data('my repo rebase', retcode=1)
-  )
+  yield (api.test('rebase_failed', status="INFRA_FAILURE") +
+         api.step_data('my repo rebase', retcode=1))
 
   yield api.test('remote_not_origin') + api.properties(remote_name='not_origin')
 
@@ -156,12 +152,12 @@ def GenTests(api):
           'count-objects',
           stdout=api.raw_io.output(api.git.count_objects_output('xxx'))))
 
-  yield (
-      api.test('count-objects_with_bad_output_fails_build') +
-      api.step_data(
-          'count-objects',
-          stdout=api.raw_io.output(api.git.count_objects_output('xxx'))) +
-      api.properties(count_objects_can_fail_build=True))
+  yield (api.test('count-objects_with_bad_output_fails_build',
+                  status="INFRA_FAILURE") +
+         api.step_data('count-objects',
+                       stdout=api.raw_io.output(
+                           api.git.count_objects_output('xxx'))) +
+         api.properties(count_objects_can_fail_build=True))
   yield (
       api.test('cat-file_test') +
       api.step_data('git cat-file abcdef12345:TestFile',
@@ -173,6 +169,6 @@ def GenTests(api):
       api.test('git-cache-checkout') +
       api.properties(use_git_cache=True))
 
-  yield (api.test('new_branch_failed') +
+  yield (api.test('new_branch_failed', status="INFRA_FAILURE") +
          api.properties(set_both_upstream_and_upstream_current=True) +
          api.expect_exception('ValueError'))

@@ -73,7 +73,7 @@ def GenTests(api):
           "Uncaught Exception: DepsDiffException('Unexpected result: autoroll "
           "diff found 0 files changed')"),
       api.post_process(DropExpectation),
-  )
+      status="INFRA_FAILURE")
 
   yield api.test(
       'dont have revision yet',
@@ -89,7 +89,7 @@ def GenTests(api):
           "Uncaught Exception: DepsDiffException('Couldn't checkout previous "
           "ref: fatal: bad object abcdef1234567890')"),
       api.post_process(DropExpectation),
-  )
+      status="INFRA_FAILURE")
 
   yield api.test(
       'windows',

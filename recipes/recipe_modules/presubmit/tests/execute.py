@@ -78,7 +78,8 @@ def GenTests(api):
          api.post_process(post_process.DropExpectation))
 
   yield (
-      api.test('timeout') + api.runtime(is_experimental=False) +
+      api.test('timeout', status="FAILURE") +
+      api.runtime(is_experimental=False) +
       api.buildbucket.try_build(project='infra') +
       api.presubmit(timeout_s=600) + api.step_data(
           'presubmit',
@@ -96,7 +97,8 @@ def GenTests(api):
       api.post_process(post_process.DropExpectation))
 
   yield (
-      api.test('failure') + api.runtime(is_experimental=False) +
+      api.test('failure', status="FAILURE") +
+      api.runtime(is_experimental=False) +
       api.buildbucket.try_build(project='infra') + api.step_data(
           'presubmit',
           api.json.output(
@@ -146,7 +148,8 @@ def GenTests(api):
           #### To see notifications and warnings, look at the stdout of the presubmit step.
         ''').strip()) + api.post_process(post_process.DropExpectation))
   yield (
-      api.test('failure py3') + api.runtime(is_experimental=False) +
+      api.test('failure py3', status="FAILURE") +
+      api.runtime(is_experimental=False) +
       api.buildbucket.try_build(project='infra') + api.step_data(
           'presubmit py3',
           api.json.output(
@@ -198,7 +201,8 @@ def GenTests(api):
 
   long_message = (u'Here are some suggested OWNERS:' +
     u'\nreallyLongFakeAccountNameEmail@chromium.org' * 10)
-  yield (api.test('failure-long-message') + api.runtime(is_experimental=False) +
+  yield (api.test('failure-long-message', status="FAILURE") +
+         api.runtime(is_experimental=False) +
          api.buildbucket.try_build(project='infra') + api.step_data(
              'presubmit',
              api.json.output(
@@ -237,7 +241,8 @@ def GenTests(api):
           **The complete output can be found at the bottom of the presubmit stdout.**
         ''').strip()) + api.post_process(post_process.DropExpectation))
 
-  yield (api.test('infra-failure') + api.runtime(is_experimental=False) +
+  yield (api.test('infra-failure', status="INFRA_FAILURE") +
+         api.runtime(is_experimental=False) +
          api.buildbucket.try_build(project='infra') + api.step_data(
              'presubmit',
              api.json.output(
@@ -271,14 +276,15 @@ def GenTests(api):
     '/p/chromium/issues/entry?components='
     'Infra%3EClient%3EChrome&status=Untriaged)'
   )
-  yield (api.test('failure-no-json') + api.runtime(is_experimental=False) +
+  yield (api.test('failure-no-json', status="INFRA_FAILURE") +
+         api.runtime(is_experimental=False) +
          api.buildbucket.try_build(project='infra') +
          api.step_data('presubmit', api.json.output(None, retcode=1)) +
          api.post_process(post_process.StatusException) +
          api.post_process(post_process.ResultReason, bug_msg) +
          api.post_process(post_process.DropExpectation))
 
-  yield (api.test('infra-failure-no-json') +
+  yield (api.test('infra-failure-no-json', status="INFRA_FAILURE") +
          api.runtime(is_experimental=False) +
          api.buildbucket.try_build(project='infra') +
          api.step_data('presubmit', api.json.output(None, retcode=2)) +

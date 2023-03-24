@@ -20,18 +20,10 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-      api.test('basic') +
-      api.post_process(post_process.StatusSuccess) +
-      api.post_process(post_process.DropExpectation)
-  )
+  yield (api.test('basic') + api.post_process(post_process.StatusSuccess) +
+         api.post_process(post_process.DropExpectation))
 
-  yield (
-      api.test('failure') +
-      api.override_step_data(
-          'bot_update',
-          api.json.output({'did_run': True}),
-          retcode=1) +
-      api.post_process(post_process.StatusAnyFailure) +
-      api.post_process(post_process.DropExpectation)
-  )
+  yield (api.test('failure', status="INFRA_FAILURE") + api.override_step_data(
+      'bot_update', api.json.output({'did_run': True}), retcode=1) +
+         api.post_process(post_process.StatusAnyFailure) +
+         api.post_process(post_process.DropExpectation))

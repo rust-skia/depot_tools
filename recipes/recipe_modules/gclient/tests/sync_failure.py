@@ -22,5 +22,5 @@ def GenTests(api):
       api.override_step_data('gclient sync', retcode=1),
       # Should not fail with uncaught exception
       api.post_process(post_process.ResultReasonRE, r'^(?!Uncaught Exception)'),
-      api.post_process(post_process.DropExpectation)
-  )
+      api.post_process(post_process.DropExpectation),
+      status="INFRA_FAILURE")

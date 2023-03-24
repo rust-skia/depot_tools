@@ -19,13 +19,15 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (api.test('timeout') + api.buildbucket.try_build(
-      'chromium',
-      'linux',
-      git_repo='https://chromium.googlesource.com/chromium/src',
-      change_number=91827,
-      patch_set=1) + api.tryserver.gerrit_change_target_ref('refs/heads/main')
-         + api.override_step_data(
-             'gerrit fetch current CL info', times_out_after=1200) +
-         api.post_process(post_process.StatusException) + api.post_process(
-             post_process.DropExpectation))
+  yield (api.test('timeout', status="INFRA_FAILURE") +
+         api.buildbucket.try_build(
+             'chromium',
+             'linux',
+             git_repo='https://chromium.googlesource.com/chromium/src',
+             change_number=91827,
+             patch_set=1) +
+         api.tryserver.gerrit_change_target_ref('refs/heads/main') +
+         api.override_step_data('gerrit fetch current CL info',
+                                times_out_after=1200) +
+         api.post_process(post_process.StatusException) +
+         api.post_process(post_process.DropExpectation))
