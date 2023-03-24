@@ -354,6 +354,20 @@ def remove(target, cleanup_dir):
   print('Marking for removal %s => %s' % (target, dest))
   try:
     os.rename(target, dest)
+  except OSError as os_e:
+    print('Error renaming %s to %s: %s' % (target, dest, str(os_e)))
+    if not target.endswith('/.', '\.'):
+      raise
+    # Because the solutions name is '.', we might be in a bot
+    # directory that is locked to prevent renaming. Instead
+    # try moving renaming all content within the directory.
+    print('Trying to rename all contents %s -> %s' % (target, dest))
+    if target.endswith('.'):
+      allfiles = os.listdir(target)
+      for f in allfiles:
+        target_path = os.path.join(target, f)
+        dst_path = os.path.join(destination, f)
+        os.rename(target_path, dst_path)
   except Exception as e:
     print('Error renaming %s to %s: %s' % (target, dest, str(e)))
     raise
@@ -711,7 +725,8 @@ def _git_checkout(sln, sln_dir, revisions, refs, no_fetch_tags, git_cache_dir,
         remove(sln_dir, cleanup_dir)
 
       # Use "tries=1", since we retry manually in this loop.
-      if not path.isdir(sln_dir):
+      if not path.isdir(sln_dir) or (path.isdir(sln_dir) and sln_dir.endswith(
+          ('/.', '\.')) and len(os.listdir(sln_dir)) == 0):
         git('clone', '--no-checkout', '--local', '--shared', mirror_dir,
             sln_dir)
         _git_disable_gc(sln_dir)
@@ -1039,11 +1054,7 @@ def checkout(options, git_slns, specs, revisions, step_text):
   if os.path.exists(dirty_path):
     ensure_no_checkout(dir_names, options.cleanup_dir)
 
-  with open(dirty_path, 'w') as f:
-    # create file, no content
-    pass
-
-  should_delete_dirty_file = False
+  should_create_dirty_file = True
   experiments = []
   if options.experiments:
     experiments = options.experiments.split(',')
@@ -1083,12 +1094,12 @@ def checkout(options, git_slns, specs, revisions, step_text):
 
           experiments=experiments)
       ensure_checkout(**checkout_parameters)
-      should_delete_dirty_file = True
+      should_create_dirty_file = False
     except GclientSyncFailed:
       print('We failed gclient sync, lets delete the checkout and retry.')
       ensure_no_checkout(dir_names, options.cleanup_dir)
       ensure_checkout(**checkout_parameters)
-      should_delete_dirty_file = True
+      should_create_dirty_file = False
   except PatchFailed as e:
     # Tell recipes information such as root, got_revision, etc.
     emit_json(options.output_json,
@@ -1100,15 +1111,13 @@ def checkout(options, git_slns, specs, revisions, step_text):
               failed_patch_body=e.output,
               step_text='%s PATCH FAILED' % step_text,
               fixed_revisions=revisions)
-    should_delete_dirty_file = True
+    should_create_dirty_file = False
     raise
   finally:
-    if should_delete_dirty_file:
-      try:
-        os.remove(dirty_path)
-      except OSError:
-        print('Dirty file %s has been removed by a different process.' %
-              dirty_path)
+    if should_create_dirty_file:
+      with open(dirty_path, 'w') as f:
+        # create file, no content
+        pass
 
   # Take care of got_revisions outputs.
   revision_mapping = GOT_REVISION_MAPPINGS.get(git_slns[0]['url'], {})
