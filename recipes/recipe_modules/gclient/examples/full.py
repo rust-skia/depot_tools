@@ -42,6 +42,7 @@ TEST_CONFIGS = [
   'gerrit_test_cq_normal',
   'gyp',
   'infra',
+  'infra_superproject',
   'infradata_master_manager',
   'infradata_config',
   'infradata_rbe',
