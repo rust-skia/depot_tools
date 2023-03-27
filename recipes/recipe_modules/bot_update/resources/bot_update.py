@@ -356,7 +356,7 @@ def remove(target, cleanup_dir):
     os.rename(target, dest)
   except OSError as os_e:
     print('Error renaming %s to %s: %s' % (target, dest, str(os_e)))
-    if not target.endswith('/.', '\.'):
+    if not target.endswith(('/.', '\.')):
       raise
     # Because the solutions name is '.', we might be in a bot
     # directory that is locked to prevent renaming. Instead
