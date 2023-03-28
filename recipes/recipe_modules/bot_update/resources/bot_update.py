@@ -366,8 +366,8 @@ def remove(target, cleanup_dir):
       allfiles = os.listdir(target)
       for f in allfiles:
         target_path = os.path.join(target, f)
-        dst_path = os.path.join(destination, f)
-        os.rename(target_path, dst_path)
+        dst_path = os.path.join(dest, f)
+        os.renames(target_path, dst_path)
   except Exception as e:
     print('Error renaming %s to %s: %s' % (target, dest, str(e)))
     raise
