@@ -24,6 +24,7 @@ per-file cbuildbot=file://CROS_OWNERS
 per-file cros=file://CROS_OWNERS
 per-file *cros_python2*=file://CROS_OWNERS
 per-file cros_sdk=file://CROS_OWNERS
+per-file gerrit=file://CROS_OWNERS
 per-file repo=file://CROS_OWNERS
 per-file repo_launcher=file://CROS_OWNERS
 per-file CROS_OWNERS=file://CROS_OWNERS
