@@ -1653,11 +1653,16 @@ class TestGitCl(unittest.TestCase):
     git_cl.UploadAllSquashed(options, orig_args)
 
     # Asserts
+    self.maxDiff = None
     self.assertEqual(mockSquashedCommit.mock_calls, [
         mock.call(options,
                   'current-upstream-ancestor',
+                  'current-upstream-ancestor',
                   end_commit='next-upstream-ancestor'),
-        mock.call(options, upstream_commit_to_push, end_commit=None)
+        mock.call(options,
+                  upstream_commit_to_push,
+                  'next-upstream-ancestor',
+                  end_commit=None)
     ])
 
     expected_refspec = ('commit-to-push:refs/for/refs/heads/main%notify=NONE,'
@@ -1737,8 +1742,10 @@ class TestGitCl(unittest.TestCase):
     git_cl.UploadAllSquashed(options, orig_args)
 
     # Asserts
-    self.assertEqual(mockSquashedCommit.mock_calls,
-                     [mock.call(options, 'external-commit', end_commit=None)])
+    self.assertEqual(mockSquashedCommit.mock_calls, [
+        mock.call(
+            options, 'external-commit', 'external-commit', end_commit=None)
+    ])
 
     expected_refspec = ('commit-to-push:refs/for/refs/heads/main%notify=NONE,'
                         'm=honk_stonk,topic=circus,hashtag=cow')
@@ -1760,9 +1767,12 @@ class TestGitCl(unittest.TestCase):
     git_cl.UploadAllSquashed(options, orig_args)
 
     # Asserts
-    self.assertEqual(
-        mockSquashedCommit.mock_calls,
-        [mock.call(options, 'current-upstream-ancestor', end_commit=None)])
+    self.assertEqual(mockSquashedCommit.mock_calls, [
+        mock.call(options,
+                  'current-upstream-ancestor',
+                  'current-upstream-ancestor',
+                  end_commit=None)
+    ])
 
   @mock.patch(
       'git_cl.Changelist._GerritCommitMsgHookCheck', lambda offer_removal: None)
@@ -4005,6 +4015,7 @@ class ChangelistTest(unittest.TestCase):
     mockPrepareChange.return_value = (reviewers, ccs, change_desc)
 
     parent_hash = 'upstream-gerrit-hash'
+    parent_orig_hash = 'upstream-last-upload-hash'
     parent_hash_root = 'root-commit'
     hash_to_push = 'new-squash-hash'
     hash_to_push_root = 'new-squash-hash-root'
@@ -4028,13 +4039,14 @@ class ChangelistTest(unittest.TestCase):
     cl = git_cl.Changelist(branchref=branchref)
     options = optparse.Values()
 
-    new_upload = cl.PrepareSquashedCommit(options, parent_hash)
+    new_upload = cl.PrepareSquashedCommit(options, parent_hash,
+                                          parent_orig_hash)
     self.assertEqual(new_upload.reviewers, reviewers)
     self.assertEqual(new_upload.ccs, ccs)
     self.assertEqual(new_upload.commit_to_push, hash_to_push)
     self.assertEqual(new_upload.new_last_uploaded_commit, end_hash)
     self.assertEqual(new_upload.change_desc, change_desc)
-    mockPrepareChange.assert_called_with(options, parent_hash, end_hash)
+    mockPrepareChange.assert_called_with(options, parent_orig_hash, end_hash)
 
   @mock.patch('git_cl.Settings.GetRoot', return_value='')
   @mock.patch('git_cl.Changelist.GetMostRecentPatchset', return_value=2)

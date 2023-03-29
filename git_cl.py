@@ -1686,14 +1686,29 @@ class Changelist(object):
     # branch/change.
     return refspec_opts
 
-  def PrepareSquashedCommit(self, options, parent, end_commit=None):
-    # type: (optparse.Values, str, Optional[str]) -> _NewUpload()
-    """Create a squashed commit to upload."""
+  def PrepareSquashedCommit(self,
+                            options,
+                            parent,
+                            orig_parent,
+                            end_commit=None):
+    # type: (optparse.Values, str, str, Optional[str]) -> _NewUpload()
+    """Create a squashed commit to upload.
+
+
+      Args:
+        parent: The commit to use as the parent for the new squashed.
+        orig_parent: The commit that is an actual ancestor of `end_commit`. It
+            is part of the same original tree as end_commit, which does not
+            contain squashed commits. This is used to create the change
+            description for the new squashed commit with:
+            `git log orig_parent..end_commit`.
+        end_commit: The commit to use as the end of the new squashed commit.
+    """
 
     if end_commit is None:
       end_commit = RunGit(['rev-parse', self.branchref]).strip()
 
-    reviewers, ccs, change_desc = self._PrepareChange(options, parent,
+    reviewers, ccs, change_desc = self._PrepareChange(options, orig_parent,
                                                       end_commit)
     latest_tree = RunGit(['rev-parse', end_commit + ':']).strip()
     with gclient_utils.temporary_file() as desc_tempfile:
@@ -4870,6 +4885,7 @@ def UploadAllSquashed(options, orig_args):
     # We can only support external changes when we're only uploading one
     # branch.
     parent = cl._UpdateWithExternalChanges() if len(ordered_cls) == 1 else None
+    orig_parent = None
     if parent is None:
       origin = '.'
       branch = cl.GetBranch()
@@ -4884,6 +4900,9 @@ def UploadAllSquashed(options, orig_args):
           if upstream_branch in ['master', 'main']:
             parent = cl.GetCommonAncestorWithUpstream()
           else:
+            orig_parent = scm.GIT.GetBranchConfig(settings.GetRoot(),
+                                                  upstream_branch,
+                                                  LAST_UPLOAD_HASH_CONFIG_KEY)
             parent = scm.GIT.GetBranchConfig(settings.GetRoot(),
                                              upstream_branch,
                                              GERRIT_SQUASH_HASH_CONFIG_KEY)
@@ -4896,6 +4915,8 @@ def UploadAllSquashed(options, orig_args):
         # tree.
         parent = cl.GetCommonAncestorWithUpstream()
 
+    if orig_parent is None:
+      orig_parent = parent
     for i, cl in enumerate(ordered_cls):
       # If we're in the middle of the stack, set end_commit to downstream's
       # direct ancestor.
@@ -4905,9 +4926,11 @@ def UploadAllSquashed(options, orig_args):
         child_base_commit = None
       new_upload = cl.PrepareSquashedCommit(options,
                                             parent,
+                                            orig_parent,
                                             end_commit=child_base_commit)
       uploads_by_cl.append((cl, new_upload))
       parent = new_upload.commit_to_push
+      orig_parent = child_base_commit
 
   # Create refspec options
   cl, new_upload = uploads_by_cl[-1]
