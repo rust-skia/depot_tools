@@ -18,8 +18,15 @@ class GSUtilApi(recipe_api.RecipeApi):
   def gsutil_py_path(self):
     return self.repo_resource('gsutil.py')
 
-  def __call__(self, cmd, name=None, use_retry_wrapper=True, version=None,
-               parallel_upload=False, multithreaded=False, infra_step=True,
+  def __call__(self,
+               cmd,
+               name=None,
+               use_retry_wrapper=True,
+               version=None,
+               parallel_upload=False,
+               multithreaded=False,
+               infra_step=True,
+               dry_run=False,
                **kwargs):
     """A step to run arbitrary gsutil commands.
 
@@ -36,6 +43,8 @@ class GSUtilApi(recipe_api.RecipeApi):
           options first (see 'gsutil help options').
       * name (str) - Name of the step to use. Defaults to the first non-flag
           token in the cmd.
+      * dry_run (bool): If True, don't actually run the step; just log what
+          the step would have been.
     """
     if name:
       full_name = 'gsutil ' + name
@@ -79,6 +88,11 @@ class GSUtilApi(recipe_api.RecipeApi):
       cmd_prefix.append('--')
 
     exec_cmd = ['python3', '-u', gsutil_path] + cmd_prefix + cmd
+    if dry_run:
+      return self.m.step.empty(full_name,
+                               step_text='Pretending to run gsutil command',
+                               log_text=' '.join((str(i) for i in exec_cmd)),
+                               log_name='command')
     return self.m.step(full_name, exec_cmd, infra_step=infra_step, **kwargs)
 
   def upload(self, source, bucket, dest, args=None, link_name='gsutil.upload',

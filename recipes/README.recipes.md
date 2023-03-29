@@ -640,7 +640,7 @@ PYTHON_VERSION_COMPATIBILITY: PY3
 
 #### **class [GSUtilApi](/recipes/recipe_modules/gsutil/api.py#10)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/gsutil/api.py#21)(self, cmd, name=None, use_retry_wrapper=True, version=None, parallel_upload=False, multithreaded=False, infra_step=True, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/gsutil/api.py#21)(self, cmd, name=None, use_retry_wrapper=True, version=None, parallel_upload=False, multithreaded=False, infra_step=True, dry_run=False, \*\*kwargs):**
 
 A step to run arbitrary gsutil commands.
 
@@ -657,10 +657,12 @@ Args:
       options first (see 'gsutil help options').
   * name (str) - Name of the step to use. Defaults to the first non-flag
       token in the cmd.
+  * dry_run (bool): If True, don't actually run the step; just log what
+      the step would have been.
 
-&mdash; **def [cat](/recipes/recipe_modules/gsutil/api.py#115)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [cat](/recipes/recipe_modules/gsutil/api.py#129)(self, url, args=None, \*\*kwargs):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [configure\_gsutil](/recipes/recipe_modules/gsutil/api.py#169)(self, \*\*kwargs):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [configure\_gsutil](/recipes/recipe_modules/gsutil/api.py#183)(self, \*\*kwargs):**
 
 Temporarily configures the behavior of gsutil.
 
@@ -672,23 +674,23 @@ possible configurations.
 Args:
   kwargs: Every keyword arg is treated as config line in the temp Boto file.
 
-&mdash; **def [copy](/recipes/recipe_modules/gsutil/api.py#129)(self, source_bucket, source, dest_bucket, dest, args=None, link_name='gsutil.copy', metadata=None, unauthenticated_url=False, \*\*kwargs):**
+&mdash; **def [copy](/recipes/recipe_modules/gsutil/api.py#143)(self, source_bucket, source, dest_bucket, dest, args=None, link_name='gsutil.copy', metadata=None, unauthenticated_url=False, \*\*kwargs):**
 
-&mdash; **def [download](/recipes/recipe_modules/gsutil/api.py#101)(self, bucket, source, dest, args=None, \*\*kwargs):**
+&mdash; **def [download](/recipes/recipe_modules/gsutil/api.py#115)(self, bucket, source, dest, args=None, \*\*kwargs):**
 
-&mdash; **def [download\_url](/recipes/recipe_modules/gsutil/api.py#108)(self, url, dest, args=None, \*\*kwargs):**
+&mdash; **def [download\_url](/recipes/recipe_modules/gsutil/api.py#122)(self, url, dest, args=None, \*\*kwargs):**
 
 &emsp; **@property**<br>&mdash; **def [gsutil\_py\_path](/recipes/recipe_modules/gsutil/api.py#17)(self):**
 
-&mdash; **def [list](/recipes/recipe_modules/gsutil/api.py#148)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [list](/recipes/recipe_modules/gsutil/api.py#162)(self, url, args=None, \*\*kwargs):**
 
-&mdash; **def [remove\_url](/recipes/recipe_modules/gsutil/api.py#162)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [remove\_url](/recipes/recipe_modules/gsutil/api.py#176)(self, url, args=None, \*\*kwargs):**
 
-&mdash; **def [signurl](/recipes/recipe_modules/gsutil/api.py#155)(self, private_key_file, bucket, dest, args=None, \*\*kwargs):**
+&mdash; **def [signurl](/recipes/recipe_modules/gsutil/api.py#169)(self, private_key_file, bucket, dest, args=None, \*\*kwargs):**
 
-&mdash; **def [stat](/recipes/recipe_modules/gsutil/api.py#122)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [stat](/recipes/recipe_modules/gsutil/api.py#136)(self, url, args=None, \*\*kwargs):**
 
-&mdash; **def [upload](/recipes/recipe_modules/gsutil/api.py#84)(self, source, bucket, dest, args=None, link_name='gsutil.upload', metadata=None, unauthenticated_url=False, \*\*kwargs):**
+&mdash; **def [upload](/recipes/recipe_modules/gsutil/api.py#98)(self, source, bucket, dest, args=None, link_name='gsutil.upload', metadata=None, unauthenticated_url=False, \*\*kwargs):**
 ### *recipe_modules* / [osx\_sdk](/recipes/recipe_modules/osx_sdk)
 
 [DEPS](/recipes/recipe_modules/osx_sdk/__init__.py#7): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/version][recipe_engine/recipe_modules/version]

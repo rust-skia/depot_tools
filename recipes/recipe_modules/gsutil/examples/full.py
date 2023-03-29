@@ -90,5 +90,12 @@ def RunSteps(api):
 
   api.gsutil.stat('gs://%s/foo' % bucket)
 
+  # Run in dry-run mode.
+  api.gsutil.cat('gs://%s/foo' % bucket,
+                 name='read remote file',
+                 multithreaded=True,
+                 dry_run=True)
+
+
 def GenTests(api):
   yield api.test('basic')
