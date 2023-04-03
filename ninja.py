@@ -58,7 +58,7 @@ def main(args):
   # macOS's python sets CPATH, LIBRARY_PATH, SDKROOT implicitly.
   # https://openradar.appspot.com/radar?id=5608755232243712
   #
-  # Removing thoese environment variables to avoid affecting clang's behaviors.
+  # Removing those environment variables to avoid affecting clang's behaviors.
   if sys.platform == 'darwin':
     os.environ.pop("CPATH", None)
     os.environ.pop("LIBRARY_PATH", None)
