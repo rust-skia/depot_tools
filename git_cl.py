@@ -4218,53 +4218,106 @@ def write_json(path, contents):
       json.dump(contents, f)
 
 
+def _GetIssueBranchMap():
+  # type: () -> Dict[int, List]
+  """Associate issues (as number) to the list of branches associated to this
+  issue."""
+  branches = RunGit(['for-each-ref', 'refs/heads',
+                     '--format=%(refname)']).splitlines()
+  # Reverse issue lookup.
+  issue_branch_map = {}
+
+  git_config = {}
+  for config in RunGit(['config', '--get-regexp',
+                        r'branch\..*issue']).splitlines():
+    name, _space, val = config.partition(' ')
+    git_config[name] = val
+
+  for branch in branches:
+    issue = git_config.get('branch.%s.%s' %
+                           (scm.GIT.ShortBranchName(branch), ISSUE_CONFIG_KEY))
+    if issue:
+      issue_branch_map.setdefault(int(issue), []).append(branch)
+  return issue_branch_map
+
+
+def SwitchToIssue(options, args):
+  """Switch to the branch associated to issue args[0]
+
+  Fail if the first arg is not a number. Fail if there are 0 such branch.
+  If there are multiple such branch, warns and behaves as
+  `git cl issue -r issue_number`.
+  """
+  issue_branch_map = _GetIssueBranchMap()
+  if not args:
+    DieWithError('`git cl issue --switch` requires a number.')
+  try:
+    issue_num = int(args[0])
+  except ValueError:
+    DieWithError('Cannot parse issue number: %s' % args[0])
+  branches = issue_branch_map.get(issue_num, [])
+  if not branches:
+    DieWithError('No branch associated to issue: %d' % issue_num)
+  if len(branches) > 1:
+    # Print the various branches
+    PrintIssueToBranches(options, args)
+    DieWithError('Multiple branches associated to issue: %d' % issue_num)
+  prefix_size = len('refs/heads/')
+  RunGit(['switch', branches[0][prefix_size:]])
+  return 0
+
+
+def PrintIssueToBranches(options, args):
+  """Print the name of the branch(es) associated to the issue.
+
+  If no issue is specified, print issue -> branch(es) for all known issues"""
+  # Reverse issue lookup.
+  issue_branch_map = _GetIssueBranchMap()
+
+  if not args:
+    args = sorted(issue_branch_map.keys())
+  result = {}
+  for issue in args:
+    try:
+      issue_num = int(issue)
+    except ValueError:
+      print('ERROR cannot parse issue number: %s' % issue, file=sys.stderr)
+      continue
+    result[issue_num] = issue_branch_map.get(issue_num)
+    print('Branch for issue number %s: %s' %
+          (issue, ', '.join(issue_branch_map.get(issue_num) or ('None', ))))
+  if options.json:
+    write_json(options.json, result)
+  return 0
+
+
 @subcommand.usage('[issue_number]')
 @metrics.collector.collect_metrics('git cl issue')
 def CMDissue(parser, args):
   """Sets or displays the current code review issue number.
 
   Pass issue number 0 to clear the current issue.
+  --reverse and --switch option allow to access branch(es) from issue number.
   """
   parser.add_option('-r', '--reverse', action='store_true',
                     help='Lookup the branch(es) for the specified issues. If '
                          'no issues are specified, all branches with mapped '
                          'issues will be listed.')
+  parser.add_option('-s',
+                    '--switch',
+                    action='store_true',
+                    help='Switch to the branch linked to the specified issue. '
+                    'If multiple branches are linked, list all of them.'
+                    'Fail if `git switch` would fail in current state.')
   parser.add_option('--json',
                     help='Path to JSON output file, or "-" for stdout.')
   options, args = parser.parse_args(args)
 
+  if options.switch:
+    return SwitchToIssue(options, args)
+
   if options.reverse:
-    branches = RunGit(['for-each-ref', 'refs/heads',
-                       '--format=%(refname)']).splitlines()
-    # Reverse issue lookup.
-    issue_branch_map = {}
-
-    git_config = {}
-    for config in RunGit(['config', '--get-regexp',
-                          r'branch\..*issue']).splitlines():
-      name, _space, val = config.partition(' ')
-      git_config[name] = val
-
-    for branch in branches:
-      issue = git_config.get(
-          'branch.%s.%s' % (scm.GIT.ShortBranchName(branch), ISSUE_CONFIG_KEY))
-      if issue:
-        issue_branch_map.setdefault(int(issue), []).append(branch)
-    if not args:
-      args = sorted(issue_branch_map.keys())
-    result = {}
-    for issue in args:
-      try:
-        issue_num = int(issue)
-      except ValueError:
-        print('ERROR cannot parse issue number: %s' % issue, file=sys.stderr)
-        continue
-      result[issue_num] = issue_branch_map.get(issue_num)
-      print('Branch for issue number %s: %s' % (
-          issue, ', '.join(issue_branch_map.get(issue_num) or ('None',))))
-    if options.json:
-      write_json(options.json, result)
-    return 0
+    return PrintIssueToBranches(options, args)
 
   if len(args) > 0:
     issue = ParseIssueNumberArgument(args[0])
