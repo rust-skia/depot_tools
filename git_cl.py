@@ -4262,8 +4262,7 @@ def SwitchToIssue(options, args):
     # Print the various branches
     PrintIssueToBranches(options, args)
     DieWithError('Multiple branches associated to issue: %d' % issue_num)
-  prefix_size = len('refs/heads/')
-  RunGit(['switch', branches[0][prefix_size:]])
+  RunGit(['switch', scm.GIT.ShortBranchName(branches[0])])
   return 0
 
 
