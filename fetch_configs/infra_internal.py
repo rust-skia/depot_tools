@@ -14,26 +14,18 @@ class InfraInternal(config_util.Config):
 
   @staticmethod
   def fetch_spec(_props):
-    def url(host, repo):
-      return 'https://%s.googlesource.com/%s.git' % (host, repo)
-
-    spec = {
-      'solutions': [
-        {
-          'name': 'infra_internal',
-          'url': url('chrome-internal', 'infra/infra_internal'),
-          'managed': False
-        },
-      ],
-    }
     return {
-        'type': 'gclient_git',
-        'gclient_git_spec': spec,
+        'alias': {
+            'config': 'infra_superproject',
+            'props': [
+                '--checkout_internal=True',
+            ],
+        },
     }
 
   @staticmethod
   def expected_root(_props):
-    return 'infra_internal'
+    return ''
 
 
 def main(argv=None):
@@ -42,4 +34,3 @@ def main(argv=None):
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv))
-

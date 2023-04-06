@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import sys
+import ast
 
 import config_util  # pylint: disable=import-error
 
@@ -12,7 +13,7 @@ import config_util  # pylint: disable=import-error
 class InfraSuperproject(config_util.Config):
   """Basic Config class for the whole set of Infrastructure repositories."""
   @staticmethod
-  def fetch_spec(_props):
+  def fetch_spec(props):
     def url(host, repo):
       return 'https://%s.googlesource.com/%s.git' % (host, repo)
 
@@ -22,12 +23,12 @@ class InfraSuperproject(config_util.Config):
                 'name': '.',
                 'url': url('chromium', 'infra/infra_superproject'),
                 'managed': False,
-                'custom_vars': {
-                    'checkout_internal': True
-                }
+                'custom_vars': {},
             },
         ],
     }
+    if ast.literal_eval(props.get('checkout_internal', 'False')):
+      spec['solutions'][0]['custom_vars']['checkout_internal'] = True
     return {
         'type': 'gclient_git',
         'gclient_git_spec': spec,

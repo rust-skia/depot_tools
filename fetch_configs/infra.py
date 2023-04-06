@@ -15,21 +15,14 @@ class Infra(config_util.Config):
   @staticmethod
   def fetch_spec(props):
     return {
-      'type': 'gclient_git',
-      'gclient_git_spec': {
-        'solutions': [
-          {
-            'name'     : 'infra',
-            'url'      : 'https://chromium.googlesource.com/infra/infra.git',
-            'managed'  : False,
-          }
-        ],
-      },
+        'alias': {
+            'config': 'infra_superproject',
+        },
     }
 
   @staticmethod
   def expected_root(_props):
-    return 'infra'
+    return ''
 
 
 def main(argv=None):
