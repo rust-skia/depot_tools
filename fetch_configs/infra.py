@@ -17,6 +17,7 @@ class Infra(config_util.Config):
     return {
         'alias': {
             'config': 'infra_superproject',
+            'props': [],
         },
     }
 
