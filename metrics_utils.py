@@ -49,7 +49,7 @@ def get_notice_footer():
   yield '$ gclient metrics [--opt-in] [--opt-out]'
   yield 'For more information please see metrics.README.md'
   yield 'in your depot_tools checkout or visit'
-  yield 'https://goo.gl/yNpRDV.'
+  yield 'https://bit.ly/3MpLAYM.'
 
 def get_change_notice(version):
   if version == 0:
