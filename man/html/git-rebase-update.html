@@ -756,7 +756,7 @@ git-rebase-update(1) Manual Page
 <h2 id="_synopsis">SYNOPSIS</h2>
 <div class="sectionbody">
 <div class="verseblock">
-<pre class="content"><em>git rebase-update</em> [-v | --verbose] [-n | --no-fetch] [-k | --keep-going]</pre>
+<pre class="content"><em>git rebase-update</em> [-v | --verbose] [-n | --no-fetch] [-k | --keep-going] [--no-squash]</pre>
 <div class="attribution">
 </div></div>
 </div>
@@ -866,6 +866,14 @@ Restoration
 <dd>
 <p>
   Skip the <code>git fetch</code> phase of rebase-update.
+</p>
+</dd>
+<dt class="hdlist1">
+--no-squash
+</dt>
+<dd>
+<p>
+  Skip the squash phase of rebase-update when there are merge conflicts.
 </p>
 </dd>
 <dt class="hdlist1">

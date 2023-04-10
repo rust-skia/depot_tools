@@ -9,7 +9,7 @@ include::_git-rebase-update_desc.helper.txt[]
 SYNOPSIS
 --------
 [verse]
-'git rebase-update' [-v | --verbose] [-n | --no-fetch] [-k | --keep-going]
+'git rebase-update' [-v | --verbose] [-n | --no-fetch] [-k | --keep-going] [--no-squash]
 
 DESCRIPTION
 -----------
@@ -77,6 +77,9 @@ OPTIONS
 -n::
 --no-fetch::
   Skip the `git fetch` phase of rebase-update.
+
+--no-squash::
+  Skip the squash phase of rebase-update when there are merge conflicts.
 
 -v::
 --verbose::
