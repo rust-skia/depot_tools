@@ -141,7 +141,7 @@ def remove_empty_branches(branch_tree):
     print(git.run('branch', '-d', branch))
 
 
-def rebase_branch(branch, parent, start_hash, no_squash):
+def rebase_branch(branch, parent, start_hash):
   logging.debug('considering %s(%s) -> %s(%s) : %s',
                 branch, git.hash_one(branch), parent, git.hash_one(parent),
                 start_hash)
@@ -162,18 +162,8 @@ def rebase_branch(branch, parent, start_hash, no_squash):
   if git.hash_one(parent) != start_hash:
     # Try a plain rebase first
     print('Rebasing:', branch)
-    rebase_ret = git.rebase(parent, start_hash, branch, abort = not no_squash)
+    rebase_ret = git.rebase(parent, start_hash, branch, abort=True)
     if not rebase_ret.success:
-      if no_squash:
-        print(textwrap.dedent("""\
-        Your working copy is in mid-rebase. Either:
-         * completely resolve like a normal git-rebase; OR
-         * abort the rebase and mark this branch as dormant:
-               git config branch.%s.dormant true
-
-        And then run `git rebase-update` again to resume.
-        """ % branch))
-        return False
       # TODO(iannucci): Find collapsible branches in a smarter way?
       print("Failed! Attempting to squash", branch, "...", end=' ')
       sys.stdout.flush()
@@ -245,9 +235,6 @@ def main(args=None):
                            'if none specified.')
   parser.add_argument('--keep-empty', '-e', action='store_true',
                       help='Do not automatically delete empty branches.')
-  parser.add_argument(
-      '--no-squash', action='store_true',
-      help='Will not try to squash branches when rebasing fails.')
   opts = parser.parse_args(args)
 
   if opts.verbose:  # pragma: no cover
@@ -308,7 +295,7 @@ def main(args=None):
     if git.is_dormant(branch):
       print('Skipping dormant branch', branch)
     else:
-      ret = rebase_branch(branch, parent, merge_base[branch], opts.no_squash)
+      ret = rebase_branch(branch, parent, merge_base[branch])
       if not ret:
         retcode = 1
 
