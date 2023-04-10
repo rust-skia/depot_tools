@@ -171,6 +171,7 @@ DOGFOOD_STACKED_CHANGES_VAR = 'DOGFOOD_STACKED_CHANGES'
 DOGFOOD_STACKED_CHANGES_REPOS = [
     'chromium.googlesource.com/infra/',
     'chrome-internal.googlesource.com/infra/'
+    'chromium.googlesource.com/chromium/src'
 ]
 
 
@@ -4828,6 +4829,9 @@ def CMDupload(parser, args):
 
   if options.squash and (dogfood_stacked_changes
                          or os.environ.get(DOGFOOD_STACKED_CHANGES_VAR) == '1'):
+    print('Depot Tools no longer sets new uploads to "WIP". Please update the'
+          '"Set new changes to "work in progress" by default" checkbox at'
+          'https://<host>-review.googlesource.com/settings/')
     if options.dependencies:
       parser.error('--dependencies is not available for this workflow.')
 
