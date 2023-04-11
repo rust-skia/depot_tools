@@ -285,13 +285,14 @@ def expect_tests(c):
   c.got_revision_mapping['expect_tests'] = 'got_revision'
 
 
+# TODO(crbug.com/1415507): Delete the old infra configs and rename
+# the _superproject configs after migration deadline.
 @config_ctx()
 def infra_superproject(c):
   soln = c.solutions.add()
   soln.name = '.'
   soln.url = 'https://chromium.googlesource.com/infra/infra_superproject.git'
-  # TODO(crbug.com/1415507): When builders can checkout internal code, add
-  # soln.custom_vars = {'checkout_internal': True}
+  c.got_revision_mapping['infra'] = 'got_revision'
   c.repo_path_map.update({
       'https://chromium.googlesource.com/infra/luci/gae':
       ('infra/go/src/go.chromium.org/gae', 'HEAD'),
@@ -302,6 +303,15 @@ def infra_superproject(c):
       'https://chromium.googlesource.com/infra/luci/recipes-py':
       ('infra/recipes-py', 'HEAD')
   })
+
+
+@config_ctx()
+def infra_internal_superproject(c):
+  soln = c.solutions.add()
+  soln.name = '.'
+  soln.custom_vars = {'checkout_internal': True}
+  soln.url = 'https://chromium.googlesource.com/infra/infra_superproject.git'
+  c.got_revision_mapping['infra_internal'] = 'got_revision'
 
 
 @config_ctx()
