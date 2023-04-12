@@ -12,6 +12,7 @@ import base64
 import httplib2
 import json
 import os
+import socket
 import sys
 import unittest
 
@@ -384,6 +385,17 @@ class GerritUtilTest(unittest.TestCase):
     conn = mock.Mock(req_params={'uri': 'uri', 'method': 'method'})
     conn.request.side_effect = [
         (mock.Mock(status=500), b''),
+        (mock.Mock(status=200), b'content\xe2\x9c\x94'),
+    ]
+
+    self.assertEqual('content✔', gerrit_util.ReadHttpResponse(conn).getvalue())
+    self.assertEqual(2, len(conn.request.mock_calls))
+    gerrit_util.time_sleep.assert_called_once_with(10.0)
+
+  def testReadHttpResponse_TimeoutAndSuccess(self):
+    conn = mock.Mock(req_params={'uri': 'uri', 'method': 'method'})
+    conn.request.side_effect = [
+        socket.timeout('timeout'),
         (mock.Mock(status=200), b'content\xe2\x9c\x94'),
     ]
 

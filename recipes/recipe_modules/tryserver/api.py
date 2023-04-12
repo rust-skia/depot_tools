@@ -140,7 +140,7 @@ class TryserverApi(recipe_api.RecipeApi):
         o_params=['ALL_REVISIONS', 'DOWNLOAD_COMMANDS'],
         limit=1,
         name='fetch current CL info',
-        timeout=60,
+        timeout=360,
         step_test_data=lambda: self.m.json.test_api.output(mock_res))[0]
 
     self._gerrit_change_target_ref = res['branch']
@@ -348,7 +348,7 @@ class TryserverApi(recipe_api.RecipeApi):
         'https://%s' % self.gerrit_change.host,
         self.gerrit_change_number,
         self.gerrit_patchset_number,
-        timeout=60)
+        timeout=360)
 
   def _get_footers(self, patch_text=None):
     if patch_text is not None:

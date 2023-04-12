@@ -196,6 +196,7 @@ class GerritApi(recipe_api.RecipeApi):
     """
     args = [
         'changes',
+        '--verbose',
         '--host', host,
         '--json_file', self.m.json.output()
     ]

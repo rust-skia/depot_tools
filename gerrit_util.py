@@ -68,6 +68,13 @@ def time_time():
   return time.time()
 
 
+def log_retry_and_sleep(seconds, attempt):
+  LOGGER.info('Will retry in %d seconds (%d more times)...', seconds,
+              TRY_LIMIT - attempt - 1)
+  time_sleep(seconds)
+  return seconds * random.uniform(MIN_BACKOFF, MAX_BACKOFF)
+
+
 class GerritError(Exception):
   """Exception class for errors commuicating with the gerrit-on-borg service."""
   def __init__(self, http_status, message, *args, **kwargs):
@@ -329,10 +336,7 @@ class GceAuthenticator(Authenticator):
       # Retry server error status codes.
       LOGGER.warn('Encountered server error')
       if TRY_LIMIT - i > 1:
-        LOGGER.info('Will retry in %d seconds (%d more times)...',
-                    next_delay_sec, TRY_LIMIT - i - 1)
-        time_sleep(next_delay_sec)
-        next_delay_sec *= random.uniform(MIN_BACKOFF, MAX_BACKOFF)
+        next_delay_sec = log_retry_and_sleep(next_delay_sec, i)
     return None, None
 
   @classmethod
@@ -405,7 +409,7 @@ def CreateHttpConn(host, path, reqtype='GET', headers=None, body=None):
       LOGGER.debug('%s: %s' % (key, val))
     if body:
       LOGGER.debug(body)
-  conn = httplib2.Http()
+  conn = httplib2.Http(timeout=10.0)
   # HACK: httplib2.Http has no such attribute; we store req_host here for later
   # use in ReadHttpResponse.
   conn.req_host = host
@@ -430,7 +434,13 @@ def ReadHttpResponse(conn, accept_statuses=frozenset([200])):
   sleep_time = SLEEP_TIME
   for idx in range(TRY_LIMIT):
     before_response = time.time()
-    response, contents = conn.request(**conn.req_params)
+    try:
+      response, contents = conn.request(**conn.req_params)
+    except socket.timeout:
+      if idx < TRY_LIMIT - 1:
+        sleep_time = log_retry_and_sleep(sleep_time, idx)
+        continue
+      raise
     contents = contents.decode('utf-8', 'replace')
 
     response_time = time.time() - before_response
@@ -468,10 +478,7 @@ def ReadHttpResponse(conn, accept_statuses=frozenset([200])):
                 contents)
 
     if idx < TRY_LIMIT - 1:
-      LOGGER.info('Will retry in %d seconds (%d more times)...',
-                  sleep_time, TRY_LIMIT - idx - 1)
-      time_sleep(sleep_time)
-      sleep_time *= random.uniform(MIN_BACKOFF, MAX_BACKOFF)
+      sleep_time = log_retry_and_sleep(sleep_time, idx)
   # end of retries loop
 
   if response.status in accept_statuses:
