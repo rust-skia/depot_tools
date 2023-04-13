@@ -375,7 +375,12 @@ class LuciContextAuthenticator(Authenticator):
     return 'Bearer %s' % self._authenticator.get_access_token().token
 
 
-def CreateHttpConn(host, path, reqtype='GET', headers=None, body=None):
+def CreateHttpConn(host,
+                   path,
+                   reqtype='GET',
+                   headers=None,
+                   body=None,
+                   timeout=10.0):
   """Opens an HTTPS connection to a Gerrit service, and sends a request."""
   headers = headers or {}
   bare_host = host.partition(':')[0]
@@ -409,7 +414,7 @@ def CreateHttpConn(host, path, reqtype='GET', headers=None, body=None):
       LOGGER.debug('%s: %s' % (key, val))
     if body:
       LOGGER.debug(body)
-  conn = httplib2.Http(timeout=10.0)
+  conn = httplib2.Http(timeout=timeout)
   # HACK: httplib2.Http has no such attribute; we store req_host here for later
   # use in ReadHttpResponse.
   conn.req_host = host
@@ -1057,7 +1062,7 @@ def CreateChange(host, project, branch='main', subject='', params=()):
     if not body[key]:
       raise GerritError(200, '%s is required' % key.title())
 
-  conn = CreateHttpConn(host, path, reqtype='POST', body=body)
+  conn = CreateHttpConn(host, path, reqtype='POST', body=body, timeout=None)
   return ReadHttpJsonResponse(conn, accept_statuses=[201])
 
 
