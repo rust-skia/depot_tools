@@ -3,70 +3,54 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 """
-Creates a new infra_superpoject gclient checkout based on an existing
-infra or infra_internal checkout.
+Migrates an infra or infra_internal gclient to an infra_superproject one.
 
-  Usage:
+Does an in-place migration of the cwd's infra or infra_internal gclient
+checkout to an infra_superproject checkout, preserving all repo branches
+and commits. Should be called in the gclient root directory (the one that
+contains the .gclient file).
 
-  (1) Commit any WIP changes in all infra repos:
-      `git commit -a -v -m "another commit" OR `git commit -a -v --amend`
-
-  (2) Run `git rebase-update` and `gclient sync` and ensure all conflicts
-      are resolved.
-
-  (3) In your gclient root directory (the one that contains a .gclient file),
-      run:
-      `python3 path/to/depot_tools/infra_to_superproject.py <destination>`
-      example:
-     `cd ~/cr`  # gclient root dir
-     `python3 depot_tools/infra_to_superproject.py ~/cr2`
-
-  (4) `cd <destination>` and check that everything looks like your original
-      gclient checkout. The file structure should be the same, your branches
-      and commits in repos should be copied over.
-
-  (5) `sudo rm -rf <old_directory_name>`
-      example:
-      `sudo rm -rf cr`
-
-  (6) `mv <destination> <old_directory_name>`
-      example:
-      `mv cr2 cr
-
+By default creates a backup dir of the original gclient checkout in
+`<dir>_backup`. If something goes wrong during the migration, this can
+be used to restore your environment to its original state.
 """
 
+import argparse
 import subprocess
 import os
 import platform
 import sys
+import shutil
 import json
 from pathlib import Path
 
 
 def main(argv):
-  assert len(argv) == 1, 'One and only one arg expected.'
-  assert platform.system() == 'Linux', 'Non-linux OSs not supported yet.'
-  destination = argv[0]
+  source = os.getcwd()
 
-  # In case there is '~' in the destination string
-  destination = os.path.expanduser(destination)
+  parser = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0],
+                                   epilog=' '.join(
+                                       __doc__.strip().splitlines()[1:]))
+  parser.add_argument('-n',
+                      '--no-backup',
+                      action='store_true',
+                      help='NOT RECOMMENDED. Skips copying the current '
+                      'checkout (which can take up to ~15 min) to '
+                      'a backup before starting the migration.')
+  args = parser.parse_args(argv)
 
-  Path(destination).mkdir(parents=True, exist_ok=True)
+  if not args.no_backup:
+    backup = source + '_backup'
+    print(f'Creating backup in {backup}')
+    print('May take up to ~15 minutes...')
+    shutil.copytree(source, backup, symlinks=True, dirs_exist_ok=True)
+    print('backup complete')
 
-  print(f'Copying {os.getcwd()} into {destination}')
-  cp = subprocess.Popen(
-      ['cp', '-a', os.path.join(os.getcwd(), '.'), destination],
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE)
-  cp.wait()
-  print('Copying complete')
-
-  print(f'Deleting old {destination}/.gclient file')
-  gclient_file = os.path.join(destination, '.gclient')
+  print(f'Deleting old {source}/.gclient file')
+  gclient_file = os.path.join(source, '.gclient')
   with open(gclient_file, 'r') as file:
     data = file.read()
     internal = "infra_internal" in data
-
   os.remove(gclient_file)
 
   print('Migrating to infra/infra_superproject')
@@ -76,7 +60,7 @@ def main(argv):
     print('including internal code in checkout')
   else:
     cmds.append('infra')
-  fetch = subprocess.Popen(cmds, cwd=destination)
+  fetch = subprocess.Popen(cmds, cwd=source, shell=True)
   fetch.wait()
 
 
