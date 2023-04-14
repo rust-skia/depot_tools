@@ -439,12 +439,12 @@ class GerritUtilTest(unittest.TestCase):
         'host', [('key', 'val'), ('foo', 'bar baz')], 'first param', limit=500,
         o_params=['PARAM_A', 'PARAM_B'], start='start')
     mockCreateHttpConn.assert_called_once_with(
-        'host',
-        ('changes/?q=first%20param+key:val+foo:bar+baz'
-         '&start=start'
-         '&n=500'
-         '&o=PARAM_A'
-         '&o=PARAM_B'))
+        'host', ('changes/?q=first%20param+key:val+foo:bar+baz'
+                 '&start=start'
+                 '&n=500'
+                 '&o=PARAM_A'
+                 '&o=PARAM_B'),
+        timeout=30.0)
 
   def testQueryChanges_NoParams(self):
     self.assertRaises(RuntimeError, gerrit_util.QueryChanges, 'host', [])

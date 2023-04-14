@@ -380,7 +380,7 @@ def CreateHttpConn(host,
                    reqtype='GET',
                    headers=None,
                    body=None,
-                   timeout=10.0):
+                   timeout=None):
   """Opens an HTTPS connection to a Gerrit service, and sends a request."""
   headers = headers or {}
   bare_host = host.partition(':')[0]
@@ -556,7 +556,7 @@ def QueryChanges(host, params, first_param=None, limit=None, o_params=None,
     path = '%s&n=%d' % (path, limit)
   if o_params:
     path = '%s&%s' % (path, '&'.join(['o=%s' % p for p in o_params]))
-  return ReadHttpJsonResponse(CreateHttpConn(host, path))
+  return ReadHttpJsonResponse(CreateHttpConn(host, path, timeout=30.0))
 
 
 def GenerateAllChanges(host, params, first_param=None, limit=500,
@@ -1062,7 +1062,7 @@ def CreateChange(host, project, branch='main', subject='', params=()):
     if not body[key]:
       raise GerritError(200, '%s is required' % key.title())
 
-  conn = CreateHttpConn(host, path, reqtype='POST', body=body, timeout=None)
+  conn = CreateHttpConn(host, path, reqtype='POST', body=body)
   return ReadHttpJsonResponse(conn, accept_statuses=[201])
 
 
