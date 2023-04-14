@@ -60,7 +60,8 @@ def main(argv):
     print('including internal code in checkout')
   else:
     cmds.append('infra')
-  fetch = subprocess.Popen(cmds, cwd=source, shell=True)
+  shell = sys.platform == 'win32'
+  fetch = subprocess.Popen(cmds, cwd=source, shell=shell)
   fetch.wait()
 
 
