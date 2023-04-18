@@ -72,10 +72,10 @@ def find_rel_ninja_out_dir(args):
   return '.'
 
 
-def set_reproxy_path_flags(out_dir):
+def set_reproxy_path_flags(out_dir, make_dirs=True):
   """Helper to setup the logs and cache directories for reclient
 
-  Creates the following directory structure:
+  Creates the following directory structure if make_dirs is true:
   out_dir/
     .reproxy_tmp/
       logs/
@@ -92,14 +92,15 @@ def set_reproxy_path_flags(out_dir):
     RBE_server_address=pipe://md5(out_dir/.reproxy_tmp)/reproxy.pipe
   """
   tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
-  os.makedirs(tmp_dir, exist_ok=True)
   log_dir = os.path.join(tmp_dir, 'logs')
-  os.makedirs(log_dir, exist_ok=True)
+  cache_dir = os.path.join(tmp_dir, 'cache')
+  if make_dirs:
+    os.makedirs(tmp_dir, exist_ok=True)
+    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(cache_dir, exist_ok=True)
   os.environ.setdefault("RBE_output_dir", log_dir)
   os.environ.setdefault("RBE_proxy_log_dir", log_dir)
   os.environ.setdefault("RBE_log_dir", log_dir)
-  cache_dir = os.path.join(tmp_dir, 'cache')
-  os.makedirs(cache_dir, exist_ok=True)
   os.environ.setdefault("RBE_cache_dir", cache_dir)
   if sys.platform.startswith('win'):
     pipe_dir = hashlib.md5(tmp_dir.encode()).hexdigest()
