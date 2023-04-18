@@ -39,7 +39,7 @@ $VerifiedPlatform windows-arm64
 infra/tools/luci/vpython/${platform} git_revision:7db81fdd219325d5d11fdaf56357ec28c26fffb3
 
 # LUCI editor
-infra/tools/luci/led/${platform} git_revision:96cd500b6f361369fac78303a75d8e537570151c
+infra/tools/luci/led/${platform} git_revision:5996f38bcf1d53582b3c62711271dc92782ce43d
 
 # LUCI config generator
 infra/tools/luci/lucicfg/${platform} git_revision:8f0cb6ebb3decd050b134117d0058b99c1b448d4
