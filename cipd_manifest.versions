@@ -78,8 +78,8 @@ infra/goma/client/windows-amd64
 	AChoXxs-WpJXH3jFYC1ePMbpQrIODlr7U7nWTloaDL8C
 
 infra/rbe/client/linux-amd64
-	re_client_version:0.96.2.d36a87c-gomaip
-	WZJPE56hlz54mo_jw5J3CSm98A2jSbcZFFq2yRMmiRgC
+	re_client_version:0.101.0.6210d0d-gomaip
+	QIkkdyLfCLyZpWdJoTC8EgbCT7QcUuClhWw4rL_wcuwC
 
 infra/tools/bb/linux-386
 	git_revision:fc9d7a3dff50d001c7c7dcf9f5f312be5d2d2ab2
