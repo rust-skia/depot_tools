@@ -121,10 +121,12 @@ class Gsutil(object):
     status_code_match = re.search('status=([0-9]+)', err)
     if status_code_match:
       return (int(status_code_match.group(1)), out, err)
+    if ('ServiceException: 401 Anonymous' in err):
+      return (401, out, err)
     if ('You are attempting to access protected data with '
         'no configured credentials.' in err):
       return (403, out, err)
-    if 'matched no objects' in err:
+    if 'matched no objects' in err or 'No URLs matched' in err:
       return (404, out, err)
     return (code, out, err)
 
@@ -296,8 +298,8 @@ def _downloader_worker_thread(thread_num, q, force, base_url,
       elif code == 401:
         out_q.put(
             """%d> Failed to fetch file %s for %s due to unauthorized access,
-            skipping. Try running `gsutil.py config` and pass 0 if you don't
-            know your project id.""" % (thread_num, file_url, output_filename))
+            skipping. Try running `gsutil.py config`.""" %
+            (thread_num, file_url, output_filename))
         ret_codes.put(
             (1, 'Failed to fetch file %s for %s due to unauthorized access.' %
              (file_url, output_filename)))
