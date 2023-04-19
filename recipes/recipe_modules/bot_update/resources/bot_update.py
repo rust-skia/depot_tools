@@ -432,8 +432,10 @@ def gclient_sync(with_branch_heads,
                  gerrit_rebase_patch_ref,
                  download_topics=False,
                  experiments=None):
-  args = ['sync', '--verbose', '--reset', '--force',
-          '--nohooks', '--noprehooks', '--delete_unversioned_trees']
+  args = [
+      'sync', '--verbose', '--reset', '--force', '--upstream', '--nohooks',
+      '--noprehooks', '--delete_unversioned_trees'
+  ]
   if with_branch_heads:
     args += ['--with_branch_heads']
   if with_tags:
