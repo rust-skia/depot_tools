@@ -71,16 +71,24 @@ _CORP_LINK_KEYWORD = '.corp.google'
 def CheckChangeHasBugField(input_api, output_api):
   """Requires that the changelist have a Bug: field."""
   bugs = input_api.change.BugsFromDescription()
+  results = []
   if bugs:
     if any(b.startswith('b/') for b in bugs):
-      return [
+      results.append(
           output_api.PresubmitNotifyResult(
-              'Buganizer bugs should be prefixed with b:, not b/.')
-      ]
-    return []
+              'Buganizer bugs should be prefixed with b:, not b/.'))
+  else:
+    results.append(
+        output_api.PresubmitNotifyResult(
+            'If this change has an associated bug, add Bug: [bug number] or '
+            'Fixed: [bug number].'))
 
-  return [output_api.PresubmitNotifyResult(
-      'If this change has an associated bug, add Bug: [bug number].')]
+  if 'Fixes' in input_api.change.GitFootersFromDescription():
+    results.append(
+        output_api.PresubmitError(
+            'Fixes: is the wrong footer tag, use Fixed: instead.'))
+  return results
+
 
 def CheckChangeHasNoUnwantedTags(input_api, output_api):
   UNWANTED_TAGS = {
