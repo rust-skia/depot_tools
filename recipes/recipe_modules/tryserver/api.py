@@ -343,6 +343,9 @@ class TryserverApi(recipe_api.RecipeApi):
 
   def _ensure_gerrit_commit_message(self):
     """Fetch full commit message for Gerrit change."""
+    if self._gerrit_commit_message:
+      return
+
     self._ensure_gerrit_change_info()
     self._gerrit_commit_message = self.m.gerrit.get_change_description(
         'https://%s' % self.gerrit_change.host,
@@ -381,6 +384,11 @@ class TryserverApi(recipe_api.RecipeApi):
 
   def normalize_footer_name(self, footer):
     return '-'.join([ word.title() for word in footer.strip().split('-') ])
+
+  def get_change_description(self):
+    """Gets the CL description."""
+    self._ensure_gerrit_commit_message()
+    return self._gerrit_commit_message
 
   def set_change(self, change):
     """Set the gerrit change for this module.

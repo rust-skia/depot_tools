@@ -42,6 +42,7 @@
   * [tryserver:tests/gerrit_change_fetch_ref_timeout](#recipes-tryserver_tests_gerrit_change_fetch_ref_timeout) (Python3 ✅)
   * [tryserver:tests/gerrit_change_owner](#recipes-tryserver_tests_gerrit_change_owner) (Python3 ✅)
   * [tryserver:tests/gerrit_change_target_ref](#recipes-tryserver_tests_gerrit_change_target_ref) (Python3 ✅)
+  * [tryserver:tests/get_change_description](#recipes-tryserver_tests_get_change_description) (Python3 ✅)
   * [tryserver:tests/get_files_affected_by_patch](#recipes-tryserver_tests_get_files_affected_by_patch) (Python3 ✅)
   * [tryserver:tests/get_footers](#recipes-tryserver_tests_get_footers) (Python3 ✅)
   * [tryserver:tests/require_is_tryserver](#recipes-tryserver_tests_require_is_tryserver) (Python3 ✅)
@@ -867,6 +868,10 @@ Returns gerrit change patchset, e.g. 6 for a patch ref of
 
 Populated iff gerrit_change is populated Returns None if not populated..
 
+&mdash; **def [get\_change\_description](/recipes/recipe_modules/tryserver/api.py#388)(self):**
+
+Gets the CL description.
+
 &mdash; **def [get\_files\_affected\_by\_patch](/recipes/recipe_modules/tryserver/api.py#234)(self, patch_root, report_files_via_property=None, \*\*kwargs):**
 
 Returns list of paths to files affected by the patch.
@@ -879,7 +884,7 @@ Args:
 
 Returned paths will be relative to to api.path['root'].
 
-&mdash; **def [get\_footer](/recipes/recipe_modules/tryserver/api.py#374)(self, tag, patch_text=None):**
+&mdash; **def [get\_footer](/recipes/recipe_modules/tryserver/api.py#377)(self, tag, patch_text=None):**
 
 Gets a specific tag from a CL description
 
@@ -902,11 +907,11 @@ Returns true iff the properties exist to match a Gerrit issue.
 
 Returns true iff we have a change to check out.
 
-&mdash; **def [normalize\_footer\_name](/recipes/recipe_modules/tryserver/api.py#382)(self, footer):**
+&mdash; **def [normalize\_footer\_name](/recipes/recipe_modules/tryserver/api.py#385)(self, footer):**
 
 &mdash; **def [require\_is\_tryserver](/recipes/recipe_modules/tryserver/api.py#221)(self):**
 
-&mdash; **def [set\_change](/recipes/recipe_modules/tryserver/api.py#385)(self, change):**
+&mdash; **def [set\_change](/recipes/recipe_modules/tryserver/api.py#393)(self, change):**
 
 Set the gerrit change for this module.
 
@@ -1178,6 +1183,13 @@ PYTHON_VERSION_COMPATIBILITY: PY3
 PYTHON_VERSION_COMPATIBILITY: PY3
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/tryserver/tests/gerrit_change_target_ref.py#18)(api):**
+### *recipes* / [tryserver:tests/get\_change\_description](/recipes/recipe_modules/tryserver/tests/get_change_description.py)
+
+[DEPS](/recipes/recipe_modules/tryserver/tests/get_change_description.py#10): [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+PYTHON_VERSION_COMPATIBILITY: PY3
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/tryserver/tests/get_change_description.py#17)(api):**
 ### *recipes* / [tryserver:tests/get\_files\_affected\_by\_patch](/recipes/recipe_modules/tryserver/tests/get_files_affected_by_patch.py)
 
 [DEPS](/recipes/recipe_modules/tryserver/tests/get_files_affected_by_patch.py#9): [tryserver](#recipe_modules-tryserver), [recipe\_engine/assertions][recipe_engine/recipe_modules/assertions], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
