@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 
-import ninja_reclient
+import reclient_helper
 
 
 def main():
@@ -31,8 +31,8 @@ def main():
   if extras:
     args.args = extras + args.args
 
-  ninja_reclient.set_reproxy_path_flags(args.ninja_out, make_dirs=False)
-  reclient_bin_dir = ninja_reclient.find_reclient_bin_dir()
+  reclient_helper.set_reproxy_path_flags(args.ninja_out, make_dirs=False)
+  reclient_bin_dir = reclient_helper.find_reclient_bin_dir()
   code = subprocess.call([os.path.join(reclient_bin_dir, 'reclientreport')] +
                          args.args)
   if code != 0:
