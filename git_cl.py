@@ -1514,11 +1514,12 @@ class Changelist(object):
     with gclient_utils.temporary_file() as description_file:
       gclient_utils.FileWrite(description_file, description)
       args.extend(['--description_file', description_file])
-      if not py3_only and os.getenv('LUCI_OMIT_PYTHON2') != 'true':
+      run_py2 = not py3_only and os.getenv('LUCI_OMIT_PYTHON2') != 'true'
+      if run_py2:
         p_py2 = subprocess2.Popen(['vpython', PRESUBMIT_SUPPORT] + args)
       p_py3 = subprocess2.Popen(['vpython3', PRESUBMIT_SUPPORT] + args +
                                 ['--use-python3'])
-      if not py3_only:
+      if run_py2:
         p_py2.wait()
       p_py3.wait()
 
