@@ -56,7 +56,11 @@ class NinjaReclientTest(trial_dir.TestCase):
         os.path.isdir(os.path.join(self.root_dir, "out", "a", ".reproxy_tmp")))
     self.assertTrue(
         os.path.isdir(
-            os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "cache")))
+            os.path.join(
+                self.root_dir, ".reproxy_cache",
+                hashlib.md5(
+                    os.path.join(self.root_dir, "out", "a",
+                                 ".reproxy_tmp").encode()).hexdigest())))
     self.assertTrue(
         os.path.isdir(
             os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs")))
@@ -68,7 +72,11 @@ class NinjaReclientTest(trial_dir.TestCase):
         os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs"))
     self.assertEqual(
         os.environ.get('RBE_cache_dir'),
-        os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "cache"))
+        os.path.join(
+            self.root_dir, ".reproxy_cache",
+            hashlib.md5(
+                os.path.join(self.root_dir, "out", "a",
+                             ".reproxy_tmp").encode()).hexdigest()))
     if sys.platform.startswith('win'):
       self.assertEqual(
           os.environ.get('RBE_server_address'),

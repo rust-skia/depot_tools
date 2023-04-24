@@ -71,10 +71,36 @@ def find_ninja_out_dir(args):
   return '.'
 
 
+def find_cache_dir(tmp_dir):
+  """Helper to find the correct cache directory for a build.
+
+  tmp_dir should be a build specific temp directory within the out directory.
+
+  If this is called from within a gclient checkout, the cache dir will be:
+  <gclient_root>/.reproxy_cache/md5(tmp_dir)/
+  If this is not called from within a gclient checkout, the cache dir will be:
+  tmp_dir/cache
+  """
+  gclient_root = gclient_paths.FindGclientRoot(os.getcwd())
+  if gclient_root:
+    return os.path.join(gclient_root, '.reproxy_cache',
+                        hashlib.md5(tmp_dir.encode()).hexdigest())
+  return os.path.join(tmp_dir, 'cache')
+
+
 def set_reproxy_path_flags(out_dir, make_dirs=True):
   """Helper to setup the logs and cache directories for reclient.
 
   Creates the following directory structure if make_dirs is true:
+  If in a gclient checkout
+  out_dir/
+    .reproxy_tmp/
+      logs/
+  <gclient_root>
+    .reproxy_cache/
+      md5(out_dir/.reproxy_tmp)/
+
+  If not in a gclient checkout
   out_dir/
     .reproxy_tmp/
       logs/
@@ -92,7 +118,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
   """
   tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
   log_dir = os.path.join(tmp_dir, 'logs')
-  cache_dir = os.path.join(tmp_dir, 'cache')
+  cache_dir = find_cache_dir(tmp_dir)
   if make_dirs:
     os.makedirs(tmp_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
