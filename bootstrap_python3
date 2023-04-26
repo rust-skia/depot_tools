@@ -25,7 +25,7 @@ function bootstrap_python3 {
   BOOTSTRAP_PATH="bootstrap-${PYTHON3_VERSION}_bin"
 
   # Install CIPD packages. The CIPD client self-bootstraps.
-  "$base_dir/cipd" ensure -log-level warning -ensure-file "${CIPD_MANIFEST}" \
+  "./cipd" ensure -log-level warning -ensure-file "${CIPD_MANIFEST}" \
       -root "$BOOTSTRAP_PATH"
 
   BOOTSTRAP_PYTHON_BIN="${BOOTSTRAP_PATH}/python3/bin/python3"
