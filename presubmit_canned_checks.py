@@ -2130,10 +2130,14 @@ def CheckInclusiveLanguage(input_api, output_api,
     ]
 
   # Note that this matches exact path prefixes, and does not match
-  # subdirectories. Only files directly in an exlcluded path will
+  # subdirectories. Only files directly in an excluded path will
   # match.
   def IsExcludedFile(affected_file, excluded_paths):
     local_dir = input_api.os_path.dirname(affected_file.LocalPath())
+
+    # Excluded paths use forward slashes.
+    if input_api.platform == 'win32':
+      local_dir = local_dir.replace('\\', '/')
 
     return local_dir in excluded_paths
 

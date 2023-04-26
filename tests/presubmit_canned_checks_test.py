@@ -29,8 +29,8 @@ class InclusiveLanguageCheckTest(unittest.TestCase):
         MockFile(
             os.path.normpath(
                 'infra/inclusive_language_presubmit_exempt_dirs.txt'), [
-                    os.path.normpath('some/dir') + ' 2 1',
-                    os.path.normpath('some/other/dir') + ' 2 1',
+                    'some/dir 2 1',
+                    'some/other/dir 2 1',
                 ]),
         MockFile(
             os.path.normpath('some/ios/file.mm'),
@@ -133,8 +133,8 @@ class InclusiveLanguageCheckTest(unittest.TestCase):
         MockFile(
             os.path.normpath(
                 'infra/inclusive_language_presubmit_exempt_dirs.txt'), [
-                    os.path.normpath('some/ios') + ' 2 1',
-                    os.path.normpath('some/other/dir') + ' 2 1',
+                    'some/ios 2 1',
+                    'some/other/dir 2 1',
                 ]),
         MockFile(
             os.path.normpath('some/ios/file.mm'),
@@ -186,8 +186,8 @@ class InclusiveLanguageCheckTest(unittest.TestCase):
         MockFile(
             os.path.normpath(
                 'infra/inclusive_language_presubmit_exempt_dirs.txt'), [
-                    os.path.normpath('some/dir') + ' 2 1',
-                    os.path.normpath('some/other/dir') + ' 2 1',
+                    'some/dir 2 1',
+                    'some/other/dir 2 1',
                 ]),
         MockFile(
             os.path.normpath('some/ios/file.mm'),
@@ -249,8 +249,8 @@ class InclusiveLanguageCheckTest(unittest.TestCase):
         MockFile(
             os.path.normpath(
                 'infra/inclusive_language_presubmit_exempt_dirs.txt'), [
-                    os.path.normpath('.') + ' 2 1',
-                    os.path.normpath('some/other/dir') + ' 2 1',
+                    '. 2 1',
+                    'some/other/dir 2 1',
                 ]),
         MockFile(
             os.path.normpath('presubmit_canned_checks_test.py'),
