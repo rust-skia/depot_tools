@@ -21,7 +21,7 @@ import sys
 # Min version of Python that we *want*.  We warn for older versions.
 MIN_PYTHON_VER_SOFT = (3, 8)
 # Min version of Python that we *require*.  We abort for older versions.
-MIN_PYTHON_VER_HARD = (3, 6)
+MIN_PYTHON_VER_HARD = (3, 8)
 
 DEPOT_TOOLS_DIR = pathlib.Path(__file__).resolve().parent
 
