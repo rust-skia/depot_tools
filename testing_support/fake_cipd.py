@@ -30,7 +30,7 @@ def parse_cipd(root, contents):
 
 
 def main():
-  assert sys.argv[1] == 'ensure'
+  assert sys.argv[1] in ['ensure', 'export']
   parser = argparse.ArgumentParser()
   parser.add_argument('-ensure-file')
   parser.add_argument('-root')
