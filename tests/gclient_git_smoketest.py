@@ -427,10 +427,9 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         ('running', self.root_dir),                 # pre-deps hook
         ('running', self.root_dir),                 # pre-deps hook (fails)
     ]
-    vpython = 'vpython.bat' if sys.platform == 'win32' else 'vpython'
-    expected_stderr = ("Error: Command '%s -c import sys; "
-                       "sys.exit(1)' returned non-zero exit status 1 in %s\n"
-                       % (vpython, self.root_dir))
+    expected_stderr = ("Error: Command 'python3 -c import sys; "
+                       "sys.exit(1)' returned non-zero exit status 1 in %s\n" %
+                       (self.root_dir))
     stdout, stderr, retcode = self.gclient(
         ['sync', '--deps', 'mac', '--jobs=1', '--revision',
          'src@' + self.githash('repo_5', 3)], error_ok=True)
@@ -603,7 +602,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
           'hooks = [{',
           '  "name": "uses_builtin_var",',
           '  "pattern": ".",',
-          '  "action": ["python", "fake.py",',
+          '  "action": ["python3", "fake.py",',
           '             "--with-android={checkout_android}"],',
           '}]',
       ]))
@@ -629,7 +628,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
           'hooks = [{',
           '  "name": "uses_builtin_var",',
           '  "pattern": ".",',
-          '  "action": ["python", "fake.py",',
+          '  "action": ["python3", "fake.py",',
           '             "--with-android={checkout_android}"],',
           '}]',
     ], contents)
@@ -678,7 +677,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
           'hooks = [{',
           '  "name": "uses_builtin_var",',
           '  "pattern": ".",',
-          '  "action": ["python", "fake.py",',
+          '  "action": ["python3", "fake.py",',
           '             "--with-android={checkout_android}"],',
           '}]',
       ]))
@@ -803,7 +802,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "condition": \'True\',',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "open(\'src/git_hooked1\', \'w\')'
         '.write(\'git_hooked1\')",',
@@ -815,7 +814,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "pattern": "nonexistent",',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "open(\'src/git_hooked2\', \'w\').write(\'git_hooked2\')",',
         '    ]',
@@ -827,7 +826,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "condition": \'checkout_mac\',',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "open(\'src/git_hooked_mac\', \'w\').write('
         '\'git_hooked_mac\')",',
@@ -840,7 +839,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "pattern": ".",',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "pass",',
         '    ]',
@@ -852,7 +851,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "pattern": ".",',
         '    "cwd": "src/repo16",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "relative.py",',
         '    ]',
         '  },',
@@ -1008,7 +1007,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "condition": \'True\',',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "open(\'src/git_hooked1\', \'w\')'
         '.write(\'git_hooked1\')",',
@@ -1020,7 +1019,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "pattern": "nonexistent",',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "open(\'src/git_hooked2\', \'w\').write(\'git_hooked2\')",',
         '    ]',
@@ -1032,7 +1031,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "condition": \'checkout_mac\',',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "open(\'src/git_hooked_mac\', \'w\').write('
         '\'git_hooked_mac\')",',
@@ -1045,7 +1044,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "pattern": ".",',
         '    "cwd": ".",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "-c",',
         '        "pass",',
         '    ]',
@@ -1057,7 +1056,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '    "pattern": ".",',
         '    "cwd": "src/repo16",',
         '    "action": [',
-        '        "python",',
+        '        "python3",',
         '        "relative.py",',
         '    ]',
         '  },',

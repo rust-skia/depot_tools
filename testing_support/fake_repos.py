@@ -325,13 +325,13 @@ deps = {
 hooks = [
   {
     'pattern': '.',
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'open(\\'src/git_hooked1\\', \\'w\\').write(\\'git_hooked1\\')'],
   },
   {
     # Should not be run.
     'pattern': 'nonexistent',
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'open(\\'src/git_hooked2\\', \\'w\\').write(\\'git_hooked2\\')'],
   },
 ]
@@ -357,7 +357,7 @@ deps = {
 # processed.
 pre_deps_hooks = [
   {
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'print("pre-deps hook"); open(\\'src/git_pre_deps_hooked\\', \\'w\\').write(\\'git_pre_deps_hooked\\')'],
   }
 ]
@@ -379,11 +379,11 @@ deps = {
 # processed.
 pre_deps_hooks = [
   {
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'print("pre-deps hook"); open(\\'src/git_pre_deps_hooked\\', \\'w\\').write(\\'git_pre_deps_hooked\\')'],
   },
   {
-    'action': ['python', '-c', 'import sys; sys.exit(1)'],
+    'action': ['python3', '-c', 'import sys; sys.exit(1)'],
   }
 ]
 """ % {
@@ -463,13 +463,13 @@ hooks = [
   {
     'pattern': '.',
     'condition': 'True',
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'open(\\'src/git_hooked1\\', \\'w\\').write(\\'{hook1_contents}\\')'],
   },
   {
     # Should not be run.
     'pattern': 'nonexistent',
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'open(\\'src/git_hooked2\\', \\'w\\').write(\\'git_hooked2\\')'],
   },
 ]
@@ -477,7 +477,7 @@ hooks_os = {
   'mac': [
     {
       'pattern': '.',
-      'action': ['python', '-c',
+      'action': ['python3', '-c',
                  'open(\\'src/git_hooked_mac\\', \\'w\\').write('
                      '\\'git_hooked_mac\\')'],
     },
@@ -503,12 +503,12 @@ vars = {
 }
 hooks = [
   {
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'open(\\'src/should_run\\', \\'w\\').write(\\'should_run\\')'],
     'condition': 'true_var or True',
   },
   {
-    'action': ['python', '-c',
+    'action': ['python3', '-c',
                'open(\\'src/should_not_run\\', \\'w\\').write(\\'should_not_run\\')'],
     'condition': 'false_var',
   },
@@ -651,7 +651,7 @@ deps = {
 }
 hooks = [{
   # make sure src/repo12 exists and is a CIPD dir.
-  'action': ['python', '-c', 'with open("src/repo12/_cipd"): pass'],
+  'action': ['python3', '-c', 'with open("src/repo12/_cipd"): pass'],
 }]
 """,
       'origin': 'git/repo_13@3\n'
@@ -702,7 +702,7 @@ hooks = [{
         hooks = [{
           "name": "absolute_cwd",
           "pattern": ".",
-          "action": ["python", "-c", "pass"]
+          "action": ["python3", "-c", "pass"]
         }]"""),
       'origin': 'git/repo_15@2\n'
     })
@@ -713,7 +713,7 @@ hooks = [{
         hooks = [{
           "name": "relative_cwd",
           "pattern": ".",
-          "action": ["python", "relative.py"]
+          "action": ["python3", "relative.py"]
         }]"""),
       'relative.py': 'pass',
       'origin': 'git/repo_16@2\n'
