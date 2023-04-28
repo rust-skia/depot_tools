@@ -167,14 +167,6 @@ _MAX_STACKED_BRANCHES_UPLOAD = 20
 DOGFOOD_STACKED_CHANGES_VAR = 'DOGFOOD_STACKED_CHANGES'
 
 
-# Repo prefixes that are enrolled in the stacked changes dogfood.
-DOGFOOD_STACKED_CHANGES_REPOS = [
-    'chromium.googlesource.com/infra/',
-    'chrome-internal.googlesource.com/infra/'
-    'chromium.googlesource.com/chromium/src'
-]
-
-
 class GitPushError(Exception):
   pass
 
@@ -4817,19 +4809,14 @@ def CMDupload(parser, args):
     print('No previous patchsets, so --retry-failed has no effect.')
     options.retry_failed = False
 
-  remote = cl.GetRemoteUrl()
-  dogfood_stacked_changes = (os.environ.get(DOGFOOD_STACKED_CHANGES_VAR)
-                             not in ['1', '0']
-                             and any(repo in remote
-                                     for repo in DOGFOOD_STACKED_CHANGES_REPOS))
+  dogfood_stacked_changes = os.environ.get(DOGFOOD_STACKED_CHANGES_VAR) != '0'
 
   if dogfood_stacked_changes:
     print('This repo has been enrolled in the stacked changes dogfood. '
           'To opt-out use `export DOGFOOD_STACKED_CHANGES=0`. '
-          'File bugs at https://bit.ly/3Y6opoI')
+          'File bugs at https://bit.ly/3Y6opoI\n')
 
-  if options.squash and (dogfood_stacked_changes
-                         or os.environ.get(DOGFOOD_STACKED_CHANGES_VAR) == '1'):
+  if options.squash and dogfood_stacked_changes:
     print('Depot Tools no longer sets new uploads to "WIP". Please update the\n'
           '"Set new changes to "work in progress" by default" checkbox at\n'
           'https://<host>-review.googlesource.com/settings/')
