@@ -4812,16 +4812,22 @@ def CMDupload(parser, args):
   dogfood_stacked_changes = os.environ.get(DOGFOOD_STACKED_CHANGES_VAR) != '0'
 
   if dogfood_stacked_changes:
-    print('This repo has been enrolled in the stacked changes dogfood. '
-          'To opt-out use `export DOGFOOD_STACKED_CHANGES=0`. '
-          'File bugs at https://bit.ly/3Y6opoI\n')
+    print(
+        'This repo has been enrolled in the stacked changes dogfood.\n'
+        '`git cl upload` now uploads the current branch and all upstream '
+        'branches that have un-uploaded updates.\n'
+        'Patches can now be reapplied with --force:\n'
+        '`git cl patch --reapply --force`.\n'
+        'Googlers may visit go/stacked-changes-dogfood for more information.\n'
+        'To opt-out use `export DOGFOOD_STACKED_CHANGES=0`. '
+        'File bugs at https://bit.ly/3Y6opoI\n')
 
   if options.squash and dogfood_stacked_changes:
     print('Depot Tools no longer sets new uploads to "WIP". Please update the\n'
           '"Set new changes to "work in progress" by default" checkbox at\n'
-          'https://<host>-review.googlesource.com/settings/')
+          'https://<host>-review.googlesource.com/settings/\n')
     if options.dependencies:
-      parser.error('--dependencies is not available for this workflow.')
+      parser.error('--dependencies is not available for this dogfood workflow.')
 
     if options.cherry_pick_stacked:
       try:
