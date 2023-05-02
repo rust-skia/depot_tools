@@ -868,7 +868,7 @@ Returns gerrit change patchset, e.g. 6 for a patch ref of
 
 Populated iff gerrit_change is populated Returns None if not populated..
 
-&mdash; **def [get\_change\_description](/recipes/recipe_modules/tryserver/api.py#388)(self):**
+&mdash; **def [get\_change\_description](/recipes/recipe_modules/tryserver/api.py#390)(self):**
 
 Gets the CL description.
 
@@ -884,7 +884,7 @@ Args:
 
 Returned paths will be relative to to api.path['root'].
 
-&mdash; **def [get\_footer](/recipes/recipe_modules/tryserver/api.py#377)(self, tag, patch_text=None):**
+&mdash; **def [get\_footer](/recipes/recipe_modules/tryserver/api.py#382)(self, tag, patch_text=None):**
 
 Gets a specific tag from a CL description
 
@@ -907,11 +907,11 @@ Returns true iff the properties exist to match a Gerrit issue.
 
 Returns true iff we have a change to check out.
 
-&mdash; **def [normalize\_footer\_name](/recipes/recipe_modules/tryserver/api.py#385)(self, footer):**
+&mdash; **def [normalize\_footer\_name](/recipes/recipe_modules/tryserver/api.py#387)(self, footer):**
 
 &mdash; **def [require\_is\_tryserver](/recipes/recipe_modules/tryserver/api.py#221)(self):**
 
-&mdash; **def [set\_change](/recipes/recipe_modules/tryserver/api.py#393)(self, change):**
+&mdash; **def [set\_change](/recipes/recipe_modules/tryserver/api.py#395)(self, change):**
 
 Set the gerrit change for this module.
 

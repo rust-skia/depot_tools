@@ -356,7 +356,7 @@ class TryserverApi(recipe_api.RecipeApi):
   def _get_footers(self, patch_text=None):
     if patch_text is not None:
       return self._get_footer_step(patch_text)
-    if self._change_footers:  #pragma: nocover
+    if self._change_footers is not None:
       return self._change_footers
     if self.gerrit_change:
       self._ensure_gerrit_commit_message()
@@ -366,20 +366,22 @@ class TryserverApi(recipe_api.RecipeApi):
         'No patch text or associated changelist, cannot get footers')  #pragma: nocover
 
   def _get_footer_step(self, patch_text):
-    result = self.m.step('parse description', [
-        'python3',
-        self.repo_resource('git_footers.py'), '--json',
-        self.m.json.output()
-    ],
-                         stdin=self.m.raw_io.input(data=patch_text))
+    result = self.m.step(
+        'parse description',
+        [
+            'python3',
+            self.repo_resource('git_footers.py'),
+            '--json',
+            self.m.json.output(),
+        ],
+        stdin=self.m.raw_io.input(data=patch_text),
+        step_test_data=lambda: self.m.json.test_api.output({}),
+    )
     return result.json.output
 
   def get_footer(self, tag, patch_text=None):
     """Gets a specific tag from a CL description"""
     footers = self._get_footers(patch_text)
-    if footers is None:
-      return []
-
     return footers.get(tag, [])
 
   def normalize_footer_name(self, footer):
