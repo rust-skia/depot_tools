@@ -1109,16 +1109,15 @@ def GetPylint(input_api,
 
   The default files_to_check enforces looking only at *.py files.
 
-  Currently only pylint version '1.5', '2.6' and '2.7' are supported.
+  Currently only pylint version '2.6' and '2.7' are supported.
   """
 
   files_to_check = tuple(files_to_check or (r'.*\.py$', ))
   files_to_skip = tuple(files_to_skip or input_api.DEFAULT_FILES_TO_SKIP)
   extra_paths_list = extra_paths_list or []
 
-  assert version in ('1.5', '2.6', '2.7'), \
+  assert version in ('2.6', '2.7'), \
       'Unsupported pylint version: %s' % version
-  python2 = (version == '1.5')
 
   if input_api.is_committing or input_api.no_diffs:
     error_type = output_api.PresubmitError
@@ -1207,12 +1206,11 @@ def GetPylint(input_api,
     if input_api.sys.version_info.major != 2:
       kwargs['stdin'] = kwargs['stdin'].encode('utf-8')
 
-    return input_api.Command(
-        name='Pylint (%s)' % description,
-        cmd=cmd,
-        kwargs=kwargs,
-        message=error_type,
-        python3=not python2)
+    return input_api.Command(name='Pylint (%s)' % description,
+                             cmd=cmd,
+                             kwargs=kwargs,
+                             message=error_type,
+                             python3=True)
 
   # pylint's cycle detection doesn't work in parallel, so spawn a second,
   # single-threaded job for just that check. However, only do this if there are
@@ -1220,23 +1218,14 @@ def GetPylint(input_api,
   # Some PRESUBMITs explicitly mention cycle detection.
   if len(files) >= files_per_job and not any(
       'R0401' in a or 'cyclic-import' in a for a in extra_args):
-    tests = [
-      GetPylintCmd(files, ["--disable=cyclic-import"], True),
-      GetPylintCmd(files, ["--disable=all", "--enable=cyclic-import"], False),
+    return [
+        GetPylintCmd(files, ["--disable=cyclic-import"], True),
+        GetPylintCmd(files, ["--disable=all", "--enable=cyclic-import"], False),
     ]
-  else:
-    tests = [
-        GetPylintCmd(files, [], True),
-    ]
-  if version == '1.5':
-    # Warn users about pylint-1.5 deprecation
-    tests.append(
-        output_api.PresubmitPromptWarning(
-            'pylint-1.5 is being run on %s and is deprecated, please switch '
-            'to 2.7 before 2022-07-11 (add version=\'2.7\' to RunPylint call)'
-            % input_api.PresubmitLocalPath()))
 
-  return tests
+  return [
+      GetPylintCmd(files, [], True),
+  ]
 
 
 def RunPylint(input_api, *args, **kwargs):
