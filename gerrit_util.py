@@ -380,7 +380,7 @@ def CreateHttpConn(host,
                    reqtype='GET',
                    headers=None,
                    body=None,
-                   timeout=None):
+                   timeout=300):
   """Opens an HTTPS connection to a Gerrit service, and sends a request."""
   headers = headers or {}
   bare_host = host.partition(':')[0]
