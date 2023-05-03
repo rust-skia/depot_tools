@@ -5815,9 +5815,8 @@ def _RunRustFmt(opts, rust_diff_files, top_dir, upstream_commit):
   except rustfmt.NotFoundError as e:
     DieWithError(e)
 
-  # TODO(crbug.com/1231317): Support formatting only the changed lines
-  # if `opts.full or settings.GetFormatFullByDefault()` is False.  See also:
-  # https://github.com/emilio/rustfmt-format-diff
+  # TODO(crbug.com/1440869): Support formatting only the changed lines
+  # if `opts.full or settings.GetFormatFullByDefault()` is False.
   cmd = [rustfmt_tool]
   if opts.dry_run:
     cmd.append('--check')
