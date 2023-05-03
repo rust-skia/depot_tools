@@ -1077,7 +1077,7 @@ def CreateGerritBranch(host, project, branch, commit):
   path = 'projects/%s/branches/%s' % (project, branch)
   body = {'revision': commit}
   conn = CreateHttpConn(host, path, reqtype='PUT', body=body)
-  response = ReadHttpJsonResponse(conn, accept_statuses=[201])
+  response = ReadHttpJsonResponse(conn, accept_statuses=[201, 409])
   if response:
     return response
   raise GerritError(200, 'Unable to create gerrit branch')
