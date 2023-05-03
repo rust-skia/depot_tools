@@ -2216,7 +2216,7 @@ class CipdDependency(Dependency):
   def __init__(
       self, parent, name, dep_value, cipd_root,
       custom_vars, should_process, relative, condition):
-    package = cipd_root.expand_package_name(dep_value['package'])
+    package = dep_value['package']
     version = dep_value['version']
     url = urlparse.urljoin(
         cipd_root.service_url, '%s@%s' % (package, version))

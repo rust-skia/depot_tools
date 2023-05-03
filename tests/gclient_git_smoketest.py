@@ -1261,7 +1261,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         '  "src/cipd_dep_with_cipd_variable": {',
         '    "packages": [',
         '      {',
-        '        "package": "package3/platform-expanded-test-only",',
+        '        "package": "package3/${{platform}}",',
         '        "version": "1.2",',
         '      },',
         '    ],',

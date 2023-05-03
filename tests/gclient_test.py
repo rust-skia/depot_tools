@@ -46,15 +46,6 @@ def write(filename, content):
     f.write(content)
 
 
-class CIPDRootMock(object):
-  def __init__(self, root_dir, service_url):
-    self.root_dir = root_dir
-    self.service_url = service_url
-
-  def expand_package_name(self, package_name):
-    return package_name
-
-
 class SCMMock(object):
   unit_test = None
   def __init__(self, parsed_url, root_dir, name, out_fh=None, out_cb=None,
@@ -1091,7 +1082,6 @@ class GclientTest(trial_dir.TestCase):
     options, _ = gclient.OptionParser().parse_args([])
     options.ignore_dep_type = 'git'
     obj = gclient.GClient.LoadCurrentConfig(options)
-    obj._cipd_root = CIPDRootMock('src', 'https://example.com')
 
     self.assertEqual(1, len(obj.dependencies))
     sol = obj.dependencies[0]
@@ -1102,7 +1092,9 @@ class GclientTest(trial_dir.TestCase):
     dep = sol.dependencies[0]
 
     self.assertIsInstance(dep, gclient.CipdDependency)
-    self.assertEqual('https://example.com/lemur@version:1234', dep.url)
+    self.assertEqual(
+        'https://chrome-infra-packages.appspot.com/lemur@version:1234',
+        dep.url)
 
   def testDepsFromNotAllowedHostsUnspecified(self):
     """Verifies gclient works fine with DEPS without allowed_hosts."""
@@ -1247,7 +1239,6 @@ class GclientTest(trial_dir.TestCase):
         '}')
     options, _ = gclient.OptionParser().parse_args([])
     obj = gclient.GClient.LoadCurrentConfig(options)
-    obj._cipd_root = CIPDRootMock('src', 'https://example.com')
 
     self.assertEqual(1, len(obj.dependencies))
     sol = obj.dependencies[0]
@@ -1258,7 +1249,9 @@ class GclientTest(trial_dir.TestCase):
     dep = sol.dependencies[0]
 
     self.assertIsInstance(dep, gclient.CipdDependency)
-    self.assertEqual('https://example.com/lemur@version:1234', dep.url)
+    self.assertEqual(
+        'https://chrome-infra-packages.appspot.com/lemur@version:1234',
+        dep.url)
 
   def testIgnoresCipdDependenciesWhenFlagIsSet(self):
     """Verifies that CIPD deps are ignored if --ignore-dep-type cipd is set."""
@@ -1411,8 +1404,8 @@ class GclientTest(trial_dir.TestCase):
     parser = gclient.OptionParser()
     options, _ = parser.parse_args([])
     obj = gclient.GClient('foo', options)
-    cipd_root = CIPDRootMock(os.path.join(self.root_dir, 'dir1'),
-                             'https://example.com')
+    cipd_root = gclient_scm.CipdRoot(
+        os.path.join(self.root_dir, 'dir1'), 'https://example.com')
     obj.add_dependencies_and_close(
       [
         gclient.Dependency(
@@ -1465,7 +1458,7 @@ class GclientTest(trial_dir.TestCase):
     parser = gclient.OptionParser()
     options, _ = parser.parse_args([])
     obj = gclient.GClient('src', options)
-    cipd_root = CIPDRootMock('src', 'https://example.com')
+    cipd_root = obj.GetCipdRoot()
 
     cipd_dep = gclient.CipdDependency(
         parent=obj,
