@@ -3029,10 +3029,10 @@ class Changelist(object):
       print('\nLocal merge base %s is different from Gerrit %s.\n' %
             (local_base, external_base))
       if git_common.upstream(branch):
-        DieWithError('Upstream branch set. Consider using `git rebase-update` '
-                     'to make these the same.')
-      print('No upstream branch set. Consider setting it and using '
-            '`git rebase-update`.\nContinuing upload with Gerrit merge base.')
+        confirm_or_exit('Can\'t apply the latest changes from Gerrit.\n'
+                        'Continue with upload and override the latest changes?')
+        return
+      print('No upstream branch set. Continuing upload with Gerrit merge base.')
 
     # Fetch Gerrit's CL base if it doesn't exist locally.
     remote, _ = self.GetRemoteBranch()
