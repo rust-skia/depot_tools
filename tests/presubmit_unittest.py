@@ -664,11 +664,6 @@ class PresubmitUnittest(PresubmitTestsBase):
             change=change, gerrit_obj=None, verbose=False))
     expected = (r'Running Python ' + str(sys.version_info.major) +
                 r' post upload checks \.\.\.\n')
-    if sys.version_info[0] == 2:
-      expected += ('Running .*PRESUBMIT.py under Python 2. Add USE_PYTHON3 = '
-                   'True to prevent this.\n')
-      expected += ('Running .*PRESUBMIT.py under Python 2. Add USE_PYTHON3 = '
-                   'True to prevent this.\n')
     self.assertRegexpMatches(sys.stdout.getvalue(), expected)
 
   def testDoPostUploadExecuterWarning(self):
@@ -700,17 +695,12 @@ class PresubmitUnittest(PresubmitTestsBase):
         presubmit.DoPostUploadExecuter(
             change=change, gerrit_obj=None, verbose=False))
 
-    extra = ''
-    if sys.version_info[0] == 2:
-      extra = ('Running .*PRESUBMIT.py under Python 2. Add USE_PYTHON3 = True '
-               'to prevent this.\n')
     expected = ('Running Python ' + str(sys.version_info.major) + ' '
                 'post upload checks \.\.\.\n'
-                '%s'
                 '\n'
                 '\*\* Post Upload Hook Messages \*\*\n'
                 '!!\n'
-                '\n' % extra)
+                '\n')
     self.assertRegexpMatches(sys.stdout.getvalue(), expected)
 
   def testDoPresubmitChecksNoWarningsOrErrors(self):
@@ -806,7 +796,6 @@ def CheckChangeOnCommit(input_api, output_api):
           }
         ],
         'more_cc': ['me@example.com'],
-        'skipped_presubmits': 0,
     }
 
     fake_result_json = json.dumps(fake_result, sort_keys=True)
