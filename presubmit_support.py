@@ -309,6 +309,33 @@ def prompt_should_continue(prompt_string):
   response = sys.stdin.readline().strip().lower()
   return response in ('y', 'yes')
 
+
+def _ShouldRunPresubmit(script_text, use_python3):
+  """Try to figure out whether these presubmit checks should be run under
+    python2 or python3. We need to do this without actually trying to
+    compile the text, since the text might compile in one but not the
+    other.
+
+    Args:
+      script_text: The text of the presubmit script.
+      use_python3: if true, will use python3 instead of python2 by default
+                if USE_PYTHON3 is not specified.
+
+    Return:
+      A boolean if presubmit should be executed
+  """
+  if os.getenv('LUCI_OMIT_PYTHON2') == 'true':
+    # If LUCI omits python2, run all presubmits with python3, regardless of
+    # USE_PYTHON3 variable.
+    return True
+
+  m = re.search('^USE_PYTHON3 = (True|False)$', script_text, flags=re.MULTILINE)
+  if m:
+    use_python3 = m.group(1) == 'True'
+
+  return ((sys.version_info.major == 2) and not use_python3) or \
+      ((sys.version_info.major == 3) and use_python3)
+
 # Top level object so multiprocessing can pickle
 # Public access through OutputApi object.
 class _PresubmitResult(object):
@@ -1479,9 +1506,14 @@ def DoPostUploadExecuter(change, gerrit_obj, verbose, use_python3=False):
     filename = os.path.abspath(filename)
     # Accept CRLF presubmit script.
     presubmit_script = gclient_utils.FileRead(filename).replace('\r\n', '\n')
-    if verbose:
-      sys.stdout.write('Running %s\n' % filename)
-    results.extend(executer.ExecPresubmitScript(presubmit_script, filename))
+    if _ShouldRunPresubmit(presubmit_script, use_python3):
+      if sys.version_info[0] == 2:
+        sys.stdout.write(
+            'Running %s under Python 2. Add USE_PYTHON3 = True to prevent '
+            'this.\n' % filename)
+      elif verbose:
+        sys.stdout.write('Running %s\n' % filename)
+      results.extend(executer.ExecPresubmitScript(presubmit_script, filename))
 
   if not results:
     return 0
@@ -1755,18 +1787,29 @@ def DoPresubmitChecks(change,
     executer = PresubmitExecuter(change, committing, verbose, gerrit_obj,
                                  dry_run, thread_pool, parallel, use_python3,
                                  no_diffs)
+    skipped_count = 0;
     if default_presubmit:
       if verbose:
         sys.stdout.write('Running default presubmit script.\n')
       fake_path = os.path.join(change.RepositoryRoot(), 'PRESUBMIT.py')
-      results += executer.ExecPresubmitScript(default_presubmit, fake_path)
+      if _ShouldRunPresubmit(default_presubmit, use_python3):
+        results += executer.ExecPresubmitScript(default_presubmit, fake_path)
+      else:
+        skipped_count += 1
     for filename in presubmit_files:
       filename = os.path.abspath(filename)
       # Accept CRLF presubmit script.
       presubmit_script = gclient_utils.FileRead(filename).replace('\r\n', '\n')
-      if verbose:
-        sys.stdout.write('Running %s\n' % filename)
-      results += executer.ExecPresubmitScript(presubmit_script, filename)
+      if _ShouldRunPresubmit(presubmit_script, use_python3):
+        if sys.version_info[0] == 2:
+          sys.stdout.write(
+              'Running %s under Python 2. Add USE_PYTHON3 = True to prevent '
+              'this.\n' % filename)
+        elif verbose:
+          sys.stdout.write('Running %s\n' % filename)
+        results += executer.ExecPresubmitScript(presubmit_script, filename)
+      else:
+        skipped_count += 1
 
     results += thread_pool.RunAsync()
 
@@ -1837,6 +1880,7 @@ def DoPresubmitChecks(change,
             for warning in messages.get('Warnings', [])
         ],
         'more_cc': executer.more_cc,
+        'skipped_presubmits': skipped_count,
       }
 
       gclient_utils.FileWrite(
