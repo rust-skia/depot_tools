@@ -109,18 +109,6 @@ def CheckUnitTestsOnCommit(input_api, output_api):
 
   input_api.SetTimeout(TEST_TIMEOUT_S)
 
-  # We still support python2 presubmit tests, so we need to test them. We don't
-  # run py3 here as the code below will start those tests
-  tests = input_api.canned_checks.GetUnitTestsInDirectory(
-      input_api,
-      output_api,
-      'tests',
-      files_to_check=[
-          r'.*presubmit_unittest\.py$',
-      ],
-      run_on_python2=True,
-      run_on_python3=False)
-
   # Run only selected tests on Windows.
   test_to_run_list = [r'.*test\.py$']
   tests_to_skip_list = []
@@ -135,15 +123,14 @@ def CheckUnitTestsOnCommit(input_api, output_api):
         r'.*recipes_test\.py$',
     ])
 
-  tests.extend(
-      input_api.canned_checks.GetUnitTestsInDirectory(
-          input_api,
-          output_api,
-          'tests',
-          files_to_check=test_to_run_list,
-          files_to_skip=tests_to_skip_list,
-          run_on_python3=True,
-          run_on_python2=False))
+  tests = input_api.canned_checks.GetUnitTestsInDirectory(
+      input_api,
+      output_api,
+      'tests',
+      files_to_check=test_to_run_list,
+      files_to_skip=tests_to_skip_list,
+      run_on_python3=True,
+      run_on_python2=False)
 
   return input_api.RunTests(tests)
 
