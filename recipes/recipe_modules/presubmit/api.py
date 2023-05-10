@@ -30,43 +30,16 @@ class PresubmitApi(recipe_api.RecipeApi):
 
     name = kwargs.pop('name', 'presubmit')
     with self.m.depot_tools.on_path():
-      # Use only vpython3 on bots that don't have vpython2 on the path any
-      # longer.
-      # TODO(https://crbug.com/1401307): Switch this to vpython3 premanently
-      # and remove py3 part below.
-      experiments = self.m.buildbucket.build.input.experiments
-      if 'luci.buildbucket.omit_python2' in experiments:
-        cmd = ['vpython3', self.presubmit_support_path, '--use-python3']
-      else:
-        cmd = ['vpython', self.presubmit_support_path]
-
-      cmd.extend(args)
-      cmd.extend(['--json_output', self.m.json.output()])
       if self.m.resultdb.enabled:
         kwargs['wrapper'] = ('rdb', 'stream', '--')
-      step_data = self.m.step(name, cmd, **kwargs)
-      output = step_data.json.output or {}
-      if self.m.step.active_result.retcode != 0 or \
-          'luci.buildbucket.omit_python2' in experiments:
-        return output
-
       presubmit_args = list(args) + [
           '--json_output',
           self.m.json.output(),
       ]
-      step_data = self.m.step(name + " py3",
+      step_data = self.m.step(name,
                               ['vpython3', self.presubmit_support_path] +
                               presubmit_args, **kwargs)
-      output2 = step_data.json.output or {}
-
-      # combine outputs
-      for key in output:
-        if key in output2:
-          output[key] += output2[key]
-          del (output2[key])
-      for key in output2:
-        output[key] = output2[key]
-      return output
+      return step_data.json.output or {}
 
   @property
   def _relative_root(self):
