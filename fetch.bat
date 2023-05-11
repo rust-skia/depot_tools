@@ -16,13 +16,4 @@ IF %ERRORLEVEL% NEQ 0 (
 set PATH=%PATH%;%~dp0
 
 :: Defer control.
-IF "%GCLIENT_PY3%" == "1" (
-  :: Explicitly run on Python 3
-  call vpython3 "%~dp0\fetch.py" %*
-) ELSE IF "%GCLIENT_PY3%" == "0" (
-  :: Explicitly run on Python 2
-  call vpython "%~dp0\fetch.py" %*
-) ELSE (
-  :: Run on Python 3, allows default to be flipped.
-  call vpython3 "%~dp0\fetch.py" %*
-)
+call vpython3 "%~dp0\fetch.py" %*
