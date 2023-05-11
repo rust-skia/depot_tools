@@ -642,8 +642,7 @@ class PresubmitUnittest(PresubmitTestsBase):
     change = self.ExampleChange()
 
     executer = presubmit.GetPostUploadExecuter(change,
-                                               presubmit.GerritAccessor(),
-                                               False)
+                                               presubmit.GerritAccessor())
 
     executer.ExecPresubmitScript(self.presubmit_text, fake_presubmit)
 
@@ -806,7 +805,6 @@ def CheckChangeOnCommit(input_api, output_api):
           }
         ],
         'more_cc': ['me@example.com'],
-        'skipped_presubmits': 0,
     }
 
     fake_result_json = json.dumps(fake_result, sort_keys=True)

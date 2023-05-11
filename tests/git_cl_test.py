@@ -91,9 +91,6 @@ class ChangelistMock(object):
   def GetRemoteBranch(self):
     return ('origin', 'refs/remotes/origin/main')
 
-  def GetUsePython3(self):
-    return self._use_python3
-
 class GitMocks(object):
   def __init__(self, config=None, branchref=None):
     self.branchref = branchref or 'refs/heads/main'
@@ -723,8 +720,6 @@ class TestGitCl(unittest.TestCase):
       ((['git', 'config', '--unset-all', 'rietveld.run-post-upload-hook'],),
         CERR1),
       ((['git', 'config', '--unset-all', 'rietveld.format-full-by-default'],),
-        CERR1),
-      ((['git', 'config', '--unset-all', 'rietveld.use-python3'],),
         CERR1),
       ((['git', 'config', 'gerrit.host', 'true'],), ''),
     ]
@@ -3642,7 +3637,6 @@ class ChangelistTest(unittest.TestCase):
     mock.patch('git_cl.Changelist.GetAuthor', return_value='author').start()
     mock.patch('git_cl.Changelist.GetIssue', return_value=123456).start()
     mock.patch('git_cl.Changelist.GetPatchset', return_value=7).start()
-    mock.patch('git_cl.Changelist.GetUsePython3', return_value=False).start()
     mock.patch(
         'git_cl.Changelist.GetRemoteBranch',
         return_value=('origin', 'refs/remotes/origin/main')).start()
@@ -3875,7 +3869,7 @@ class ChangelistTest(unittest.TestCase):
 
   def testRunPostUploadHook(self):
     cl = git_cl.Changelist()
-    cl.RunPostUploadHook(2, 'upstream', 'description', False)
+    cl.RunPostUploadHook(2, 'upstream', 'description')
 
     subprocess2.Popen.assert_called_with([
         'vpython3',
@@ -3901,7 +3895,6 @@ class ChangelistTest(unittest.TestCase):
         '--post_upload',
         '--description_file',
         '/tmp/fake-temp1',
-        '--use-python3',
     ])
 
     gclient_utils.FileWrite.assert_called_once_with(
@@ -3909,7 +3902,7 @@ class ChangelistTest(unittest.TestCase):
 
   def testRunPostUploadHookPy3Only(self):
     cl = git_cl.Changelist()
-    cl.RunPostUploadHook(2, 'upstream', 'description', True)
+    cl.RunPostUploadHook(2, 'upstream', 'description')
 
     subprocess2.Popen.assert_called_once_with([
         'vpython3',
@@ -3935,7 +3928,6 @@ class ChangelistTest(unittest.TestCase):
         '--post_upload',
         '--description_file',
         '/tmp/fake-temp1',
-        '--use-python3',
     ])
 
     gclient_utils.FileWrite.assert_called_once_with('/tmp/fake-temp1',
@@ -4224,7 +4216,7 @@ class ChangelistTest(unittest.TestCase):
                                              ccs=ccs,
                                              notify=False)
     mockRunPostHook.assert_called_once_with(True, 'parent-commit',
-                                            change_desc.description, True)
+                                            change_desc.description)
 
 
 class CMDTestCaseBase(unittest.TestCase):

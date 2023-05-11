@@ -30,7 +30,7 @@ class PresubmitApi(recipe_api.RecipeApi):
 
     name = kwargs.pop('name', 'presubmit')
     with self.m.depot_tools.on_path():
-      cmd = ['vpython3', self.presubmit_support_path, '--use-python3']
+      cmd = ['vpython3', self.presubmit_support_path]
       cmd.extend(args)
       cmd.extend(['--json_output', self.m.json.output()])
       if self.m.resultdb.enabled:
