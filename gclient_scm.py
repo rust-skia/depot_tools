@@ -1596,20 +1596,6 @@ class CipdRoot(object):
         if os.path.exists(cipd_cache_dir):
           raise
 
-  def expand_package_name(self, package_name_string, **kwargs):
-    """Run `cipd expand-package-name`.
-
-    CIPD package names can be declared with placeholder variables
-    such as '${platform}', this cmd will return the package name
-    with the variables resolved. The resolution is based on the host
-    the command is executing on.
-    """
-
-    kwargs.setdefault('stderr', subprocess2.PIPE)
-    cmd = ['cipd', 'expand-package-name', package_name_string]
-    ret = subprocess2.check_output(cmd, **kwargs).decode('utf-8')
-    return ret.strip()
-
   @contextlib.contextmanager
   def _create_ensure_file(self):
     try:

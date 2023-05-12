@@ -657,10 +657,8 @@ hooks = [{
       'origin': 'git/repo_13@3\n'
     })
 
-    self._commit_git(
-        'repo_14', {
-            'DEPS':
-            textwrap.dedent("""\
+    self._commit_git('repo_14', {
+      'DEPS': textwrap.dedent("""\
         vars = {}
         deps = {
           'src/cipd_dep': {
@@ -694,28 +692,9 @@ hooks = [{
             ],
             'dep_type': 'cipd',
           },
-          'src/cipd_dep_with_cipd_variable_equation_not_ok': {
-            'packages': [
-              {
-                'package': 'package3/${{platform=fake-platform-not-ok}}',
-                'version': '1.2',
-              },
-            ],
-            'dep_type': 'cipd',
-          },
-          'src/cipd_dep_with_cipd_variable_equation_ok': {
-            'packages': [
-              {
-                'package': 'package3/${{platform=fake-platform-ok}}',
-                'version': '1.4',
-              },
-            ],
-            'dep_type': 'cipd',
-          },
         }"""),
-            'origin':
-            'git/repo_14@2\n'
-        })
+      'origin': 'git/repo_14@2\n'
+    })
 
     # A repo with a hook to be recursed in, without use_relative_paths
     self._commit_git('repo_15', {

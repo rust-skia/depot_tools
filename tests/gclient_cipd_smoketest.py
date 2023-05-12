@@ -33,8 +33,7 @@ class GClientSmokeCipd(gclient_smoketest_base.GClientSmokeBase):
 
     tree = self.mangle_git_tree(('repo_14@1', 'src'))
     tree.update({
-        '_cipd':
-        '\n'.join([
+        '_cipd': '\n'.join([
             '$ParanoidMode CheckPresence',
             '$OverrideInstallMode copy',
             '',
@@ -46,29 +45,16 @@ class GClientSmokeCipd(gclient_smoketest_base.GClientSmokeBase):
             'package0 0.1',
             '',
             '@Subdir src/cipd_dep_with_cipd_variable',
-            'package3/platform-expanded-test-only 1.2',
-            '',
-            '@Subdir src/cipd_dep_with_cipd_variable_equation_not_ok',
-            'package3/${platform=fake-platform-not-ok} 1.2',
-            '',
-            '@Subdir src/cipd_dep_with_cipd_variable_equation_ok',
-            'package3/platform-expanded-test-only 1.4',
+            'package3/${platform} 1.2',
             '',
             '',
         ]),
-        'src/another_cipd_dep/_cipd':
-        '\n'.join([
+        'src/another_cipd_dep/_cipd': '\n'.join([
             'package1 1.1-cr0',
             'package2 1.13',
         ]),
-        'src/cipd_dep/_cipd':
-        'package0 0.1',
-        'src/cipd_dep_with_cipd_variable/_cipd':
-        'package3/platform-expanded-test-only 1.2',
-        'src/cipd_dep_with_cipd_variable_equation_not_ok/_cipd':
-        'package3/${platform=fake-platform-not-ok} 1.2',
-        'src/cipd_dep_with_cipd_variable_equation_ok/_cipd':
-        'package3/platform-expanded-test-only 1.4',
+        'src/cipd_dep/_cipd': 'package0 0.1',
+        'src/cipd_dep_with_cipd_variable/_cipd': 'package3/${platform} 1.2',
     })
     self.assertTree(tree)
 
