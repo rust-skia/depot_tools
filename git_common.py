@@ -922,17 +922,18 @@ def tags(*args):
 
 def thaw():
   took_action = False
-  for sha in run_stream('rev-list', 'HEAD'):
-    sha = sha.strip().decode('utf-8')
-    msg = run('show', '--format=%f%b', '-s', 'HEAD')
-    match = FREEZE_MATCHER.match(msg)
-    if not match:
-      if not took_action:
-        return 'Nothing to thaw.'
-      break
+  with run_stream('rev-list', 'HEAD') as stream:
+    for sha in stream:
+      sha = sha.strip().decode('utf-8')
+      msg = run('show', '--format=%f%b', '-s', 'HEAD')
+      match = FREEZE_MATCHER.match(msg)
+      if not match:
+        if not took_action:
+          return 'Nothing to thaw.'
+        break
 
-    run('reset', '--' + FREEZE_SECTIONS[match.group(1)], sha)
-    took_action = True
+      run('reset', '--' + FREEZE_SECTIONS[match.group(1)], sha)
+      took_action = True
 
 
 def topo_iter(branch_tree, top_down=True):
