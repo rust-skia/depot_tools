@@ -520,8 +520,7 @@ class OutputApi(object):
 
   def AppendCC(self, cc):
     """Appends a user to cc for this change."""
-    if cc not in self.more_cc:
-      self.more_cc.append(cc)
+    self.more_cc.append(cc)
 
   def PresubmitPromptOrNotify(self, *args, **kwargs):
     """Warn the user when uploading, but only notify if committing."""
@@ -1602,6 +1601,9 @@ class PresubmitExecuter(object):
                                          presubmit_path))
             logging.debug('Running %s done.', function_name)
             self.more_cc.extend(output_api.more_cc)
+            # Clear the CC list between running each presubmit check to prevent
+            # CCs from being repeatedly appended.
+            output_api.more_cc = []
 
         else:  # Old format
           if self.committing:
@@ -1615,10 +1617,15 @@ class PresubmitExecuter(object):
                                          presubmit_path))
             logging.debug('Running %s done.', function_name)
             self.more_cc.extend(output_api.more_cc)
+            # Clear the CC list between running each presubmit check to prevent
+            # CCs from being repeatedly appended.
+            output_api.more_cc = []
 
     finally:
       for f in input_api._named_temporary_files:
         os.remove(f)
+
+    self.more_cc = sorted(set(self.more_cc))
 
     return results
 

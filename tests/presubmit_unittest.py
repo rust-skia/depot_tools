@@ -1596,6 +1596,65 @@ class OutputApiUnittest(PresubmitTestsBase):
     self.assertEqual(['chromium-reviews@chromium.org'], output_api.more_cc)
 
 
+  def testAppendCCAndMultipleChecks(self):
+    description_lines = ('Hello there', 'this is a change', 'BUG=123')
+    files = [
+        ['A', 'foo\\blat.cc'],
+    ]
+    fake_presubmit = os.path.join(self.fake_root_dir, 'PRESUBMIT.py')
+
+    change = presubmit.Change('mychange', '\n'.join(description_lines),
+                              self.fake_root_dir, files, 0, 0, None)
+
+    # Base case: AppendCC from multiple different checks should be reflected in
+    # the final result.
+    executer = presubmit.PresubmitExecuter(change, True, None,
+                                           presubmit.GerritAccessor())
+    self.assertFalse(
+        executer.ExecPresubmitScript(
+            "PRESUBMIT_VERSION = '2.0.0'\n"
+            'def CheckChangeAddCC1(input_api, output_api):\n'
+            "  output_api.AppendCC('chromium-reviews@chromium.org')\n"
+            '  return []\n'
+            '\n'
+            'def CheckChangeAppendCC2(input_api, output_api):\n'
+            "  output_api.AppendCC('ipc-security-reviews@chromium.org')\n"
+            '  return []\n', fake_presubmit))
+    self.assertEqual(
+        ['chromium-reviews@chromium.org', 'ipc-security-reviews@chromium.org'],
+        executer.more_cc)
+
+    # Check that if one presubmit check appends a CC, it does not get duplicated
+    # into the more CC list by subsequent checks.
+    executer = presubmit.PresubmitExecuter(change, True, None,
+                                           presubmit.GerritAccessor())
+    self.assertFalse(
+        executer.ExecPresubmitScript(
+            "PRESUBMIT_VERSION = '2.0.0'\n"
+            'def CheckChangeAddCC(input_api, output_api):\n'
+            "  output_api.AppendCC('chromium-reviews@chromium.org')\n"
+            '  return []\n'
+            '\n'
+            'def CheckChangeDoNothing(input_api, output_api):\n'
+            '  return []\n', fake_presubmit))
+    self.assertEqual(['chromium-reviews@chromium.org'], executer.more_cc)
+
+    # Check that if multiple presubmit checks append the same CC, it gets
+    # deduplicated.
+    executer = presubmit.PresubmitExecuter(change, True, None,
+                                           presubmit.GerritAccessor())
+    self.assertFalse(
+        executer.ExecPresubmitScript(
+            "PRESUBMIT_VERSION = '2.0.0'\n"
+            'def CheckChangeAddCC1(input_api, output_api):\n'
+            "  output_api.AppendCC('chromium-reviews@chromium.org')\n"
+            '  return []\n'
+            '\n'
+            'def CheckChangeAppendCC2(input_api, output_api):\n'
+            "  output_api.AppendCC('chromium-reviews@chromium.org')\n"
+            '  return []\n', fake_presubmit))
+    self.assertEqual(['chromium-reviews@chromium.org'], executer.more_cc)
+
   def testOutputApiHandling(self):
     presubmit.OutputApi.PresubmitError('!!!').handle()
     self.assertIsNotNone(sys.stdout.getvalue().count('!!!'))
