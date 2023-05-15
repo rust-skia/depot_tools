@@ -106,6 +106,7 @@ $TmpPath = $CipdBinary + ".tmp." + $PID
 try {
   Write-Output "Downloading CIPD client for $Platform from $URL..."
   Retry-Command {
+    $ProgressPreference = "SilentlyContinue"
     Invoke-WebRequest -UserAgent $UserAgent -Uri $URL -OutFile $TmpPath
   }
 
