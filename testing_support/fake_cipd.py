@@ -2,9 +2,11 @@
 # Copyright (c) 2018 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+from string import Template
 
 import argparse
 import io
+import json
 import os
 import re
 import shutil
@@ -15,9 +17,59 @@ OS_VAR = 'os'
 PLATFORM_VAR = 'platform'
 
 CIPD_SUBDIR_RE = '@Subdir (.*)'
+CIPD_DESCRIBE = 'describe'
 CIPD_ENSURE = 'ensure'
 CIPD_EXPAND_PKG = 'expand-package-name'
 CIPD_EXPORT = 'export'
+
+DESCRIBE_STDOUT_TEMPLATE = """\
+Package:       ${package}
+Instance ID:   ${package}-fake-instance-id
+Registered by: user:fake-testing-support
+Registered at: 2023-05-10 18:53:55.078574 +0000 UTC
+Refs:
+  ${package}-latest
+Tags:
+  git_revision:${package}-fake-git-revision
+  ${package}-fake-tag:1.0
+  ${package}-fake-tag:2.0
+"""
+
+DESCRIBE_JSON_TEMPLATE = """{
+  "result": {
+    "pin": {
+      "package": "${package}",
+      "instance_id": "${package}-fake-instance-id"
+    },
+    "registered_by": "user:fake-testing-support",
+    "registered_ts": 1683744835,
+    "refs": [
+      {
+        "ref": "${package}-latest",
+        "instance_id": "${package}-fake-instance-id",
+        "modified_by": "user:fake-testing-support",
+        "modified_ts": 1683744835
+      }
+    ],
+    "tags": [
+      {
+        "tag": "git_revision:${package}-fake-git-revision",
+        "registered_by": "user:fake-testing-support",
+        "registered_ts": 1683744835
+      },
+      {
+        "tag": "${package}-fake-tag:1.0",
+        "registered_by": "user:fake-testing-support",
+        "registered_ts": 1683744835
+      },
+      {
+        "tag": "${package}-fake-tag:2.0",
+        "registered_by": "user:fake-testing-support",
+        "registered_ts": 1683744835
+      }
+    ]
+  }
+}"""
 
 
 def parse_cipd(root, contents):
@@ -50,9 +102,37 @@ def expand_package_name_cmd(package_name):
   return package_name
 
 
+def describe_cmd(package_name):
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-json-output')
+  parser.add_argument('-version', required=True)
+  args, _ = parser.parse_known_args()
+  json_template = Template(DESCRIBE_JSON_TEMPLATE).substitute(
+      package=package_name)
+  cli_out = Template(DESCRIBE_STDOUT_TEMPLATE).substitute(package=package_name)
+  json_out = json.loads(json_template)
+  found = False
+  for tag in json_out['result']['tags']:
+    if tag['tag'] == args.version:
+      found = True
+      break
+  for tag in json_out['result']['refs']:
+    if tag['ref'] == args.version:
+      found = True
+      break
+  if found:
+    if args.json_output:
+      with io.open(args.json_output, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(json_out, indent=4))
+    sys.stdout.write(cli_out)
+    return 0
+  sys.stdout.write('Error: no such ref.\n')
+  return 1
+
+
 def main():
   cmd = sys.argv[1]
-  assert cmd in [CIPD_ENSURE, CIPD_EXPAND_PKG, CIPD_EXPORT]
+  assert cmd in [CIPD_DESCRIBE, CIPD_ENSURE, CIPD_EXPAND_PKG, CIPD_EXPORT]
   # Handle cipd expand-package-name
   if cmd == CIPD_EXPAND_PKG:
     # Expecting argument after cmd
@@ -60,6 +140,11 @@ def main():
     # Write result to stdout
     sys.stdout.write(expand_package_name_cmd(sys.argv[2]))
     return 0
+  if cmd == CIPD_DESCRIBE:
+    # Expecting argument after cmd
+    assert len(sys.argv) >= 3
+    return describe_cmd(sys.argv[2])
+
   parser = argparse.ArgumentParser()
   parser.add_argument('-ensure-file')
   parser.add_argument('-root')
