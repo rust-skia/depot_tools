@@ -247,7 +247,9 @@ class Hook(object):
 
     cmd = list(self._action)
 
-    if cmd[0] == 'vpython3' and _detect_host_os() == 'win':
+    if cmd[0] == 'python':
+      cmd[0] = 'vpython'
+    if (cmd[0] in ['vpython', 'vpython3']) and _detect_host_os() == 'win':
       cmd[0] += '.bat'
 
     exit_code = 2
