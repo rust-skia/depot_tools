@@ -13,6 +13,7 @@ import unittest.mock
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
 
+import gclient_paths
 import ninja_reclient
 from testing_support import trial_dir
 
@@ -92,12 +93,15 @@ class NinjaReclientTest(trial_dir.TestCase):
     mock_call.assert_has_calls([
         unittest.mock.call([
             os.path.join(self.root_dir, reclient_bin_dir,
-                         'bootstrap'), "--re_proxy=" +
-            os.path.join(self.root_dir, reclient_bin_dir, 'reproxy'),
+                         'bootstrap' + gclient_paths.GetExeSuffix()),
+            "--re_proxy=" +
+            os.path.join(self.root_dir, reclient_bin_dir,
+                         'reproxy' + gclient_paths.GetExeSuffix()),
             "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
         ]),
         unittest.mock.call([
-            os.path.join(self.root_dir, reclient_bin_dir, 'bootstrap'),
+            os.path.join(self.root_dir, reclient_bin_dir,
+                         'bootstrap' + gclient_paths.GetExeSuffix()),
             "--shutdown", "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
         ]),
     ])
@@ -120,12 +124,15 @@ class NinjaReclientTest(trial_dir.TestCase):
     mock_call.assert_has_calls([
         unittest.mock.call([
             os.path.join(self.root_dir, reclient_bin_dir,
-                         'bootstrap'), "--re_proxy=" +
-            os.path.join(self.root_dir, reclient_bin_dir, 'reproxy'),
+                         'bootstrap' + gclient_paths.GetExeSuffix()),
+            "--re_proxy=" +
+            os.path.join(self.root_dir, reclient_bin_dir,
+                         'reproxy' + gclient_paths.GetExeSuffix()),
             "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
         ]),
         unittest.mock.call([
-            os.path.join(self.root_dir, reclient_bin_dir, 'bootstrap'),
+            os.path.join(self.root_dir, reclient_bin_dir,
+                         'bootstrap' + gclient_paths.GetExeSuffix()),
             "--shutdown", "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
         ]),
     ])

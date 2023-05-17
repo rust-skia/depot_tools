@@ -45,15 +45,17 @@ def run(cmd_args):
 
 def start_reproxy(reclient_cfg, reclient_bin_dir):
   return run([
-      os.path.join(reclient_bin_dir, 'bootstrap'),
-      '--re_proxy=' + os.path.join(reclient_bin_dir, 'reproxy'),
+      os.path.join(reclient_bin_dir,
+                   'bootstrap' + gclient_paths.GetExeSuffix()), '--re_proxy=' +
+      os.path.join(reclient_bin_dir, 'reproxy' + gclient_paths.GetExeSuffix()),
       '--cfg=' + reclient_cfg
   ])
 
 
 def stop_reproxy(reclient_cfg, reclient_bin_dir):
   return run([
-      os.path.join(reclient_bin_dir, 'bootstrap'), '--shutdown',
+      os.path.join(reclient_bin_dir,
+                   'bootstrap' + gclient_paths.GetExeSuffix()), '--shutdown',
       '--cfg=' + reclient_cfg
   ])
 
