@@ -538,6 +538,11 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       return
     url = None
     scm = self.CreateSCM()
+    if scm.name == 'cipd':
+      revision = scm.revinfo(None, None, None)
+      package = self.GetExpandedPackageName()
+      url = '%s/p/%s/+/%s' % (scm.GetActualRemoteURL(None), package, revision)
+
     if os.path.isdir(scm.checkout_path):
       revision = scm.revinfo(None, None, None)
       url = '%s@%s' % (gclient_utils.SplitUrlRevision(self.url)[0], revision)
@@ -2276,6 +2281,13 @@ class CipdDependency(Dependency):
   def GetScmName(self):
     """Always 'cipd'."""
     return 'cipd'
+
+  def GetExpandedPackageName(self):
+    """Return the CIPD package name with the variables evaluated."""
+    package = self._cipd_root.expand_package_name(self._package_name)
+    if package:
+      return package
+    return self._package_name
 
   #override
   def CreateSCM(self, out_cb=None):

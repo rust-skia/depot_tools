@@ -17,6 +17,8 @@ import gclient_smoketest_base
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+CHROME_INFRA_URL = "https://chrome-infra-packages.appspot.com"
+
 
 class GClientSmokeCipd(gclient_smoketest_base.GClientSmokeBase):
   def setUp(self):
@@ -131,6 +133,42 @@ class GClientSmokeCipd(gclient_smoketest_base.GClientSmokeBase):
         'src/repo12/_cipd': 'foo 1.3',
     })
     self.assertTree(tree)
+
+  def testRevInfo(self):
+    self.gclient(['config', self.git_base + 'repo_18', '--name', 'src'])
+    self.gclient(['sync'])
+    results = self.gclient(['revinfo'])
+    out = ('src: %(base)srepo_18\n'
+           'src/cipd_dep:package0: %(instance_url1)s\n'
+           'src/cipd_dep:package0/${platform}: %(instance_url2)s\n' % {
+               'base':
+               self.git_base,
+               'instance_url1':
+               CHROME_INFRA_URL + '/package0@package0-fake-tag:1.0',
+               'instance_url2':
+               CHROME_INFRA_URL +
+               '/package0/${platform}@package0/${platform}-fake-tag:1.0',
+           })
+    self.check((out, '', 0), results)
+
+  def testRevInfoActual(self):
+    self.gclient(['config', self.git_base + 'repo_18', '--name', 'src'])
+    self.gclient(['sync'])
+    results = self.gclient(['revinfo', '--actual'])
+    out = ('src: %(base)srepo_18@%(hash1)s\n'
+           'src/cipd_dep:package0: %(instance_url1)s\n'
+           'src/cipd_dep:package0/${platform}: %(instance_url2)s\n' % {
+               'base':
+               self.git_base,
+               'hash1':
+               self.githash('repo_18', 1),
+               'instance_url1':
+               CHROME_INFRA_URL + '/p/package0/+/package0-fake-instance-id',
+               'instance_url2':
+               CHROME_INFRA_URL + '/p/package0/platform-expanded-test-only' +
+               '/+/package0/${platform}-fake-instance-id',
+           })
+    self.check((out, '', 0), results)
 
 
 if __name__ == '__main__':

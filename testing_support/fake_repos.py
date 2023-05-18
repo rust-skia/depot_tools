@@ -212,7 +212,7 @@ class FakeReposBase(object):
 
 class FakeRepos(FakeReposBase):
   """Implements populateGit()."""
-  NB_GIT_REPOS = 17
+  NB_GIT_REPOS = 18
 
   def populateGit(self):
     # Testing:
@@ -731,6 +731,30 @@ hooks = [{
         ]"""),
       'origin': 'git/repo_17@2\n'
     })
+
+    self._commit_git(
+        'repo_18', {
+            'DEPS':
+            textwrap.dedent("""\
+        deps = {
+          'src/cipd_dep': {
+            'packages': [
+              {
+                'package': 'package0',
+                'version': 'package0-fake-tag:1.0',
+              },
+              {
+                'package': 'package0/${{platform}}',
+                'version': 'package0/${{platform}}-fake-tag:1.0',
+              },
+            ],
+            'dep_type': 'cipd',
+          },
+        }"""),
+            'origin':
+            'git/repo_18@2\n'
+        })
+
 
 class FakeRepoSkiaDEPS(FakeReposBase):
   """Simulates the Skia DEPS transition in Chrome."""
