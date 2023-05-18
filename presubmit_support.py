@@ -219,7 +219,7 @@ class ThreadPool(object):
         stdout = 'Process timed out after %ss\n%s' % (self.timeout, stdout)
       return p.returncode, stdout
 
-  def CallCommand(self, test):
+  def CallCommand(self, test, show_callstack=None):
     """Runs an external program.
 
     This function converts invocation of .py files and invocations of 'python'
@@ -233,16 +233,18 @@ class ThreadPool(object):
     except Exception:
       duration = time_time() - start
       return test.message(
-          '%s\n%s exec failure (%4.2fs)\n%s' % (
-              test.name, ' '.join(cmd), duration, traceback.format_exc()))
+          '%s\n%s exec failure (%4.2fs)\n%s' %
+          (test.name, ' '.join(cmd), duration, traceback.format_exc()),
+          show_callstack=show_callstack)
 
     if returncode != 0:
-      return test.message(
-          '%s\n%s (%4.2fs) failed\n%s' % (
-              test.name, ' '.join(cmd), duration, stdout))
+      return test.message('%s\n%s (%4.2fs) failed\n%s' %
+                          (test.name, ' '.join(cmd), duration, stdout),
+                          show_callstack=show_callstack)
 
     if test.info:
-      return test.info('%s\n%s (%4.2fs)' % (test.name, ' '.join(cmd), duration))
+      return test.info('%s\n%s (%4.2fs)' % (test.name, ' '.join(cmd), duration),
+                       show_callstack=show_callstack)
 
   def AddTests(self, tests, parallel=True):
     if parallel:
@@ -260,7 +262,7 @@ class ThreadPool(object):
           if not self._tests:
             break
           test = self._tests.pop()
-        result = self.CallCommand(test)
+        result = self.CallCommand(test, show_callstack=False)
         if result:
           with self._messages_lock:
             self._messages.append(result)
@@ -317,7 +319,7 @@ class _PresubmitResult(object):
   fatal = False
   should_prompt = False
 
-  def __init__(self, message, items=None, long_text=''):
+  def __init__(self, message, items=None, long_text='', show_callstack=None):
     """
     message: A short one-line message to indicate errors.
     items: A list of short strings to indicate where errors occurred.
@@ -326,7 +328,9 @@ class _PresubmitResult(object):
     self._message = _PresubmitResult._ensure_str(message)
     self._items = items or []
     self._long_text = _PresubmitResult._ensure_str(long_text.rstrip())
-    if _SHOW_CALLSTACKS:
+    if show_callstack is None:
+      show_callstack = _SHOW_CALLSTACKS
+    if show_callstack:
       self._long_text += 'Presubmit result call stack is:\n'
       self._long_text += ''.join(traceback.format_stack(None, 8))
 

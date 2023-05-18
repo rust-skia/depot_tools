@@ -3241,9 +3241,8 @@ class ThreadPoolTest(unittest.TestCase):
             name=str(i),
             cmd=[str(i)],
             kwargs={},
-            message=lambda x: x,
-        )
-        for i in range(10)
+            message=lambda x, **kwargs: x,
+        ) for i in range(10)
     ]
 
     t = presubmit.ThreadPool(1)
