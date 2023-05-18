@@ -81,7 +81,10 @@ class PresubmitFailure(Exception):
 
 
 class CommandData(object):
-  def __init__(self, name, cmd, kwargs, message, python3=False):
+  def __init__(self, name, cmd, kwargs, message, python3=True):
+    # The python3 argument is ignored but has to be retained because of the many
+    # callers in other repos that pass it in.
+    del python3
     self.name = name
     self.cmd = cmd
     self.stdin = kwargs.get('stdin', None)
@@ -91,7 +94,7 @@ class CommandData(object):
     self.kwargs['stdin'] = subprocess.PIPE
     self.message = message
     self.info = None
-    self.python3 = python3
+
 
 
 # Adapted from
@@ -184,9 +187,7 @@ class ThreadPool(object):
     self._nonparallel_tests = []
 
   def _GetCommand(self, test):
-    vpython = 'vpython'
-    if test.python3:
-      vpython += '3'
+    vpython = 'vpython3'
     if sys.platform == 'win32':
       vpython += '.bat'
 
@@ -638,10 +639,10 @@ class InputApi(object):
 
     self.is_windows = sys.platform == 'win32'
 
-    # Set python_executable to 'vpython' in order to allow scripts in other
+    # Set python_executable to 'vpython3' in order to allow scripts in other
     # repos (e.g. src.git) to automatically pick up that repo's .vpython file,
     # instead of inheriting the one in depot_tools.
-    self.python_executable = 'vpython'
+    self.python_executable = 'vpython3'
     # Offer a python 3 executable for use during the migration off of python 2.
     self.python3_executable = 'vpython3'
     self.environ = os.environ
@@ -1744,13 +1745,6 @@ def DoPresubmitChecks(change,
     if not presubmit_files and verbose:
       sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
     results = []
-    if sys.platform == 'win32':
-      temp = os.environ['TEMP']
-    else:
-      temp = '/tmp'
-    python2_usage_log_file = os.path.join(temp, 'python2_usage.txt')
-    if os.path.exists(python2_usage_log_file):
-      os.remove(python2_usage_log_file)
     thread_pool = ThreadPool()
     executer = PresubmitExecuter(change, committing, verbose, gerrit_obj,
                                  dry_run, thread_pool, parallel, no_diffs)
@@ -1768,17 +1762,6 @@ def DoPresubmitChecks(change,
       results += executer.ExecPresubmitScript(presubmit_script, filename)
 
     results += thread_pool.RunAsync()
-
-    if os.path.exists(python2_usage_log_file):
-      with open(python2_usage_log_file) as f:
-        python2_usage = [x.strip() for x in f.readlines()]
-        results.append(
-            OutputApi(committing).PresubmitPromptWarning(
-                'Python 2 scripts were run during %s presubmits. Please see '
-                'https://bugs.chromium.org/p/chromium/issues/detail?id=1313804'
-                '#c61 for tips on resolving this.'
-                % python_version,
-                items=python2_usage))
 
     messages = {}
     should_prompt = False

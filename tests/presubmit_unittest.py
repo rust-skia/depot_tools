@@ -2548,7 +2548,7 @@ the current line as well!
     self.assertEqual(results[0].__class__,
                       presubmit.OutputApi.PresubmitNotifyResult)
     self.assertEqual(
-        'test_module\npyyyyython -m test_module (0.00s) failed\nfoo',
+        'test_module\npyyyyython3 -m test_module (0.00s) failed\nfoo',
         results[0]._message)
 
   def testRunPythonUnitTestsFailureCommitting(self):
@@ -2561,7 +2561,7 @@ the current line as well!
     self.assertEqual(len(results), 1)
     self.assertEqual(results[0].__class__, presubmit.OutputApi.PresubmitError)
     self.assertEqual(
-        'test_module\npyyyyython -m test_module (0.00s) failed\nfoo',
+        'test_module\npyyyyython3 -m test_module (0.00s) failed\nfoo',
         results[0]._message)
 
   def testRunPythonUnitTestsSuccess(self):
@@ -2830,9 +2830,9 @@ the current line as well!
 
     cmd = ['bar.py', '--verbose']
     if input_api.platform == 'win32':
-      cmd.insert(0, 'vpython.bat')
+      cmd.insert(0, 'vpython3.bat')
     else:
-      cmd.insert(0, 'vpython')
+      cmd.insert(0, 'vpython3')
     self.assertEqual(subprocess.Popen.mock_calls, [
         mock.call(
             cmd, cwd=self.fake_root_dir, stdout=subprocess.PIPE,
@@ -2932,20 +2932,14 @@ the current line as well!
     self.assertEqual([result.__class__ for result in results], [
         presubmit.OutputApi.PresubmitPromptWarning,
         presubmit.OutputApi.PresubmitNotifyResult,
-        presubmit.OutputApi.PresubmitNotifyResult,
     ])
 
     cmd = ['bar.py', '--verbose']
-    vpython = 'vpython'
     vpython3 = 'vpython3'
     if input_api.platform == 'win32':
-      vpython += '.bat'
       vpython3 += '.bat'
 
     self.assertEqual(subprocess.Popen.mock_calls, [
-        mock.call(
-            [vpython] + cmd, cwd=self.fake_root_dir, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, stdin=subprocess.PIPE),
         mock.call(
             [vpython3] + cmd, cwd=self.fake_root_dir, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, stdin=subprocess.PIPE),
@@ -2958,7 +2952,6 @@ the current line as well!
     self.assertEqual(presubmit.sigint_handler.wait.mock_calls, [
         mock.call(subprocesses[0], None),
         mock.call(subprocesses[1], None),
-        mock.call(subprocesses[2], None),
     ])
 
     self.checkstdout('')
@@ -2998,50 +2991,6 @@ the current line as well!
     self.assertEqual(subprocess.Popen.mock_calls, [
         mock.call(
             [vpython3] + cmd, cwd=self.fake_root_dir, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, stdin=subprocess.PIPE),
-        mock.call(
-            ['allo', '--verbose'], cwd=self.fake_root_dir,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            stdin=subprocess.PIPE),
-    ])
-
-    self.checkstdout('')
-
-  @mock.patch('io.open', mock.mock_open())
-  def testCannedRunUnitTestsDontRunOnPython3(self):
-    io.open().readline.return_value = '#!/usr/bin/env python3'
-    change = presubmit.Change(
-        'foo1', 'description1', self.fake_root_dir, None, 0, 0, None)
-    input_api = self.MockInputApi(change, False)
-    input_api.verbose = True
-    input_api.PresubmitLocalPath.return_value = self.fake_root_dir
-    presubmit.sigint_handler.wait.return_value = (b'', None)
-
-    subprocess.Popen.side_effect = [
-        mock.Mock(returncode=1),
-        mock.Mock(returncode=0),
-        mock.Mock(returncode=0),
-    ]
-
-    unit_tests = ['allo', 'bar.py']
-    results = presubmit_canned_checks.RunUnitTests(
-        input_api,
-        presubmit.OutputApi,
-        unit_tests,
-        run_on_python3=False)
-    self.assertEqual([result.__class__ for result in results], [
-        presubmit.OutputApi.PresubmitPromptWarning,
-        presubmit.OutputApi.PresubmitNotifyResult,
-    ])
-
-    cmd = ['bar.py', '--verbose']
-    vpython = 'vpython'
-    if input_api.platform == 'win32':
-      vpython += '.bat'
-
-    self.assertEqual(subprocess.Popen.mock_calls, [
-        mock.call(
-            [vpython] + cmd, cwd=self.fake_root_dir, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, stdin=subprocess.PIPE),
         mock.call(
             ['allo', '--verbose'], cwd=self.fake_root_dir,
