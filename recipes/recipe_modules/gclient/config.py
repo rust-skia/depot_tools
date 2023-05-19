@@ -312,6 +312,10 @@ def infra_internal_superproject(c):
   soln.custom_vars = {'checkout_internal': True}
   soln.url = 'https://chromium.googlesource.com/infra/infra_superproject.git'
   c.got_revision_mapping['infra_internal'] = 'got_revision'
+  c.repo_path_map.update({
+      'https://chrome-internal.googlesource.com/infra/infra_internal':
+      ('infra_internal', None)
+  })
 
 
 @config_ctx()

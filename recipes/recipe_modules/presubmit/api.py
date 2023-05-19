@@ -86,7 +86,6 @@ class PresubmitApi(recipe_api.RecipeApi):
                    '-c',
                    'user.name=The Commit Bot',
                    'commit',
-                   '--allow-empty',
                    '-a',
                    '-m',
                    'Committed patch',
