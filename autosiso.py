@@ -32,6 +32,12 @@ def _use_remoteexec(argv):
 
 
 def main(argv):
+  # TODO(b/283714114): support single file compile with '^'.
+  # The arguments need to be passed as a double quoted string on Windows.
+  #
+  # pylint: disable=line-too-long
+  # See also https://source.chromium.org/chromium/chromium/tools/depot_tools/+/main:autoninja.py;l=33-42;drc=eb2866e6541607f63cdc50038379886c77f17506
+
   if not _use_remoteexec(argv):
     print(
         "`use_remoteexec=true` is not detected.\n"
