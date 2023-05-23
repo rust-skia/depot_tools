@@ -33,6 +33,11 @@ param(
     $VersionFile
 )
 
+# Import PowerShell<=5 Get-Filehash from Microsoft.PowerShell.Utility.
+# This prevents loading of incompatible Get-FileHash from PowerShell 6+ $PSModulePath.
+# See: crbug.com/1443163.
+Import-Module $PSHOME\Modules\Microsoft.PowerShell.Utility -Function Get-FileHash
+
 $DepotToolsPath = Split-Path $MyInvocation.MyCommand.Path -Parent
 
 # Put depot_tool's git revision into the user agent string.
