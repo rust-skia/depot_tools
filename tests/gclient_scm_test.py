@@ -954,6 +954,7 @@ class CipdWrapperTestCase(unittest.TestCase):
     mock.patch('tempfile.mkdtemp', lambda: self._workdir).start()
     mock.patch('gclient_scm.CipdRoot.add_package').start()
     mock.patch('gclient_scm.CipdRoot.clobber').start()
+    mock.patch('gclient_scm.CipdRoot.ensure_file_resolve').start()
     mock.patch('gclient_scm.CipdRoot.ensure').start()
     self.addCleanup(mock.patch.stopall)
     self.addCleanup(gclient_utils.rmtree, self._cipd_root_dir)

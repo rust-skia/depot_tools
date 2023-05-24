@@ -1553,6 +1553,7 @@ class CipdRoot(object):
     self._packages_by_subdir = collections.defaultdict(list)
     self._root_dir = root_dir
     self._service_url = service_url
+    self._resolved_packages = None
 
   def add_package(self, subdir, package, version):
     """Adds a package to this CIPD root.
@@ -1581,6 +1582,11 @@ class CipdRoot(object):
   def packages(self, subdir):
     """Get the list of configured packages for the given subdir."""
     return list(self._packages_by_subdir[subdir])
+
+  def resolved_packages(self):
+    if not self._resolved_packages:
+      self._resolved_packages = self.ensure_file_resolve()
+    return self._resolved_packages
 
   def clobber(self):
     """Remove the .cipd directory.
@@ -1643,6 +1649,52 @@ class CipdRoot(object):
         ]
         gclient_utils.CheckCallAndFilter(
             cmd, print_stdout=True, show_header=True)
+
+  @contextlib.contextmanager
+  def _create_ensure_file_for_resolve(self):
+    try:
+      contents = '$ResolvedVersions %s\n' % os.devnull
+      for subdir, packages in sorted(self._packages_by_subdir.items()):
+        contents += '@Subdir %s\n' % subdir
+        for package in sorted(packages, key=lambda p: p.name):
+          contents += '%s %s\n' % (package.name, package.version)
+        contents += '\n'
+      ensure_file = None
+      with tempfile.NamedTemporaryFile(suffix='.ensure',
+                                       delete=False,
+                                       mode='wb') as ensure_file:
+        ensure_file.write(contents.encode('utf-8', 'replace'))
+      yield ensure_file.name
+    finally:
+      if ensure_file is not None and os.path.exists(ensure_file.name):
+        os.remove(ensure_file.name)
+
+  def _create_resolved_file(self):
+    return tempfile.NamedTemporaryFile(suffix='.resolved',
+                                       delete=False,
+                                       mode='wb')
+
+  def ensure_file_resolve(self):
+    """Run `cipd ensure-file-resolve`."""
+    with self._mutator_lock:
+      with self._create_resolved_file() as output_file:
+        with self._create_ensure_file_for_resolve() as ensure_file:
+          cmd = [
+              'cipd',
+              'ensure-file-resolve',
+              '-log-level',
+              'error',
+              '-ensure-file',
+              ensure_file,
+              '-json-output',
+              output_file.name,
+          ]
+          gclient_utils.CheckCallAndFilter(cmd,
+                                           print_stdout=False,
+                                           show_header=False)
+          with open(output_file.name) as f:
+            output_json = json.load(f)
+            return output_json.get('result', {})
 
   def run(self, command):
     if command == 'update':
@@ -1716,6 +1768,22 @@ class CipdWrapper(SCMWrapper):
     """Grab the instance ID."""
     try:
       tmpdir = tempfile.mkdtemp()
+      # Attempt to get instance_id from the root resolved cache.
+      # Resolved cache will not match on any CIPD packages with
+      # variables such as ${platform}, they will fall back to
+      # the slower method below.
+      resolved = self._root.resolved_packages()
+      if resolved:
+        # CIPD uses POSIX separators across all platforms, so
+        # replace any Windows separators.
+        path_split = self.relpath.replace(os.sep, "/").split(":")
+        if len(path_split) > 1:
+          src_path, package = path_split
+          if src_path in resolved:
+            for resolved_package in resolved[src_path]:
+              if package == resolved_package.get('pin', {}).get('package'):
+                return resolved_package.get('pin', {}).get('instance_id')
+
       describe_json_path = os.path.join(tmpdir, 'describe.json')
       cmd = [
           'cipd', 'describe',

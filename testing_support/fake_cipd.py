@@ -19,6 +19,7 @@ PLATFORM_VAR = 'platform'
 CIPD_SUBDIR_RE = '@Subdir (.*)'
 CIPD_DESCRIBE = 'describe'
 CIPD_ENSURE = 'ensure'
+CIPD_ENSURE_FILE_RESOLVE = 'ensure-file-resolve'
 CIPD_EXPAND_PKG = 'expand-package-name'
 CIPD_EXPORT = 'export'
 
@@ -81,6 +82,8 @@ def parse_cipd(root, contents):
     if match:
       print('match')
       current_subdir = os.path.join(root, *match.group(1).split('/'))
+      if not root:
+        current_subdir = match.group(1)
     elif line and current_subdir:
       print('no match')
       tree.setdefault(current_subdir, []).append(line)
@@ -100,6 +103,30 @@ def expand_package_name_cmd(package_name):
     if package_name.endswith(var):
       package_name = package_name.replace(var, "%s-expanded-test-only" % v)
   return package_name
+
+
+def ensure_file_resolve():
+  resolved = {"result": {}}
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-ensure-file', required=True)
+  parser.add_argument('-json-output')
+  args, _ = parser.parse_known_args()
+  with io.open(args.ensure_file, 'r', encoding='utf-8') as f:
+    new_content = parse_cipd("", f.readlines())
+    for path, packages in new_content.items():
+      resolved_packages = []
+      for package in packages:
+        package_name = expand_package_name_cmd(package.split(" ")[0])
+        resolved_packages.append({
+            "package": package_name,
+            "pin": {
+                "package": package_name,
+                "instance_id": package_name + "-fake-resolved-id",
+            }
+        })
+      resolved["result"][path] = resolved_packages
+    with io.open(args.json_output, 'w', encoding='utf-8') as f:
+      f.write(json.dumps(resolved, indent=4))
 
 
 def describe_cmd(package_name):
@@ -132,7 +159,10 @@ def describe_cmd(package_name):
 
 def main():
   cmd = sys.argv[1]
-  assert cmd in [CIPD_DESCRIBE, CIPD_ENSURE, CIPD_EXPAND_PKG, CIPD_EXPORT]
+  assert cmd in [
+      CIPD_DESCRIBE, CIPD_ENSURE, CIPD_ENSURE_FILE_RESOLVE, CIPD_EXPAND_PKG,
+      CIPD_EXPORT
+  ]
   # Handle cipd expand-package-name
   if cmd == CIPD_EXPAND_PKG:
     # Expecting argument after cmd
@@ -144,6 +174,8 @@ def main():
     # Expecting argument after cmd
     assert len(sys.argv) >= 3
     return describe_cmd(sys.argv[2])
+  if cmd == CIPD_ENSURE_FILE_RESOLVE:
+    return ensure_file_resolve()
 
   parser = argparse.ArgumentParser()
   parser.add_argument('-ensure-file')

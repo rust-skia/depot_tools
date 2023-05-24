@@ -747,6 +747,10 @@ hooks = [{
                 'package': 'package0/${{platform}}',
                 'version': 'package0/${{platform}}-fake-tag:1.0',
               },
+              {
+                'package': 'package1/another',
+                'version': 'package1/another-fake-tag:1.0',
+              },
             ],
             'dep_type': 'cipd',
           },
