@@ -74,6 +74,8 @@
       "--patch_ref",
       "https://chromium.googlesource.com/chromium/src@refs/heads/main:refs/changes/56/123456/7",
       "--revision",
+      "infra@HEAD",
+      "--revision",
       "src@refs/heads/main",
       "--refs",
       "refs/heads/main"

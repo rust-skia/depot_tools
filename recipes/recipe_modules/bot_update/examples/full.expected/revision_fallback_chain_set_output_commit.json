@@ -14,6 +14,8 @@
       "[CLEANUP]/bot_update",
       "--output_json",
       "/path/to/tmp/json",
+      "--revision",
+      "infra@HEAD",
       "--refs",
       "refs/heads/main"
     ],

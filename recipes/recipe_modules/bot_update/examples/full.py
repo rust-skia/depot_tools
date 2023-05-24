@@ -71,6 +71,7 @@ def RunSteps(api):
   bot_update_output = engine_types.thaw(api.properties.get('bot_update_output'))
   if bot_update_output:
     step_test_data = lambda: api.json.test_api.output(bot_update_output)
+  rev_overrides = {'infra': 'HEAD'}
   bot_update_step = api.bot_update.ensure_checkout(
       patch=patch,
       with_branch_heads=with_branch_heads,
@@ -85,7 +86,8 @@ def RunSteps(api):
       add_blamelists=add_blamelists,
       set_output_commit=set_output_commit,
       step_test_data=step_test_data,
-    )
+      recipe_revision_overrides=rev_overrides,
+  )
   if patch:
     api.bot_update.deapply_patch(bot_update_step)
 

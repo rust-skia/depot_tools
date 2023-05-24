@@ -100,6 +100,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       step_test_data=None,
                       enforce_fetch=False,
                       download_topics=False,
+                      recipe_revision_overrides=None,
                       **kwargs):
     """
     Args:
@@ -130,6 +131,11 @@ class BotUpdateApi(recipe_api.RecipeApi):
         via tryserver.set_change() and explicitly set this flag False.
       * download_topics: If True, gclient downloads and patches locally from all
         open Gerrit CLs that have the same topic as the tested patch ref.
+      * recipe_revision_overrides: a dict {deps_name: revision} of revision
+        overrides passed in from the recipe. These should be revisions unique
+        to each particular build/recipe run. e.g. the recipe might parse a gerrit
+        change's commit message to get this revision override requested by the
+        author.
     """
     assert not (ignore_input_commit and set_output_commit)
     if assert_one_gerrit_change:
@@ -227,6 +233,10 @@ class BotUpdateApi(recipe_api.RecipeApi):
       revisions[first_sol] = root_solution_revision
     # Allow for overrides required to bisect into rolls.
     revisions.update(self._deps_revision_overrides)
+
+    # Set revision overrides passed in from the calling recipe
+    if recipe_revision_overrides:
+      revisions.update(recipe_revision_overrides)
 
     # Compute command-line parameters for requested revisions.
     # Also collect all fixed revisions to simulate them in the json output.
