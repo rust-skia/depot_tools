@@ -1437,7 +1437,7 @@ class GetPostUploadExecuter(object):
     if function_name not in context:
       return {}
     post_upload_hook = context[function_name]
-    if not len(inspect.getargspec(post_upload_hook)[0]) == 3:
+    if not len(inspect.getfullargspec(post_upload_hook)[0]) == 3:
       raise PresubmitFailure(
           'Expected function "PostUploadHook" to take three arguments.')
     return post_upload_hook(self.gerrit, self.change, OutputApi(False))

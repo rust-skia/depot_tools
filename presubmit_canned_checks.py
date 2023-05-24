@@ -67,29 +67,35 @@ _CORP_LINK_KEYWORD = '.corp.google'
 
 ### Description checks
 
-def CheckChangeHasBugField(input_api, output_api):
-  """Requires that the changelist have a Bug: field."""
-  bugs = input_api.change.BugsFromDescription()
+
+def CheckChangeHasBugFieldFromChange(change, output_api, show_suggestions=True):
+  """Requires that the changelist have a Bug: field. If show_suggestions is
+  False then only report on incorrect tags, not missing tags."""
+  bugs = change.BugsFromDescription()
   results = []
   if bugs:
     if any(b.startswith('b/') for b in bugs):
       results.append(
           output_api.PresubmitNotifyResult(
               'Buganizer bugs should be prefixed with b:, not b/.'))
-  else:
+  elif show_suggestions:
     results.append(
         output_api.PresubmitNotifyResult(
             'If this change has an associated bug, add Bug: [bug number] or '
             'Fixed: [bug number].'))
 
-  if 'Fixes' in input_api.change.GitFootersFromDescription():
+  if 'Fixes' in change.GitFootersFromDescription():
     results.append(
         output_api.PresubmitError(
             'Fixes: is the wrong footer tag, use Fixed: instead.'))
   return results
 
 
-def CheckChangeHasNoUnwantedTags(input_api, output_api):
+def CheckChangeHasBugField(input_api, output_api):
+  return CheckChangeHasBugFieldFromChange(input_api.change, output_api)
+
+
+def CheckChangeHasNoUnwantedTagsFromChange(change, output_api):
   UNWANTED_TAGS = {
       'FIXED': {
           'why': 'is not supported',
@@ -100,11 +106,16 @@ def CheckChangeHasNoUnwantedTags(input_api, output_api):
 
   errors = []
   for tag, desc in UNWANTED_TAGS.items():
-    if tag in input_api.change.tags:
+    if tag in change.tags:
       subs = tag, desc['why'], desc.get('instead', '')
       errors.append(('%s= %s. %s' % subs).rstrip())
 
   return [output_api.PresubmitError('\n'.join(errors))] if errors else []
+
+
+def CheckChangeHasNoUnwantedTags(input_api, output_api):
+  return CheckChangeHasNoUnwantedTagsFromChange(input_api.change, output_api)
+
 
 def CheckDoNotSubmitInDescription(input_api, output_api):
   """Checks that the user didn't add 'DO NOT ''SUBMIT' to the CL description.
