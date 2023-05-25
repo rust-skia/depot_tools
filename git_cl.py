@@ -2972,8 +2972,11 @@ class Changelist(object):
       desc = ps_to_info[ps].get('description', '')
       print('Patchset %d [%s] %s' % (ps, commit, desc))
 
-    if not ask_for_explicit_yes('\nUploading as-is will override them. '
-                                'Get the latest changes and apply?'):
+    print('\nSee diff at: %s/%d..%d' %
+          (self.GetIssueURL(short=True), local_ps, external_ps))
+    print('\nUploading without applying patches will override them.')
+
+    if not ask_for_explicit_yes('Get the latest changes and apply on top?'):
       return
 
     # Get latest Gerrit merge base. Use the first parent even if multiple exist.
