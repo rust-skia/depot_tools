@@ -1913,15 +1913,14 @@ class Changelist(object):
   def GetGerritHost(self):
     # Lazy load of configs.
     self.GetCodereviewServer()
+
     if self._gerrit_host and '.' not in self._gerrit_host:
       # Abbreviated domain like "chromium" instead of chromium.googlesource.com.
-      # This happens for internal stuff http://crbug.com/614312.
       parsed = urllib.parse.urlparse(self.GetRemoteUrl())
       if parsed.scheme == 'sso':
-        print('WARNING: using non-https URLs for remote is likely broken\n'
-              '  Your current remote is: %s' % self.GetRemoteUrl())
         self._gerrit_host = '%s.googlesource.com' % self._gerrit_host
         self._gerrit_server = 'https://%s' % self._gerrit_host
+
     return self._gerrit_host
 
   def _GetGitHost(self):
@@ -1941,10 +1940,19 @@ class Changelist(object):
         if self._gerrit_server:
           self._gerrit_host = urllib.parse.urlparse(self._gerrit_server).netloc
       if not self._gerrit_server:
+        url = urllib.parse.urlparse(self.GetRemoteUrl())
+        parts = url.netloc.split('.')
+
         # We assume repo to be hosted on Gerrit, and hence Gerrit server
         # has "-review" suffix for lowest level subdomain.
-        parts = self._GetGitHost().split('.')
         parts[0] = parts[0] + '-review'
+
+        if url.scheme == 'sso' and len(parts) == 1:
+          # sso:// uses abbreivated hosts, eg. sso://chromium instead of
+          # chromium.googlesource.com. Hence, for code review server, they need
+          # to be expanded.
+          parts[0] += '.googlesource.com'
+
         self._gerrit_host = '.'.join(parts)
         self._gerrit_server = 'https://%s' % self._gerrit_host
     return self._gerrit_server
