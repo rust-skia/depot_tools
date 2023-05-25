@@ -301,7 +301,8 @@ def infra_superproject(c):
       'https://chromium.googlesource.com/infra/luci/luci-go':
       ('infra/go/src/go.chromium.org/luci', 'HEAD'),
       'https://chromium.googlesource.com/infra/luci/recipes-py':
-      ('infra/recipes-py', 'HEAD')
+      ('infra/recipes-py', 'HEAD'),
+      'https://chromium.googlesource.com/infra/infra': ('infra', None)
   })
 
 
