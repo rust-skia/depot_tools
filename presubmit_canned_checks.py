@@ -1467,16 +1467,14 @@ def PanProjectChecks(input_api, output_api,
 
   snapshot("checking owners files format")
   try:
-    if not 'PRESUBMIT_SKIP_NETWORK' in _os.environ:
+    if not 'PRESUBMIT_SKIP_NETWORK' in _os.environ and owners_check:
+      snapshot("checking owners")
       results.extend(
           input_api.canned_checks.CheckOwnersFormat(input_api, output_api))
-
-      if owners_check:
-        snapshot("checking owners")
-        results.extend(
-            input_api.canned_checks.CheckOwners(input_api,
-                                                output_api,
-                                                source_file_filter=None))
+      results.extend(
+          input_api.canned_checks.CheckOwners(input_api,
+                                              output_api,
+                                              source_file_filter=None))
   except Exception as e:
     print('Failed to check owners - %s' % str(e))
 
