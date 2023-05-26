@@ -86,8 +86,10 @@ class NinjaReclientTest(trial_dir.TestCase):
                            ".reproxy_tmp").encode()).hexdigest())
     else:
       self.assertEqual(
-          os.environ.get('RBE_server_address'), "unix://%s/reproxy.sock" %
-          os.path.join(self.root_dir, "out", "a", ".reproxy_tmp"))
+          os.environ.get('RBE_server_address'),
+          "unix://tmp/reproxy_%s.sock" % hashlib.sha256(
+              os.path.join(self.root_dir, "out", "a",
+                           ".reproxy_tmp").encode()).hexdigest())
 
     mock_ninja.assert_called_once_with(argv)
     mock_call.assert_has_calls([
