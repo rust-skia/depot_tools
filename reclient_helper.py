@@ -137,7 +137,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
     # unix domain socket has path length limit, so use fixed size path here.
     # ref: https://www.man7.org/linux/man-pages/man7/unix.7.html
     os.environ.setdefault(
-        "RBE_server_address", "unix://tmp/reproxy_%s.sock" %
+        "RBE_server_address", "unix:///tmp/reproxy_%s.sock" %
         hashlib.sha256(tmp_dir.encode()).hexdigest())
 
 
