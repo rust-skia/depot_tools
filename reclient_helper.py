@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 import gclient_paths
+import reclient_metrics
 
 
 def find_reclient_bin_dir():
@@ -90,6 +91,25 @@ def find_cache_dir(tmp_dir):
   return os.path.join(tmp_dir, 'cache')
 
 
+def set_reproxy_metrics_flags():
+  """Helper to setup metrics collection flags for reproxy.
+
+  The following env vars are set if not already set:
+    RBE_metrics_project=chromium-reclient-metrics
+    RBE_invocation_id=$AUTONINJA_BUILD_ID
+    RBE_metrics_table=rbe_metrics.builds
+    RBE_metrics_labels=source=developer
+    RBE_metrics_prefix=go.chromium.org
+  """
+  autoninja_id = os.environ.get("AUTONINJA_BUILD_ID")
+  if autoninja_id is not None:
+    os.environ.setdefault("RBE_invocation_id", autoninja_id)
+  os.environ.setdefault("RBE_metrics_project", "chromium-reclient-metrics")
+  os.environ.setdefault("RBE_metrics_table", "rbe_metrics.builds")
+  os.environ.setdefault("RBE_metrics_labels", "source=developer")
+  os.environ.setdefault("RBE_metrics_prefix", "go.chromium.org")
+
+
 def set_reproxy_path_flags(out_dir, make_dirs=True):
   """Helper to setup the logs and cache directories for reclient.
 
@@ -157,12 +177,19 @@ def build_context(argv):
           file=sys.stderr)
     yield 1
     return
+
+  ninja_out = find_ninja_out_dir(argv)
+
   try:
-    set_reproxy_path_flags(find_ninja_out_dir(argv))
+    set_reproxy_path_flags(ninja_out)
   except OSError:
     print("Error creating reproxy_tmp in output dir", file=sys.stderr)
     yield 1
     return
+
+  if reclient_metrics.check_status(ninja_out):
+    set_reproxy_metrics_flags()
+
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
   if reproxy_ret_code != 0:
     yield reproxy_ret_code

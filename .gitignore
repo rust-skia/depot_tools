@@ -89,6 +89,9 @@ testing_support/google_appengine
 # Ignore the ninjalog upload config.
 /ninjalog.cfg
 
+# Ignore reclient metrics upload config.
+/reclient_metrics.cfg
+
 # Ignore git traces produced by git push on git-cl upload.
 /traces
 
