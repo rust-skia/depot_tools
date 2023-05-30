@@ -10,18 +10,9 @@ details on the presubmit API built into depot_tools.
 
 PRESUBMIT_VERSION = '2.0.0'
 
-USE_PYTHON3 = True
-
 import fnmatch
 import os
 import sys
-
-# Whether to run the checks under Python2 or Python3.
-# TODO: Uncomment this to run the checks under Python3, and change the tests
-# in _CommonChecks in this file and the values and tests in
-# //tests/PRESUBMIT.py as well to keep the test coverage of all three cases
-# (true, false, and default/not specified).
-# USE_PYTHON3 = False
 
 # CIPD ensure manifest for checking CIPD client itself.
 CIPD_CLIENT_ENSURE_FILE_TEMPLATE = r'''
@@ -128,9 +119,7 @@ def CheckUnitTestsOnCommit(input_api, output_api):
       output_api,
       'tests',
       files_to_check=test_to_run_list,
-      files_to_skip=tests_to_skip_list,
-      run_on_python3=True,
-      run_on_python2=False)
+      files_to_skip=tests_to_skip_list)
 
   return input_api.RunTests(tests)
 
