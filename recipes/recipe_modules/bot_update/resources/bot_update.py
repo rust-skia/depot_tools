@@ -1044,6 +1044,19 @@ def checkout(options, git_slns, specs, revisions, step_text):
   ver = git('version').strip()
   print('Using %s' % ver)
 
+  # Get the epoch of the git cache from a cache epoch marker file. If this file
+  # does not exist, create one with the current timestamp.
+  cache_epoch_marker_path = os.path.join(options.git_cache_dir, '.cache_epoch')
+  if os.path.isfile(cache_epoch_marker_path):
+    with open(cache_epoch_marker_path) as f:
+      cache_epoch = f.readline().strip()
+  else:
+    with open(cache_epoch_marker_path, 'w') as f:
+      cache_epoch = int(time.time())
+      print(cache_epoch, file=f)
+
+  print('git_cache epoch: {}'.format(datetime.fromtimestamp(int(cache_epoch))))
+
   try:
     protocol = git('config', '--get', 'protocol.version')
     print('Using git protocol version %s' % protocol)
@@ -1133,14 +1146,17 @@ def checkout(options, git_slns, specs, revisions, step_text):
     revision_mapping['got_revision'] = first_sln
 
   manifest = create_manifest()
-  got_revisions = parse_got_revision(manifest, revision_mapping)
+  properties = parse_got_revision(manifest, revision_mapping)
 
-  if not got_revisions:
+  if not properties:
     # TODO(hinoka): We should probably bail out here, but in the interest
     # of giving mis-configured bots some time to get fixed use a dummy
     # revision here.
-    got_revisions = { 'got_revision': 'BOT_UPDATE_NO_REV_FOUND' }
+    properties = {'got_revision': 'BOT_UPDATE_NO_REV_FOUND'}
     #raise Exception('No got_revision(s) found in gclient output')
+
+  # Add git cache age to the output.properties
+  properties['git_cache_epoch'] = cache_epoch
 
   # Tell recipes information such as root, got_revision, etc.
   emit_json(options.output_json,
@@ -1149,7 +1165,7 @@ def checkout(options, git_slns, specs, revisions, step_text):
             patch_root=options.patch_root,
             step_text=step_text,
             fixed_revisions=revisions,
-            properties=got_revisions,
+            properties=properties,
             manifest=manifest)
 
 
