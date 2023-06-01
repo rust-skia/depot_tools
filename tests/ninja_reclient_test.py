@@ -96,7 +96,8 @@ class NinjaReclientTest(trial_dir.TestCase):
     self.assertEqual(os.environ.get('RBE_metrics_project'),
                      "chromium-reclient-metrics")
     self.assertEqual(os.environ.get('RBE_metrics_table'), "rbe_metrics.builds")
-    self.assertEqual(os.environ.get('RBE_metrics_labels'), "source=developer")
+    self.assertEqual(os.environ.get('RBE_metrics_labels'),
+                     "source=developer,tool=ninja_reclient")
     self.assertEqual(os.environ.get('RBE_metrics_prefix'), "go.chromium.org")
 
     mock_metrics_status.assert_called_once_with("out/a")

@@ -91,14 +91,14 @@ def find_cache_dir(tmp_dir):
   return os.path.join(tmp_dir, 'cache')
 
 
-def set_reproxy_metrics_flags():
+def set_reproxy_metrics_flags(tool):
   """Helper to setup metrics collection flags for reproxy.
 
   The following env vars are set if not already set:
     RBE_metrics_project=chromium-reclient-metrics
     RBE_invocation_id=$AUTONINJA_BUILD_ID
     RBE_metrics_table=rbe_metrics.builds
-    RBE_metrics_labels=source=developer
+    RBE_metrics_labels=source=developer,tool={tool}
     RBE_metrics_prefix=go.chromium.org
   """
   autoninja_id = os.environ.get("AUTONINJA_BUILD_ID")
@@ -106,7 +106,7 @@ def set_reproxy_metrics_flags():
     os.environ.setdefault("RBE_invocation_id", autoninja_id)
   os.environ.setdefault("RBE_metrics_project", "chromium-reclient-metrics")
   os.environ.setdefault("RBE_metrics_table", "rbe_metrics.builds")
-  os.environ.setdefault("RBE_metrics_labels", "source=developer")
+  os.environ.setdefault("RBE_metrics_labels", "source=developer,tool=" + tool)
   os.environ.setdefault("RBE_metrics_prefix", "go.chromium.org")
 
 
@@ -162,7 +162,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
 
 
 @contextlib.contextmanager
-def build_context(argv):
+def build_context(argv, tool):
   # If use_remoteexec is set, but the reclient binaries or configs don't
   # exist, display an error message and stop.  Otherwise, the build will
   # attempt to run with rewrapper wrapping actions, but will fail with
@@ -188,7 +188,7 @@ def build_context(argv):
     return
 
   if reclient_metrics.check_status(ninja_out):
-    set_reproxy_metrics_flags()
+    set_reproxy_metrics_flags(tool)
 
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
   if reproxy_ret_code != 0:

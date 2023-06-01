@@ -45,7 +45,7 @@ def main(argv):
         file=sys.stderr)
     return 1
 
-  with reclient_helper.build_context(argv) as ret_code:
+  with reclient_helper.build_context(argv, 'autosiso') as ret_code:
     if ret_code:
       return ret_code
     argv = [
