@@ -53,7 +53,7 @@ def main(argv):
     # Failed at least once, try deleting the tracker files
     try:
       logging.warning('Trying harder: deleting tracker files')
-      gsutil_dir = os.path.join(os.environ['HOME'], '.gsutil')
+      gsutil_dir = os.path.expanduser('~/.gsutil')
       logging.info('Removing %s' % gsutil_dir)
       shutil.rmtree(gsutil_dir)
     except BaseException as e:
