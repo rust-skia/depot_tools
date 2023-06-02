@@ -51,13 +51,16 @@ def main(argv):
           ' '.join(cmd), retcode, hard+1, soft+1))
 
     # Failed at least once, try deleting the tracker files
-    logging.warning('Trying harder: deleting tracker files')
     gsutil_dir = os.path.expanduser('~/.gsutil')
-    logging.info('Removing %s' % gsutil_dir)
-    try:
-      shutil.rmtree(gsutil_dir)
-    except BaseException as e:
-      logging.warning('Deleting tracker files failed: %s' % e)
+    if os.path.exists(gsutil_dir):
+      logging.warning('Trying harder: deleting tracker files')
+      logging.info('Removing %s' % gsutil_dir)
+      try:
+        shutil.rmtree(gsutil_dir)
+      except FileNotFoundError:
+        pass
+      except BaseException as e:
+        logging.warning('Deleting tracker files failed: %s' % e)
 
   logging.error('Command %s failed %d retries, giving up.' % (
       ' '.join(args.command), args.soft_retries*args.hard_retries))
