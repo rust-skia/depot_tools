@@ -182,4 +182,5 @@ def GetCodeOwnersClient(host, project, branch):
   raise Exception(
       'code-owners plugin is not enabled. Ask your host admin to enable it '
       'on %s. Read more about code-owners at '
-      'https://gerrit.googlesource.com/plugins/code-owners.' % host)
+      'https://chromium-review.googlesource.com/'
+      'plugins/code-owners/Documentation/index.html.' % host)

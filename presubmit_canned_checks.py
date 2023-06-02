@@ -1343,7 +1343,8 @@ def CheckOwnersFormat(input_api, output_api):
       output_api.PresubmitError(
           'code-owners is not enabled. Ask your host enable it on your gerrit '
           'host. Read more about code-owners at '
-          'https://gerrit.googlesource.com/plugins/code-owners.')
+          'https://chromium-review.googlesource.com/'
+          'plugins/code-owners/Documentation/index.html.')
   ]
 
 
@@ -1363,7 +1364,8 @@ def CheckOwners(
       output_api.PresubmitError(
           'code-owners is not enabled. Ask your host enable it on your gerrit '
           'host. Read more about code-owners at '
-          'https://gerrit.googlesource.com/plugins/code-owners.')
+          'https://chromium-review.googlesource.com/'
+          'plugins/code-owners/Documentation/index.html.')
   ]
 
 
