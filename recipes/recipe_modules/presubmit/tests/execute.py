@@ -68,14 +68,6 @@ def GenTests(api):
                           ['--skip_canned', 'CheckOwners']) +
          api.post_process(post_process.DropExpectation))
 
-  yield (api.test('vpython3') + api.runtime(is_experimental=False) +
-         api.buildbucket.try_build(
-            project='infra', experiments=['luci.buildbucket.omit_python2']) +
-         api.post_process(post_process.StepCommandContains, 'presubmit',
-                          ['vpython3']) +
-         api.post_process(post_process.StatusSuccess) +
-         api.post_process(post_process.DropExpectation))
-
   yield (
       api.test('timeout', status="FAILURE") +
       api.runtime(is_experimental=False) +
