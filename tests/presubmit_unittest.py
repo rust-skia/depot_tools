@@ -2219,9 +2219,14 @@ class CannedChecksUnittest(PresubmitTestsBase):
 
     results = presubmit_canned_checks.CheckChangedLUCIConfigs(
         input_api, presubmit.OutputApi)
-    self.assertEqual(len(results), 1)
+    self.assertEqual(len(results), 2)
     self.assertEqual(results[0].json_format()['message'],
                      "Config validation for file(bar.cfg): deadbeef")
+    self.assertEqual(
+        results[1].json_format()['message'],
+        "Found 1 additional errors/warnings in files that are not modified,"
+        " run `lucicfg validate %s%sgenerated -config-set "
+        "project/deadbeef` to reveal them" % (self.fake_root_dir, self._OS_SEP))
     subprocess.Popen.assert_called_once_with([
         'lucicfg' + ('.bat' if input_api.is_windows else ''),
         'validate',

@@ -1918,6 +1918,7 @@ def CheckChangedLUCIConfigs(input_api, output_api):
   outputs = []
   lucicfg = 'lucicfg' if not input_api.is_windows else 'lucicfg.bat'
   log_level = 'debug' if input_api.verbose else 'warning'
+  repo_root = input_api.change.RepositoryRoot()
   for d, fileSet in dir_to_fileSet.items():
     config_set = dir_to_config_set[d]
     with input_api.CreateTemporaryFile() as f:
@@ -1931,7 +1932,7 @@ def CheckChangedLUCIConfigs(input_api, output_api):
           cmd,
           stderr=input_api.subprocess.PIPE,
           shell=input_api.is_windows,  # to resolve *.bat
-          cwd=input_api.change.RepositoryRoot(),
+          cwd=repo_root,
       )
       logging.debug('running %s\nSTDOUT:\n%s\nSTDERR:\n%s', cmd, out[0], out[1])
       try:
@@ -1943,12 +1944,11 @@ def CheckChangedLUCIConfigs(input_api, output_api):
       else:
         result = result.get('result', None)
         if result:
+          non_affected_file_msg_count = 0
           for validation_result in (result.get('validation', None) or []):
             for msg in (validation_result.get('messages', None) or []):
               if d != '.' and msg['path'] not in fileSet:
-                # TODO(yiwzhang): This is the message from non-affected file.
-                # Output presubmit warning for those files if needed in the
-                # future.
+                non_affected_file_msg_count += 1
                 continue
               sev = msg['severity']
               if sev == 'WARNING':
@@ -1960,6 +1960,17 @@ def CheckChangedLUCIConfigs(input_api, output_api):
               outputs.append(
                   out_f('Config validation for file(%s): %s' %
                         (msg['path'], msg['text'])))
+          if non_affected_file_msg_count:
+            reproduce_cmd = [
+                lucicfg, 'validate',
+                repo_root if d == '.' else input_api.os_path.join(repo_root, d),
+                '-config-set', config_set
+            ]
+            outputs.append(
+                output_api.PresubmitPromptWarning(
+                    'Found %d additional errors/warnings in files that are not '
+                    'modified, run `%s` to reveal them' %
+                    (non_affected_file_msg_count, ' '.join(reproduce_cmd))))
   return outputs
 
 
