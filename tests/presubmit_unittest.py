@@ -64,6 +64,9 @@ class MockTemporaryFile(object):
   def __exit__(self, *args):
     pass
 
+  def close(self):
+    pass
+
 
 class PresubmitTestsBase(TestCaseUtils, unittest.TestCase):
   """Sets up and tears down the mocks but doesn't test anything as-is."""
@@ -2055,28 +2058,26 @@ class CannedChecksUnittest(PresubmitTestsBase):
 
   @mock.patch('git_cl.Changelist')
   @mock.patch('auth.Authenticator')
-  def testCannedCheckChangedLUCIConfigs(self, mockGetAuth, mockChangelist):
+  def testCannedCheckChangedLUCIConfigsRoot(self, mockGetAuth, mockCl):
     affected_file1 = mock.MagicMock(presubmit.GitAffectedFile)
     affected_file1.LocalPath.return_value = 'foo.cfg'
-    affected_file1.NewContents.return_value = ['test', 'foo']
     affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
-    affected_file2.LocalPath.return_value = 'bar.cfg'
-    affected_file2.NewContents.return_value = ['test', 'bar']
+    affected_file2.LocalPath.return_value = 'sub/bar.cfg'
 
     mockGetAuth().get_access_token().token = 123
 
     host = 'https://host.com'
     branch = 'branch'
     http_resp = {
-      'messages': [{'severity': 'ERROR', 'text': 'deadbeef'}],
-      'config_sets': [{'config_set': 'deadbeef',
-                       'location': '%s/+/%s' % (host, branch)}]
+        'config_sets': [{
+            'config_set': 'project/deadbeef',
+            'location': '%s/+/%s' % (host, branch)
+        }]
     }
     urllib_request.urlopen.return_value = http_resp
-    json.load.return_value = http_resp
 
-    mockChangelist().GetRemoteBranch.return_value = ('remote', branch)
-    mockChangelist().GetRemoteUrl.return_value = host
+    mockCl().GetRemoteBranch.return_value = ('remote', branch)
+    mockCl().GetRemoteUrl.return_value = host
 
     change1 = presubmit.Change(
       'foo', 'foo1', self.fake_root_dir, None, 0, 0, None)
@@ -2085,11 +2086,156 @@ class CannedChecksUnittest(PresubmitTestsBase):
 
     input_api.AffectedFiles = lambda **_: affected_files
 
+    proc = mock.Mock()
+    proc.communicate.return_value = ('This is STDOUT', 'This is STDERR')
+    proc.returncode = 0
+    subprocess.Popen.return_value = proc
+    input_api.CreateTemporaryFile.return_value = MockTemporaryFile('tmp_file')
+
+    validation_result = {
+        'result': {
+            'validation': [{
+                'messages': [{
+                    'path': 'foo.cfg',
+                    'severity': 'ERROR',
+                    'text': 'deadbeef',
+                }, {
+                    'path': 'sub/bar.cfg',
+                    'severity': 'WARNING',
+                    'text': 'cafecafe',
+                }]
+            }]
+        }
+    }
+    json.load.side_effect = [http_resp, validation_result]
+
+    results = presubmit_canned_checks.CheckChangedLUCIConfigs(
+        input_api, presubmit.OutputApi)
+    self.assertEqual(len(results), 2)
+    self.assertEqual(results[0].json_format()['message'],
+                     "Config validation for file(foo.cfg): deadbeef")
+    self.assertEqual(results[1].json_format()['message'],
+                     "Config validation for file(sub/bar.cfg): cafecafe")
+    subprocess.Popen.assert_called_once_with([
+        'lucicfg' + ('.bat' if input_api.is_windows else ''), 'validate', '.',
+        '-config-set', 'project/deadbeef', '-log-level',
+        'debug' if input_api.verbose else 'warning', '-json-output', 'tmp_file'
+    ],
+                                             cwd=self.fake_root_dir,
+                                             stderr=subprocess.PIPE,
+                                             shell=input_api.is_windows)
+
+  @mock.patch('git_cl.Changelist')
+  @mock.patch('auth.Authenticator')
+  def testCannedCheckChangedLUCIConfigsNoFile(self, mockGetAuth, mockCl):
+    affected_file1 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file1.LocalPath.return_value = 'foo.cfg'
+    affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file2.LocalPath.return_value = 'bar.cfg'
+
+    mockGetAuth().get_access_token().token = 123
+
+    host = 'https://host.com'
+    branch = 'branch'
+    http_resp = {
+        'config_sets': [{
+            'config_set': 'project/deadbeef',
+            'location': '%s/+/%s/generated' % (host, branch)
+            # no affected file in generated folder
+        }]
+    }
+    urllib_request.urlopen.return_value = http_resp
+    json.load.return_value = http_resp
+
+    mockCl().GetRemoteBranch.return_value = ('remote', branch)
+    mockCl().GetRemoteUrl.return_value = host
+
+    change1 = presubmit.Change('foo', 'foo1', self.fake_root_dir, None, 0, 0,
+                               None)
+    input_api = self.MockInputApi(change1, False)
+    affected_files = (affected_file1, affected_file2)
+
+    input_api.AffectedFiles = lambda **_: affected_files
+
+    results = presubmit_canned_checks.CheckChangedLUCIConfigs(
+        input_api, presubmit.OutputApi)
+    self.assertEqual(len(results), 0)
+
+  @mock.patch('git_cl.Changelist')
+  @mock.patch('auth.Authenticator')
+  def testCannedCheckChangedLUCIConfigsNonRoot(self, mockGetAuth, mockCl):
+    affected_file1 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file1.LocalPath.return_value = 'generated/foo.cfg'
+    affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
+    affected_file2.LocalPath.return_value = 'generated/bar.cfg'
+
+    mockGetAuth().get_access_token().token = 123
+
+    host = 'https://host.com'
+    branch = 'branch'
+    http_resp = {
+        'config_sets': [{
+            'config_set': 'project/deadbeef',
+            'location': '%s/+/%s/generated' % (host, branch)
+        }]
+    }
+    urllib_request.urlopen.return_value = http_resp
+
+    mockCl().GetRemoteBranch.return_value = ('remote', branch)
+    mockCl().GetRemoteUrl.return_value = host
+
+    change1 = presubmit.Change('foo', 'foo1', self.fake_root_dir, None, 0, 0,
+                               None)
+    input_api = self.MockInputApi(change1, False)
+    affected_files = (affected_file1, affected_file2)
+
+    input_api.AffectedFiles = lambda **_: affected_files
+
+    proc = mock.Mock()
+    proc.communicate.return_value = ('This is STDOUT', 'This is STDERR')
+    proc.returncode = 0
+    subprocess.Popen.return_value = proc
+    input_api.CreateTemporaryFile.return_value = MockTemporaryFile('tmp_file')
+
+    validation_result = {
+        'result': {
+            'validation': [{
+                'messages': [
+                    {
+                        'path': 'bar.cfg',
+                        'severity': 'ERROR',
+                        'text': 'deadbeef',
+                    },
+                    {
+                        'path': 'sub/baz.cfg',  # not an affected file
+                        'severity': 'ERROR',
+                        'text': 'cafecafe',
+                    }
+                ]
+            }]
+        }
+    }
+    json.load.side_effect = [http_resp, validation_result]
+
     results = presubmit_canned_checks.CheckChangedLUCIConfigs(
         input_api, presubmit.OutputApi)
     self.assertEqual(len(results), 1)
     self.assertEqual(results[0].json_format()['message'],
-                     "Config validation for ['foo.cfg', 'bar.cfg']: deadbeef")
+                     "Config validation for file(bar.cfg): deadbeef")
+    subprocess.Popen.assert_called_once_with([
+        'lucicfg' + ('.bat' if input_api.is_windows else ''),
+        'validate',
+        'generated',
+        '-config-set',
+        'project/deadbeef',
+        '-log-level',
+        'debug' if input_api.verbose else 'warning',
+        '-json-output',
+        'tmp_file',
+    ],
+                                             cwd=self.fake_root_dir,
+                                             stderr=subprocess.PIPE,
+                                             shell=input_api.is_windows)
 
   def testCannedCheckChangeHasNoTabs(self):
     self.ContentTest(presubmit_canned_checks.CheckChangeHasNoTabs,

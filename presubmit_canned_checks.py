@@ -1816,15 +1816,17 @@ def CheckVPythonSpec(input_api, output_api, file_filter=None):
   return commands
 
 
-# Use this limit to decide whether to split one request into multiple requests.
-# It preemptively prevents configs are too large even after the compression.
-# The GFE limit is 32 MiB and assume the compression ratio > 5:1.
-_CONFIG_SIZE_LIMIT_PER_REQUEST = 5 * 32 * 1024 * 1024
-
-
 def CheckChangedLUCIConfigs(input_api, output_api):
-  import collections
-  import base64
+  """Validates the changed config file against LUCI Config.
+
+  Only return the warning and/or error for files in input_api.AffectedFiles().
+
+  Assumes `lucicfg` binary is in PATH and the user is logged in.
+
+  Returns:
+    A list presubmit errors and/or warnings from the validation result of files
+    in input_api.AffectedFiles()
+  """
   import json
   import logging
 
@@ -1879,12 +1881,13 @@ def CheckChangedLUCIConfigs(input_api, output_api):
     return [output_api.PresubmitPromptWarning('No config_sets were returned')]
   loc_pref = '%s/+/%s/' % (remote_host_url, remote_branch)
   logging.debug('Derived location prefix: %s', loc_pref)
-  dir_to_config_set = {
-    '%s/' % cs['location'][len(loc_pref):].rstrip('/'): cs['config_set']
-    for cs in config_sets
-    if cs['location'].startswith(loc_pref) or
-    ('%s/' % cs['location']) == loc_pref
-  }
+  dir_to_config_set = {}
+  for cs in config_sets:
+    if cs['location'].startswith(loc_pref) or ('%s/' %
+                                               cs['location']) == loc_pref:
+      path = cs['location'][len(loc_pref):].rstrip('/')
+      d = input_api.os_path.join(*path.split('/')) if path else '.'
+      dir_to_config_set[d] = cs['config_set']
   if not dir_to_config_set:
     warning_long_text_lines = [
         'No config_set found for %s.' % loc_pref,
@@ -1900,75 +1903,63 @@ def CheckChangedLUCIConfigs(input_api, output_api):
     return [output_api.PresubmitPromptWarning(
         warning_long_text_lines[0],
         long_text='\n'.join(warning_long_text_lines))]
-  cs_to_files = collections.defaultdict(list)
+
+  dir_to_fileSet = {}
   for f in input_api.AffectedFiles(include_deletes=False):
-    # windows
-    file_path = f.LocalPath().replace(_os.sep, '/')
-    logging.debug('Affected file path: %s', file_path)
-    for dr, cs in dir_to_config_set.items():
-      if dr == '/' or file_path.startswith(dr):
-        cs_to_files[cs].append({
-          'path': file_path[len(dr):] if dr != '/' else file_path,
-          'content': base64.b64encode(
-              '\n'.join(f.NewContents()).encode('utf-8')).decode('utf-8')
-        })
+    for d in dir_to_config_set:
+      if d != '.' and not f.LocalPath().startswith(d):
+        continue  # file doesn't belong to this config set
+      rel_path = f.LocalPath() if d == '.' else input_api.os_path.relpath(
+          f.LocalPath(), start=d)
+      fileSet = dir_to_fileSet.setdefault(d, set())
+      fileSet.add(rel_path.replace(_os.sep, '/'))
+      dir_to_fileSet[d] = fileSet
+
   outputs = []
-
-  def do_one_validation(config_set, files):
-    if not files:
-      return
-    res = request('validate-config',
-                  body={
-                      'config_set': config_set,
-                      'files': files,
-                  })
-
-    for msg in res.get('messages', []):
-      sev = msg['severity']
-      if sev == 'WARNING':
-        out_f = output_api.PresubmitPromptWarning
-      elif sev in ('ERROR', 'CRITICAL'):
-        out_f = output_api.PresubmitError
-      else:
-        out_f = output_api.PresubmitNotifyResult
-      outputs.append(
-          out_f('Config validation for %s: %s' %
-                ([str(file['path']) for file in files], msg['text'])))
-
-  for cs, files in cs_to_files.items():
-    # make the first pass to ensure none of the config standalone exceeds the
-    # size limit.
-    for f in files:
-      if len(f['content']) > _CONFIG_SIZE_LIMIT_PER_REQUEST:
-        return [
+  lucicfg = 'lucicfg' if not input_api.is_windows else 'lucicfg.bat'
+  log_level = 'debug' if input_api.verbose else 'warning'
+  for d, fileSet in dir_to_fileSet.items():
+    config_set = dir_to_config_set[d]
+    with input_api.CreateTemporaryFile() as f:
+      cmd = [
+          lucicfg, 'validate', d, '-config-set', config_set, '-log-level',
+          log_level, '-json-output', f.name
+      ]
+      # return code is not important as the validation failure will be retrieved
+      # from the output json file.
+      out, _ = input_api.subprocess.communicate(
+          cmd,
+          stderr=input_api.subprocess.PIPE,
+          shell=input_api.is_windows,  # to resolve *.bat
+          cwd=input_api.change.RepositoryRoot(),
+      )
+      logging.debug('running %s\nSTDOUT:\n%s\nSTDERR:\n%s', cmd, out[0], out[1])
+      try:
+        result = json.load(f)
+      except json.JSONDecodeError as e:
+        outputs.append(
             output_api.PresubmitError(
-                ('File %s grows too large, it is now ~%.2f MiB. '
-                 'The limit is %.2f MiB') %
-                (f['path'], len(f['content']) /
-                 (1024 * 1024), _CONFIG_SIZE_LIMIT_PER_REQUEST / (1024 * 1024)))
-        ]
-
-    # Split the request for the same config set into smaller requests so that
-    # the config content size in each request does not exceed
-    # _CONFIG_SIZE_LIMIT_PER_REQUEST.
-    startIdx = 0
-    curSize = 0
-    for idx, f in enumerate(files):
-      content = f['content']
-      if curSize + len(content) > _CONFIG_SIZE_LIMIT_PER_REQUEST:
-        try:
-          do_one_validation(cs, files[startIdx:idx])
-        except input_api.urllib_error.HTTPError as e:
-          return [
-              output_api.PresubmitError(
-                  'Validation request to luci-config failed', long_text=str(e))
-          ]
-
-        curSize = 0
-        startIdx = idx
-      curSize += len(content)
-    do_one_validation(cs, files[startIdx:])  # validate all the remaining config
-
+                'Error when parsing lucicfg validate output', long_text=str(e)))
+      else:
+        result = result.get('result', None)
+        if result:
+          for validation_result in (result.get('validation', None) or []):
+            for msg in (validation_result.get('messages', None) or []):
+              if d != '.' and msg['path'] not in fileSet:
+                # TODO(yiwzhang): This is the message from non-affected file.
+                # Output presubmit warning for those files if needed in the
+                # future.
+                continue
+              sev = msg['severity']
+              if sev == 'WARNING':
+                out_f = output_api.PresubmitPromptWarning
+              elif sev in ('ERROR', 'CRITICAL'):
+                out_f = output_api.PresubmitError
+              else:
+                out_f = output_api.PresubmitNotifyResult
+              outputs.append(
+                  out_f('Config validation for file(%s): %s' %
+                        (msg['path'], msg['text'])))
   return outputs
 
 

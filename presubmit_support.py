@@ -837,7 +837,6 @@ class InputApi(object):
 
       with input_api.CreateTemporaryFile() as f:
         f.write('xyz')
-        f.close()
         input_api.subprocess.check_output(['script-that', '--reads-from',
                                            f.name])
 
