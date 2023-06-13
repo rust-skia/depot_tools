@@ -3226,7 +3226,10 @@ def CMDrevinfo(parser, args):
 
 @metrics.collector.collect_metrics('gclient getdep')
 def CMDgetdep(parser, args):
-  """Gets revision information and variable values from a DEPS file."""
+  """Gets revision information and variable values from a DEPS file.
+
+  If key doesn't exist or is incorrectly declared, this script exits with exit
+  code 2."""
   parser.add_option('--var', action='append',
                     dest='vars', metavar='VAR', default=[],
                     help='Gets the value of a given variable.')
@@ -3271,7 +3274,11 @@ def CMDgetdep(parser, args):
             % (name, package))
       print(gclient_eval.GetCIPD(local_scope, name, package))
     else:
-      print(gclient_eval.GetRevision(local_scope, name))
+      try:
+        print(gclient_eval.GetRevision(local_scope, name))
+      except KeyError as e:
+        print(repr(e), file=sys.stderr)
+        sys.exit(2)
 
 
 @metrics.collector.collect_metrics('gclient setdep')
