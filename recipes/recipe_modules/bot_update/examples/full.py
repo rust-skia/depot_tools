@@ -256,6 +256,17 @@ def GenTests(api):
           commit_positions=False))
   )
 
+  yield (api.test('upload_traces', status="FAILURE") + try_build() +
+         api.properties(fail_patch='apply') +
+         api.step_data('bot_update', retcode=88))
+
+  yield (api.test('upload_traces_fail', status="FAILURE") + try_build() +
+         api.properties(fail_patch='apply') +
+         api.step_data('bot_update', retcode=88) + api.step_data(
+             'upload git traces.gsutil upload',
+             retcode=1,
+         ))
+
   yield (
       api.test('revision_specifying_ref') +
       ci_build() +

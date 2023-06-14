@@ -51,7 +51,7 @@
 
 ### *recipe_modules* / [bot\_update](/recipes/recipe_modules/bot_update)
 
-[DEPS](/recipes/recipe_modules/bot_update/__init__.py#3): [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [gerrit](#recipe_modules-gerrit), [gitiles](#recipe_modules-gitiles), [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/milo][recipe_engine/recipe_modules/milo], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/bot_update/__init__.py#3): [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [gerrit](#recipe_modules-gerrit), [gitiles](#recipe_modules-gitiles), [gsutil](#recipe_modules-gsutil), [tryserver](#recipe_modules-tryserver), [recipe\_engine/archive][recipe_engine/recipe_modules/archive], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/led][recipe_engine/recipe_modules/led], [recipe\_engine/milo][recipe_engine/recipe_modules/milo], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 
 Recipe module to ensure a checkout is consistent on a bot.
@@ -62,12 +62,12 @@ Recipe module to ensure a checkout is consistent on a bot.
 
 Wrapper for easy calling of bot_update.
 
-&mdash; **def [deapply\_patch](/recipes/recipe_modules/bot_update/api.py#538)(self, bot_update_step):**
+&mdash; **def [deapply\_patch](/recipes/recipe_modules/bot_update/api.py#584)(self, bot_update_step):**
 
 Deapplies a patch, taking care of DEPS and solution revisions properly.
     
 
-&mdash; **def [ensure\_checkout](/recipes/recipe_modules/bot_update/api.py#81)(self, gclient_config=None, suffix=None, patch=True, update_presentation=True, patch_root=None, with_branch_heads=False, with_tags=False, no_fetch_tags=False, refs=None, clobber=False, root_solution_revision=None, gerrit_no_reset=False, gerrit_no_rebase_patch_ref=False, assert_one_gerrit_change=True, patch_refs=None, ignore_input_commit=False, add_blamelists=False, set_output_commit=False, step_test_data=None, enforce_fetch=False, download_topics=False, recipe_revision_overrides=None, \*\*kwargs):**
+&mdash; **def [ensure\_checkout](/recipes/recipe_modules/bot_update/api.py#119)(self, gclient_config=None, suffix=None, patch=True, update_presentation=True, patch_root=None, with_branch_heads=False, with_tags=False, no_fetch_tags=False, refs=None, clobber=False, root_solution_revision=None, gerrit_no_reset=False, gerrit_no_rebase_patch_ref=False, assert_one_gerrit_change=True, patch_refs=None, ignore_input_commit=False, add_blamelists=False, set_output_commit=False, step_test_data=None, enforce_fetch=False, download_topics=False, recipe_revision_overrides=None, \*\*kwargs):**
 
 Args:
   * gclient_config: The gclient configuration to use when running bot_update.
@@ -103,7 +103,7 @@ Args:
     change's commit message to get this revision override requested by the
     author.
 
-&mdash; **def [get\_project\_revision\_properties](/recipes/recipe_modules/bot_update/api.py#515)(self, project_name, gclient_config=None):**
+&mdash; **def [get\_project\_revision\_properties](/recipes/recipe_modules/bot_update/api.py#561)(self, project_name, gclient_config=None):**
 
 Returns all property names used for storing the checked-out revision of
 a given project.
@@ -117,9 +117,9 @@ Args:
 Returns (list of str): All properties that'll hold the checked-out revision
     of the given project. An empty list if no such properties exist.
 
-&emsp; **@property**<br>&mdash; **def [last\_returned\_properties](/recipes/recipe_modules/bot_update/api.py#49)(self):**
+&emsp; **@property**<br>&mdash; **def [last\_returned\_properties](/recipes/recipe_modules/bot_update/api.py#34)(self):**
 
-&mdash; **def [resolve\_fixed\_revision](/recipes/recipe_modules/bot_update/api.py#466)(self, bot_update_json, name):**
+&mdash; **def [resolve\_fixed\_revision](/recipes/recipe_modules/bot_update/api.py#512)(self, bot_update_json, name):**
 
 Sets a fixed revision for a single dependency using project revision
 properties.
@@ -1182,6 +1182,7 @@ Move things around in a loop!
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/windows_sdk/examples/full.py#16)(api):**
 
+[recipe_engine/recipe_modules/archive]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/1386da2d6dcc4a23163a944ded39dcd0ac730046/README.recipes.md#recipe_modules-archive
 [recipe_engine/recipe_modules/assertions]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/1386da2d6dcc4a23163a944ded39dcd0ac730046/README.recipes.md#recipe_modules-assertions
 [recipe_engine/recipe_modules/buildbucket]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/1386da2d6dcc4a23163a944ded39dcd0ac730046/README.recipes.md#recipe_modules-buildbucket
 [recipe_engine/recipe_modules/cipd]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/1386da2d6dcc4a23163a944ded39dcd0ac730046/README.recipes.md#recipe_modules-cipd

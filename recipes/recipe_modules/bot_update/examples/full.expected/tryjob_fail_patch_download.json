@@ -82,8 +82,15 @@
     ],
     "env": {
       "DEPOT_TOOLS_REPORT_BUILD": "chromium/src/try/linux/8945511751514863184",
+      "GIT_BACKENDINFO": "1",
+      "GIT_DAPPER_TRACE": "1",
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
-      "GIT_HTTP_LOW_SPEED_TIME": "1800"
+      "GIT_HTTP_LOW_SPEED_TIME": "1800",
+      "GIT_SSH_COMMAND": "ssh -o SendEnv=GIT_DAPPER_TRACE -o SendEnv=GIT_BACKENDINFO",
+      "GIT_TRACE2_EVENT": "[CLEANUP]/traces/trace2-event",
+      "GIT_TRACE_CURL": "[CLEANUP]/traces/trace-curl",
+      "GIT_TRACE_CURL_NO_DATA": "1",
+      "GIT_TRACE_PACKET": "[CLEANUP]/traces/trace-packet"
     },
     "env_suffixes": {
       "DEPOT_TOOLS_UPDATE": [
@@ -202,6 +209,64 @@
       "@@@SET_BUILD_PROPERTY@got_v8_revision@\"801ada225ddc271c132c3a35f03975671d43e399\"@@@",
       "@@@SET_BUILD_PROPERTY@got_v8_revision_cp@\"refs/heads/main@{#43426}\"@@@",
       "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "upload git traces"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::archive]/resources/archive.py"
+    ],
+    "luci_context": {
+      "realm": {
+        "name": "chromium/src:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "upload git traces.compress traces",
+    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[CLEANUP]/traces\", \"type\": \"dir\"}], \"output\": \"[CLEANUP]/traces/8945511751514863184.zip\", \"root\": \"[CLEANUP]/traces\"}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python3",
+      "-u",
+      "RECIPE_MODULE[depot_tools::gsutil]/resources/gsutil_smart_retry.py",
+      "--",
+      "RECIPE_REPO[depot_tools]/gsutil.py",
+      "----",
+      "cp",
+      "[CLEANUP]/traces/8945511751514863184.zip",
+      "gs://chrome-bot-traces"
+    ],
+    "infra_step": true,
+    "luci_context": {
+      "realm": {
+        "name": "chromium/src:try"
+      },
+      "resultdb": {
+        "current_invocation": {
+          "name": "invocations/build:8945511751514863184",
+          "update_token": "token"
+        },
+        "hostname": "rdbhost"
+      }
+    },
+    "name": "upload git traces.gsutil upload",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
