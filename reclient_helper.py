@@ -190,6 +190,10 @@ def build_context(argv, tool):
   if reclient_metrics.check_status(ninja_out):
     set_reproxy_metrics_flags(tool)
 
+  if os.environ.get('RBE_instance', None):
+    print('WARNING: Using RBE_instance=%s\n' %
+          os.environ.get('RBE_instance', ''))
+
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
   if reproxy_ret_code != 0:
     yield reproxy_ret_code
