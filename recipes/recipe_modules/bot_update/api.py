@@ -417,8 +417,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
             pin['host'], pin['project'] = (
                 self.m.gitiles.parse_repo_url(m['repository']))
             blamelist_pins.append(pin)
-
-          result.blamelist_pins = blamelist_pins
           self.m.milo.show_blamelist_for(blamelist_pins)
 
         # Set output commit of the build.
