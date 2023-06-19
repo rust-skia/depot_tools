@@ -41,6 +41,15 @@ def main(args):
   if gclient_root_path:
     gclient_src_root_path = os.path.join(gclient_root_path, 'src')
 
+  siso_override_path = os.environ.get('SISO_PATH')
+  if siso_override_path:
+    print('depot_tools/siso.py: Using Siso binary from SISO_PATH: %s.' %
+          siso_override_path)
+    if not os.path.isfile(siso_override_path):
+      print('depot_tools/siso.py: Could not find Siso at provided SISO_PATH.',
+            file=sys.stderr)
+      return 1
+
   for base_path in set(
       [primary_solution_path, gclient_root_path, gclient_src_root_path]):
     if not base_path:
@@ -53,8 +62,8 @@ def main(args):
         for line in f.readlines():
           k, v = line.rstrip().split('=', 1)
           env[k] = v
-    siso_path = os.path.join(base_path, 'third_party', 'siso',
-                             'siso' + gclient_paths.GetExeSuffix())
+    siso_path = siso_override_path or os.path.join(
+        base_path, 'third_party', 'siso', 'siso' + gclient_paths.GetExeSuffix())
     if os.path.isfile(siso_path):
       return subprocess.call([siso_path] + args[1:], env=env)
 
