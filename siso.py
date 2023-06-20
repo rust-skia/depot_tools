@@ -57,19 +57,20 @@ def main(args):
     env = environ.copy()
     sisoenv_path = os.path.join(base_path, 'build', 'config', 'siso',
                                 '.sisoenv')
-    if os.path.exists(sisoenv_path):
-      with open(sisoenv_path) as f:
-        for line in f.readlines():
-          k, v = line.rstrip().split('=', 1)
-          env[k] = v
+    if not os.path.exists(sisoenv_path):
+      continue
+    with open(sisoenv_path) as f:
+      for line in f.readlines():
+        k, v = line.rstrip().split('=', 1)
+        env[k] = v
     siso_path = siso_override_path or os.path.join(
         base_path, 'third_party', 'siso', 'siso' + gclient_paths.GetExeSuffix())
     if os.path.isfile(siso_path):
       return subprocess.call([siso_path] + args[1:], env=env)
 
   print(
-      'depot_tools/siso.py: Could not find Siso in the third_party of '
-      'the current project.',
+      'depot_tools/siso.py: Could not find .sisoenv under build/config/siso of '
+      'the current project. Did you run gclient sync?',
       file=sys.stderr)
   return 1
 
