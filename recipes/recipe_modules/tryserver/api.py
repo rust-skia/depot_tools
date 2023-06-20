@@ -152,7 +152,7 @@ class TryserverApi(recipe_api.RecipeApi):
       if int(rev['_number']) == self.gerrit_change.patchset:
         self._gerrit_change_fetch_ref = rev['ref']
         break
-    self._gerrit_change_owner = res['owner']
+    self._gerrit_change_owner = dict(res['owner'])
     self._gerrit_info_initialized = True
 
   @property

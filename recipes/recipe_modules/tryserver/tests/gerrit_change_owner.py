@@ -25,7 +25,7 @@ def GenTests(api):
       'basic',
       api.buildbucket.try_build(),
       api.post_process(StepCommandContains, 'print owner',
-                       ['echo', "OrderedDict([('name', 'John Doe')])"]),
+                       ['echo', "{'name': 'John Doe'}"]),
       api.post_process(StatusSuccess),
       api.post_process(DropExpectation),
   )
