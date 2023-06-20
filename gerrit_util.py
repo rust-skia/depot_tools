@@ -44,10 +44,11 @@ else:
   from io import StringIO
 
 LOGGER = logging.getLogger()
-# With a starting sleep time of 10.0 seconds, x <= [1.8-2.2]x backoff, and five
-# total tries, the sleep time between the first and last tries will be ~7 min.
-TRY_LIMIT = 5
-SLEEP_TIME = 10.0
+# With a starting sleep time of 12.0 seconds, x <= [1.8-2.2]x backoff, and six
+# total tries, the sleep time between the first and last tries will be ~6 min
+# (excluding time for each try).
+TRY_LIMIT = 6
+SLEEP_TIME = 12.0
 MAX_BACKOFF = 2.2
 MIN_BACKOFF = 1.8
 

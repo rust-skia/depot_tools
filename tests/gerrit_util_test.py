@@ -390,7 +390,7 @@ class GerritUtilTest(unittest.TestCase):
 
     self.assertEqual('content✔', gerrit_util.ReadHttpResponse(conn).getvalue())
     self.assertEqual(2, len(conn.request.mock_calls))
-    gerrit_util.time_sleep.assert_called_once_with(10.0)
+    gerrit_util.time_sleep.assert_called_once_with(12.0)
 
   def testReadHttpResponse_TimeoutAndSuccess(self):
     conn = mock.Mock(req_params={'uri': 'uri', 'method': 'method'})
@@ -401,7 +401,7 @@ class GerritUtilTest(unittest.TestCase):
 
     self.assertEqual('content✔', gerrit_util.ReadHttpResponse(conn).getvalue())
     self.assertEqual(2, len(conn.request.mock_calls))
-    gerrit_util.time_sleep.assert_called_once_with(10.0)
+    gerrit_util.time_sleep.assert_called_once_with(12.0)
 
   def testReadHttpResponse_Expected404(self):
     conn = mock.Mock()
