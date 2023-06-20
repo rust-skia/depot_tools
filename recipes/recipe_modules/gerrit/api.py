@@ -71,6 +71,9 @@ class GerritApi(recipe_api.RecipeApi):
         '--commit', commit,
         '--json_file', self.m.json.output()
     ]
+    allow_existent_branch = kwargs.pop('allow_existent_branch', False)
+    if allow_existent_branch:
+      args.append('--allow-existent-branch')
     step_name = 'create_gerrit_branch (%s %s)' % (project, branch)
     step_result = self(step_name, args, **kwargs)
     ref = step_result.json.output.get('ref')

@@ -17,7 +17,11 @@ def RunSteps(api):
   branch = 'test'
   commit = '67ebf73496383c6777035e374d2d664009e2aa5c'
 
-  data = api.gerrit.create_gerrit_branch(host, project, branch, commit)
+  data = api.gerrit.create_gerrit_branch(host,
+                                         project,
+                                         branch,
+                                         commit,
+                                         allow_existent_branch=True)
   assert data == 'refs/heads/test'
 
   data = api.gerrit.get_gerrit_branch(host, project, 'main')

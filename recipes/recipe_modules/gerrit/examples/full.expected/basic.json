@@ -13,7 +13,8 @@
       "--commit",
       "67ebf73496383c6777035e374d2d664009e2aa5c",
       "--json_file",
-      "/path/to/tmp/json"
+      "/path/to/tmp/json",
+      "--allow-existent-branch"
     ],
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
