@@ -20,7 +20,7 @@
   {
     "cmd": [
       "echo",
-      "OrderedDict([('Foo', ['bar'])])"
+      "{'Foo': ['bar']}"
     ],
     "name": "patch_text test"
   },
