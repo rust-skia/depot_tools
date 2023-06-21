@@ -442,18 +442,18 @@ def CMDmass_abandon(parser, args):
       limit=100,
   )
   if len(result) == 0:
-    logging.warn("Nothing to abandon")
+    logging.warning("Nothing to abandon")
     return
 
-  logging.warn("%s CLs match search query: " % len(result))
+  logging.warning("%s CLs match search query: " % len(result))
   for change in result:
-    logging.warn("[ID: %d] %s" % (change['_number'], change['subject']))
+    logging.warning("[ID: %d] %s" % (change['_number'], change['subject']))
 
   if not opt.force:
     q = input(
         'Do you want to move forward with abandoning? [y to confirm] ').strip()
     if q not in ['y', 'Y']:
-      logging.warn("Aborting...")
+      logging.warning("Aborting...")
       return
 
   for change in result:
