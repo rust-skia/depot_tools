@@ -985,7 +985,6 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       patch_refs,  # type: Mapping[str, str]
       target_branches,  # type: Mapping[str, str]
       skip_sync_revisions,  # type: Mapping[str, str]
-      applied_patches=None,  # type: Set[str]
   ):
     # type: () -> None
     """Runs |command| then parse the DEPS file."""
@@ -1029,11 +1028,9 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
       if isinstance(self, GitDependency) and command == 'update':
         patch_repo = self.url.split('@')[0]
-        fuzzy_match = self.FuzzyMatchUrl(patch_refs)
-        patch_ref = patch_refs[fuzzy_match] if fuzzy_match else None
-        target_branch = target_branches[fuzzy_match] if fuzzy_match else None
-        if fuzzy_match and applied_patches is not None:
-          applied_patches.add(fuzzy_match)
+        patch_ref = patch_refs.pop(self.FuzzyMatchUrl(patch_refs), None)
+        target_branch = target_branches.pop(
+            self.FuzzyMatchUrl(target_branches), None)
         if patch_ref:
           latest_commit = self._used_scm.apply_patch_ref(
               patch_repo, patch_ref, target_branch, options, file_list)
@@ -2003,7 +2000,6 @@ it or fix the checkout.
     patch_refs = {}
     target_branches = {}
     skip_sync_revisions = {}
-    applied_patches = set()
     # It's unnecessary to check for revision overrides for 'recurse'.
     # Save a few seconds by not calling _EnforceRevisions() in that case.
     if command not in ('diff', 'recurse', 'runhooks', 'status', 'revert',
@@ -2048,14 +2044,13 @@ it or fix the checkout.
                      options=self._options,
                      patch_refs=patch_refs,
                      target_branches=target_branches,
-                     skip_sync_revisions=skip_sync_revisions,
-                     applied_patches=applied_patches)
+                     skip_sync_revisions=skip_sync_revisions)
 
     if revision_overrides:
       print('Please fix your script, having invalid --revision flags will soon '
             'be considered an error.', file=sys.stderr)
 
-    if patch_refs.keys() != applied_patches:
+    if patch_refs:
       raise gclient_utils.Error(
           'The following --patch-ref flags were not used. Please fix it:\n%s' %
           ('\n'.join(
@@ -2253,16 +2248,8 @@ class CipdDependency(Dependency):
     self._package_version = version
 
   #override
-  def run(self,
-          revision_overrides,
-          command,
-          args,
-          work_queue,
-          options,
-          patch_refs,
-          target_branches,
-          skip_sync_revisions,
-          applied_patches=None):
+  def run(self, revision_overrides, command, args, work_queue, options,
+          patch_refs, target_branches, skip_sync_revisions):
     """Runs |command| then parse the DEPS file."""
     logging.info('CipdDependency(%s).run()' % self.name)
     if not self.should_process:
