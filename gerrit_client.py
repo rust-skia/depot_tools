@@ -203,8 +203,13 @@ def CMDheadinfo(parser, args):
 @subcommand.usage('[args ...]')
 def CMDchanges(parser, args):
   """Queries gerrit for matching changes."""
-  parser.add_option('-p', '--param', dest='params', action='append',
+  parser.add_option('-p',
+                    '--param',
+                    dest='params',
+                    action='append',
+                    default=[],
                     help='repeatable query parameter, format: -p key=value')
+  parser.add_option('--query', help='raw gerrit search query string')
   parser.add_option('-o', '--o-param', dest='o_params', action='append',
                     help='gerrit output parameters, e.g. ALL_REVISIONS')
   parser.add_option('--limit', dest='limit', type=int,
@@ -214,14 +219,16 @@ def CMDchanges(parser, args):
                          '(starting with the most recent)')
 
   (opt, args) = parser.parse_args(args)
+  assert opt.params or opt.query, '--param or --query required'
   for p in opt.params:
     assert '=' in p, '--param is key=value, not "%s"' % p
 
   result = gerrit_util.QueryChanges(
       urlparse.urlparse(opt.host).netloc,
       list(tuple(p.split('=', 1)) for p in opt.params),
-      start=opt.start,        # Default: None
-      limit=opt.limit,        # Default: None
+      first_param=opt.query,
+      start=opt.start,  # Default: None
+      limit=opt.limit,  # Default: None
       o_params=opt.o_params,  # Default: None
   )
   logging.info('Change query returned %d changes.', len(result))

@@ -50,11 +50,52 @@ class TestGerritClient(unittest.TestCase):
         'changes', '--host', 'https://example.org/foo', '-p', 'foo=bar', '-p',
         'baz=qux', '--limit', '10', '--start', '20', '-o', 'op1', '-o', 'op2'
     ])
-    util_mock.assert_called_once_with(
-        'example.org', [('foo', 'bar'), ('baz', 'qux')],
-        limit=10,
-        start=20,
-        o_params=['op1', 'op2'])
+    util_mock.assert_called_once_with('example.org', [('foo', 'bar'),
+                                                      ('baz', 'qux')],
+                                      first_param=None,
+                                      limit=10,
+                                      start=20,
+                                      o_params=['op1', 'op2'])
+
+  @mock.patch('gerrit_util.QueryChanges', return_value='')
+  def test_changes_query(self, util_mock):
+    gerrit_client.main([
+        'changes',
+        '--host',
+        'https://example.org/foo',
+        '--query',
+        'is:owner is:open',
+        '--limit',
+        '10',
+        '--start',
+        '20',
+    ])
+    util_mock.assert_called_once_with('example.org', [],
+                                      first_param='is:owner is:open',
+                                      limit=10,
+                                      start=20,
+                                      o_params=None)
+
+  @mock.patch('gerrit_util.QueryChanges', return_value='')
+  def test_changes_params_query(self, util_mock):
+    gerrit_client.main([
+        'changes',
+        '--host',
+        'https://example.org/foo',
+        '--query',
+        'is:owner is:open',
+        '-p',
+        'foo=bar',
+        '--limit',
+        '10',
+        '--start',
+        '20',
+    ])
+    util_mock.assert_called_once_with('example.org', [('foo', 'bar')],
+                                      first_param='is:owner is:open',
+                                      limit=10,
+                                      start=20,
+                                      o_params=None)
 
   @mock.patch('gerrit_util.GetRelatedChanges', return_value='')
   def test_relatedchanges(self, util_mock):
