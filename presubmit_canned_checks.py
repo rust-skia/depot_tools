@@ -765,8 +765,10 @@ def CheckLicense(input_api, output_api, license_re_param=None,
                           }
       error_message = (
           'License on new files must be:\n\n%s\n' % new_license_text +
-          '(adjusting the comment delimiter accordingly).\n\n')
-    error_message += 'Found a bad license header in these new files:'
+          '(adjusting the comment delimiter accordingly).\n\n' +
+          'If this is a moved file, then update the license but do not ' +
+          'update the year.\n\n')
+    error_message += 'Found a bad license header in these new or moved files:'
     results.append(output_api.PresubmitError(error_message,
                                              items=bad_new_files))
   if wrong_year_new_files:
