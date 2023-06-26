@@ -559,6 +559,22 @@ class GitWrapper(SCMWrapper):
                    (e.returncode, e.stderr.decode('utf-8')))
       return True
 
+  def set_config(f):
+    def wrapper(*args):
+      return_val = f(*args)
+      if os.path.exists(os.path.join(args[0].checkout_path, '.git')):
+        # If diff.ignoreSubmodules is not already set, set it to `all`.
+        currentIgnore = subprocess2.capture(
+            ['git', 'config', '--get', 'diff.ignoreSubmodules'],
+            cwd=args[0].checkout_path).strip()
+        if not currentIgnore:
+          subprocess2.capture(['git', 'config', 'diff.ignoreSubmodules', 'all'],
+                              cwd=args[0].checkout_path).strip()
+      return return_val
+
+    return wrapper
+
+  @set_config
   def update(self, options, args, file_list):
     """Runs git to update or transparently checkout the working copy.
 

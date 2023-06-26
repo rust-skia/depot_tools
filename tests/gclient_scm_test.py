@@ -393,6 +393,8 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
     self.assertEqual(file_list, expected_file_list)
     self.assertEqual(scm.revinfo(options, (), None),
                       'a7142dc9f0009350b96a11f372b6ea658592aa95')
+    self.assertEqual(scm._Capture(['config', '--get', 'diff.ignoreSubmodules']),
+                     'all')
     sys.stdout.close()
 
   def testUpdateMerge(self):
