@@ -5136,6 +5136,9 @@ def CMDsplit(parser, args):
                     '--max-depth=1 will only split by top-level '
                     'directory. Specifying a value less than 1 means no '
                     'limit on max depth.')
+  parser.add_option('--topic',
+                    default=None,
+                    help='Topic to specify when uploading')
   options, _ = parser.parse_args(args)
 
   if not options.description_file:
@@ -5147,7 +5150,7 @@ def CMDsplit(parser, args):
   return split_cl.SplitCl(options.description_file, options.comment_file,
                           Changelist, WrappedCMDupload, options.dry_run,
                           options.cq_dry_run, options.enable_auto_submit,
-                          options.max_depth, settings.GetRoot())
+                          options.max_depth, options.topic, settings.GetRoot())
 
 
 @subcommand.usage('DEPRECATED')

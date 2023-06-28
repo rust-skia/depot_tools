@@ -70,7 +70,7 @@ def AddUploadedByGitClSplitToDescription(description):
 
 def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
              description, comment, reviewers, changelist, cmd_upload,
-             cq_dry_run, enable_auto_submit, repository_root):
+             cq_dry_run, enable_auto_submit, topic, repository_root):
   """Uploads a CL with all changes to |files| in |refactor_branch|.
 
   Args:
@@ -86,6 +86,7 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
     cmd_upload: The function associated with the git cl upload command.
     cq_dry_run: If CL uploads should also do a cq dry run.
     enable_auto_submit: If CL uploads should also enable auto submit.
+    topic: Topic to associate with uploaded CLs.
   """
   # Create a branch.
   if not CreateBranchForDirectory(
@@ -126,6 +127,8 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
     upload_args.append('--send-mail')
   if enable_auto_submit:
     upload_args.append('--enable-auto-submit')
+  if topic:
+    upload_args.append('--topic={}'.format(topic))
   print('Uploading CL for ' + directory + '...')
 
   ret = cmd_upload(upload_args)
@@ -165,7 +168,7 @@ def GetFilesSplitByOwners(files, max_depth):
 
 
 def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
-                reviewers):
+                reviewers, topic):
   """Prints info about a CL.
 
   Args:
@@ -176,6 +179,7 @@ def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
     file_paths: A list of files in this CL.
     description: The CL description.
     reviewers: A set of reviewers for this CL.
+    topic: Topic to set for this CL.
   """
   description_lines = FormatDescriptionOrComment(description,
                                                  directory).splitlines()
@@ -184,13 +188,14 @@ def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
   print('CL {}/{}'.format(cl_index, num_cls))
   print('Path: {}'.format(directory))
   print('Reviewers: {}'.format(', '.join(reviewers)))
+  print('Topic: {}'.format(topic))
   print('\n' + indented_description + '\n')
   print('\n'.join(file_paths))
   print()
 
 
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
-            cq_dry_run, enable_auto_submit, max_depth, repository_root):
+            cq_dry_run, enable_auto_submit, max_depth, topic, repository_root):
   """"Splits a branch into smaller branches and uploads CLs.
 
   Args:
@@ -203,6 +208,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     enable_auto_submit: If CL uploads should also enable auto submit.
     max_depth: The maximum directory depth to search for OWNERS files. A value
                less than 1 means no limit.
+    topic: Topic to associate with split CLs.
 
   Returns:
     0 in case of success. 1 in case of error.
@@ -270,11 +276,11 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
           file_paths, exclude=[author, cl.owners_client.EVERYONE])
       if dry_run:
         PrintClInfo(cl_index, num_cls, directory, file_paths, description,
-                    reviewers)
+                    reviewers, topic)
       else:
         UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
                  description, comment, reviewers, changelist, cmd_upload,
-                 cq_dry_run, enable_auto_submit, repository_root)
+                 cq_dry_run, enable_auto_submit, topic, repository_root)
 
     # Go back to the original branch.
     git.run('checkout', refactor_branch)
