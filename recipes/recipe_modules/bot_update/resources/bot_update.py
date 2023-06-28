@@ -158,7 +158,7 @@ class RepeatingTimer(threading.Thread):
 
 def _print_pstree():
   """Debugging function used to print "ps auxwwf" for stuck processes."""
-  if sys.platform.startswith('linux2'):
+  if sys.platform.startswith('linux'):
     # Add new line for cleaner output
     print()
     subprocess.call(['ps', 'auxwwf'])
