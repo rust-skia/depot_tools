@@ -14,12 +14,18 @@
     'depot_tools': {
       'filepath': '.+',
     },
+    'build': {
+      'filepath': '.*(ninja|reclient|siso).*',
+    },
   },
 
   'WATCHLISTS': {
     'this_file': [],
     'depot_tools': [
       'chops-source-team-auto+depot_tools@google.com',
+    ],
+    'build': [
+      'chrome-build-team@google.com',
     ],
   },
 
