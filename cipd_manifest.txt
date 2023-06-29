@@ -39,7 +39,7 @@ $VerifiedPlatform windows-arm64
 infra/tools/luci/vpython/${platform} git_revision:7db81fdd219325d5d11fdaf56357ec28c26fffb3
 
 # LUCI editor
-infra/tools/luci/led/${platform} git_revision:c6d95cb947917d04656cf86856ee76c3bc942c1d
+infra/tools/luci/led/${platform} git_revision:6e9be28a4c4e3a804f400dc6c2ed08b866f0a38b
 
 # LUCI config generator
 infra/tools/luci/lucicfg/${platform} git_revision:b9abef1757f353159607f840cc5325b0397aa73f
@@ -48,13 +48,13 @@ infra/tools/luci/lucicfg/${platform} git_revision:b9abef1757f353159607f840cc5325
 infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:3e597065cb23c1fe03aeb2ebd792d83e0709c5c2
 
 # LUCI rpc command line tool
-infra/tools/prpc/${platform} git_revision:c6d95cb947917d04656cf86856ee76c3bc942c1d
+infra/tools/prpc/${platform} git_revision:6e9be28a4c4e3a804f400dc6c2ed08b866f0a38b
 
 # LUCI authentication command line tool
-infra/tools/luci-auth/${platform} git_revision:c6d95cb947917d04656cf86856ee76c3bc942c1d
+infra/tools/luci-auth/${platform} git_revision:6e9be28a4c4e3a804f400dc6c2ed08b866f0a38b
 
 # LUCI Buildbucket CLI
-infra/tools/bb/${platform} git_revision:c6d95cb947917d04656cf86856ee76c3bc942c1d
+infra/tools/bb/${platform} git_revision:6e9be28a4c4e3a804f400dc6c2ed08b866f0a38b
 
 # LUCI ResultDB CLI
 infra/tools/rdb/${platform} git_revision:5111dcfc7b559e41a5256d3e7b04542eab70cb55
@@ -67,7 +67,7 @@ infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:3435fce1653aa1d
 infra/goma/client/${os=mac}-${arch} git_revision:3435fce1653aa1d611c2834901561be7e6ccfab0
 
 # dirmd, a tool to work with DIR_METADATA files
-infra/tools/dirmd/${platform} git_revision:c6d95cb947917d04656cf86856ee76c3bc942c1d
+infra/tools/dirmd/${platform} git_revision:6e9be28a4c4e3a804f400dc6c2ed08b866f0a38b
 
 # Pinpoint CLI
 infra/chromeperf/pinpoint/${platform} git_revision:e74dd94f00ae6be0c8272e438cd264e9817ad585
