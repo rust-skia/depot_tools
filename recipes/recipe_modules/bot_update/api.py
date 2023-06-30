@@ -25,7 +25,14 @@ class BotUpdateApi(recipe_api.RecipeApi):
     bot_update_path = self.resource('bot_update.py')
     kwargs.setdefault('infra_step', True)
 
-    with self.m.context(env=self._get_bot_update_env()):
+    # Reserve 1 minute to upload traces.
+    # TODO(gavinmak): Reserve from grace_period once https://crbug.com/1305422
+    # is fixed.
+    deadline = self.m.context.deadline
+    if deadline.soft_deadline:  # pragma: no cover
+      deadline.soft_deadline -= 60
+
+    with self.m.context(env=self._get_bot_update_env(), deadline=deadline):
       with self.m.depot_tools.on_path():
         return self.m.step(name,
                            ['vpython3', '-u', bot_update_path] + cmd,
