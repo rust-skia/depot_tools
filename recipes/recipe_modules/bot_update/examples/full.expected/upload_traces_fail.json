@@ -87,10 +87,10 @@
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
       "GIT_HTTP_LOW_SPEED_TIME": "1800",
       "GIT_SSH_COMMAND": "ssh -o SendEnv=GIT_DAPPER_TRACE -o SendEnv=GIT_BACKENDINFO",
-      "GIT_TRACE2_EVENT": "[CLEANUP]/traces/trace2-event",
-      "GIT_TRACE_CURL": "[CLEANUP]/traces/trace-curl",
+      "GIT_TRACE2_EVENT": "[CLEANUP]/trace2-event",
+      "GIT_TRACE_CURL": "[CLEANUP]/trace-curl",
       "GIT_TRACE_CURL_NO_DATA": "1",
-      "GIT_TRACE_PACKET": "[CLEANUP]/traces/trace-packet"
+      "GIT_TRACE_PACKET": "[CLEANUP]/trace-packet"
     },
     "env_suffixes": {
       "DEPOT_TOOLS_UPDATE": [
@@ -255,7 +255,7 @@
       }
     },
     "name": "upload git traces.compress traces",
-    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[CLEANUP]/traces\", \"type\": \"dir\"}], \"output\": \"[CLEANUP]/traces/8945511751514863184.zip\", \"root\": \"[CLEANUP]/traces\"}",
+    "stdin": "{\"archive_type\": \"zip\", \"entries\": [{\"path\": \"[CLEANUP]/trace2-event\", \"type\": \"file\"}, {\"path\": \"[CLEANUP]/trace-curl\", \"type\": \"file\"}, {\"path\": \"[CLEANUP]/trace-packet\", \"type\": \"file\"}], \"output\": \"[CLEANUP]/8945511751514863184.zip\", \"root\": \"[CLEANUP]\"}",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -269,7 +269,7 @@
       "RECIPE_REPO[depot_tools]/gsutil.py",
       "----",
       "cp",
-      "[CLEANUP]/traces/8945511751514863184.zip",
+      "[CLEANUP]/8945511751514863184.zip",
       "gs://chrome-bot-traces"
     ],
     "infra_step": true,

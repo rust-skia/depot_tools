@@ -64,7 +64,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
     return repo_path
 
   def _get_bot_update_env(self):
-    self._trace_dir = self.m.path['cleanup'].join('traces')
+    # TODO(gavinmak): Use mkdtemp when crbug.com/1457059 is fixed.
+    self._trace_dir = self.m.path['cleanup']
 
     # If a Git HTTP request is constantly below GIT_HTTP_LOW_SPEED_LIMIT
     # bytes/second for GIT_HTTP_LOW_SPEED_TIME seconds then such request will be
@@ -104,9 +105,12 @@ class BotUpdateApi(recipe_api.RecipeApi):
     with self.m.step.nest('upload git traces') as presentation:
       id = str(self.m.buildbucket.build.id
                or self.m.led.run_id.replace('/', '_'))
-      zip_path = (self.m.archive.package(self._trace_dir).archive(
-          'compress traces', self.m.path.join(self._trace_dir, '%s.zip' % id),
-          'zip'))
+      dest = self.m.path.join(self._trace_dir, '%s.zip' % id)
+      zip_path = self.m.archive.package(self._trace_dir) \
+                  .with_file(self._trace_dir.join('trace2-event')) \
+                  .with_file(self._trace_dir.join('trace-curl')) \
+                  .with_file(self._trace_dir.join('trace-packet')) \
+                  .archive('compress traces', dest, 'zip')
       try:
         # Don't upload with a destination path, otherwise we have to grant bots
         # storage.objects.list permisson on this bucket.
