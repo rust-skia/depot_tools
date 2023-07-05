@@ -1369,7 +1369,6 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         'checkout_mac': 'mac' in self.target_os,
         'checkout_win': 'win' in self.target_os,
         'host_os': _detect_host_os(),
-
         'checkout_arm': 'arm' in self.target_cpu,
         'checkout_arm64': 'arm64' in self.target_cpu,
         'checkout_x86': 'x86' in self.target_cpu,
@@ -1378,6 +1377,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         'checkout_ppc': 'ppc' in self.target_cpu,
         'checkout_s390': 's390' in self.target_cpu,
         'checkout_x64': 'x64' in self.target_cpu,
+        'checkout_loong64': 'loong64' in self.target_cpu,
         'host_cpu': detect_host_arch.HostArch(),
     }
 
