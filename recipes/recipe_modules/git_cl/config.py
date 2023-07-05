@@ -8,7 +8,8 @@ from recipe_engine.config import config_item_context, ConfigGroup, BadConf
 from recipe_engine.config import Single
 from recipe_engine.config_types import Path
 
-def BaseConfig(**_kwargs):
+
+def BaseConfig(**_kwargs):  # pragma: no cover
   return ConfigGroup(
     repo_location=Single(Path)
   )
@@ -16,7 +17,5 @@ def BaseConfig(**_kwargs):
 config_ctx = config_item_context(BaseConfig)
 
 @config_ctx()
-def basic(c):
+def basic(c):  # pragma: no cover
   pass
-
-
