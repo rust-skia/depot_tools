@@ -168,7 +168,7 @@ def GetFilesSplitByOwners(files, max_depth):
 
 
 def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
-                reviewers, topic):
+                reviewers, enable_auto_submit, topic):
   """Prints info about a CL.
 
   Args:
@@ -179,6 +179,7 @@ def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
     file_paths: A list of files in this CL.
     description: The CL description.
     reviewers: A set of reviewers for this CL.
+    enable_auto_submit: If the CL should also have auto submit enabled.
     topic: Topic to set for this CL.
   """
   description_lines = FormatDescriptionOrComment(description,
@@ -188,6 +189,7 @@ def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
   print('CL {}/{}'.format(cl_index, num_cls))
   print('Path: {}'.format(directory))
   print('Reviewers: {}'.format(', '.join(reviewers)))
+  print('Auto-Submit: {}'.format(enable_auto_submit))
   print('Topic: {}'.format(topic))
   print('\n' + indented_description + '\n')
   print('\n'.join(file_paths))
@@ -276,7 +278,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
           file_paths, exclude=[author, cl.owners_client.EVERYONE])
       if dry_run:
         PrintClInfo(cl_index, num_cls, directory, file_paths, description,
-                    reviewers, topic)
+                    reviewers, enable_auto_submit, topic)
       else:
         UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
                  description, comment, reviewers, changelist, cmd_upload,
