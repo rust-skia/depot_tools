@@ -3300,7 +3300,8 @@ def CheckForFunctionLengths(filename, clean_lines, linenum,
     function_state.Count()  # Count non-blank/non-comment lines.
 
 
-_RE_PATTERN_TODO = re.compile(r'^//(\s*)TODO(\(.+?\))?:?(\s|$)?')
+_RE_PATTERN_TODO = re.compile(
+    r'^//(\s*)TODO(?:(\(.+?\)):?|:|)(\s|$|[A-Z]*[a-z])')
 
 
 def CheckComment(line, filename, linenum, next_line_start, error):
