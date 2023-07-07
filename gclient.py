@@ -881,6 +881,12 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       self.local_target_os = local_scope['target_os']
 
     deps = local_scope.get('deps', {})
+
+    # If dependencies are configured within git submodules, add them to DEPS.
+    if self.git_dependencies_state in (gclient_eval.SUBMODULES,
+                                       gclient_eval.SYNC):
+      deps.update(self.ParseGitSubmodules())
+
     deps_to_add = self._deps_to_objects(
         self._postprocess_deps(deps, rel_prefix), self._use_relative_paths)
 
@@ -920,6 +926,65 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     self.add_dependencies_and_close(deps_to_add, hooks_to_run,
                                     hooks_cwd=hooks_cwd)
     logging.info('ParseDepsFile(%s) done' % self.name)
+
+  def ParseGitSubmodules(self):
+    # type: () -> Mapping[str, str]
+    """
+    Parses git submodules and returns a dict of path to DEPS git url entries.
+
+    e.g {<path>: <url>@<commit_hash>}
+    """
+    cwd = os.path.join(self.root.root_dir, self.name)
+    filepath = os.path.join(cwd, '.gitmodules')
+    if not os.path.isfile(filepath):
+      logging.warning('ParseGitSubmodules(): No .gitmodules found at %s',
+                      filepath)
+      return {}
+
+    # Get submodule commit hashes
+    result = subprocess2.check_output(['git', 'submodule', 'status'],
+                                      cwd=cwd).decode('utf-8')
+    commit_hashes = {}
+    for record in result.splitlines():
+      commit, module = record.split(maxsplit=1)
+      commit_hashes[module] = commit[1:]
+
+    # Get .gitmodules fields
+    gitmodules_entries = subprocess2.check_output(
+        ['git', 'config', '--file', filepath, '-l']).decode('utf-8')
+
+    gitmodules = {}
+    for entry in gitmodules_entries.splitlines():
+      key, value = entry.split('=', maxsplit=1)
+
+      # git config keys consist of section.name.key, e.g., submodule.foo.path
+      section, submodule_key = key.split('.', maxsplit=1)
+
+      # Only parse [submodule "foo"] sections from .gitmodules.
+      if section != 'submodule':
+        continue
+
+      # The name of the submodule can contain '.', hence split from the back.
+      submodule, sub_key = submodule_key.rsplit('.', maxsplit=1)
+
+      if submodule not in gitmodules:
+        gitmodules[submodule] = {}
+
+      if sub_key in ('url', 'gclient-condition', 'path'):
+        gitmodules[submodule][sub_key] = value
+
+    # Structure git submodules into a dict of DEPS git url entries.
+    submodules = {}
+    for name, module in gitmodules.items():
+      submodules[module['path']] = {
+          'dep_type': 'git',
+          'url': '{}@{}'.format(module['url'], commit_hashes[name])
+      }
+
+      if 'gclient-condition' in module:
+        submodules[module['path']]['condition'] = module['gclient-condition']
+
+    return submodules
 
   def _get_option(self, attr, default):
     obj = self
