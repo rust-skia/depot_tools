@@ -549,7 +549,8 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
     self.assertEqual(out, output_json)
 
   def testSetDep(self):
-    fake_deps = os.path.join(self.root_dir, 'DEPS.fake')
+    self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'])
+    fake_deps = os.path.join(self.git_base, 'repo_1', 'DEPS')
     with open(fake_deps, 'w') as f:
       f.write('\n'.join([
           'vars = { ',
@@ -565,8 +566,10 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
       ]))
 
     self.gclient([
-        'setdep', '-r', 'foo@new_foo', '-r', 'bar@new_bar',
-        '--var', 'foo_var=new_val', '--deps-file', fake_deps])
+        'setdep', '-r', 'foo@new_foo', '-r', 'bar@new_bar', '--var',
+        'foo_var=new_val', '--deps-file', fake_deps
+    ],
+                 cwd=self.git_base + 'repo_1')
 
     with open(fake_deps) as f:
       contents = f.read().splitlines()
@@ -584,9 +587,51 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
           '}',
     ], contents)
 
-  def testSetDep_BuiltinVariables(self):
+  def testSetDep_Submodules(self):
     self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'])
-    fake_deps = os.path.join(self.root_dir, 'DEPS.fake')
+    fake_deps = os.path.join(self.git_base, 'repo_1', 'DEPS')
+    gitmodules = os.path.join(self.git_base, 'repo_1', '.gitmodules')
+    with open(fake_deps, 'w') as f:
+      f.write('\n'.join([
+          'git_dependencies = "SUBMODULES"',
+          'vars = { ',
+          '  "foo_var": "foo_val",',
+          '  "foo_rev": "foo_rev",',
+          '}',
+      ]))
+
+    with open(gitmodules, 'w') as f:
+      f.write('\n'.join(
+          ['[submodule "foo"]', '  url = https://foo', '  path = foo']))
+
+    subprocess2.call([
+        'git', 'update-index', '--add', '--cacheinfo',
+        '160000,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,foo'
+    ],
+                     cwd=self.git_base + 'repo_1')
+
+    self.gclient([
+        'setdep', '-r', 'foo@new_foo', '--var', 'foo_var=new_val',
+        '--deps-file', fake_deps
+    ],
+                 cwd=self.git_base + 'repo_1')
+
+    with open(fake_deps) as f:
+      contents = f.read().splitlines()
+
+    self.assertEqual([
+        'git_dependencies = "SUBMODULES"',
+        'vars = { ',
+        '  "foo_var": "new_val",',
+        '  "foo_rev": "foo_rev",',
+        '}',
+    ], contents)
+
+  def testSetDep_BuiltinVariables(self):
+    self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'],
+                 cwd=self.git_base)
+
+    fake_deps = os.path.join(self.root_dir, 'DEPS')
     with open(fake_deps, 'w') as f:
       f.write('\n'.join([
           'vars = { ',
@@ -608,8 +653,10 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
       ]))
 
     self.gclient([
-        'setdep', '-r', 'foo@new_foo', '-r', 'bar@new_bar',
-        '--var', 'foo_var=new_val', '--deps-file', fake_deps])
+        'setdep', '-r', 'foo@new_foo', '-r', 'bar@new_bar', '--var',
+        'foo_var=new_val', '--deps-file', fake_deps
+    ],
+                 cwd=self.git_base + 'repo_1')
 
     with open(fake_deps) as f:
       contents = f.read().splitlines()

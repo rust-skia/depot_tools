@@ -3347,6 +3347,11 @@ def CMDsetdep(parser, args):
   local_scope = gclient_eval.Exec(contents, options.deps_file,
                                   builtin_vars=builtin_vars)
 
+  # Create a set of all git submodules.
+  submodule_status = subprocess2.check_output(['git', 'submodule',
+                                               'status']).decode('utf-8')
+  git_modules = {l.split()[1] for l in submodule_status.splitlines()}
+
   for var in options.vars:
     name, _, value = var.partition('=')
     if not name or not value:
@@ -3370,7 +3375,26 @@ def CMDsetdep(parser, args):
             % (name, package))
       gclient_eval.SetCIPD(local_scope, name, package, value)
     else:
-      gclient_eval.SetRevision(local_scope, name, value)
+      # Update DEPS only when `git_dependencies` == DEPS or SYNC.
+      # git_dependencies is defaulted to DEPS when not set.
+      if 'git_dependencies' not in local_scope or local_scope[
+          'git_dependencies'] in (gclient_eval.DEPS, gclient_eval.SYNC):
+        gclient_eval.SetRevision(local_scope, name, value)
+
+      # Update git submodules when `git_dependencies` == SYNC or SUBMODULES.
+      if 'git_dependencies' in local_scope and local_scope[
+          'git_dependencies'] in (gclient_eval.SUBMODULES, gclient_eval.SYNC):
+        # gclient setdep should update the revision, i.e., the gitlink only
+        # when the submodule entry is already present within .gitmodules.
+        if name not in git_modules:
+          raise KeyError(
+              'Could not find any dependency called %s in .gitmodules.' % name)
+
+        # Update the gitlink for the submodule.
+        subprocess2.call([
+            'git', 'update-index', '--add', '--cacheinfo',
+            f'160000,{value},{name}'
+        ])
 
   with open(options.deps_file, 'wb') as f:
     f.write(gclient_eval.RenderDEPSFile(local_scope).encode('utf-8'))
