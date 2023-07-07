@@ -21,9 +21,6 @@ class GitClApi(recipe_api.RecipeApi):
       name = name + ' (%s)' % kwargs.pop('suffix')
 
     my_loc = self._default_repo_location
-    if not my_loc and self.c:  # pragma: no cover
-      # fallback until all config usage is removed.
-      my_loc = self.c.repo_location
     cmd = ['vpython3', self.repo_resource('git_cl.py'), subcmd] + args
     with self.m.context(cwd=self.m.context.cwd or my_loc):
       return self.m.step(name, cmd, **kwargs)
