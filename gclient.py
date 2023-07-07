@@ -3413,9 +3413,11 @@ def CMDsetdep(parser, args):
                                   builtin_vars=builtin_vars)
 
   # Create a set of all git submodules.
-  submodule_status = subprocess2.check_output(['git', 'submodule',
-                                               'status']).decode('utf-8')
-  git_modules = {l.split()[1] for l in submodule_status.splitlines()}
+  if 'git_dependencies' in local_scope and local_scope['git_dependencies'] in (
+      gclient_eval.SUBMODULES, gclient_eval.SYNC):
+    submodule_status = subprocess2.check_output(['git', 'submodule',
+                                                 'status']).decode('utf-8')
+    git_modules = {l.split()[1] for l in submodule_status.splitlines()}
 
   for var in options.vars:
     name, _, value = var.partition('=')
