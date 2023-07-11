@@ -5206,7 +5206,7 @@ def CMDland(parser, args):
 @subcommand.usage('<patch url or issue id or issue url>')
 @metrics.collector.collect_metrics('git cl patch')
 def CMDpatch(parser, args):
-  """Patches in a code review."""
+  """Applies (cherry-picks) a Gerrit changelist locally."""
   parser.add_option('-b', dest='newbranch',
                     help='create a new branch off trunk for the patch')
   parser.add_option('-f', '--force', action='store_true',
