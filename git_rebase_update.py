@@ -258,7 +258,7 @@ def main(args=None):
   os.chdir(git.run('rev-parse', '--show-toplevel'))
 
   if git.current_branch() == 'HEAD':
-    if git.run('status', '--porcelain'):
+    if git.run('status', '--porcelain', '--ignore-submodules=all'):
       print('Cannot rebase-update with detached head + uncommitted changes.')
       return 1
   else:
