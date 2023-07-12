@@ -22,7 +22,7 @@ class InfraSuperproject(config_util.Config):
             {
                 'name': '.',
                 'url': url('chromium', 'infra/infra_superproject'),
-                'managed': False,
+                'managed': True,
                 'custom_vars': {},
             },
         ],
