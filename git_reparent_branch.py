@@ -92,7 +92,7 @@ def main(args):
   for branch, parent in topo_iter(branch_tree):
     if parent in branches:
       branches.append(branch)
-  return git_rebase_update.main(['--no-fetch'] + branches)
+  return git_rebase_update.main(['--no-fetch', '--keep-empty'] + branches)
 
 
 if __name__ == '__main__':  # pragma: no cover
