@@ -1141,24 +1141,37 @@ def GetEditor(git_editor=None):
 
 def RunEditor(content, git, git_editor=None):
   """Opens up the default editor in the system to get the CL description."""
-  file_handle, filename = tempfile.mkstemp(text=True, prefix='cl_description')
+  editor = GetEditor(git_editor=git_editor)
+  if not editor:
+    return None
   # Make sure CRLF is handled properly by requiring none.
   if '\r' in content:
     print(
         '!! Please remove \\r from your change description !!', file=sys.stderr)
+
+  file_handle, filename = tempfile.mkstemp(text=True, prefix='cl_description.')
   fileobj = os.fdopen(file_handle, 'wb')
   # Still remove \r if present.
   content = re.sub('\r?\n', '\n', content)
   # Some editors complain when the file doesn't end in \n.
   if not content.endswith('\n'):
     content += '\n'
+
+  if 'vim' in editor or editor == 'vi':
+    # If the user is using vim and has 'modelines' enabled, this will change the
+    # filetype from a generic auto-detected 'conf' to 'gitcommit', which is used
+    # to activate proper column wrapping, spell checking, syntax highlighting
+    # for git footers, etc.
+    #
+    # Because of the implementation of GetEditor above, we also check for the
+    # exact string 'vi' here, to help users get a sane default when they have vi
+    # symlink'd to vim (or something like vim).
+    fileobj.write('# vim: ft=gitcommit\n'.encode('utf-8'))
+
   fileobj.write(content.encode('utf-8'))
   fileobj.close()
 
   try:
-    editor = GetEditor(git_editor=git_editor)
-    if not editor:
-      return None
     cmd = '%s %s' % (editor, filename)
     if sys.platform == 'win32' and os.environ.get('TERM') == 'msys':
       # Msysgit requires the usage of 'env' to be present.
