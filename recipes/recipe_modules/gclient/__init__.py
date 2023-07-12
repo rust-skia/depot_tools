@@ -1,5 +1,3 @@
-PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
-
 DEPS = [
   'git',
   'gitiles',
@@ -13,3 +11,7 @@ DEPS = [
   'recipe_engine/step',
   'tryserver',
 ]
+
+from .config import config_ctx as CONFIG_CTX
+
+__all__ = ['CONFIG_CTX']

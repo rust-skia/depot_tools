@@ -2,11 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-try:
-  _STRING_TYPE = basestring
-except NameError:  # pragma: no cover
-  _STRING_TYPE = str
-
 from recipe_engine.config import config_item_context, ConfigGroup, BadConf
 from recipe_engine.config import ConfigList, Dict, Single, Static, Set, List
 
@@ -19,31 +14,31 @@ def BaseConfig(USE_MIRROR=True, CACHE_DIR=None,
   return ConfigGroup(
     solutions = ConfigList(
       lambda: ConfigGroup(
-        name = Single(_STRING_TYPE),
-        url = Single((_STRING_TYPE, type(None)), empty_val=''),
-        deps_file = Single(_STRING_TYPE, empty_val=deps_file, required=False,
+        name = Single(str),
+        url = Single((str, type(None)), empty_val=''),
+        deps_file = Single(str, empty_val=deps_file, required=False,
                            hidden=False),
         managed = Single(bool, empty_val=True, required=False, hidden=False),
-        custom_deps = Dict(value_type=(_STRING_TYPE, type(None))),
-        custom_vars = Dict(value_type=(_STRING_TYPE, bool)),
-        safesync_url = Single(_STRING_TYPE, required=False),
+        custom_deps = Dict(value_type=(str, type(None))),
+        custom_vars = Dict(value_type=(str, bool)),
+        safesync_url = Single(str, required=False),
 
         revision = Single(
-            (_STRING_TYPE, gclient_api.RevisionResolver),
+            (str, gclient_api.RevisionResolver),
             required=False, hidden=True),
       )
     ),
-    deps_os = Dict(value_type=_STRING_TYPE),
-    hooks = List(_STRING_TYPE),
-    target_os = Set(_STRING_TYPE),
+    deps_os = Dict(value_type=str),
+    hooks = List(str),
+    target_os = Set(str),
     target_os_only = Single(bool, empty_val=False, required=False),
-    target_cpu = Set(_STRING_TYPE),
+    target_cpu = Set(str),
     target_cpu_only = Single(bool, empty_val=False, required=False),
     cache_dir = Static(cache_dir, hidden=False),
 
     # If supplied, use this as the source root (instead of the first solution's
     # checkout).
-    src_root = Single(_STRING_TYPE, required=False, hidden=True),
+    src_root = Single(str, required=False, hidden=True),
 
     # Maps 'solution' -> build_property
     # TODO(machenbach): Deprecate this in favor of the one below.
@@ -57,7 +52,7 @@ def BaseConfig(USE_MIRROR=True, CACHE_DIR=None,
     # of code here of setting custom vars AND passing in --revision. We hope
     # to remove custom vars later.
     revisions = Dict(
-        value_type=(_STRING_TYPE, gclient_api.RevisionResolver),
+        value_type=(str, gclient_api.RevisionResolver),
         hidden=True),
 
     # TODO(iannucci): HACK! The use of None here to indicate that we apply this
