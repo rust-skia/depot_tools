@@ -5,9 +5,6 @@
 # Monkeypatch IMapIterator so that Ctrl-C can kill everything properly.
 # Derived from https://gist.github.com/aljungberg/626518
 
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import multiprocessing.pool
 import sys
 import threading
@@ -42,12 +39,6 @@ import textwrap
 import subprocess2
 
 from io import BytesIO
-
-
-if sys.version_info.major == 2:
-  # On Python 3, BrokenPipeError is raised instead.
-  # pylint:disable=redefined-builtin
-  BrokenPipeError = IOError
 
 
 ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -450,12 +441,27 @@ def freeze():
 
   root_path = repo_root()
 
+  # unindexed tracks all the files which are unindexed but we want to add to
+  # the `FREEZE.unindexed` commit.
+  unindexed = []
+
+  # will be set to true if there are any indexed files to commit.
+  have_indexed_files = False
+
   for f, s in status():
     if is_unmerged(s):
       die("Cannot freeze unmerged changes!")
-    if limit_mb > 0:
-      if s.lstat == '?':
-        untracked_bytes += os.lstat(os.path.join(root_path, f)).st_size
+    if s.lstat not in ' ?':
+      # This covers all changes to indexed files.
+      # lstat = ' ' means that the file is tracked and modified, but wasn't
+      # added yet.
+      # lstat = '?' means that the file is untracked.
+      have_indexed_files = True
+    else:
+      unindexed.append(f.encode('utf-8'))
+    if s.lstat == '?' and limit_mb > 0:
+      untracked_bytes += os.lstat(os.path.join(root_path, f)).st_size
+
   if limit_mb > 0 and untracked_bytes > limit_mb * MB:
     die("""\
       You appear to have too much untracked+unignored data in your git
@@ -476,23 +482,29 @@ def freeze():
       Where <new_limit> is an integer threshold in megabytes.""",
       untracked_bytes / (MB * 1.0), limit_mb, key)
 
-  try:
-    run('commit', '--no-verify', '-m', FREEZE + '.indexed')
-    took_action = True
-  except subprocess2.CalledProcessError:
-    pass
+  if have_indexed_files:
+    try:
+      run('commit', '--no-verify', '-m', f'{FREEZE}.indexed')
+      took_action = True
+    except subprocess2.CalledProcessError:
+      pass
 
   add_errors = False
-  try:
-    run('add', '-A', '--ignore-errors')
-  except subprocess2.CalledProcessError:
-    add_errors = True
+  if unindexed:
+    try:
+      run('add',
+          '--pathspec-from-file',
+          '-',
+          '--ignore-errors',
+          indata=b'\n'.join(unindexed))
+    except subprocess2.CalledProcessError:
+      add_errors = True
 
-  try:
-    run('commit', '--no-verify', '-m', FREEZE + '.unindexed')
-    took_action = True
-  except subprocess2.CalledProcessError:
-    pass
+    try:
+      run('commit', '--no-verify', '-m', f'{FREEZE}.unindexed')
+      took_action = True
+    except subprocess2.CalledProcessError:
+      pass
 
   ret = []
   if add_errors:
