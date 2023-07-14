@@ -233,7 +233,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"solutions\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"Angle/\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"revision\": \"1fd70473fb3de634b409d4acaf49ffc1f90aae1f\"@@@",
-      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    },@@@",
       "@@@STEP_LOG_LINE@json.output@    \"src/blatley/\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"revision\": \"5e800497199d615131a76cd10651e74d7c8a0962\"@@@",
       "@@@STEP_LOG_LINE@json.output@    }@@@",
