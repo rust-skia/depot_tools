@@ -219,8 +219,11 @@ def return_code_from_exception(exception):
   """Returns the exit code that would result of raising the exception."""
   if exception is None:
     return 0
-  if isinstance(exception[1], SystemExit):
-    return exception[1].code
+  e = exception[1]
+  if isinstance(e, KeyboardInterrupt):
+    return 130
+  if isinstance(e, SystemExit):
+    return e.code
   return 1
 
 

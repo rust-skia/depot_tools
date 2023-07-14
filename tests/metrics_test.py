@@ -302,6 +302,22 @@ class MetricsCollectorTest(unittest.TestCase):
     self.assertEqual(cm.exception.code, 0)
     self.assert_collects_metrics({'exit_code': 0})
 
+  def test_handles_keyboard_interrupt(self):
+    """Tests that KeyboardInterrupt exits with 130 and metrics are collected."""
+    self.FileRead.side_effect = [
+        '{"is-googler": true, "countdown": 0, "opt-in": true, "version": 0}'
+    ]
+
+    @self.collector.collect_metrics('fun')
+    def fun():
+      raise KeyboardInterrupt
+
+    # When an exception is raised, we should catch it, update exit-code,
+    # collect metrics, and re-raise it.
+    with self.assertRaises(KeyboardInterrupt):
+      fun()
+    self.assert_collects_metrics({'exit_code': 130})
+
   def test_handles_system_exit_non_zero(self):
     """Tests that the sys.exit code is respected and metrics are collected."""
     self.FileRead.side_effect = [
