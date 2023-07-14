@@ -821,12 +821,13 @@ def run_with_stderr(*cmd, **kwargs):
   autostrip = kwargs.pop('autostrip', True)
   indata = kwargs.pop('indata', None)
   decode = kwargs.pop('decode', True)
+  accepted_retcodes = kwargs.pop('accepted_retcodes', [0])
 
   cmd = (GIT_EXE, '-c', 'color.ui=never') + cmd
   proc = subprocess2.Popen(cmd, **kwargs)
   ret, err = proc.communicate(indata)
   retcode = proc.wait()
-  if retcode != 0:
+  if retcode not in accepted_retcodes:
     raise subprocess2.CalledProcessError(retcode, cmd, os.getcwd(), ret, err)
 
   if autostrip:

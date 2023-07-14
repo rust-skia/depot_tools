@@ -69,6 +69,10 @@ class OutputManager(object):
     for i, col in enumerate(line.columns):
       self.max_column_lengths[i] = max(self.max_column_lengths[i], len(col))
 
+  def merge(self, other):
+    for line in other.lines:
+      self.append(line)
+
   def as_formatted_string(self):
     return '\n'.join(
         l.as_padded_string(self.max_column_lengths) for l in self.lines)
@@ -116,6 +120,7 @@ class BranchMapper(object):
     self.verbosity = 0
     self.maxjobs = 0
     self.show_subject = False
+    self.hide_dormant = False
     self.output = OutputManager()
     self.__gone_branches = set()
     self.__branches_info = None
@@ -172,7 +177,7 @@ class BranchMapper(object):
 
     if roots:
       for root in sorted(roots):
-        self.__append_branch(root)
+        self.__append_branch(root, self.output)
     else:
       no_branches = OutputLine()
       no_branches.append('No User Branches')
@@ -214,9 +219,27 @@ class BranchMapper(object):
 
     return color
 
-  def __append_branch(self, branch, depth=0):
+  def __is_dormant_branch(self, branch):
+    if '/' in branch:
+      return False
+
+    is_dormant = run('config',
+                     '--get',
+                     'branch.{}.dormant'.format(branch),
+                     accepted_retcodes=[0, 1])
+    return is_dormant == 'true'
+
+  def __append_branch(self, branch, output, depth=0):
     """Recurses through the tree structure and appends an OutputLine to the
     OutputManager for each branch."""
+    child_output = OutputManager()
+    for child in sorted(self.__parent_map.pop(branch, ())):
+      self.__append_branch(child, child_output, depth=depth + 1)
+
+    is_dormant_branch = self.__is_dormant_branch(branch)
+    if self.hide_dormant and is_dormant_branch and not child_output.lines:
+      return
+
     branch_info = self.__branches_info[branch]
     if branch_info:
       branch_hash = branch_info.hash
@@ -277,6 +300,11 @@ class BranchMapper(object):
       line.append(behind_string, separator=' ', color=Fore.MAGENTA)
       line.append(back_separator)
 
+    if self.verbosity >= 4:
+      line.append(' (dormant)' if is_dormant_branch else '          ',
+                  separator='  ',
+                  color=Fore.RED)
+
     # The Rietveld issue associated with the branch.
     if self.verbosity >= 2:
       (url, color, status) = ('', '', '') if self.__is_invalid_parent(branch) \
@@ -293,10 +321,9 @@ class BranchMapper(object):
       else:
         line.append('')
 
-    self.output.append(line)
+    output.append(line)
 
-    for child in sorted(self.__parent_map.pop(branch, ())):
-      self.__append_branch(child, depth=depth + 1)
+    output.merge(child_output)
 
 
 def print_desc():
@@ -326,10 +353,13 @@ def main(argv):
     print_desc()
 
   parser = argparse.ArgumentParser()
-  parser.add_argument('-v', action='count', default=0,
+  parser.add_argument('-v',
+                      action='count',
+                      default=0,
                       help=('Pass once to show tracking info, '
                             'twice for hash and review url, '
-                            'thrice for review status'))
+                            'thrice for review status, '
+                            'four times to mark dormant branches'))
   parser.add_argument('--no-color', action='store_true', dest='nocolor',
                       help='Turn off colors.')
   parser.add_argument(
@@ -337,6 +367,10 @@ def main(argv):
       help='The number of jobs to use when retrieving review status')
   parser.add_argument('--show-subject', action='store_true',
                       dest='show_subject', help='Show the commit subject.')
+  parser.add_argument('--hide-dormant',
+                      action='store_true',
+                      dest='hide_dormant',
+                      help='Hides dormant branches.')
 
   opts = parser.parse_args(argv)
 
@@ -345,6 +379,7 @@ def main(argv):
   mapper.output.nocolor = opts.nocolor
   mapper.maxjobs = opts.maxjobs
   mapper.show_subject = opts.show_subject
+  mapper.hide_dormant = opts.hide_dormant
   mapper.start()
   print(mapper.output.as_formatted_string())
   return 0
