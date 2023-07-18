@@ -1044,6 +1044,8 @@ class GitWrapper(SCMWrapper):
       if self.url:
         _, base_rev = gclient_utils.SplitUrlRevision(self.url)
         if base_rev:
+          if base_rev.startswith('refs/'):
+            base_rev = ''.join(scm.GIT.RefToRemoteRef(base_rev, self.remote))
           merge_base = [base_rev]
       self._Run(
           ['-c', 'core.quotePath=false', 'diff', '--name-status'] + merge_base,

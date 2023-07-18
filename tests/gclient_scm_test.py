@@ -325,6 +325,24 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
                      'a7142dc9f0009350b96a11f372b6ea658592aa95')
     sys.stdout.close()
 
+  def testStatusRef(self):
+    if not self.enabled:
+      return
+    options = self.Options()
+    file_paths = [join(self.base_path, 'a')]
+    with open(file_paths[0], 'a') as f:
+      f.writelines('touched\n')
+    scm = gclient_scm.GitWrapper(self.url + '@refs/heads/feature',
+                                 self.root_dir, self.relpath)
+    file_paths.append(join(self.base_path, 'c'))  # feature branch touches c
+    file_list = []
+    scm.status(options, self.args, file_list)
+    self.assertEqual(file_list, file_paths)
+    self.checkstdout(
+        ('\n________ running \'git -c core.quotePath=false diff --name-status '
+         'refs/remotes/origin/feature\' in \'%s\'\n\nM\ta\n') %
+        join(self.root_dir, '.'))
+
   def testStatusNew(self):
     if not self.enabled:
       return
