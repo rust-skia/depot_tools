@@ -150,7 +150,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
     os.makedirs(tmp_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(cache_dir, exist_ok=True)
-    os.makedirs(racing_dir)
+    os.makedirs(racing_dir, exist_ok=True)
   os.environ.setdefault("RBE_output_dir", log_dir)
   os.environ.setdefault("RBE_proxy_log_dir", log_dir)
   os.environ.setdefault("RBE_log_dir", log_dir)
