@@ -141,6 +141,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
   """
   tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
   log_dir = os.path.join(tmp_dir, 'logs')
+  racing_dir = os.path.join(tmp_dir, 'racing')
   cache_dir = find_cache_dir(tmp_dir)
   if make_dirs:
     if os.path.exists(log_dir):
@@ -149,10 +150,12 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
     os.makedirs(tmp_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(cache_dir, exist_ok=True)
+    os.makedirs(racing_dir)
   os.environ.setdefault("RBE_output_dir", log_dir)
   os.environ.setdefault("RBE_proxy_log_dir", log_dir)
   os.environ.setdefault("RBE_log_dir", log_dir)
   os.environ.setdefault("RBE_cache_dir", cache_dir)
+  os.environ.setdefault("RBE_racing_tmp_dir", racing_dir)
   if sys.platform.startswith('win'):
     pipe_dir = hashlib.md5(tmp_dir.encode()).hexdigest()
     os.environ.setdefault("RBE_server_address",
@@ -163,6 +166,12 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
     os.environ.setdefault(
         "RBE_server_address", "unix:///tmp/reproxy_%s.sock" %
         hashlib.sha256(tmp_dir.encode()).hexdigest())
+
+
+def enable_racing():
+  os.environ.setdefault("RBE_exec_strategy", "racing")
+  # TODO(b/288285261) Tune bias once latency data has been gathered.
+  os.environ.setdefault("RBE_racing_bias", "0.95")
 
 
 @contextlib.contextmanager
@@ -197,6 +206,8 @@ def build_context(argv, tool):
   if os.environ.get('RBE_instance', None):
     print('WARNING: Using RBE_instance=%s\n' %
           os.environ.get('RBE_instance', ''))
+
+  enable_racing()
 
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
   if reproxy_ret_code != 0:
