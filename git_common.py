@@ -496,7 +496,8 @@ def freeze():
           '--pathspec-from-file',
           '-',
           '--ignore-errors',
-          indata=b'\n'.join(unindexed))
+          indata=b'\n'.join(unindexed),
+          cwd=root_path)
     except subprocess2.CalledProcessError:
       add_errors = True
 
