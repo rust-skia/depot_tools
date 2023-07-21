@@ -168,11 +168,6 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
         hashlib.sha256(tmp_dir.encode()).hexdigest())
 
 
-def enable_racing():
-  os.environ.setdefault("RBE_exec_strategy", "racing")
-  # TODO(b/288285261) Tune bias once latency data has been gathered.
-  os.environ.setdefault("RBE_racing_bias", "0.95")
-
 
 @contextlib.contextmanager
 def build_context(argv, tool):
@@ -206,8 +201,6 @@ def build_context(argv, tool):
   if os.environ.get('RBE_instance', None):
     print('WARNING: Using RBE_instance=%s\n' %
           os.environ.get('RBE_instance', ''))
-
-  enable_racing()
 
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
   if reproxy_ret_code != 0:
