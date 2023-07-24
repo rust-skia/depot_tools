@@ -111,6 +111,12 @@ def set_reproxy_metrics_flags(tool):
   os.environ.setdefault("RBE_metrics_prefix", "go.chromium.org")
 
 
+def remove_mdproxy_from_path():
+  os.environ["PATH"] = os.pathsep.join(
+      d for d in os.environ.get("PATH", "").split(os.pathsep)
+      if "mdproxy" not in d)
+
+
 def set_reproxy_path_flags(out_dir, make_dirs=True):
   """Helper to setup the logs and cache directories for reclient.
 
@@ -201,6 +207,9 @@ def build_context(argv, tool):
   if os.environ.get('RBE_instance', None):
     print('WARNING: Using RBE_instance=%s\n' %
           os.environ.get('RBE_instance', ''))
+
+  # TODO(b/292523514) remove this once a fix is landed in reproxy
+  remove_mdproxy_from_path()
 
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
   if reproxy_ret_code != 0:
