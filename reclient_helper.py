@@ -180,6 +180,10 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
         hashlib.sha256(tmp_dir.encode()).hexdigest())
 
 
+def set_racing_defaults():
+  os.environ.setdefault("RBE_local_resource_fraction", "0.2")
+  os.environ.setdefault("RBE_racing_bias", "0.95")
+
 
 @contextlib.contextmanager
 def build_context(argv, tool):
@@ -213,6 +217,8 @@ def build_context(argv, tool):
   if os.environ.get('RBE_instance', None):
     print('WARNING: Using RBE_instance=%s\n' %
           os.environ.get('RBE_instance', ''))
+
+  set_racing_defaults()
 
   # TODO(b/292523514) remove this once a fix is landed in reproxy
   remove_mdproxy_from_path()
