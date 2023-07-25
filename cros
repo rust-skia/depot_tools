@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
+# Copyright 2011 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -52,8 +52,8 @@ def _FindChromite(path):
 def _MissingErrorOut(target):
   sys.stderr.write("""ERROR: Couldn't find the chromite tool %s.
 
-Please change to a directory inside your Chromium OS source tree
-and retry.  If you need to setup a Chromium OS source tree, see
+Please change to a directory inside your ChromiumOS source tree
+and retry.  If you need to setup a ChromiumOS source tree, see
   https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md
 """ % target)
   return 127
@@ -65,7 +65,7 @@ def _CheckPythonVersion():
     return
 
   progname = os.path.basename(sys.argv[0])
-  print('%s: Chrome OS requires Python-%s+, but "%s" is "%s"' %
+  print('%s: ChromiumOS requires Python-%s+, but "%s" is "%s"' %
         (progname, '.'.join(str(x) for x in MIN_PYTHON_VER_SOFT),
          sys.executable, sys.version.replace('\n', ' ')),
         file=sys.stderr)
