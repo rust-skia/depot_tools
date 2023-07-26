@@ -181,9 +181,17 @@ def main(args):
         # performance.
         j_value = min(j_value, 1000)
       elif sys.platform == 'darwin':
-        # On macOS, j value higher than 800 causes 'Too many open files' error
-        # (crbug.com/936864).
-        j_value = min(j_value, 800)
+        mac_ver = tuple(map(int, platform.mac_ver()[0].split('.')))
+        if mac_ver[0] > 13 or (mac_ver[0] == 13 and mac_ver[0] >= 5):
+          # On macOS 13.5, the recommended way to increase the file descriptors
+          # and process no longer works and the build fails with an error. Set
+          # the limit to 200 until new way to increase the limit is discovered
+          # (crbug.com/1467777).
+          j_value = min(j_value, 250)
+        else:
+          # On macOS, j value higher than 800 causes 'Too many open files' error
+          # (crbug.com/936864).
+          j_value = min(j_value, 800)
 
       args.append('%d' % j_value)
     else:
