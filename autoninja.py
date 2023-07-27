@@ -11,14 +11,15 @@ makes using remote build acceleration simpler and safer, and avoids errors that
 can cause slow goma builds or swap-storms on unaccelerated builds.
 """
 
-from __future__ import print_function
-
 import multiprocessing
 import os
 import platform
 import re
 import subprocess
 import sys
+
+if sys.platform == 'darwin':
+  import resource
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -150,6 +151,24 @@ def main(args):
     # ionice -c 3 is IO priority IDLE
     prefix_args = ['nice'] + ['-10']
 
+  # On macOS, the default limit of open file descriptors is too low (256).
+  # This causes a large j value to result in 'Too many open files' errors.
+  # Check whether the limit can be raised to a large enough value. If yes,
+  # use `ulimit -n .... &&` as a prefix to increase the limit when running
+  # ninja.
+  if sys.platform == 'darwin':
+    wanted_limit = 200000  # Large enough to avoid any risk of exhaustion.
+    fileno_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if fileno_limit <= wanted_limit:
+      try:
+        resource.setrlimit(resource.RLIMIT_NOFILE, (wanted_limit, hard_limit))
+      except Exception as _:
+        pass
+      fileno_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+      if fileno_limit >= wanted_limit:
+        prefix_args = ['ulimit', '-n', f'{wanted_limit}', '&&']
+
+
   # Call ninja.py so that it can find ninja binary installed by DEPS or one in
   # PATH.
   ninja_path = os.path.join(SCRIPT_DIR, 'ninja.py')
@@ -181,17 +200,18 @@ def main(args):
         # performance.
         j_value = min(j_value, 1000)
       elif sys.platform == 'darwin':
-        mac_ver = tuple(map(int, platform.mac_ver()[0].split('.')))
-        if mac_ver[0] > 13 or (mac_ver[0] == 13 and mac_ver[0] >= 5):
-          # On macOS 13.5, the recommended way to increase the file descriptors
-          # and process no longer works and the build fails with an error. Set
-          # the limit to 200 until new way to increase the limit is discovered
-          # (crbug.com/1467777).
-          j_value = min(j_value, 250)
+        # If the number of open file descriptors is large enough (or it can be
+        # raised to a large enough value), then set j value to 1000. This limit
+        # comes from ninja which is limited to at most FD_SETSIZE (1024) open
+        # file descriptors (using 1000 leave a bit of head room).
+        #
+        # If the number of open file descriptors cannot be raised, then use a
+        # j value of 200 which is the maximum value that reliably work with
+        # the default limit of 256.
+        if fileno_limit >= wanted_limit:
+          j_value = min(j_value, 1000)
         else:
-          # On macOS, j value higher than 800 causes 'Too many open files' error
-          # (crbug.com/936864).
-          j_value = min(j_value, 800)
+          j_value = min(j_value, 200)
 
       args.append('%d' % j_value)
     else:
