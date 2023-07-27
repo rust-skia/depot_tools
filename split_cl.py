@@ -27,6 +27,11 @@ import git_common as git
 # in the past.
 CL_SPLIT_FORCE_LIMIT = 10
 
+# The maximum number of top reviewers to list. `git cl split` may send many CLs
+# to a single reviewer, so the top reviewers with the most CLs sent to them
+# will be listed.
+CL_SPLIT_TOP_REVIEWERS = 5
+
 
 def EnsureInGitRepository():
   """Throws an exception if the current directory is not a git repository."""
@@ -268,6 +273,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     if answer.lower() != 'y':
       return 0
 
+    cls_per_reviewer = collections.defaultdict(int)
     for cl_index, (directory, files) in \
         enumerate(files_split_by_owners.items(), 1):
       # Use '/' as a path separator in the branch name and the CL description
@@ -283,6 +289,18 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
                  description, comment, reviewers, changelist, cmd_upload,
                  cq_dry_run, enable_auto_submit, topic, repository_root)
+
+      for reviewer in reviewers:
+        cls_per_reviewer[reviewer] += 1
+
+    # List the top reviewers that will be sent the most CLs as a result of the
+    # split.
+    reviewer_rankings = sorted(cls_per_reviewer.items(),
+                               key=lambda item: item[1],
+                               reverse=True)
+    print('The top reviewers are:')
+    for reviewer, count in reviewer_rankings[:CL_SPLIT_TOP_REVIEWERS]:
+      print(f'    {reviewer}: {count} CLs')
 
     # Go back to the original branch.
     git.run('checkout', refactor_branch)
