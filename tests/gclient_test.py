@@ -451,7 +451,7 @@ class GclientTest(trial_dir.TestCase):
 
     self.assertEqual(
         [(h.action, h.effective_cwd) for h in self._get_hooks()],
-        [(('tata', 'titi'), self.root_dir),
+        [(('tata', 'titi'), os.path.join(self.root_dir, 'foo')),
          (('fire', 'lazors'), os.path.join(self.root_dir, 'foo/baz'))])
 
   def testTargetOS(self):

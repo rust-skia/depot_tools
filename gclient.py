@@ -897,8 +897,9 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     hooks_cwd = self.root.root_dir
     if self._use_relative_paths:
       hooks_cwd = os.path.join(hooks_cwd, self.name)
-      logging.warning('Updating hook base working directory to %s.',
-                      hooks_cwd)
+    elif self._relative:
+      hooks_cwd = os.path.join(hooks_cwd, os.path.dirname(self.name))
+    logging.warning('Using hook base working directory: %s.', hooks_cwd)
 
     # Only add all hooks if we should sync, otherwise just add custom hooks.
     # override named sets of hooks by the custom hooks
