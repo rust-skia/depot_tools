@@ -1552,7 +1552,7 @@ class TestGitCl(unittest.TestCase):
     options.enable_auto_submit = False
     options.set_bot_commit = False
     options.cq_dry_run = False
-    options.use_commit_queue = options.cq_quick_run = False
+    options.use_commit_queue = False
     options.hashtags = ['cow']
     options.target_branch = None
     options.push_options = ['uploadvalidator~skip']
@@ -1631,7 +1631,7 @@ class TestGitCl(unittest.TestCase):
     options.enable_auto_submit = False
     options.set_bot_commit = False
     options.cq_dry_run = False
-    options.use_commit_queue = options.cq_quick_run = False
+    options.use_commit_queue = False
     options.hashtags = ['cow']
     options.target_branch = None
     options.push_options = ['uploadvalidator~skip']
@@ -1697,7 +1697,7 @@ class TestGitCl(unittest.TestCase):
     options.enable_auto_submit = False
     options.set_bot_commit = False
     options.cq_dry_run = False
-    options.use_commit_queue = options.cq_quick_run = False
+    options.use_commit_queue = False
     options.hashtags = ['cow']
     options.target_branch = None
     options.push_options = ['uploadvalidator~skip']
@@ -2712,18 +2712,6 @@ class TestGitCl(unittest.TestCase):
           {'Commit-Queue': vote}, notify, None), ''),
     ]
 
-  def _cmd_set_quick_run_gerrit(self):
-    self.mockGit.config['branch.main.gerritissue'] = '123'
-    self.mockGit.config['branch.main.gerritserver'] = (
-        'https://chromium-review.googlesource.com')
-    self.mockGit.config['remote.origin.url'] = (
-        'https://chromium.googlesource.com/infra/infra')
-    self.calls = [
-        (('SetReview', 'chromium-review.googlesource.com',
-          'infra%2Finfra~123', None,
-          {'Commit-Queue': 1, 'Quick-Run': 1}, None, None), ''),
-    ]
-
   def test_cmd_set_commit_gerrit_clear(self):
     self._cmd_set_commit_gerrit_common(0)
     self.assertEqual(0, git_cl.main(['set-commit', '-c']))
@@ -2735,10 +2723,6 @@ class TestGitCl(unittest.TestCase):
   def test_cmd_set_commit_gerrit(self):
     self._cmd_set_commit_gerrit_common(2)
     self.assertEqual(0, git_cl.main(['set-commit']))
-
-  def test_cmd_set_quick_run_gerrit(self):
-    self._cmd_set_quick_run_gerrit()
-    self.assertEqual(0, git_cl.main(['set-commit', '-q']))
 
   def test_description_display(self):
     mock.patch('git_cl.Changelist', ChangelistMock).start()
@@ -4549,16 +4533,6 @@ class CMDTryTestCase(CMDTestCaseBase):
     self.assertEqual(
         sys.stdout.getvalue(),
         'Scheduling CQ dry run on: '
-        'https://chromium-review.googlesource.com/123456\n')
-
-  @mock.patch('git_cl.Changelist.SetCQState')
-  def testSetCQQuickRunByDefault(self, mockSetCQState):
-    mockSetCQState.return_value = 0
-    self.assertEqual(0, git_cl.main(['try', '-q']))
-    git_cl.Changelist.SetCQState.assert_called_with(git_cl._CQState.QUICK_RUN)
-    self.assertEqual(
-        sys.stdout.getvalue(),
-        'Scheduling CQ quick run on: '
         'https://chromium-review.googlesource.com/123456\n')
 
   @mock.patch('git_cl._call_buildbucket')
