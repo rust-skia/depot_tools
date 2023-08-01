@@ -28,6 +28,8 @@ per-file presubmit*.py=brucedawson@chromium.org
 
 per-file pylint*=vapier@chromium.org
 
+per-file bazel=file://CROS_OWNERS
+per-file bazel.py=file://CROS_OWNERS
 per-file cbuildbot=file://CROS_OWNERS
 per-file cros=file://CROS_OWNERS
 per-file *cros_python2*=file://CROS_OWNERS
