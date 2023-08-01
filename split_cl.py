@@ -32,29 +32,45 @@ CL_SPLIT_FORCE_LIMIT = 10
 # will be listed.
 CL_SPLIT_TOP_REVIEWERS = 5
 
+FilesAndOwnersDirectory = collections.namedtuple("FilesAndOwnersDirectory",
+                                                 "files owners_directories")
+
 
 def EnsureInGitRepository():
   """Throws an exception if the current directory is not a git repository."""
   git.run('rev-parse')
 
 
-def CreateBranchForDirectory(prefix, directory, upstream):
-  """Creates a branch named |prefix| + "_" + |directory| + "_split".
+def CreateBranchForDirectories(prefix, directories, upstream):
+  """Creates a branch named |prefix| + "_" + |directories[0]| + "_split".
 
   Return false if the branch already exists. |upstream| is used as upstream for
   the created branch.
   """
   existing_branches = set(git.branches(use_limit = False))
-  branch_name = prefix + '_' + directory + '_split'
+  branch_name = prefix + '_' + directories[0] + '_split'
   if branch_name in existing_branches:
     return False
   git.run('checkout', '-t', upstream, '-b', branch_name)
   return True
 
 
-def FormatDescriptionOrComment(txt, directory):
-  """Replaces $directory with |directory| in |txt|."""
-  return txt.replace('$directory', '/' + directory)
+def FormatDirectoriesForPrinting(directories, prefix=None):
+  """Formats directory list for printing
+
+  Uses dedicated format for single-item list."""
+
+  prefixed = directories
+  if prefix:
+    prefixed = [(prefix + d) for d in directories]
+
+  return str(prefixed) if len(prefixed) > 1 else str(prefixed[0])
+
+
+def FormatDescriptionOrComment(txt, directories):
+  """Replaces $directory with |directories| in |txt|."""
+  to_insert = FormatDirectoriesForPrinting(directories, prefix='/')
+  return txt.replace('$directory', to_insert)
 
 
 def AddUploadedByGitClSplitToDescription(description):
@@ -73,7 +89,7 @@ def AddUploadedByGitClSplitToDescription(description):
   return '\n'.join(lines)
 
 
-def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
+def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
              description, comment, reviewers, changelist, cmd_upload,
              cq_dry_run, enable_auto_submit, topic, repository_root):
   """Uploads a CL with all changes to |files| in |refactor_branch|.
@@ -81,8 +97,8 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
   Args:
     refactor_branch: Name of the branch that contains the changes to upload.
     refactor_branch_upstream: Name of the upstream of |refactor_branch|.
-    directory: Path to the directory that contains the OWNERS file for which
-        to upload a CL.
+    directories: Paths to the directories that contain the OWNERS files for
+        which to upload a CL.
     files: List of AffectedFile instances to include in the uploaded CL.
     description: Description of the uploaded CL.
     comment: Comment to post on the uploaded CL.
@@ -94,9 +110,10 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
     topic: Topic to associate with uploaded CLs.
   """
   # Create a branch.
-  if not CreateBranchForDirectory(
-      refactor_branch, directory, refactor_branch_upstream):
-    print('Skipping ' + directory + ' for which a branch already exists.')
+  if not CreateBranchForDirectories(refactor_branch, directories,
+                                    refactor_branch_upstream):
+    print('Skipping ' + FormatDirectoriesForPrinting(directories) +
+          ' for which a branch already exists.')
     return
 
   # Checkout all changes to files in |files|.
@@ -119,7 +136,7 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
   # when it is closed.
   with gclient_utils.temporary_file() as tmp_file:
     gclient_utils.FileWrite(
-        tmp_file, FormatDescriptionOrComment(description, directory))
+        tmp_file, FormatDescriptionOrComment(description, directories))
     git.run('commit', '-F', tmp_file)
 
   # Upload a CL.
@@ -134,17 +151,18 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
     upload_args.append('--enable-auto-submit')
   if topic:
     upload_args.append('--topic={}'.format(topic))
-  print('Uploading CL for ' + directory + '...')
+  print('Uploading CL for ' + FormatDirectoriesForPrinting(directories) + '...')
 
   ret = cmd_upload(upload_args)
   if ret != 0:
-    print('Uploading failed for ' + directory + '.')
+    print('Uploading failed for ' + FormatDirectoriesForPrinting(directories) +
+          '.')
     print('Note: git cl split has built-in resume capabilities.')
     print('Delete ' + git.current_branch() +
           ' then run git cl split again to resume uploading.')
 
   if comment:
-    changelist().AddComment(FormatDescriptionOrComment(comment, directory),
+    changelist().AddComment(FormatDescriptionOrComment(comment, directories),
                             publish=True)
 
 
@@ -172,14 +190,14 @@ def GetFilesSplitByOwners(files, max_depth):
   return files_split_by_owners
 
 
-def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
+def PrintClInfo(cl_index, num_cls, directories, file_paths, description,
                 reviewers, enable_auto_submit, topic):
   """Prints info about a CL.
 
   Args:
     cl_index: The index of this CL in the list of CLs to upload.
     num_cls: The total number of CLs that will be uploaded.
-    directory: Path to the directory that contains the OWNERS file for which
+    directories: Paths to directories that contains the OWNERS files for which
         to upload a CL.
     file_paths: A list of files in this CL.
     description: The CL description.
@@ -188,11 +206,11 @@ def PrintClInfo(cl_index, num_cls, directory, file_paths, description,
     topic: Topic to set for this CL.
   """
   description_lines = FormatDescriptionOrComment(description,
-                                                 directory).splitlines()
+                                                 directories).splitlines()
   indented_description = '\n'.join(['    ' + l for l in description_lines])
 
   print('CL {}/{}'.format(cl_index, num_cls))
-  print('Path: {}'.format(directory))
+  print('Paths: {}'.format(FormatDirectoriesForPrinting(directories)))
   print('Reviewers: {}'.format(', '.join(reviewers)))
   print('Auto-Submit: {}'.format(enable_auto_submit))
   print('Topic: {}'.format(topic))
@@ -245,9 +263,22 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     assert refactor_branch_upstream, \
         "Branch %s must have an upstream." % refactor_branch
 
-    files_split_by_owners = GetFilesSplitByOwners(files, max_depth)
+    # Verify that the description contains a bug link. Examples:
+    #   Bug: 123
+    #   Bug: chromium:456
+    bug_pattern = re.compile(r"^Bug:\s*(?:[a-zA-Z]+:)?[0-9]+", re.MULTILINE)
+    matches = re.findall(bug_pattern, description)
+    answer = 'y'
+    if not matches:
+      answer = gclient_utils.AskForData(
+          'Description does not include a bug link. Proceed? (y/n):')
+    if answer.lower() != 'y':
+      return 0
 
-    num_cls = len(files_split_by_owners)
+    files_split_by_reviewers = SelectReviewersForFiles(cl, author, files,
+                                                       max_depth)
+
+    num_cls = len(files_split_by_reviewers)
     print('Will split current branch (' + refactor_branch + ') into ' +
           str(num_cls) + ' CLs.\n')
     if cq_dry_run and num_cls > CL_SPLIT_FORCE_LIMIT:
@@ -261,34 +292,20 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
       if answer.lower() != 'y':
         return 0
 
-    # Verify that the description contains a bug link. Examples:
-    #   Bug: 123
-    #   Bug: chromium:456
-    bug_pattern = re.compile(r"^Bug:\s*(?:[a-zA-Z]+:)?[0-9]+", re.MULTILINE)
-    matches = re.findall(bug_pattern, description)
-    answer = 'y'
-    if not matches:
-      answer = gclient_utils.AskForData(
-          'Description does not include a bug link. Proceed? (y/n):')
-    if answer.lower() != 'y':
-      return 0
-
     cls_per_reviewer = collections.defaultdict(int)
-    for cl_index, (directory, files) in \
-        enumerate(files_split_by_owners.items(), 1):
-      # Use '/' as a path separator in the branch name and the CL description
-      # and comment.
-      directory = directory.replace(os.path.sep, '/')
-      file_paths = [f for _, f in files]
-      reviewers = cl.owners_client.SuggestOwners(
-          file_paths, exclude=[author, cl.owners_client.EVERYONE])
+    for cl_index, (reviewers, cl_info) in \
+        enumerate(files_split_by_reviewers.items(), 1):
+      # Convert reviewers from tuple to set.
+      reviewer_set = set(reviewers)
       if dry_run:
-        PrintClInfo(cl_index, num_cls, directory, file_paths, description,
-                    reviewers, enable_auto_submit, topic)
+        file_paths = [f for _, f in cl_info.files]
+        PrintClInfo(cl_index, num_cls, cl_info.owners_directories, file_paths,
+                    description, reviewer_set, enable_auto_submit, topic)
       else:
-        UploadCl(refactor_branch, refactor_branch_upstream, directory, files,
-                 description, comment, reviewers, changelist, cmd_upload,
-                 cq_dry_run, enable_auto_submit, topic, repository_root)
+        UploadCl(refactor_branch, refactor_branch_upstream,
+                 cl_info.owners_directories, cl_info.files, description,
+                 comment, reviewer_set, changelist, cmd_upload, cq_dry_run,
+                 enable_auto_submit, topic, repository_root)
 
       for reviewer in reviewers:
         cls_per_reviewer[reviewer] += 1
@@ -309,3 +326,36 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     sys.stderr.write(cpe.stderr)
     return 1
   return 0
+
+
+def SelectReviewersForFiles(cl, author, files, max_depth):
+  """Selects reviewers for passed-in files
+
+  Args:
+    cl: Changelist class instance
+    author: Email of person running 'git cl split'
+    files: List of files
+    max_depth: The maximum directory depth to search for OWNERS files. A value
+               less than 1 means no limit.
+  """
+  info_split_by_owners = GetFilesSplitByOwners(files, max_depth)
+
+  info_split_by_reviewers = {}
+
+  for (directory, split_files) in info_split_by_owners.items():
+    # Use '/' as a path separator in the branch name and the CL description
+    # and comment.
+    directory = directory.replace(os.path.sep, '/')
+    file_paths = [f for _, f in split_files]
+    # Convert reviewers list to tuple in order to use reviewers as key to
+    # dictionary.
+    reviewers = tuple(
+        cl.owners_client.SuggestOwners(
+            file_paths, exclude=[author, cl.owners_client.EVERYONE]))
+
+    if not reviewers in info_split_by_reviewers:
+      info_split_by_reviewers[reviewers] = FilesAndOwnersDirectory([], [])
+    info_split_by_reviewers[reviewers].files.extend(split_files)
+    info_split_by_reviewers[reviewers].owners_directories.append(directory)
+
+  return info_split_by_reviewers
