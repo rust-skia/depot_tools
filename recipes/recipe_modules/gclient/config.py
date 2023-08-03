@@ -486,7 +486,6 @@ def gerrit(c):
   s = c.solutions.add()
   s.name = 'gerrit'
   s.url = 'https://gerrit.googlesource.com/gerrit.git'
-  c.revisions['gerrit'] = 'refs/heads/master'
 
 @config_ctx(includes=['gerrit'])
 def gerrit_plugins_binary_size(c):
