@@ -25,20 +25,15 @@ if [ $MSYS = 0 ]; then
   echo
 fi
 
+base_dir=$(dirname "$0")
+if [ -e "$base_dir/.disable_auto_update" ]; then
+  exit
+fi
+
 # Test if this script is running under a MinGW install.  If it is, we will
 # hardcode the paths to Git where possible.
 OUTPUT="$(uname | grep 'MINGW')"
 MINGW=$?
-
-if [ $MINGW = 0 ]; then
-  base_dir="${0%/*}"
-else
-  base_dir=$(dirname "$0")
-fi
-
-if [ -e "$base_dir/.disable_auto_update" ]; then
-  exit
-fi
 
 # We want to update the bundled tools even under MinGW.
 if [ $MINGW = 0 ]; then
