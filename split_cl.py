@@ -155,8 +155,7 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
 
   ret = cmd_upload(upload_args)
   if ret != 0:
-    print('Uploading failed for ' + FormatDirectoriesForPrinting(directories) +
-          '.')
+    print('Uploading failed.')
     print('Note: git cl split has built-in resume capabilities.')
     print('Delete ' + git.current_branch() +
           ' then run git cl split again to resume uploading.')
