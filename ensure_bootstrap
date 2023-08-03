@@ -14,12 +14,15 @@
 # invoke this script instead of manually calling "cipd_bin_setup" and other
 # operations.
 
+# Export for other depot_tools scripts to re-use.
+export DEPOT_TOOLS_DIR="${DEPOT_TOOLS_DIR:-$(dirname "${BASH_SOURCE[0]}")}"
+
 # Test if this script is running under a MinGW install.  If it is, we will
 # hardcode the paths to Git where possible.
 OUTPUT="$(uname | grep 'MINGW')"
 MINGW=$?
 
-base_dir=$(dirname "${BASH_SOURCE[0]}")
+base_dir="${DEPOT_TOOLS_DIR}"
 if [ $MINGW != 0 ]; then
   # Don't bootstrap Python 3 on windows, since it is already done by
   # bootstrap/win_tools.bat.

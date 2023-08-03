@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 function cipd_bin_setup {
-    local MYPATH=$(dirname "${BASH_SOURCE[0]}")
+    local MYPATH="${DEPOT_TOOLS_DIR:-$(dirname "${BASH_SOURCE[0]}")}"
     local ENSURE="$MYPATH/cipd_manifest.txt"
     local ROOT="$MYPATH/.cipd_bin"
 

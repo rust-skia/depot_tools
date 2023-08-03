@@ -35,10 +35,10 @@ then
   exec "python" "${NEWARGS[@]}"
 fi
 
+# Export for other depot_tools scripts to re-use.
+export DEPOT_TOOLS_DIR="${DEPOT_TOOLS_DIR:-$(dirname "$0")}"
 
-base_dir=$(dirname "$0")
-
-source "$base_dir/cipd_bin_setup.sh"
+source "${DEPOT_TOOLS_DIR}/cipd_bin_setup.sh"
 cipd_bin_setup &> /dev/null
 
 case $(uname -s) in
@@ -46,6 +46,6 @@ MINGW*|CYGWIN*)
   cmd.exe //c $0.bat "$@"
   ;;
 *)
-  exec "$base_dir/.cipd_bin/vpython" "$@"
+  exec "${DEPOT_TOOLS_DIR}/.cipd_bin/vpython" "$@"
   ;;
 esac

@@ -6,7 +6,10 @@
 
 set -e -o pipefail
 
-MYPATH=$(dirname "${BASH_SOURCE[0]}")
+# Export for other depot_tools scripts to re-use.
+export DEPOT_TOOLS_DIR="${DEPOT_TOOLS_DIR:-$(dirname "${BASH_SOURCE[0]}")}"
+
+MYPATH="${DEPOT_TOOLS_DIR}"
 CYGWIN=false
 
 # Make sure this starts empty

@@ -11,6 +11,9 @@ then
   exit
 fi
 
+# Export for other depot_tools scripts to re-use.
+export DEPOT_TOOLS_DIR="${DEPOT_TOOLS_DIR:-$(dirname "$0")}"
+
 # Test if this script is running under a MSYS install. This is likely an error
 # if it is, so we warn the user accordingly.
 OUTPUT="$(uname | grep 'MSYS')"
@@ -25,7 +28,7 @@ if [ $MSYS = 0 ]; then
   echo
 fi
 
-base_dir=$(dirname "$0")
+base_dir="${DEPOT_TOOLS_DIR}"
 if [ -e "$base_dir/.disable_auto_update" ]; then
   exit
 fi
