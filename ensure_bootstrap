@@ -19,11 +19,8 @@
 OUTPUT="$(uname | grep 'MINGW')"
 MINGW=$?
 
-if [ $MINGW = 0 ]; then
-  base_dir="${0%/*}"
-else
-  base_dir=$(dirname "${BASH_SOURCE[0]}")
-
+base_dir=$(dirname "${BASH_SOURCE[0]}")
+if [ $MINGW != 0 ]; then
   # Don't bootstrap Python 3 on windows, since it is already done by
   # bootstrap/win_tools.bat.
   if [ "X$DEPOT_TOOLS_BOOTSTRAP_PYTHON3" != "X0" ]; then
