@@ -23,9 +23,6 @@ if [ $MINGW = 0 ]; then
   base_dir="${0%/*}"
 else
   base_dir=$(dirname "${BASH_SOURCE[0]}")
-  if [ -L "$base_dir" ]; then
-    base_dir=`cd "$base_dir" && pwd -P`
-  fi
 
   # Don't bootstrap Python 3 on windows, since it is already done by
   # bootstrap/win_tools.bat.

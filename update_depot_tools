@@ -34,9 +34,6 @@ if [ $MINGW = 0 ]; then
   base_dir="${0%/*}"
 else
   base_dir=$(dirname "$0")
-  if [ -L "$base_dir" ]; then
-    base_dir=`cd "$base_dir" && pwd -P`
-  fi
 fi
 
 if [ -e "$base_dir/.disable_auto_update" ]; then
