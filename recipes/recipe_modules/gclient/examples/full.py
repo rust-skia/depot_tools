@@ -33,7 +33,6 @@ TEST_CONFIGS = [
     'gerrit_plugins_buildbucket',
     'gerrit_plugins_chromium_behavior',
     'gerrit_plugins_chromium_binary_size',
-    'gerrit_plugins_chromium_style',
     'gerrit_plugins_chumpdetector',
     'gerrit_plugins_code_coverage',
     'gerrit_plugins_git_numberer',

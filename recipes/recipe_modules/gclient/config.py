@@ -517,13 +517,6 @@ def gerrit_plugins_chromium_binary_size(c):
   c.got_revision_mapping['gerrit_plugins_chromium_binary_size'] = 'got_revision'
 
 @config_ctx(includes=['gerrit'])
-def gerrit_plugins_chromium_style(c):
-  s = c.solutions.add()
-  s.name = 'gerrit_plugins_chromium_style'
-  s.url = ChromiumGitURL(c, 'infra', 'gerrit-plugins', 'chromium-style.git')
-  c.got_revision_mapping['gerrit_plugins_binary_size'] = 'got_revision'
-
-@config_ctx(includes=['gerrit'])
 def gerrit_plugins_chumpdetector(c):
   s = c.solutions.add()
   s.name = 'gerrit_plugins_chumpdetector'
