@@ -7,7 +7,7 @@ function cipd_bin_setup {
     local ENSURE="$MYPATH/cipd_manifest.txt"
     local ROOT="$MYPATH/.cipd_bin"
 
-    UNAME=`uname -s | tr '[:upper:]' '[:lower:]'`
+    UNAME="${DEPOT_TOOLS_UNAME_S:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
     case $UNAME in
       cygwin*)
         ENSURE="$(cygpath -w $ENSURE)"

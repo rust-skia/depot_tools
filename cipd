@@ -8,6 +8,7 @@ set -e -o pipefail
 
 # Export for other depot_tools scripts to re-use.
 export DEPOT_TOOLS_DIR="${DEPOT_TOOLS_DIR:-$(dirname "${BASH_SOURCE[0]}")}"
+export DEPOT_TOOLS_UNAME_S="${DEPOT_TOOLS_UNAME_S:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
 
 MYPATH="${DEPOT_TOOLS_DIR}"
 CYGWIN=false
@@ -15,7 +16,7 @@ CYGWIN=false
 # Make sure this starts empty
 ARCH=
 
-UNAME=`uname -s | tr '[:upper:]' '[:lower:]'`
+UNAME="${DEPOT_TOOLS_UNAME_S}"
 case "${UNAME}" in
   aix)
     OS="${UNAME}"
