@@ -94,7 +94,6 @@ CIPD_BACKEND="https://chrome-infra-packages.appspot.com"
 VERSION_FILE="${MYPATH}/cipd_client_version"
 
 CLIENT="${MYPATH}/.cipd_client"
-VERSION=$(<"${VERSION_FILE}")
 PLATFORM="${OS}-${ARCH}"
 
 # A value in .cipd_client_platform overrides the "guessed" platform.
@@ -103,7 +102,6 @@ if [ -f "${PLATFORM_OVERRIDE_FILE}" ]; then
   PLATFORM=$(<"${PLATFORM_OVERRIDE_FILE}")
 fi
 
-URL="${CIPD_BACKEND}/client?platform=${PLATFORM}&version=${VERSION}"
 USER_AGENT="depot_tools/$(git -C ${MYPATH} rev-parse HEAD 2>/dev/null || echo "???")"
 
 
@@ -169,6 +167,9 @@ function clean_bootstrap() {
   if [ -z "${expected_hash}" ] ; then
     exit 1
   fi
+
+  local VERSION=$(<"${VERSION_FILE}")
+  local URL="${CIPD_BACKEND}/client?platform=${PLATFORM}&version=${VERSION}"
 
   # Download the client into a temporary file, check its hash, then move it into
   # the final location.
