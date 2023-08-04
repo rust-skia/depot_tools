@@ -9,4 +9,6 @@ setlocal
 set PATH=%PATH%;%~dp0
 
 :: Defer control.
-python3 "%~dp0\autosiso.py" %*
+:: Add double quotes to the arguments to preserve the special '^' character.
+:: See autosiso.py for more information.
+python3 "%~dp0\autosiso.py" "%*"

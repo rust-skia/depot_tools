@@ -32,11 +32,16 @@ def _use_remoteexec(argv):
 
 
 def main(argv):
-  # TODO(b/283714114): support single file compile with '^'.
-  # The arguments need to be passed as a double quoted string on Windows.
-  #
-  # pylint: disable=line-too-long
-  # See also https://source.chromium.org/chromium/chromium/tools/depot_tools/+/main:autoninja.py;l=33-42;drc=eb2866e6541607f63cdc50038379886c77f17506
+  # On Windows the autosiso.bat script passes along the arguments enclosed in
+  # double quotes. This prevents multiple levels of parsing of the special '^'
+  # characters needed when compiling a single file but means that this script
+  # gets called with a single argument containing all of the actual arguments,
+  # separated by spaces. When this case is detected we need to do argument
+  # splitting ourselves. This means that arguments containing actual spaces are
+  # not supported by autoninja, but that is not a real limitation.
+  if (sys.platform.startswith('win') and len(argv) == 2
+      and argv[1].count(' ') > 0):
+    argv = argv[:1] + argv[1].split()
 
   if not _use_remoteexec(argv):
     print(
