@@ -12,6 +12,7 @@ import os
 import shutil
 import subprocess
 import sys
+import time
 
 import gclient_paths
 import reclient_metrics
@@ -225,7 +226,10 @@ def build_context(argv, tool):
   # TODO(b/292523514) remove this once a fix is landed in reproxy
   remove_mdproxy_from_path()
 
+  start = time.time()
   reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
+  elapsed = time.time() - start
+  print('%1.3f s to start reproxy' % elapsed)
   if reproxy_ret_code != 0:
     yield reproxy_ret_code
     return
@@ -233,4 +237,7 @@ def build_context(argv, tool):
     yield
   finally:
     print("Shutting down reproxy...", file=sys.stderr)
+    start = time.time()
     stop_reproxy(reclient_cfg, reclient_bin_dir)
+    elapsed = time.time() - start
+    print('%1.3f s to stop reproxy' % elapsed)
