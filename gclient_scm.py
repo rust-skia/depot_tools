@@ -398,6 +398,22 @@ class GitWrapper(SCMWrapper):
     # 4. Return the new patch_revs to process.
     return patch_revs_to_process
 
+  def _ref_to_remote_ref(self, target_rev):
+    """Helper function for scm.GIT.RefToRemoteRef with error checking.
+
+    Joins the results of scm.GIT.RefToRemoteRef into a string, but raises a
+    comprehensible error if RefToRemoteRef fails.
+
+    Args:
+      target_rev: a ref somewhere under refs/.
+    """
+    tmp_ref = scm.GIT.RefToRemoteRef(target_rev, self.remote)
+    if not tmp_ref:
+      raise gclient_utils.Error(
+          'Failed to turn target revision %r in repo %r into remote ref' %
+          (target_rev, self.checkout_path))
+    return ''.join(tmp_ref)
+
   def apply_patch_ref(self, patch_repo, patch_rev, target_rev, options,
                       file_list):
     # type: (str, str, str, optparse.Values, Collection[str]) -> str
@@ -452,7 +468,7 @@ class GitWrapper(SCMWrapper):
       # to find the corresponding remote ref for it, since |target_rev| might
       # point to a local ref which is not up to date with the corresponding
       # remote ref.
-      remote_ref = ''.join(scm.GIT.RefToRemoteRef(target_rev, self.remote))
+      remote_ref = self._ref_to_remote_ref(target_rev)
       self.Print('Trying the corresponding remote ref for %r: %r\n' % (
           target_rev, remote_ref))
       if scm.GIT.IsValidRevision(self.checkout_path, remote_ref):
@@ -1045,7 +1061,7 @@ class GitWrapper(SCMWrapper):
         _, base_rev = gclient_utils.SplitUrlRevision(self.url)
         if base_rev:
           if base_rev.startswith('refs/'):
-            base_rev = ''.join(scm.GIT.RefToRemoteRef(base_rev, self.remote))
+            base_rev = self._ref_to_remote_ref(base_rev)
           merge_base = [base_rev]
       self._Run(
           ['-c', 'core.quotePath=false', 'diff', '--name-status'] + merge_base,
