@@ -62,12 +62,10 @@ def main(args):
             file=sys.stderr)
       print(file=sys.stderr)
 
-  # Strip -o/--offline so ninja doesn't see them.
-  input_args = [arg for arg in input_args if arg not in ('-o', '--offline')]
-
   use_goma = False
   use_remoteexec = False
   use_rbe = False
+  use_siso = False
 
   # Attempt to auto-detect remote build acceleration. We support gn-based
   # builds, where we look for args.gn in the build tree, and cmake-based builds
@@ -94,6 +92,27 @@ def main(args):
         if re.search(r'(^|\s)(use_rbe)\s*=\s*true($|\s)', line_without_comment):
           use_rbe = True
           continue
+        if re.search(r'(^|\s)(use_siso)\s*=\s*true($|\s)',
+                     line_without_comment):
+          use_siso = True
+          continue
+
+    if use_siso:
+      ninja_marker = os.path.join(output_dir, '.ninja_deps')
+      if os.path.exists(ninja_marker):
+        return ('echo Run gn clean before switching from ninja to siso in %s' %
+                output_dir)
+      siso = ['autosiso'] if use_remoteexec else ['siso', 'ninja']
+      if sys.platform.startswith('win'):
+        # An explicit 'call' is needed to make sure the invocation of autosiso
+        # returns to autoninja.bat, and the command prompt title gets reset.
+        siso = ['call'] + siso
+      return ' '.join(siso + input_args[1:])
+
+    siso_marker = os.path.join(output_dir, '.siso_deps')
+    if os.path.exists(siso_marker):
+      return ('echo Run gn clean before switching from siso to ninja in %s' %
+              output_dir)
 
   else:
     for relative_path in [
@@ -107,6 +126,9 @@ def main(args):
             if re.match(r'^\s*command\s*=\s*\S+gomacc', line):
               use_goma = True
               break
+
+  # Strip -o/--offline so ninja doesn't see them.
+  input_args = [arg for arg in input_args if arg not in ('-o', '--offline')]
 
   # If GOMA_DISABLED is set to "true", "t", "yes", "y", or "1"
   # (case-insensitive) then gomacc will use the local compiler instead of doing
