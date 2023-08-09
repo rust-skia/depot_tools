@@ -2,9 +2,11 @@ set noparent
 
 ajp@google.com
 aravindvasudev@google.com
+ddoman@chromium.org
 gavinmak@google.com
 jojwang@google.com
 sokcevic@google.com
+yiwzhang@google.com
 
 per-file autoninja*=brucedawson@chromium.org
 per-file autoninja*=dpranke@google.com
