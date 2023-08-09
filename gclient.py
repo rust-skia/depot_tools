@@ -942,16 +942,23 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       return {}
 
     # Get submodule commit hashes
-    result = subprocess2.check_output(['git', 'submodule', 'status'],
+    #  Output Format: `<mode> <commit_hash> <path>`.
+    result = subprocess2.check_output([
+        'git', 'ls-tree', '-r', 'HEAD', '--format',
+        '%(objectmode) %(objectname) %(path)'
+    ],
                                       cwd=cwd).decode('utf-8')
+
     commit_hashes = {}
-    for record in result.splitlines():
-      commit, module = record.split(maxsplit=1)
-      commit_hashes[module] = commit[1:]
+    for r in result.splitlines():
+      # ['<mode>', '<commit_hash>', '<path>'].
+      record = r.strip().split()
+      if record[0] == '160000':  # Only add gitlinks
+        commit_hashes[record[2]] = record[1]
 
     # Get .gitmodules fields
     gitmodules_entries = subprocess2.check_output(
-        ['git', 'config', '--file', filepath, '-l']).decode('utf-8')
+        ['git', 'config', '--file', filepath, '-l'], cwd=cwd).decode('utf-8')
 
     gitmodules = {}
     for entry in gitmodules_entries.splitlines():
@@ -961,7 +968,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       section, submodule_key = key.split('.', maxsplit=1)
 
       # Only parse [submodule "foo"] sections from .gitmodules.
-      if section != 'submodule':
+      if section.strip() != 'submodule':
         continue
 
       # The name of the submodule can contain '.', hence split from the back.
@@ -975,14 +982,14 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     # Structure git submodules into a dict of DEPS git url entries.
     submodules = {}
-    for name, module in gitmodules.items():
+    for module in gitmodules.values():
       if self._use_relative_paths:
         path = module['path']
       else:
         path = f'{self.name}/{module["path"]}'
       submodules[path] = {
           'dep_type': 'git',
-          'url': '{}@{}'.format(module['url'], commit_hashes[name])
+          'url': '{}@{}'.format(module['url'], commit_hashes[module['path']])
       }
 
       if 'gclient-condition' in module:
