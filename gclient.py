@@ -881,10 +881,21 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     deps = local_scope.get('deps', {})
 
-    # If dependencies are configured within git submodules, add them to DEPS.
+    # If dependencies are configured within git submodules, add them to deps.
     if self.git_dependencies_state in (gclient_eval.SUBMODULES,
                                        gclient_eval.SYNC):
-      deps.update(self.ParseGitSubmodules())
+      gitsubmodules = self.ParseGitSubmodules()
+      # TODO(crbug.com/1471685): Temporary hack. In case of applied patches
+      # where the changes are staged but not committed, any gitlinks from
+      # the patch are not returned in ParseGitSubmodules. In these cases,
+      # DEPS does have the commits from the patch, so we use those commits
+      # instead.
+      if self.git_dependencies_state == gclient_eval.SYNC:
+        for sub in gitsubmodules:
+          if sub not in deps:
+            deps[sub] = gitsubmodules[sub]
+      elif self.git_dependencies_state == gclient_eval.SUBMODULES:
+        deps.update(gitsubmodules)
 
     deps_to_add = self._deps_to_objects(
         self._postprocess_deps(deps, rel_prefix), self._use_relative_paths)
