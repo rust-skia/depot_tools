@@ -212,7 +212,7 @@ class FakeReposBase(object):
 
 class FakeRepos(FakeReposBase):
   """Implements populateGit()."""
-  NB_GIT_REPOS = 18
+  NB_GIT_REPOS = 20
 
   def populateGit(self):
     # Testing:
@@ -757,6 +757,73 @@ hooks = [{
         }"""),
             'origin':
             'git/repo_18@2\n'
+        })
+
+    # a relative path repo
+    self._commit_git(
+        'repo_19', {
+            'DEPS': """
+
+git_dependencies = "SUBMODULES"
+use_relative_paths = True
+vars = {
+  'foo_checkout': True,
+}
+deps = {
+  "some_repo": {
+    "url": '/repo_2@%(hash_2)s',
+    "condition": "not foo_checkout",
+  },
+  "chicken/dickens": {
+    "url": '/repo_3@%(hash_3)s',
+  },
+  "weird/deps": {
+    "url": '/repo_1'
+  },
+  "bar": {
+    "packages": [{
+      "package": "lemur",
+      "version": "version:1234",
+     }],
+     "dep_type": "cipd",
+  },
+}""" % {
+                'hash_2': self.git_hashes['repo_2'][1][0],
+                'hash_3': self.git_hashes['repo_3'][1][0],
+            },
+        })
+
+    # a non-relative_path repo
+    self._commit_git(
+        'repo_20', {
+            'DEPS': """
+
+git_dependencies = "SUBMODULES"
+vars = {
+  'foo_checkout': True,
+}
+deps = {
+  "foo/some_repo": {
+    "url": '/repo_2@%(hash_2)s',
+    "condition": "not foo_checkout",
+  },
+  "foo/chicken/dickens": {
+    "url": '/repo_3@%(hash_3)s',
+  },
+  "foo/weird/deps": {
+    "url": '/repo_1'
+  },
+  "foo/bar": {
+    "packages": [{
+      "package": "lemur",
+      "version": "version:1234",
+     }],
+     "dep_type": "cipd",
+  },
+}""" % {
+                'hash_2': self.git_hashes['repo_2'][1][0],
+                'hash_3': self.git_hashes['repo_3'][1][0],
+            },
         })
 
 

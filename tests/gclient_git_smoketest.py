@@ -32,6 +32,44 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
     if not self.enabled:
       self.skipTest('git fake repos not available')
 
+  def testGitmodules_relative(self):
+    self.gclient(['config', self.git_base + 'repo_19', '--name', 'dir'],
+                 cwd=self.git_base + 'repo_19')
+    self.gclient(['sync'], cwd=self.git_base + 'repo_19')
+    self.gclient(['gitmodules'],
+                 cwd=self.git_base + os.path.join('repo_19', 'dir'))
+
+    gitmodules = os.path.join(self.git_base, 'repo_19', 'dir', '.gitmodules')
+    with open(gitmodules) as f:
+      contents = f.read().splitlines()
+      self.assertEqual([
+          '[submodule "some_repo"]', '\tpath = some_repo', '\turl = /repo_2',
+          '\tgclient-condition = not foo_checkout',
+          '[submodule "chicken/dickens"]', '\tpath = chicken/dickens',
+          '\turl = /repo_3'
+      ], contents)
+
+  def testGitmodules_not_relative(self):
+    self.gclient(['config', self.git_base + 'repo_20', '--name', 'foo'],
+                 cwd=self.git_base + 'repo_20')
+    self.gclient(['sync'], cwd=self.git_base + 'repo_20')
+    self.gclient(['gitmodules'],
+                 cwd=self.git_base + os.path.join('repo_20', 'foo'))
+
+    gitmodules = os.path.join(self.git_base, 'repo_20', 'foo', '.gitmodules')
+    with open(gitmodules) as f:
+      contents = f.read().splitlines()
+      self.assertEqual([
+          '[submodule "some_repo"]', '\tpath = some_repo', '\turl = /repo_2',
+          '\tgclient-condition = not foo_checkout',
+          '[submodule "chicken/dickens"]', '\tpath = chicken/dickens',
+          '\turl = /repo_3'
+      ], contents)
+
+  def testGitmodules_not_in_gclient(self):
+    with self.assertRaisesRegex(AssertionError, 'from a gclient workspace'):
+      self.gclient(['gitmodules'], cwd=self.root_dir)
+
   def testSync(self):
     self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'])
     # Test unversioned checkout.
