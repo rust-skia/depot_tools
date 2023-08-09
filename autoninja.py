@@ -173,6 +173,11 @@ def main(args):
     # ionice -c 3 is IO priority IDLE
     prefix_args = ['nice'] + ['-10']
 
+  # Tell goma or reclient to do local compiles. On Windows these environment
+  # variables are set by the wrapper batch file.
+  offline_env = ['RBE_remote_disabled=1', 'GOMA_DISABLED=1'
+                 ] if offline and not sys.platform.startswith('win') else []
+
   # On macOS, the default limit of open file descriptors is too low (256).
   # This causes a large j value to result in 'Too many open files' errors.
   # Check whether the limit can be raised to a large enough value. If yes,
@@ -188,7 +193,8 @@ def main(args):
         pass
       fileno_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
       if fileno_limit >= wanted_limit:
-        prefix_args = ['ulimit', '-n', f'{wanted_limit}', '&&']
+        prefix_args = ['ulimit', '-n', f'{wanted_limit}', '&&'] + offline_env
+        offline_env = []
 
 
   # Call ninja.py so that it can find ninja binary installed by DEPS or one in
@@ -196,13 +202,15 @@ def main(args):
   ninja_path = os.path.join(SCRIPT_DIR, 'ninja.py')
   # If using remoteexec, use ninja_reclient.py which wraps ninja.py with
   # starting and stopping reproxy.
-  if not offline and use_remoteexec:
+  if use_remoteexec:
     ninja_path = os.path.join(SCRIPT_DIR, 'ninja_reclient.py')
-  args = prefix_args + [sys.executable, ninja_path] + input_args[1:]
+
+  args = offline_env + prefix_args + [sys.executable, ninja_path
+                                      ] + input_args[1:]
 
   num_cores = multiprocessing.cpu_count()
   if not j_specified and not t_specified:
-    if use_goma or use_remoteexec or use_rbe:
+    if not offline and (use_goma or use_remoteexec or use_rbe):
       args.append('-j')
       default_core_multiplier = 80
       if platform.machine() in ('x86_64', 'AMD64'):
@@ -255,11 +263,6 @@ def main(args):
 
   if os.environ.get('NINJA_SUMMARIZE_BUILD', '0') == '1':
     args += ['-d', 'stats']
-
-  if offline and not sys.platform.startswith('win'):
-    # Tell goma or reclient to do local compiles. On Windows these environment
-    # variables are set by the wrapper batch file.
-    return 'RBE_remote_disabled=1 GOMA_DISABLED=1 ' + ' '.join(args)
 
   return ' '.join(args)
 
