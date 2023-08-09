@@ -942,19 +942,16 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       return {}
 
     # Get submodule commit hashes
-    #  Output Format: `<mode> <commit_hash> <path>`.
-    result = subprocess2.check_output([
-        'git', 'ls-tree', '-r', 'HEAD', '--format',
-        '%(objectmode) %(objectname) %(path)'
-    ],
+    #  Output Format: `<mode> SP <type> SP <object> TAB <file>`.
+    result = subprocess2.check_output(['git', 'ls-tree', '-r', 'HEAD'],
                                       cwd=cwd).decode('utf-8')
 
     commit_hashes = {}
     for r in result.splitlines():
-      # ['<mode>', '<commit_hash>', '<path>'].
-      record = r.strip().split()
+      # ['<mode>', '<type>', '<commit_hash>', '<path>'].
+      record = r.strip().split(maxsplit=3)  # path can contain spaces.
       if record[0] == '160000':  # Only add gitlinks
-        commit_hashes[record[2]] = record[1]
+        commit_hashes[record[3]] = record[2]
 
     # Get .gitmodules fields
     gitmodules_entries = subprocess2.check_output(
