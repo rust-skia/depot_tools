@@ -15,8 +15,10 @@ function cipd_bin_setup {
         ;;
     esac
 
-    "$MYPATH/cipd" ensure \
+    (
+    source "$MYPATH/cipd" ensure \
         -log-level warning \
         -ensure-file "$ENSURE" \
         -root "$ROOT"
+    )
 }
