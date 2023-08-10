@@ -195,10 +195,10 @@ def build_context(argv, tool):
   reclient_bin_dir = find_reclient_bin_dir()
   reclient_cfg = find_reclient_cfg()
   if reclient_bin_dir is None or reclient_cfg is None:
-    print(("Build is configured to use reclient but necessary binaries "
+    print(('Build is configured to use reclient but necessary binaries '
            "or config files can't be found.\n"
-           "Please check if `download_remoteexec_cfg: True` custom var is set"
-           " in `.gclient`, and run `gclient sync`."),
+           'Please check if `"download_remoteexec_cfg": True` custom var is set'
+           ' in `.gclient`, and run `gclient sync`.'),
           file=sys.stderr)
     yield 1
     return
