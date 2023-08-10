@@ -12,7 +12,7 @@ from git_common import freeze, thaw
 
 
 def CMDfreeze(parser, args):
-  """Freeze a branch's changes."""
+  """Freeze a branch's changes, excluding unstaged gitlinks changes."""
   parser.parse_args(args)
   return freeze()
 

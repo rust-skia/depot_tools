@@ -448,7 +448,7 @@ def freeze():
   # will be set to true if there are any indexed files to commit.
   have_indexed_files = False
 
-  for f, s in status():
+  for f, s in status(ignore_submodules='all'):
     if is_unmerged(s):
       die("Cannot freeze unmerged changes!")
     if s.lstat not in ' ?':
