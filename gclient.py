@@ -2729,6 +2729,8 @@ def CMDgitmodules(parser, args):
       f.write(f'[submodule "{path}"]\n\tpath = {path}\n\turl = {url}\n')
       if 'condition' in dep:
         f.write(f'\tgclient-condition = {dep["condition"]}\n')
+  print('.gitmodules and gitlinks updated. Please check git diff and '
+        'commit changes.')
 
 
 @metrics.collector.collect_metrics('gclient flatten')

@@ -1518,13 +1518,16 @@ def PanProjectChecks(input_api, output_api,
       results.extend(
           input_api.canned_checks.CheckCorpLinksInDescription(
               input_api, output_api))
-      if input_api.change.scm == 'git':
-        snapshot("checking for commit objects in tree")
-        results.extend(input_api.canned_checks.CheckForCommitObjects(
-            input_api, output_api))
     snapshot("checking do not submit in files")
     results.extend(input_api.canned_checks.CheckDoNotSubmitInFiles(
         input_api, output_api))
+
+  if global_checks:
+    if input_api.change.scm == 'git':
+      snapshot("checking for commit objects in tree")
+      results.extend(
+          input_api.canned_checks.CheckForCommitObjects(input_api, output_api))
+
   snapshot("done")
   return results
 
@@ -1769,19 +1772,23 @@ def CheckForCommitObjects(input_api, output_api):
       ]
 
     mismatch_entries = []
+    deps_msg = ""
     for commit_tree_entry in commit_tree_entries:
       # Search for commit hashes in DEPS file - they must be present
       if commit_tree_entry[2] not in deps_content:
         mismatch_entries.append(commit_tree_entry[3])
+        deps_msg += f"\n    {commit_tree_entry[3]} -> {commit_tree_entry[2]}"
     if mismatch_entries:
       return [
           output_api.PresubmitError(
               'DEPS file indicates git submodule migration is in progress,\n'
-              'but the commit objects do not match DEPS entries.\n'
-              'Update the following commit objects with:\n'
-              '`git update-index --add --cacheinfo 160000,<commit_rev>,<path>`'
-              '\n'
-              'or DEPS entries:\n', mismatch_entries)
+              'but the commit objects do not match DEPS entries.\n\n'
+              'To reset all git submodule git entries to match DEPS, run\n'
+              'the following command in the root of this repository:\n'
+              '    gclient gitmodules'
+              '\n\n'
+              'If git submodule changes are correct, update the following DEPS '
+              'entries to: ' + deps_msg)
       ]
 
   return []
