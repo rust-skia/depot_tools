@@ -871,8 +871,12 @@ def is_dirty_git_tree(cmd):
   return False
 
 
-def status():
+def status(ignore_submodules=None):
   """Returns a parsed version of git-status.
+
+  Args:
+   ignore_submodules (str|None): "all", "none", or None.
+                                 None is equivalent to "none".
 
   Returns a generator of (current_name, (lstat, rstat, src)) pairs where:
     * current_name is the name of the file
@@ -881,6 +885,11 @@ def status():
     * src is the current name of the file, or the original name of the file
       if lstat == 'R'
   """
+
+  ignore_submodules = ignore_submodules or 'none'
+  assert ignore_submodules in (
+      'all', 'none'), f'ignore_submodules value {ignore_submodules} is invalid'
+
   stat_entry = collections.namedtuple('stat_entry', 'lstat rstat src')
 
   def tokenizer(stream):
@@ -909,7 +918,12 @@ def status():
         src = dest
       yield (dest, stat_entry(lstat, rstat, src))
 
-  return parser(tokenizer(run_stream('status', '-z', bufsize=-1)))
+  return parser(
+      tokenizer(
+          run_stream('status',
+                     '-z',
+                     f'--ignore-submodules={ignore_submodules}',
+                     bufsize=-1)))
 
 
 def squash_current_branch(header=None, merge_base=None):
