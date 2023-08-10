@@ -966,7 +966,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     # Get .gitmodules fields
     gitmodules_entries = subprocess2.check_output(
-        ['git', 'config', '--file', filepath, '-l'], cwd=cwd).decode('utf-8')
+        ['git', 'config', '--file', filepath, '-l']).decode('utf-8')
 
     gitmodules = {}
     for entry in gitmodules_entries.splitlines():
