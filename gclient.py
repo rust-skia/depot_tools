@@ -995,9 +995,17 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         path = module['path']
       else:
         path = f'{self.name}/{module["path"]}'
+      # TODO(crbug.com/1471685): Temporary hack. In case of applied patches
+      # where the changes are staged but not committed, any gitlinks from
+      # the patch are not returned by `git ls-tree`. The path won't be found
+      # in commit_hashes. Use a temporary '0000000' value that will be replaced
+      # with w/e is found in DEPS later.
       submodules[path] = {
-          'dep_type': 'git',
-          'url': '{}@{}'.format(module['url'], commit_hashes[module['path']])
+          'dep_type':
+          'git',
+          'url':
+          '{}@{}'.format(module['url'],
+                         commit_hashes.get(module['path'], '0000000'))
       }
 
       if 'gclient-condition' in module:
