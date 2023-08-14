@@ -4432,6 +4432,7 @@ def CMDlint(parser, args):
 
 
 @metrics.collector.collect_metrics('git cl presubmit')
+@subcommand.usage('[base branch]')
 def CMDpresubmit(parser, args):
   """Runs presubmit tests on the current changelist."""
   parser.add_option('-u', '--upload', action='store_true',
