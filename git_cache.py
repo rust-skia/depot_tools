@@ -234,6 +234,8 @@ class Mirror(object):
   def RunGit(self, cmd, print_stdout=True, **kwargs):
     """Run git in a subprocess."""
     cwd = kwargs.setdefault('cwd', self.mirror_path)
+    if "--git-dir" not in cmd:
+      cmd = ['--git-dir', cwd] + cmd
     kwargs.setdefault('print_stdout', False)
     if print_stdout:
       kwargs.setdefault('filter_fn', self.print)
@@ -446,11 +448,12 @@ class Mirror(object):
         # Start with a bare git dir.
         self.RunGit(['init', '--bare'], cwd=self.mirror_path)
         # Set appropriate symbolic-ref
-        remote_info = exponential_backoff_retry(
-            lambda: subprocess.check_output(
-                [self.git_exe, 'remote', 'show', self.url],
-                cwd=self.mirror_path).decode('utf-8', 'ignore').strip()
-        )
+        remote_info = exponential_backoff_retry(lambda: subprocess.check_output(
+            [
+                self.git_exe, '--git-dir', self.mirror_path, 'remote', 'show',
+                self.url
+            ],
+            cwd=self.mirror_path).decode('utf-8', 'ignore').strip())
         default_branch_regexp = re.compile(r'HEAD branch: (.*)$')
         m = default_branch_regexp.search(remote_info, re.MULTILINE)
         if m:
@@ -464,13 +467,12 @@ class Mirror(object):
             len(pack_files))
 
   def _fetch(self,
-             rundir,
              verbose,
              depth,
              no_fetch_tags,
              reset_fetch_config,
              prune=True):
-    self.config(rundir, reset_fetch_config)
+    self.config(self.mirror_path, reset_fetch_config)
 
     fetch_cmd = ['fetch']
     if verbose:
@@ -483,14 +485,18 @@ class Mirror(object):
       fetch_cmd.append('--prune')
     fetch_cmd.append('origin')
 
-    fetch_specs = subprocess.check_output(
-        [self.git_exe, 'config', '--get-all', 'remote.origin.fetch'],
-        cwd=rundir).decode('utf-8', 'ignore').strip().splitlines()
+    fetch_specs = subprocess.check_output([
+        self.git_exe, '--git-dir', self.mirror_path, 'config', '--get-all',
+        'remote.origin.fetch'
+    ],
+                                          cwd=self.mirror_path).decode(
+                                              'utf-8',
+                                              'ignore').strip().splitlines()
     for spec in fetch_specs:
       try:
         self.print('Fetching %s' % spec)
         with self.print_duration_of('fetch %s' % spec):
-          self.RunGit(fetch_cmd + [spec], cwd=rundir, retry=True)
+          self.RunGit(fetch_cmd + [spec], retry=True)
       except subprocess.CalledProcessError:
         if spec == '+refs/heads/*:refs/heads/*':
           raise ClobberNeeded()  # Corrupted cache.
@@ -499,7 +505,7 @@ class Mirror(object):
       self.print('Fetching %s' % commit)
       try:
         with self.print_duration_of('fetch %s' % commit):
-          self.RunGit(['fetch', 'origin', commit], cwd=rundir, retry=True)
+          self.RunGit(['fetch', 'origin', commit], retry=True)
       except subprocess.CalledProcessError:
         logging.warning('Fetch of %s failed' % commit)
 
@@ -519,8 +525,7 @@ class Mirror(object):
     with lockfile.lock(self.mirror_path, lock_timeout):
       try:
         self._ensure_bootstrapped(depth, bootstrap, reset_fetch_config)
-        self._fetch(self.mirror_path, verbose, depth, no_fetch_tags,
-                    reset_fetch_config)
+        self._fetch(verbose, depth, no_fetch_tags, reset_fetch_config)
       except ClobberNeeded:
         # This is a major failure, we need to clean and force a bootstrap.
         gclient_utils.rmtree(self.mirror_path)
@@ -529,8 +534,7 @@ class Mirror(object):
                                   bootstrap,
                                   reset_fetch_config,
                                   force=True)
-        self._fetch(self.mirror_path, verbose, depth, no_fetch_tags,
-                    reset_fetch_config)
+        self._fetch(verbose, depth, no_fetch_tags, reset_fetch_config)
 
   def update_bootstrap(self, prune=False, gc_aggressive=False):
     # NOTE: There have been cases where repos were being recursively uploaded
