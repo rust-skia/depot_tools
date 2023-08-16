@@ -19,9 +19,6 @@ import metadata.fields.types as field_types
 import metadata.fields.util as util
 import metadata.validation_result as vr
 
-# The delimiter used to separate multiple URLs.
-_VALUE_DELIMITER = ","
-
 _PATTERN_URL_ALLOWED = re.compile(r"^(https?|ftp|git):\/\/\S+$")
 _PATTERN_URL_CANONICAL_REPO = re.compile(
     r"^This is the canonical (public )?repo(sitory)?\.?$", re.IGNORECASE)
@@ -41,7 +38,7 @@ class URLField(field_types.MetadataField):
       return None
 
     invalid_values = []
-    for url in value.split(_VALUE_DELIMITER):
+    for url in value.split(self.VALUE_DELIMITER):
       url = url.strip()
       if not util.matches(_PATTERN_URL_ALLOWED, url):
         invalid_values.append(url)
@@ -52,7 +49,7 @@ class URLField(field_types.MetadataField):
                   "URLs, separate them with a '{delim}'. Invalid values: "
                   "{values}.")
       message = template.format(field_name=self._name,
-                                delim=_VALUE_DELIMITER,
+                                delim=self.VALUE_DELIMITER,
                                 values=util.quoted(invalid_values))
       return vr.ValidationError(message)
 

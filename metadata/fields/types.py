@@ -29,6 +29,10 @@ _PATTERN_STARTS_WITH_YES_OR_NO = re.compile(r"^(yes|no)", re.IGNORECASE)
 
 class MetadataField:
   """Base class for all metadata fields."""
+
+  # The delimiter used to separate multiple values.
+  VALUE_DELIMITER = ","
+
   def __init__(self, name: str, one_liner: bool = True):
     self._name = name
     self._one_liner = one_liner

@@ -16,6 +16,7 @@ sys.path.insert(0, _ROOT_DIR)
 
 import metadata.fields.custom.cpe_prefix
 import metadata.fields.custom.date
+import metadata.fields.custom.license
 import metadata.fields.custom.license_file
 import metadata.fields.custom.url
 import metadata.fields.custom.version
@@ -38,6 +39,7 @@ LICENSE_ANDROID_COMPATIBLE = field_types.YesNoField(
 # Custom fields.
 CPE_PREFIX = metadata.fields.custom.cpe_prefix.CPEPrefixField()
 DATE = metadata.fields.custom.date.DateField()
+LICENSE = metadata.fields.custom.license.LicenseField()
 LICENSE_FILE = metadata.fields.custom.license_file.LicenseFileField()
 URL = metadata.fields.custom.url.URLField()
 VERSION = metadata.fields.custom.version.VersionField()
@@ -49,6 +51,7 @@ ALL_FIELDS = (
     VERSION,
     DATE,
     REVISION,
+    LICENSE,
     LICENSE_FILE,
     SECURITY_CRITICAL,
     SHIPPED,

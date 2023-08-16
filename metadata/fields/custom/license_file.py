@@ -25,9 +25,6 @@ _PATTERN_PATH_BACKWARD = re.compile(r"\.\.\/")
 # Deprecated special value for packages that aren't shipped.
 _NOT_SHIPPED = "NOT_SHIPPED"
 
-# The delimiter used to separate multiple license file paths.
-_VALUE_DELIMITER = ","
-
 
 class LicenseFileField(field_types.MetadataField):
   """Custom field for the paths to the package's license file(s)."""
@@ -48,7 +45,7 @@ class LicenseFileField(field_types.MetadataField):
           f"{self._name} uses deprecated value '{_NOT_SHIPPED}'.")
 
     invalid_values = []
-    for path in value.split(_VALUE_DELIMITER):
+    for path in value.split(self.VALUE_DELIMITER):
       path = path.strip()
       if util.is_empty(path) or util.matches(_PATTERN_PATH_BACKWARD, path):
         invalid_values.append(path)
@@ -58,7 +55,7 @@ class LicenseFileField(field_types.MetadataField):
                   "or include '../'. If there are multiple license files, "
                   "separate them with a '{delim}'. Invalid values: {values}.")
       message = template.format(field_name=self._name,
-                                delim=_VALUE_DELIMITER,
+                                delim=self.VALUE_DELIMITER,
                                 values=util.quoted(invalid_values))
       return vr.ValidationError(message)
 
@@ -79,7 +76,7 @@ class LicenseFileField(field_types.MetadataField):
           f"{self._name} uses deprecated value '{_NOT_SHIPPED}'.")
 
     invalid_values = []
-    for license_filename in value.split(_VALUE_DELIMITER):
+    for license_filename in value.split(self.VALUE_DELIMITER):
       license_filename = license_filename.strip()
       if license_filename.startswith("/"):
         license_filepath = os.path.join(
