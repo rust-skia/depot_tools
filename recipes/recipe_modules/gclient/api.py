@@ -424,3 +424,44 @@ class GclientApi(recipe_api.RecipeApi):
   @property
   def DepsDiffException(self):
     return DepsDiffException
+
+  def roll_deps(self, deps_path, dep_updates, test_data=None):
+    """Updates DEPS file to desired revisions, and returns all requried file
+    changes.
+
+    Args:
+      deps_path - Path to DEPS file that will be modified.
+      dep_updates - A map of dependencies to update (key = dependency name,
+                    value = revision).
+
+    Returns:
+      A map of all files that need to be modified (key = file path, value = file
+      content) in addition to DEPS file itself.
+      Note: that git submodules (gitlinks) are treated as files and content is a
+      commit hash.
+      Note: deps_path is not added to returned map since the repo relative path
+      is not known.
+    """
+    update_gitlink = False
+    dep_updates_args = []
+    file_changes = {}
+
+    deps_contents = self.m.file.read_text('Read DEPS file', deps_path,
+                                          test_data)
+    lines = deps_contents.split('\n')
+    for line in lines:
+      if line.startswith('git_dependencies = '):
+        if 'DEPS' not in line:
+          # Need to update gitlinks
+          update_gitlink = True
+        break
+
+    for dep, rev in dep_updates.items():
+      dep_updates_args.extend(['-r', f'{dep}@{rev}'])
+      if update_gitlink:
+        # Add gitlink updates to file changes.
+        file_changes[dep] = rev.encode('UTF-8')
+    # Apply the updates to the local DEPS files.
+    self.m.gclient('setdep',
+                   ['setdep', '--deps-file', deps_path] + dep_updates_args)
+    return file_changes

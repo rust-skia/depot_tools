@@ -5,12 +5,14 @@
 PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
-  'gclient',
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/path',
-  'recipe_engine/properties',
-  'recipe_engine/step',
+    'gclient',
+    'recipe_engine/assertions',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/path',
+    'recipe_engine/properties',
+    'recipe_engine/step',
 ]
 
 
@@ -64,8 +66,18 @@ TEST_CONFIGS = [
     'with_tags',
 ]
 
+DEPS_CONTENT = """
+git_dependencies = 'SYNC'
+"""
+
 
 def RunSteps(api):
+  file_changes = api.gclient.roll_deps(
+      'foo', {'foo': '2222222222222222222222222222222222222222'},
+      test_data=DEPS_CONTENT)
+  api.assertions.assertEqual(
+      file_changes, {'foo': b'2222222222222222222222222222222222222222'})
+
   for config_name in TEST_CONFIGS:
     api.gclient.make_config(config_name)
 

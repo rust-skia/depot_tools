@@ -3,6 +3,44 @@
     "cmd": [
       "vpython3",
       "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "copy",
+      "foo",
+      "/path/to/tmp/"
+    ],
+    "infra_step": true,
+    "name": "Read DEPS file",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@foo@@@@",
+      "@@@STEP_LOG_LINE@foo@git_dependencies = 'SYNC'@@@",
+      "@@@STEP_LOG_END@foo@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
+      "RECIPE_REPO[depot_tools]/gclient.py",
+      "setdep",
+      "--deps-file",
+      "foo",
+      "-r",
+      "foo@2222222222222222222222222222222222222222"
+    ],
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "gclient setdep"
+  },
+  {
+    "cmd": [
+      "vpython3",
+      "-u",
       "RECIPE_REPO[depot_tools]/gclient.py",
       "config",
       "--spec",
