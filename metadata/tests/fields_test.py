@@ -82,6 +82,25 @@ class FieldValidationTest(unittest.TestCase):
         error_values=["", "\n", "April 3, 2012", "2012/03/04"],
     )
 
+  def test_url_validation(self):
+    self._run_field_validation(
+        field=known_fields.URL,
+        valid_values=[
+            "https://www.example.com/a",
+            "http://www.example.com/b",
+            "ftp://www.example.com/c,git://www.example.com/d",
+            "This is the canonical public repository",
+        ],
+        error_values=[
+            "",
+            "\n",
+            "ghttps://www.example.com/e",
+            "https://www.example.com/ f",
+            "Https://www.example.com/g",
+            "This is an unrecognized message for the URL",
+        ],
+    )
+
   def test_version_validation(self):
     self._run_field_validation(
         field=known_fields.VERSION,

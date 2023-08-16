@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+# Copyright 2023 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import os
+import re
+import sys
+from typing import Union
+
+_THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+# The repo's root directory.
+_ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, "..", "..", ".."))
+
+# Add the repo's root directory for clearer imports.
+sys.path.insert(0, _ROOT_DIR)
+
+import metadata.fields.types as field_types
+import metadata.fields.util as util
+import metadata.validation_result as vr
+
+# The delimiter used to separate multiple URLs.
+_VALUE_DELIMITER = ","
+
+_PATTERN_URL_ALLOWED = re.compile(r"^(https?|ftp|git):\/\/\S+$")
+_PATTERN_URL_CANONICAL_REPO = re.compile(
+    r"^This is the canonical (public )?repo(sitory)?\.?$", re.IGNORECASE)
+
+
+class URLField(field_types.MetadataField):
+  """Custom field for the package URL(s)."""
+  def __init__(self):
+    super().__init__(name="URL", one_liner=False)
+
+  def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    """Checks the given value has acceptable URL values only.
+
+    Note: this field supports multiple values.
+    """
+    if util.matches(_PATTERN_URL_CANONICAL_REPO, value):
+      return None
+
+    invalid_values = []
+    for url in value.split(_VALUE_DELIMITER):
+      url = url.strip()
+      if not util.matches(_PATTERN_URL_ALLOWED, url):
+        invalid_values.append(url)
+
+    if invalid_values:
+      template = ("{field_name} has invalid values. URLs must use a protocol "
+                  "scheme in [http, https, ftp, git]. If there are multiple "
+                  "URLs, separate them with a '{delim}'. Invalid values: "
+                  "{values}.")
+      message = template.format(field_name=self._name,
+                                delim=_VALUE_DELIMITER,
+                                values=util.quoted(invalid_values))
+      return vr.ValidationError(message)
+
+    return None
