@@ -82,6 +82,14 @@ class FieldValidationTest(unittest.TestCase):
         error_values=["", "\n", "April 3, 2012", "2012/03/04"],
     )
 
+  def test_version_validation(self):
+    self._run_field_validation(
+        field=known_fields.VERSION,
+        valid_values=["n / a", "123abc", "unknown forked version"],
+        error_values=["", "\n"],
+        warning_values=["0", "unknown"],
+    )
+
 
 if __name__ == "__main__":
   unittest.main()

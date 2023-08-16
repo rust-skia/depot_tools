@@ -16,6 +16,7 @@ sys.path.insert(0, _ROOT_DIR)
 
 import metadata.fields.custom.cpe_prefix
 import metadata.fields.custom.date
+import metadata.fields.custom.version
 import metadata.fields.types as field_types
 
 # Freeform text fields.
@@ -35,10 +36,12 @@ LICENSE_ANDROID_COMPATIBLE = field_types.YesNoField(
 # Custom fields.
 CPE_PREFIX = metadata.fields.custom.cpe_prefix.CPEPrefixField()
 DATE = metadata.fields.custom.date.DateField()
+VERSION = metadata.fields.custom.version.VersionField()
 
 ALL_FIELDS = (
     NAME,
     SHORT_NAME,
+    VERSION,
     DATE,
     REVISION,
     SECURITY_CRITICAL,
