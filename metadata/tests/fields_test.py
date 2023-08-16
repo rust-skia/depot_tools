@@ -66,6 +66,15 @@ class FieldValidationTest(unittest.TestCase):
         warning_values=["Yes?", "not"],
     )
 
+  def test_cpe_prefix_validation(self):
+    self._run_field_validation(
+        field=known_fields.CPE_PREFIX,
+        valid_values=[
+            "unknown", "cpe:/a:sqlite:sqlite:3.0.0", "cpe:/a:sqlite:sqlite"
+        ],
+        error_values=["", "\n"],
+    )
+
   def test_date_validation(self):
     self._run_field_validation(
         field=known_fields.DATE,
