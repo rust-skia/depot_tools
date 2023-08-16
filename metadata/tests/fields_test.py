@@ -15,6 +15,7 @@ _ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, "..", ".."))
 # Add the repo's root directory for clearer imports.
 sys.path.insert(0, _ROOT_DIR)
 
+import metadata.fields.known as known_fields
 import metadata.fields.types as field_types
 import metadata.validation_result as vr
 
@@ -63,6 +64,13 @@ class FieldValidationTest(unittest.TestCase):
         valid_values=["yes", "no", "No", "YES"],
         error_values=["", "\n", "Probably yes"],
         warning_values=["Yes?", "not"],
+    )
+
+  def test_date_validation(self):
+    self._run_field_validation(
+        field=known_fields.DATE,
+        valid_values=["2012-03-04"],
+        error_values=["", "\n", "April 3, 2012", "2012/03/04"],
     )
 
 

@@ -14,6 +14,7 @@ _ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, "..", ".."))
 # Add the repo's root directory for clearer imports.
 sys.path.insert(0, _ROOT_DIR)
 
+import metadata.fields.custom.date
 import metadata.fields.types as field_types
 
 # Freeform text fields.
@@ -30,9 +31,13 @@ SHIPPED = field_types.YesNoField("Shipped")
 LICENSE_ANDROID_COMPATIBLE = field_types.YesNoField(
     "License Android Compatible")
 
+# Custom fields.
+DATE = metadata.fields.custom.date.DateField()
+
 ALL_FIELDS = (
     NAME,
     SHORT_NAME,
+    DATE,
     REVISION,
     SECURITY_CRITICAL,
     SHIPPED,
