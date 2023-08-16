@@ -82,6 +82,49 @@ class FieldValidationTest(unittest.TestCase):
         error_values=["", "\n", "April 3, 2012", "2012/03/04"],
     )
 
+  def test_license_file_validation(self):
+    self._run_field_validation(
+        field=known_fields.LICENSE_FILE,
+        valid_values=[
+            "LICENSE", "src/LICENSE.txt",
+            "LICENSE, //third_party_test/LICENSE-TEST", "src/MISSING_LICENSE"
+        ],
+        error_values=["", "\n", ","],
+        warning_values=["NOT_SHIPPED"],
+    )
+
+    # Check relative path from README directory, and multiple license files.
+    result = known_fields.LICENSE_FILE.validate_on_disk(
+        value="LICENSE, src/LICENSE.txt",
+        readme_dir=os.path.join(_THIS_DIR, "data"),
+        chromium_src_dir=_THIS_DIR,
+    )
+    self.assertIsNone(result)
+
+    # Check relative path from Chromium src directory.
+    result = known_fields.LICENSE_FILE.validate_on_disk(
+        value="//data/LICENSE",
+        readme_dir=os.path.join(_THIS_DIR, "data"),
+        chromium_src_dir=_THIS_DIR,
+    )
+    self.assertIsNone(result)
+
+    # Check missing file.
+    result = known_fields.LICENSE_FILE.validate_on_disk(
+        value="MISSING_LICENSE",
+        readme_dir=os.path.join(_THIS_DIR, "data"),
+        chromium_src_dir=_THIS_DIR,
+    )
+    self.assertIsInstance(result, vr.ValidationError)
+
+    # Check deprecated NOT_SHIPPED.
+    result = known_fields.LICENSE_FILE.validate_on_disk(
+        value="NOT_SHIPPED",
+        readme_dir=os.path.join(_THIS_DIR, "data"),
+        chromium_src_dir=_THIS_DIR,
+    )
+    self.assertIsInstance(result, vr.ValidationWarning)
+
   def test_url_validation(self):
     self._run_field_validation(
         field=known_fields.URL,
