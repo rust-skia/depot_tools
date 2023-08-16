@@ -92,10 +92,8 @@ class GitCacheTest(unittest.TestCase):
     # Add a bad refspec to the cache's fetch config.
     cache_dir = os.path.join(
         self.cache_dir, mirror.UrlToCacheDir(self.origin_dir))
-    self.git([
-        '--git-dir', cache_dir, 'config', '--add', 'remote.origin.fetch',
-        '+refs/heads/foo:refs/heads/foo'
-    ],
+    self.git(['config', '--add', 'remote.origin.fetch',
+              '+refs/heads/foo:refs/heads/foo'],
              cwd=cache_dir)
 
     mirror.populate(reset_fetch_config=True)
