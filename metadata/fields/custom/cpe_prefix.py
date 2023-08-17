@@ -25,7 +25,7 @@ _PATTERN_CPE_PREFIX = re.compile(r"^cpe:/.+:.+:.+(:.+)*$")
 class CPEPrefixField(field_types.MetadataField):
   """Custom field for the package's CPE."""
   def __init__(self):
-    super().__init__(name="CPEPrefix", one_liner=False)
+    super().__init__(name="CPEPrefix", one_liner=True)
 
   def validate(self, value: str) -> Union[vr.ValidationResult, None]:
     """Checks the given value is either 'unknown', or a valid

@@ -40,6 +40,9 @@ class MetadataField:
   def get_name(self):
     return self._name
 
+  def is_one_liner(self):
+    return self._one_liner
+
   def validate(self, value: str) -> Union[vr.ValidationResult, None]:
     """Checks the given value is acceptable for the field.
 
