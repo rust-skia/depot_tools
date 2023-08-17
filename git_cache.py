@@ -234,6 +234,9 @@ class Mirror(object):
   def RunGit(self, cmd, print_stdout=True, **kwargs):
     """Run git in a subprocess."""
     cwd = kwargs.setdefault('cwd', self.mirror_path)
+    if "--git-dir" not in cmd:
+      cmd = ['--git-dir', os.path.abspath(cwd)] + cmd
+
     kwargs.setdefault('print_stdout', False)
     if print_stdout:
       kwargs.setdefault('filter_fn', self.print)
@@ -243,13 +246,10 @@ class Mirror(object):
     self.print('running "git %s" in "%s"' % (' '.join(cmd), cwd))
     gclient_utils.CheckCallAndFilter([self.git_exe] + cmd, **kwargs)
 
-  def config(self, cwd=None, reset_fetch_config=False):
-    if cwd is None:
-      cwd = self.mirror_path
-
+  def config(self, reset_fetch_config=False):
     if reset_fetch_config:
       try:
-        self.RunGit(['config', '--unset-all', 'remote.origin.fetch'], cwd=cwd)
+        self.RunGit(['config', '--unset-all', 'remote.origin.fetch'])
       except subprocess.CalledProcessError as e:
         # If exit code was 5, it means we attempted to unset a config that
         # didn't exist. Ignore it.
@@ -258,7 +258,7 @@ class Mirror(object):
 
     # Don't run git-gc in a daemon.  Bad things can happen if it gets killed.
     try:
-      self.RunGit(['config', 'gc.autodetach', '0'], cwd=cwd)
+      self.RunGit(['config', 'gc.autodetach', '0'])
     except subprocess.CalledProcessError:
       # Hard error, need to clobber.
       raise ClobberNeeded()
@@ -267,20 +267,23 @@ class Mirror(object):
     # repositories, and there's no way to track progress and make sure it's
     # not stuck.
     if self.supported_project():
-      self.RunGit(['config', 'gc.autopacklimit', '0'], cwd=cwd)
+      self.RunGit(['config', 'gc.autopacklimit', '0'])
 
     # Allocate more RAM for cache-ing delta chains, for better performance
     # of "Resolving deltas".
-    self.RunGit(['config', 'core.deltaBaseCacheLimit',
-                 gclient_utils.DefaultDeltaBaseCacheLimit()], cwd=cwd)
+    self.RunGit([
+        'config', 'core.deltaBaseCacheLimit',
+        gclient_utils.DefaultDeltaBaseCacheLimit()
+    ])
 
-    self.RunGit(['config', 'remote.origin.url', self.url], cwd=cwd)
-    self.RunGit(['config', '--replace-all', 'remote.origin.fetch',
-                 '+refs/heads/*:refs/heads/*', r'\+refs/heads/\*:.*'], cwd=cwd)
+    self.RunGit(['config', 'remote.origin.url', self.url])
+    self.RunGit([
+        'config', '--replace-all', 'remote.origin.fetch',
+        '+refs/heads/*:refs/heads/*', r'\+refs/heads/\*:.*'
+    ])
     for spec, value_regex in self.fetch_specs:
       self.RunGit(
-          ['config', '--replace-all', 'remote.origin.fetch', spec, value_regex],
-          cwd=cwd)
+          ['config', '--replace-all', 'remote.origin.fetch', spec, value_regex])
 
   def bootstrap_repo(self, directory):
     """Bootstrap the repo from Google Storage if possible.
@@ -444,18 +447,18 @@ class Mirror(object):
         # 1. No previous cache.
         # 2. Project doesn't have a bootstrap folder.
         # Start with a bare git dir.
-        self.RunGit(['init', '--bare'], cwd=self.mirror_path)
+        self.RunGit(['init', '--bare'])
         # Set appropriate symbolic-ref
-        remote_info = exponential_backoff_retry(
-            lambda: subprocess.check_output(
-                [self.git_exe, 'remote', 'show', self.url],
-                cwd=self.mirror_path).decode('utf-8', 'ignore').strip()
-        )
+        remote_info = exponential_backoff_retry(lambda: subprocess.check_output(
+            [
+                self.git_exe, '--git-dir',
+                os.path.abspath(self.mirror_path), 'remote', 'show', self.url
+            ],
+            cwd=self.mirror_path).decode('utf-8', 'ignore').strip())
         default_branch_regexp = re.compile(r'HEAD branch: (.*)$')
         m = default_branch_regexp.search(remote_info, re.MULTILINE)
         if m:
-          self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/' + m.groups()[0]],
-                      cwd=self.mirror_path)
+          self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/' + m.groups()[0]])
       else:
         # Bootstrap failed, previous cache exists; warn and continue.
         logging.warning(
@@ -464,13 +467,12 @@ class Mirror(object):
             len(pack_files))
 
   def _fetch(self,
-             rundir,
              verbose,
              depth,
              no_fetch_tags,
              reset_fetch_config,
              prune=True):
-    self.config(rundir, reset_fetch_config)
+    self.config(reset_fetch_config)
 
     fetch_cmd = ['fetch']
     if verbose:
@@ -483,14 +485,19 @@ class Mirror(object):
       fetch_cmd.append('--prune')
     fetch_cmd.append('origin')
 
-    fetch_specs = subprocess.check_output(
-        [self.git_exe, 'config', '--get-all', 'remote.origin.fetch'],
-        cwd=rundir).decode('utf-8', 'ignore').strip().splitlines()
+    fetch_specs = subprocess.check_output([
+        self.git_exe, '--git-dir',
+        os.path.abspath(self.mirror_path), 'config', '--get-all',
+        'remote.origin.fetch'
+    ],
+                                          cwd=self.mirror_path).decode(
+                                              'utf-8',
+                                              'ignore').strip().splitlines()
     for spec in fetch_specs:
       try:
         self.print('Fetching %s' % spec)
         with self.print_duration_of('fetch %s' % spec):
-          self.RunGit(fetch_cmd + [spec], cwd=rundir, retry=True)
+          self.RunGit(fetch_cmd + [spec], retry=True)
       except subprocess.CalledProcessError:
         if spec == '+refs/heads/*:refs/heads/*':
           raise ClobberNeeded()  # Corrupted cache.
@@ -499,7 +506,7 @@ class Mirror(object):
       self.print('Fetching %s' % commit)
       try:
         with self.print_duration_of('fetch %s' % commit):
-          self.RunGit(['fetch', 'origin', commit], cwd=rundir, retry=True)
+          self.RunGit(['fetch', 'origin', commit], retry=True)
       except subprocess.CalledProcessError:
         logging.warning('Fetch of %s failed' % commit)
 
@@ -519,8 +526,7 @@ class Mirror(object):
     with lockfile.lock(self.mirror_path, lock_timeout):
       try:
         self._ensure_bootstrapped(depth, bootstrap, reset_fetch_config)
-        self._fetch(self.mirror_path, verbose, depth, no_fetch_tags,
-                    reset_fetch_config)
+        self._fetch(verbose, depth, no_fetch_tags, reset_fetch_config)
       except ClobberNeeded:
         # This is a major failure, we need to clean and force a bootstrap.
         gclient_utils.rmtree(self.mirror_path)
@@ -529,8 +535,7 @@ class Mirror(object):
                                   bootstrap,
                                   reset_fetch_config,
                                   force=True)
-        self._fetch(self.mirror_path, verbose, depth, no_fetch_tags,
-                    reset_fetch_config)
+        self._fetch(verbose, depth, no_fetch_tags, reset_fetch_config)
 
   def update_bootstrap(self, prune=False, gc_aggressive=False):
     # NOTE: There have been cases where repos were being recursively uploaded
