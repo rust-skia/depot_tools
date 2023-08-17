@@ -13,8 +13,23 @@ import argparse
 import os
 import subprocess
 import sys
+import tarfile
+import tempfile
 
 import reclient_helper
+
+
+# TODO(b/296402157): Remove once reclientreport binary saves all logs on windows
+def temp_win_impl__b_296402157(out_dir):
+  '''Temporary implementation until b/296402157 is fixed'''
+  log_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp', 'logs'))
+  with tempfile.NamedTemporaryFile(prefix='reclientreport',
+                                   suffix='.tar.gz',
+                                   delete=False) as f:
+    with tarfile.open(fileobj=f, mode='w:gz') as tar:
+      tar.add(log_dir, arcname=os.path.basename(log_dir))
+    print(
+        f'Created log file at {f.name}. Please attach this to your bug report!')
 
 
 def main():
@@ -26,6 +41,9 @@ def main():
   parser.add_argument('args', nargs=argparse.REMAINDER)
 
   args, extras = parser.parse_known_args()
+  if sys.platform.startswith('win'):
+    temp_win_impl__b_296402157(args.ninja_out)
+    return
   if args.args and args.args[0] == '--':
     args.args.pop(0)
   if extras:
