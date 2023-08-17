@@ -407,14 +407,29 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
     scm = gclient_scm.GitWrapper(self.url, self.root_dir,
                                  self.relpath)
     file_list = []
+    scm._Capture(['config', 'diff.ignoreSubmodules', 'all'])
+
     scm.update(options, (), file_list)
     self.assertEqual(file_list, expected_file_list)
     self.assertEqual(scm.revinfo(options, (), None),
                       'a7142dc9f0009350b96a11f372b6ea658592aa95')
-    self.assertEqual(scm._Capture(['config', '--get', 'diff.ignoreSubmodules']),
-                     'all')
+    with self.assertRaises(Exception):
+      scm._Capture(['config', '--get', 'diff.ignoreSubmodules'])
     self.assertEqual(
         scm._Capture(['config', '--get', 'fetch.recurseSubmodules']), 'off')
+    sys.stdout.close()
+
+  def testUpdateUpdate_only_unset_ignoresubmodules_all(self):
+    if not self.enabled:
+      return
+    options = self.Options()
+    scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
+    file_list = []
+    scm._Capture(['config', 'diff.ignoreSubmodules', 'none'])
+
+    scm.update(options, (), file_list)
+    self.assertEqual(scm._Capture(['config', '--get', 'diff.ignoreSubmodules']),
+                     'none')
     sys.stdout.close()
 
   def testUpdateMerge(self):
