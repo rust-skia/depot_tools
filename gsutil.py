@@ -266,7 +266,7 @@ def run_gsutil(target, args, clean=False):
           '\n' + separator + '\n' +
           'Warning: You might have an outdated .boto file. If this issue '
           'persists after running `gsutil.py config`, try removing your '
-          '.boto, usually located in your home directory.\n' + separator + '\n',
+          '.boto file.\n' + separator + '\n',
           file=sys.stderr)
 
     _print_subprocess_result(p)
