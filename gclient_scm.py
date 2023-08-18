@@ -583,9 +583,9 @@ class GitWrapper(SCMWrapper):
         config = subprocess2.capture(
             ['git', 'config', '-l'],
             cwd=args[0].checkout_path).decode('utf-8').strip().splitlines()
-        if 'diff.ignoresubmodules=all' in config:
+        if 'diff.ignoresubmodules=dirty' not in config:
           subprocess2.capture(
-              ['git', 'config', '--unset', 'diff.ignoreSubmodules'],
+              ['git', 'config', 'diff.ignoreSubmodules', 'dirty'],
               cwd=args[0].checkout_path)
         if 'fetch.recursesubmodules=off' not in config:
           subprocess2.capture(
