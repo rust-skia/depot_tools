@@ -75,8 +75,18 @@ def RunSteps(api):
   file_changes = api.gclient.roll_deps(
       'foo', {'foo': '2222222222222222222222222222222222222222'},
       test_data=DEPS_CONTENT)
-  api.assertions.assertEqual(
-      file_changes, {'foo': b'2222222222222222222222222222222222222222'})
+
+  api.assertions.assertEqual(file_changes['foo'],
+                             b'2222222222222222222222222222222222222222')
+
+  file_changes = api.gclient.roll_deps(
+      DEPS_CONTENT, {'src/bar': '2222222222222222222222222222222222222222'},
+      strip_prefix_for_gitlink='src/',
+      test_data=DEPS_CONTENT)
+
+  # We expect src/ to be stripped from src/bar.
+  api.assertions.assertEqual(file_changes['bar'],
+                             b'2222222222222222222222222222222222222222')
 
   for config_name in TEST_CONFIGS:
     api.gclient.make_config(config_name)

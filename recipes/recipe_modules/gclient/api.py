@@ -425,7 +425,11 @@ class GclientApi(recipe_api.RecipeApi):
   def DepsDiffException(self):
     return DepsDiffException
 
-  def roll_deps(self, deps_path, dep_updates, test_data=None):
+  def roll_deps(self,
+                deps_path,
+                dep_updates,
+                strip_prefix_for_gitlink=None,
+                test_data=None):
     """Updates DEPS file to desired revisions, and returns all requried file
     changes.
 
@@ -433,22 +437,24 @@ class GclientApi(recipe_api.RecipeApi):
       deps_path - Path to DEPS file that will be modified.
       dep_updates - A map of dependencies to update (key = dependency name,
                     value = revision).
+      strip_prefix_for_gitlink - Prefix that will be removed when adding
+                                 gitlinks. This is only useful for repositories
+                                 that use use_relative_path = True. That's
+                                 currently only chromium/src.
 
     Returns:
       A map of all files that need to be modified (key = file path, value = file
       content) in addition to DEPS file itself.
       Note: that git submodules (gitlinks) are treated as files and content is a
       commit hash.
-      Note: deps_path is not added to returned map since the repo relative path
-      is not known.
+      Note: we expect DEPS to be in the root of the project.
     """
+    deps_content = self.m.file.read_text('Read DEPS file', deps_path, test_data)
     update_gitlink = False
     dep_updates_args = []
     file_changes = {}
 
-    deps_contents = self.m.file.read_text('Read DEPS file', deps_path,
-                                          test_data)
-    lines = deps_contents.split('\n')
+    lines = deps_content.split('\n')
     for line in lines:
       if line.startswith('git_dependencies = '):
         if 'DEPS' not in line:
@@ -460,8 +466,17 @@ class GclientApi(recipe_api.RecipeApi):
       dep_updates_args.extend(['-r', f'{dep}@{rev}'])
       if update_gitlink:
         # Add gitlink updates to file changes.
-        file_changes[dep] = rev.encode('UTF-8')
+        gitlink_path = dep
+        if strip_prefix_for_gitlink and \
+            gitlink_path.startswith(strip_prefix_for_gitlink):
+          # strip src/ from path
+          gitlink_path = gitlink_path[len(strip_prefix_for_gitlink):]
+
+        file_changes[gitlink_path] = rev.encode('UTF-8')
     # Apply the updates to the local DEPS files.
     self.m.gclient('setdep',
                    ['setdep', '--deps-file', deps_path] + dep_updates_args)
+
+    updated_deps = self.m.file.read_raw('Read modified DEPS', deps_path)
+    file_changes['DEPS'] = updated_deps
     return file_changes

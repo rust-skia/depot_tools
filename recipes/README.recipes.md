@@ -228,7 +228,7 @@ Args:
 
 &mdash; **def [resolve\_revision](/recipes/recipe_modules/gclient/api.py#161)(self, revision):**
 
-&mdash; **def [roll\_deps](/recipes/recipe_modules/gclient/api.py#428)(self, deps_path, dep_updates, test_data=None):**
+&mdash; **def [roll\_deps](/recipes/recipe_modules/gclient/api.py#428)(self, deps_path, dep_updates, strip_prefix_for_gitlink=None, test_data=None):**
 
 Updates DEPS file to desired revisions, and returns all requried file
 changes.
@@ -237,14 +237,17 @@ Args:
   deps_path - Path to DEPS file that will be modified.
   dep_updates - A map of dependencies to update (key = dependency name,
                 value = revision).
+  strip_prefix_for_gitlink - Prefix that will be removed when adding
+                             gitlinks. This is only useful for repositories
+                             that use use_relative_path = True. That's
+                             currently only chromium/src.
 
 Returns:
   A map of all files that need to be modified (key = file path, value = file
   content) in addition to DEPS file itself.
   Note: that git submodules (gitlinks) are treated as files and content is a
   commit hash.
-  Note: deps_path is not added to returned map since the repo relative path
-  is not known.
+  Note: we expect DEPS to be in the root of the project.
 
 &mdash; **def [runhooks](/recipes/recipe_modules/gclient/api.py#285)(self, args=None, name='runhooks', \*\*kwargs):**
 
