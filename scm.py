@@ -132,7 +132,7 @@ class GIT(object):
         raise gclient_utils.Error('Cannot determine upstream branch')
     command = [
         '-c', 'core.quotePath=false', 'diff', '--name-status', '--no-renames',
-        '-r',
+        '--ignore-submodules=all', '-r',
         '%s...%s' % (upstream_branch, end_commit)
     ]
     status = GIT.Capture(command, cwd)
@@ -382,8 +382,10 @@ class GIT(object):
   @staticmethod
   def GetAllFiles(cwd):
     """Returns the list of all files under revision control."""
-    command = ['-c', 'core.quotePath=false', 'ls-files', '--', '.']
-    return GIT.Capture(command, cwd=cwd).splitlines(False)
+    command = ['-c', 'core.quotePath=false', 'ls-files', '-s', '--', '.']
+    files = GIT.Capture(command, cwd=cwd).splitlines(False)
+    # return only files
+    return [f.split(maxsplit=4)[-1] for f in files if f.startswith('100')]
 
   @staticmethod
   def GetPatchName(cwd):
