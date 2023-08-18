@@ -884,18 +884,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     # If dependencies are configured within git submodules, add them to deps.
     if self.git_dependencies_state in (gclient_eval.SUBMODULES,
                                        gclient_eval.SYNC):
-      gitsubmodules = self.ParseGitSubmodules()
-      # TODO(crbug.com/1471685): Temporary hack. In case of applied patches
-      # where the changes are staged but not committed, any gitlinks from
-      # the patch are not returned in ParseGitSubmodules. In these cases,
-      # DEPS does have the commits from the patch, so we use those commits
-      # instead.
-      if self.git_dependencies_state == gclient_eval.SYNC:
-        for sub in gitsubmodules:
-          if sub not in deps:
-            deps[sub] = gitsubmodules[sub]
-      elif self.git_dependencies_state == gclient_eval.SUBMODULES:
-        deps.update(gitsubmodules)
+      deps.update(self.ParseGitSubmodules())
 
     deps_to_add = self._deps_to_objects(
         self._postprocess_deps(deps, rel_prefix), self._use_relative_paths)
@@ -952,18 +941,6 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                       filepath)
       return {}
 
-    # Get submodule commit hashes
-    #  Output Format: `<mode> SP <type> SP <object> TAB <file>`.
-    result = subprocess2.check_output(['git', 'ls-tree', '-r', 'HEAD'],
-                                      cwd=cwd).decode('utf-8')
-
-    commit_hashes = {}
-    for r in result.splitlines():
-      # ['<mode>', '<type>', '<commit_hash>', '<path>'].
-      record = r.strip().split(maxsplit=3)  # path can contain spaces.
-      if record[0] == '160000':  # Only add gitlinks
-        commit_hashes[record[3]] = record[2]
-
     # Get .gitmodules fields
     gitmodules_entries = subprocess2.check_output(
         ['git', 'config', '--file', filepath, '-l']).decode('utf-8')
@@ -987,6 +964,19 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
       if sub_key in ('url', 'gclient-condition', 'path'):
         gitmodules[submodule][sub_key] = value
+
+    paths = [module['path'] for module in gitmodules.values()]
+    # Get submodule commit hashes. We use `gitt ls-files -s` to ensure
+    # we capture gitlink changes from staged applied patches.
+    # Output Format: `<mode> SP <type> SP <object> TAB <file>`.
+    result = subprocess2.check_output(['git', 'ls-files', '-s'] + paths,
+                                      cwd=cwd).decode('utf-8')
+    commit_hashes = {}
+    for r in result.splitlines():
+      # ['<mode>', '<commit_hash>', '<stage_number>', '<path>'].
+      record = r.strip().split(maxsplit=3)  # path can contain spaces.
+      assert record[0] == '160000', 'file is not a gitlink: %s' % record
+      commit_hashes[record[3]] = record[1]
 
     # Structure git submodules into a dict of DEPS git url entries.
     submodules = {}
