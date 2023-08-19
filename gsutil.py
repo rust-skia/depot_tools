@@ -262,12 +262,12 @@ def run_gsutil(target, args, clean=False):
     if b'Your credentials are invalid.' in p.stderr:
       # Make sure this error message is visible when invoked by gclient runhooks
       separator = '*' * 80
-      print(
-          '\n' + separator + '\n' +
-          'Warning: You might have an outdated .boto file. If this issue '
-          'persists after running `gsutil.py config`, try removing your '
-          '.boto file.\n' + separator + '\n',
-          file=sys.stderr)
+      print('\n' + separator + '\n' +
+            'Warning: You might have an outdated .boto file. If this issue '
+            'persists after running `gsutil.py config`, try removing your '
+            '.boto, usually located in your home directory.\n' + separator +
+            '\n',
+            file=sys.stderr)
 
     _print_subprocess_result(p)
     return p.returncode
