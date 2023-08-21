@@ -115,7 +115,6 @@ from third_party.repo.progress import Progress
 import subcommand
 import subprocess2
 import setup_color
-import git_cl
 
 from third_party import six
 
@@ -2722,11 +2721,14 @@ def CMDgitmodules(parser, args):
       if prefix_length:
         path = path[prefix_length:]
 
-      git_cl.RunGit(
-          ['update-index', '--add', '--cacheinfo', '160000', commit, path])
+      subprocess2.call([
+          'git', 'update-index', '--add', '--cacheinfo',
+          f'160000,{commit},{path}'
+      ])
       f.write(f'[submodule "{path}"]\n\tpath = {path}\n\turl = {url}\n')
       if 'condition' in dep:
         f.write(f'\tgclient-condition = {dep["condition"]}\n')
+  subprocess2.call(['git', 'add', '.gitmodules'])
   print('.gitmodules and gitlinks updated. Please check git diff and '
         'commit changes.')
 
@@ -3536,21 +3538,40 @@ def CMDsetdep(parser, args):
       # Update git submodules when `git_dependencies` == SYNC or SUBMODULES.
       if git_modules and 'git_dependencies' in local_scope and local_scope[
           'git_dependencies'] in (gclient_eval.SUBMODULES, gclient_eval.SYNC):
+        git_module_name = name
+        if not 'use_relative_paths' in local_scope or \
+            local_scope['use_relative_paths'] != True:
+          deps_dir = os.path.dirname(os.path.abspath(options.deps_file))
+          gclient_path = gclient_paths.FindGclientRoot(deps_dir)
+          delta_path = None
+          if gclient_path:
+            delta_path = os.path.relpath(deps_dir,
+                                         os.path.abspath(gclient_path))
+          if delta_path:
+            prefix_length = len(delta_path.replace(os.path.sep, '/')) + 1
+            git_module_name = name[prefix_length:]
         # gclient setdep should update the revision, i.e., the gitlink only
         # when the submodule entry is already present within .gitmodules.
-        if name not in git_modules:
+        if git_module_name not in git_modules:
           raise KeyError(
-              'Could not find any dependency called %s in .gitmodules.' % name)
+              f'Could not find any dependency called "{git_module_name}" in '
+              f'.gitmodules.')
 
         # Update the gitlink for the submodule.
         subprocess2.call([
             'git', 'update-index', '--add', '--cacheinfo',
-            f'160000,{value},{name}'
+            f'160000,{value},{git_module_name}'
         ],
                          cwd=cwd)
 
   with open(options.deps_file, 'wb') as f:
     f.write(gclient_eval.RenderDEPSFile(local_scope).encode('utf-8'))
+
+  if git_modules:
+    subprocess2.call(['git', 'add', options.deps_file], cwd=cwd)
+    print('Changes have been staged. See changes with `git status`.\n'
+          'Use `git commit -m "Manual roll"` to commit your changes. \n'
+          'Run gclient sync to update your local dependency checkout.')
 
 
 @metrics.collector.collect_metrics('gclient verify')

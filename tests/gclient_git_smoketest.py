@@ -627,11 +627,76 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
 
   def testSetDep_Submodules(self):
     self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'])
+    with open(os.path.join(self.git_base, '.gclient'), 'w') as f:
+      f.write('')
+
+    fake_deps = os.path.join(self.git_base, 'repo_1', 'DEPS')
+    gitmodules = os.path.join(self.git_base, 'repo_1', '.gitmodules')
+    with open(fake_deps, 'w') as f:
+      f.write('\n'.join([
+          'git_dependencies = "SYNC"',
+          'vars = { ',
+          '  "foo_var": "foo_val",',
+          '  "foo_rev": "foo_rev",',
+          '}',
+          'deps = { ',
+          '  "repo_1/foo": "https://foo" + Var("foo_rev"),',
+          '  "repo_1/bar": "https://bar@barrev",',
+          '}',
+      ]))
+
+    with open(gitmodules, 'w') as f:
+      f.write('\n'.join([
+          '[submodule "foo"]', '  url = https://foo', '  path = foo',
+          '[submodule "bar"]', '  url = https://bar', '  path = bar'
+      ]))
+
+    subprocess2.call([
+        'git', 'update-index', '--add', '--cacheinfo',
+        '160000,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,foo'
+    ],
+                     cwd=self.git_base + 'repo_1')
+    subprocess2.call([
+        'git', 'update-index', '--add', '--cacheinfo',
+        '160000,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,bar'
+    ],
+                     cwd=self.git_base + 'repo_1')
+
+    self.gclient([
+        'setdep',
+        '-r',
+        'repo_1/foo@new_foo',
+        '--var',
+        'foo_var=new_val',
+        '-r',
+        'repo_1/bar@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    ],
+                 cwd=self.git_base + 'repo_1')
+
+    with open(fake_deps) as f:
+      contents = f.read().splitlines()
+
+    self.assertEqual([
+        'git_dependencies = "SYNC"',
+        'vars = { ',
+        '  "foo_var": "new_val",',
+        '  "foo_rev": "new_foo",',
+        '}',
+        'deps = { ',
+        '  "repo_1/foo": "https://foo" + Var("foo_rev"),',
+        '  "repo_1/bar": '
+        '"https://bar@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",',
+        '}',
+    ], contents)
+
+  def testSetDep_Submodules_relative(self):
+    self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'])
     fake_deps = os.path.join(self.git_base, 'repo_1', 'DEPS')
     gitmodules = os.path.join(self.git_base, 'repo_1', '.gitmodules')
     with open(fake_deps, 'w') as f:
       f.write('\n'.join([
           'git_dependencies = "SUBMODULES"',
+          'use_relative_paths = True',
           'vars = { ',
           '  "foo_var": "foo_val",',
           '  "foo_rev": "foo_rev",',
@@ -659,6 +724,7 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
 
     self.assertEqual([
         'git_dependencies = "SUBMODULES"',
+        'use_relative_paths = True',
         'vars = { ',
         '  "foo_var": "new_val",',
         '  "foo_rev": "foo_rev",',
