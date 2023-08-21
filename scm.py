@@ -385,7 +385,7 @@ class GIT(object):
     command = ['-c', 'core.quotePath=false', 'ls-files', '-s', '--', '.']
     files = GIT.Capture(command, cwd=cwd).splitlines(False)
     # return only files
-    return [f.split(maxsplit=4)[-1] for f in files if f.startswith('100')]
+    return [f.split(maxsplit=3)[-1] for f in files if f.startswith('100')]
 
   @staticmethod
   def GetPatchName(cwd):

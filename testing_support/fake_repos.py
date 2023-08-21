@@ -233,8 +233,10 @@ class FakeRepos(FakeReposBase):
       'origin': 'git/repo_3@2\n',
     })
 
-    self._commit_git('repo_1', {
-      'DEPS': """
+    self._commit_git(
+        'repo_1',
+        {
+            'DEPS': """
 vars = {
   'DummyVariable': 'repo',
   'false_var': False,
@@ -272,15 +274,16 @@ deps_os = {
     'src/repo4': '/repo_4',
   },
 }""" % {
-            'git_base': self.git_base,
-            # See self.__init__() for the format. Grab's the hash of the first
-            # commit in repo_2. Only keep the first 7 character because of:
-            # TODO(maruel): http://crosbug.com/3591 We need to strip the hash..
-            # duh.
-            'hash3': self.git_hashes['repo_3'][1][0][:7]
-        },
-        'origin': 'git/repo_1@1\n',
-    })
+                'git_base': self.git_base,
+                # See self.__init__() for the format. Grab's the hash of the
+                # first commit in repo_2. Only keep the first 7 character
+                # because of: TODO(maruel): http://crosbug.com/3591 We need to
+                # strip the hash..  duh.
+                'hash3': self.git_hashes['repo_3'][1][0][:7]
+            },
+            'origin': 'git/repo_1@1\n',
+            'foo bar': 'some file with a space',
+        })
 
     self._commit_git('repo_2', {
       'origin': 'git/repo_2@1\n',

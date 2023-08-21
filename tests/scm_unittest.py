@@ -170,7 +170,8 @@ class RealGitTest(fake_repos.FakeReposTestBase):
     self.assertFalse(scm.GIT.IsAncestor(self.githash('repo_1', 1), 'zebra'))
 
   def testGetAllFiles(self):
-    self.assertEqual(['DEPS','origin'], scm.GIT.GetAllFiles(self.cwd))
+    self.assertEqual(['DEPS', 'foo bar', 'origin'],
+                     scm.GIT.GetAllFiles(self.cwd))
 
   def testGetSetConfig(self):
     key = 'scm.test-key'
