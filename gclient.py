@@ -2707,6 +2707,7 @@ def CMDgitmodules(parser, args):
     if delta_path:
       prefix_length = len(delta_path.replace(os.path.sep, '/')) + 1
 
+  cache_info = []
   with open(options.output_gitmodules, 'w') as f:
     for path, dep in ls.get('deps').items():
       if path in options.skip_dep:
@@ -2721,13 +2722,13 @@ def CMDgitmodules(parser, args):
       if prefix_length:
         path = path[prefix_length:]
 
-      subprocess2.call([
-          'git', 'update-index', '--add', '--cacheinfo',
-          f'160000,{commit},{path}'
-      ])
+      cache_info += ['--cacheinfo', f'160000,{commit},{path}']
       f.write(f'[submodule "{path}"]\n\tpath = {path}\n\turl = {url}\n')
       if 'condition' in dep:
         f.write(f'\tgclient-condition = {dep["condition"]}\n')
+
+  if cache_info:
+    subprocess2.call(['git', 'update-index', '--add'] + cache_info)
   subprocess2.call(['git', 'add', '.gitmodules'])
   print('.gitmodules and gitlinks updated. Please check git diff and '
         'commit changes.')
