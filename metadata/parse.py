@@ -40,7 +40,7 @@ def parse_file(filepath: str) -> List[dm.DependencyMetadata]:
     Returns:
         each dependency's metadata described in the file.
   """
-  with open(filepath, "r") as f:
+  with open(filepath, "r", encoding="utf-8") as f:
     lines = f.readlines()
 
   dependencies = []

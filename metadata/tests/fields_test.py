@@ -113,32 +113,32 @@ class FieldValidationTest(unittest.TestCase):
     # Check relative path from README directory, and multiple license files.
     result = known_fields.LICENSE_FILE.validate_on_disk(
         value="LICENSE, src/LICENSE.txt",
-        readme_dir=os.path.join(_THIS_DIR, "data"),
-        chromium_src_dir=_THIS_DIR,
+        source_file_dir=os.path.join(_THIS_DIR, "data"),
+        repo_root_dir=_THIS_DIR,
     )
     self.assertIsNone(result)
 
     # Check relative path from Chromium src directory.
     result = known_fields.LICENSE_FILE.validate_on_disk(
         value="//data/LICENSE",
-        readme_dir=os.path.join(_THIS_DIR, "data"),
-        chromium_src_dir=_THIS_DIR,
+        source_file_dir=os.path.join(_THIS_DIR, "data"),
+        repo_root_dir=_THIS_DIR,
     )
     self.assertIsNone(result)
 
     # Check missing file.
     result = known_fields.LICENSE_FILE.validate_on_disk(
         value="MISSING_LICENSE",
-        readme_dir=os.path.join(_THIS_DIR, "data"),
-        chromium_src_dir=_THIS_DIR,
+        source_file_dir=os.path.join(_THIS_DIR, "data"),
+        repo_root_dir=_THIS_DIR,
     )
     self.assertIsInstance(result, vr.ValidationError)
 
     # Check deprecated NOT_SHIPPED.
     result = known_fields.LICENSE_FILE.validate_on_disk(
         value="NOT_SHIPPED",
-        readme_dir=os.path.join(_THIS_DIR, "data"),
-        chromium_src_dir=_THIS_DIR,
+        source_file_dir=os.path.join(_THIS_DIR, "data"),
+        repo_root_dir=_THIS_DIR,
     )
     self.assertIsInstance(result, vr.ValidationWarning)
 

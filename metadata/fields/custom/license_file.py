@@ -64,12 +64,23 @@ class LicenseFileField(field_types.MetadataField):
   def validate_on_disk(
       self,
       value: str,
-      readme_dir: str,
-      chromium_src_dir: str,
+      source_file_dir: str,
+      repo_root_dir: str,
   ) -> Union[vr.ValidationResult, None]:
     """Checks the given value consists of file paths which exist on disk.
 
     Note: this field supports multiple values.
+
+    Args:
+      value: the value to validate.
+      source_file_dir: the directory of the metadata file that the license file
+                       value is from; this is needed to construct file paths to
+                       license files.
+      repo_root_dir: the repository's root directory; this is needed to
+                     construct file paths to license files.
+
+    Returns: a validation result based on the license file value, and whether
+             the license file(s) exist on disk, otherwise None.
     """
     if value == _NOT_SHIPPED:
       return vr.ValidationWarning(
@@ -80,9 +91,9 @@ class LicenseFileField(field_types.MetadataField):
       license_filename = license_filename.strip()
       if license_filename.startswith("/"):
         license_filepath = os.path.join(
-            chromium_src_dir, os.path.normpath(license_filename.lstrip("/")))
+            repo_root_dir, os.path.normpath(license_filename.lstrip("/")))
       else:
-        license_filepath = os.path.join(readme_dir,
+        license_filepath = os.path.join(source_file_dir,
                                         os.path.normpath(license_filename))
 
       if not os.path.exists(license_filepath):

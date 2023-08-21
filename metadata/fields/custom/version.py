@@ -22,7 +22,7 @@ import metadata.validation_result as vr
 _PATTERN_NOT_APPLICABLE = re.compile(r"^N ?\/ ?A$", re.IGNORECASE)
 
 
-def is_version_unknown(value: str) -> bool:
+def is_unknown(value: str) -> bool:
   """Returns whether the value denotes the version being unknown."""
   return (value == "0" or util.matches(_PATTERN_NOT_APPLICABLE, value)
           or util.is_unknown(value))

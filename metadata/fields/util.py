@@ -17,6 +17,12 @@ _PATTERN_UNKNOWN = re.compile(r"^unknown$", re.IGNORECASE)
 # empty string, or all characters are only whitespace.
 _PATTERN_ONLY_WHITESPACE = re.compile(r"^\s*$")
 
+# Pattern used to check if the string starts with "yes", case-insensitive.
+_PATTERN_STARTS_WITH_YES = re.compile(r"^yes", re.IGNORECASE)
+
+# Pattern used to check if the string starts with "no", case-insensitive.
+_PATTERN_STARTS_WITH_NO = re.compile(r"^no", re.IGNORECASE)
+
 
 def matches(pattern: re.Pattern, value: str) -> bool:
   """Returns whether the value matches the pattern."""
@@ -36,3 +42,17 @@ def is_unknown(value: str) -> bool:
 def quoted(values: List[str]) -> str:
   """Returns a string of the given values, each being individually quoted."""
   return ", ".join([f"'{entry}'" for entry in values])
+
+
+def infer_as_boolean(value: str, default: bool = True) -> bool:
+  """Attempts to infer the value as a boolean, where:
+    - "yes"-ish values return True;
+    - "no"-ish values return False; and
+    - default is returned otherwise.
+  """
+  if matches(_PATTERN_STARTS_WITH_YES, value):
+    return True
+  elif matches(_PATTERN_STARTS_WITH_NO, value):
+    return False
+  else:
+    return default

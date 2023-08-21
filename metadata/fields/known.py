@@ -61,8 +61,8 @@ ALL_FIELDS = (
     LOCAL_MODIFICATIONS,
 )
 ALL_FIELD_NAMES = {field.get_name() for field in ALL_FIELDS}
-FIELD_MAPPING = {field.get_name().lower(): field for field in ALL_FIELDS}
+_FIELD_MAPPING = {field.get_name().lower(): field for field in ALL_FIELDS}
 
 
 def get_field(label: str) -> Union[field_types.MetadataField, None]:
-  return FIELD_MAPPING.get(label.lower())
+  return _FIELD_MAPPING.get(label.lower())

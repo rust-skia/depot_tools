@@ -37,6 +37,15 @@ class MetadataField:
     self._name = name
     self._one_liner = one_liner
 
+  def __eq__(self, other):
+    if not isinstance(other, MetadataField):
+      return False
+
+    return self._name.lower() == other._name.lower()
+
+  def __hash__(self):
+    return hash(self._name.lower())
+
   def get_name(self):
     return self._name
 

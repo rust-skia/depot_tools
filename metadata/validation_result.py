@@ -9,10 +9,10 @@ from typing import Dict, Union
 
 class ValidationResult:
   """Base class for validation issues."""
-  def __init__(self, message: str, fatal: bool, **tags: Dict[str, str]):
+  def __init__(self, message: str, fatal: bool):
     self._fatal = fatal
     self._message = message
-    self._tags = tags
+    self._tags = {}
 
   def __str__(self) -> str:
     prefix = "ERROR" if self._fatal else "[non-fatal]"
