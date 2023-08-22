@@ -97,9 +97,13 @@ def main(args):
           use_siso = True
           continue
 
+    siso_marker = os.path.join(output_dir, '.siso_deps')
     if use_siso:
-      ninja_marker = os.path.join(output_dir, '.ninja_deps')
-      if os.path.exists(ninja_marker):
+      ninja_marker = os.path.join(output_dir, '.ninja_log')
+      # autosiso generates a .ninja_log file so the mere existence of a
+      # .ninja_log file doesn't imply that a ninja build was done. However if
+      # there is a .ninja_log but no .siso_deps then that implies a ninja build.
+      if os.path.exists(ninja_marker) and not os.path.exists(siso_marker):
         return ('echo Run gn clean before switching from ninja to siso in %s' %
                 output_dir)
       siso = ['autosiso'] if use_remoteexec else ['siso', 'ninja']
@@ -109,7 +113,6 @@ def main(args):
         siso = ['call'] + siso
       return ' '.join(siso + input_args[1:])
 
-    siso_marker = os.path.join(output_dir, '.siso_deps')
     if os.path.exists(siso_marker):
       return ('echo Run gn clean before switching from siso to ninja in %s' %
               output_dir)
