@@ -158,7 +158,7 @@ class GclientGitCheckout(GclientCheckout, GitCheckout):
       self.run_git(
           'config', '--add', 'remote.origin.fetch',
           '+refs/tags/*:refs/tags/*', cwd=wd)
-    self.run_git('config', 'diff.ignoreSubmodules', 'all', cwd=wd)
+    self.run_git('config', 'diff.ignoreSubmodules', 'dirty', cwd=wd)
 
 
 CHECKOUT_TYPE_MAP = {
