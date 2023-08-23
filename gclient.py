@@ -2708,7 +2708,7 @@ def CMDgitmodules(parser, args):
       prefix_length = len(delta_path.replace(os.path.sep, '/')) + 1
 
   cache_info = []
-  with open(options.output_gitmodules, 'w') as f:
+  with open(options.output_gitmodules, 'w', newline='') as f:
     for path, dep in ls.get('deps').items():
       if path in options.skip_dep:
         continue
@@ -2726,6 +2726,10 @@ def CMDgitmodules(parser, args):
       f.write(f'[submodule "{path}"]\n\tpath = {path}\n\turl = {url}\n')
       if 'condition' in dep:
         f.write(f'\tgclient-condition = {dep["condition"]}\n')
+      # Windows has limit how long, so let's chunk those calls.
+      if len(cache_info) >= 100:
+        subprocess2.call(['git', 'update-index', '--add'] + cache_info)
+        cache_info = []
 
   if cache_info:
     subprocess2.call(['git', 'update-index', '--add'] + cache_info)
