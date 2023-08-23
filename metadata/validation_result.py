@@ -7,6 +7,11 @@ import textwrap
 from typing import Dict, Union
 
 
+_CHROMIUM_METADATA_PRESCRIPT = "Third party metadata issue:"
+_CHROMIUM_METADATA_POSTSCRIPT = ("Check //third_party/README.chromium.template "
+                                 "for details.")
+
+
 class ValidationResult:
   """Base class for validation issues."""
   def __init__(self, message: str, fatal: bool):
@@ -33,20 +38,27 @@ class ValidationResult:
   def get_all_tags(self) -> Dict[str, str]:
     return dict(self._tags)
 
-  def get_message(self, width: int = 0) -> str:
-    if width > 0:
-      return textwrap.fill(text=self._message, width=width)
+  def get_message(self,
+                  prescript: str = _CHROMIUM_METADATA_PRESCRIPT,
+                  postscript: str = _CHROMIUM_METADATA_POSTSCRIPT,
+                  width: int = 0) -> str:
+    components = [prescript, self._message, postscript]
+    message = " ".join(
+        [component for component in components if len(component) > 0])
 
-    return self._message
+    if width > 0:
+      return textwrap.fill(text=message, width=width)
+
+    return message
 
 
 class ValidationError(ValidationResult):
   """Fatal validation issue. Presubmit should fail."""
-  def __init__(self, message: str, **tags: Dict[str, str]):
-    super().__init__(message=message, fatal=True, **tags)
+  def __init__(self, message: str):
+    super().__init__(message=message, fatal=True)
 
 
 class ValidationWarning(ValidationResult):
   """Non-fatal validation issue. Presubmit should pass."""
-  def __init__(self, message: str, **tags: Dict[str, str]):
-    super().__init__(message=message, fatal=False, **tags)
+  def __init__(self, message: str):
+    super().__init__(message=message, fatal=False)
