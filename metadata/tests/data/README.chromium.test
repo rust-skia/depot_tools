@@ -22,11 +22,29 @@ EXCEPT:
 -------------------- DEPENDENCY DIVIDER --------------------
 
 Name: Test-B README for Chromium metadata
-Short Name: metadata-test-valid-again
-URL: https://www.example.com/metadata
-Version: 1.0.12
+SHORT NAME: metadata-test-invalid
+URL: file://home/drive/chromium/src/metadata
+Version:0
 Date: 2020-12-03
-License: Apache, 2.0 and MIT
-License File: LICENSE
+License: MIT
+Security critical: yes
+Shipped:    Yes
+
+Description:
+
+Local Modifications:     None.
+
+-------------------- DEPENDENCY DIVIDER --------------------
+-------------------- DEPENDENCY DIVIDER --------------------
+
+Name: Test-C README for Chromium metadata
+URL: https://www.example.com/first
+URL: https://www.example.com/second
+Version: N/A
+Date: 2020-12-03
+License: Custom license
 Security Critical: yes
-Shipped: yes
+
+Description:
+Test metadata with multiple entries for one field, and
+missing a mandatory field.
