@@ -24,8 +24,6 @@ Branches are colorized as follows:
     upstream, then you will see this.
 """
 
-from __future__ import print_function
-
 import argparse
 import collections
 import metrics

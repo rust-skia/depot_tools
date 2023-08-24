@@ -9,20 +9,12 @@ Example usage:
   ./gerrit_client.py [command] [args]
 """
 
-from __future__ import print_function
-
 import json
 import logging
 import optparse
 import subcommand
 import sys
-
-if sys.version_info.major == 2:
-  import urlparse
-  from urllib import quote_plus
-else:
-  from urllib.parse import quote_plus
-  import urllib.parse as urlparse
+import urllib.parse
 
 import fix_encoding
 import gerrit_util
@@ -49,7 +41,7 @@ def CMDmovechanges(parser, args):
   assert opt.destination_branch, "--destination_branch not defined"
   for p in opt.params:
     assert '=' in p, '--param is key=value, not "%s"' % p
-  host = urlparse.urlparse(opt.host).netloc
+  host = urllib.parse.urlparse(opt.host).netloc
 
   limit = 100
   while True:
@@ -72,9 +64,9 @@ def CMDbranchinfo(parser, args):
   parser.add_option('--branch', dest='branch', help='branch name')
 
   (opt, args) = parser.parse_args(args)
-  host = urlparse.urlparse(opt.host).netloc
-  project = quote_plus(opt.project)
-  branch = quote_plus(opt.branch)
+  host = urllib.parse.urlparse(opt.host).netloc
+  project = urllib.parse.quote_plus(opt.project)
+  branch = urllib.parse.quote_plus(opt.branch)
   result = gerrit_util.GetGerritBranch(host, project, branch)
   logging.info(result)
   write_result(result, opt)
@@ -94,7 +86,7 @@ def CMDrawapi(parser, args):
   (opt, args) = parser.parse_args(args)
   assert opt.path, "--path not defined"
 
-  host = urlparse.urlparse(opt.host).netloc
+  host = urllib.parse.urlparse(opt.host).netloc
   kwargs = {}
   if opt.method:
     kwargs['reqtype'] = opt.method.upper()
@@ -122,9 +114,9 @@ def CMDbranch(parser, args):
   assert opt.branch, "--branch not defined"
   assert opt.commit, "--commit not defined"
 
-  project = quote_plus(opt.project)
-  host = urlparse.urlparse(opt.host).netloc
-  branch = quote_plus(opt.branch)
+  project = urllib.parse.quote_plus(opt.project)
+  host = urllib.parse.urlparse(opt.host).netloc
+  branch = urllib.parse.quote_plus(opt.branch)
   result = gerrit_util.GetGerritBranch(host, project, branch)
   if result:
     if not opt.allow_existent_branch:
@@ -161,9 +153,9 @@ def CMDtag(parser, args):
   assert opt.tag, "--tag not defined"
   assert opt.commit, "--commit not defined"
 
-  project = quote_plus(opt.project)
-  host = urlparse.urlparse(opt.host).netloc
-  tag = quote_plus(opt.tag)
+  project = urllib.parse.quote_plus(opt.project)
+  host = urllib.parse.urlparse(opt.host).netloc
+  tag = urllib.parse.quote_plus(opt.tag)
   result = gerrit_util.CreateGerritTag(host, project, tag, opt.commit)
   logging.info(result)
   write_result(result, opt)
@@ -178,9 +170,9 @@ def CMDhead(parser, args):
   assert opt.project, "--project not defined"
   assert opt.branch, "--branch not defined"
 
-  project = quote_plus(opt.project)
-  host = urlparse.urlparse(opt.host).netloc
-  branch = quote_plus(opt.branch)
+  project = urllib.parse.quote_plus(opt.project)
+  host = urllib.parse.urlparse(opt.host).netloc
+  branch = urllib.parse.quote_plus(opt.branch)
   result = gerrit_util.UpdateHead(host, project, branch)
   logging.info(result)
   write_result(result, opt)
@@ -193,8 +185,8 @@ def CMDheadinfo(parser, args):
   (opt, args) = parser.parse_args(args)
   assert opt.project, "--project not defined"
 
-  project = quote_plus(opt.project)
-  host = urlparse.urlparse(opt.host).netloc
+  project = urllib.parse.quote_plus(opt.project)
+  host = urllib.parse.urlparse(opt.host).netloc
   result = gerrit_util.GetHead(host, project)
   logging.info(result)
   write_result(result, opt)
@@ -224,7 +216,7 @@ def CMDchanges(parser, args):
     assert '=' in p, '--param is key=value, not "%s"' % p
 
   result = gerrit_util.QueryChanges(
-      urlparse.urlparse(opt.host).netloc,
+      urllib.parse.urlparse(opt.host).netloc,
       list(tuple(p.split('=', 1)) for p in opt.params),
       first_param=opt.query,
       start=opt.start,  # Default: None
@@ -244,7 +236,7 @@ def CMDrelatedchanges(parser, args):
   (opt, args) = parser.parse_args(args)
 
   result = gerrit_util.GetRelatedChanges(
-      urlparse.urlparse(opt.host).netloc,
+      urllib.parse.urlparse(opt.host).netloc,
       change=opt.change,
       revision=opt.revision,
   )
@@ -282,7 +274,7 @@ def CMDcreatechange(parser, args):
     params.append(('notify_details', {'CC': {'accounts': opt.cc_list}}))
 
   result = gerrit_util.CreateChange(
-      urlparse.urlparse(opt.host).netloc,
+      urllib.parse.urlparse(opt.host).netloc,
       opt.project,
       branch=opt.branch,
       subject=opt.subject,
@@ -304,7 +296,7 @@ def CMDchangeedit(parser, args):
   with open(opt.file) as f:
     data = f.read()
   result = gerrit_util.ChangeEdit(
-      urlparse.urlparse(opt.host).netloc, opt.change, opt.path, data)
+      urllib.parse.urlparse(opt.host).netloc, opt.change, opt.path, data)
   logging.info(result)
   write_result(result, opt)
 
@@ -318,7 +310,7 @@ def CMDpublishchangeedit(parser, args):
   (opt, args) = parser.parse_args(args)
 
   result = gerrit_util.PublishChangeEdit(
-      urlparse.urlparse(opt.host).netloc, opt.change, opt.notify)
+      urllib.parse.urlparse(opt.host).netloc, opt.change, opt.notify)
   logging.info(result)
   write_result(result, opt)
 
@@ -329,7 +321,7 @@ def CMDsubmitchange(parser, args):
   parser.add_option('-c', '--change', type=int, help='change number')
   (opt, args) = parser.parse_args(args)
   result = gerrit_util.SubmitChange(
-      urlparse.urlparse(opt.host).netloc, opt.change)
+      urllib.parse.urlparse(opt.host).netloc, opt.change)
   logging.info(result)
   write_result(result, opt)
 
@@ -340,7 +332,7 @@ def CMDchangesubmittedtogether(parser, args):
   parser.add_option('-c', '--change', type=int, help='change number')
   (opt, args) = parser.parse_args(args)
   result = gerrit_util.GetChangesSubmittedTogether(
-      urlparse.urlparse(opt.host).netloc, opt.change)
+      urllib.parse.urlparse(opt.host).netloc, opt.change)
   logging.info(result)
   write_result(result, opt)
 
@@ -351,7 +343,7 @@ def CMDgetcommitincludedin(parser, args):
   parser.add_option('--commit', dest='commit', help='commit hash')
   (opt, args) = parser.parse_args(args)
   result = gerrit_util.GetCommitIncludedIn(
-      urlparse.urlparse(opt.host).netloc, opt.project, opt.commit)
+      urllib.parse.urlparse(opt.host).netloc, opt.project, opt.commit)
   logging.info(result)
   write_result(result, opt)
 
@@ -361,11 +353,10 @@ def CMDsetbotcommit(parser, args):
   """Sets bot-commit+1 to a bot generated change."""
   parser.add_option('-c', '--change', type=int, help='change number')
   (opt, args) = parser.parse_args(args)
-  result = gerrit_util.SetReview(
-      urlparse.urlparse(opt.host).netloc,
-      opt.change,
-      labels={'Bot-Commit': 1},
-      ready=True)
+  result = gerrit_util.SetReview(urllib.parse.urlparse(opt.host).netloc,
+                                 opt.change,
+                                 labels={'Bot-Commit': 1},
+                                 ready=True)
   logging.info(result)
   write_result(result, opt)
 
@@ -379,7 +370,7 @@ def CMDsetlabel(parser, args):
                     nargs=2,
                     metavar=('label_name', 'label_value'))
   (opt, args) = parser.parse_args(args)
-  result = gerrit_util.SetReview(urlparse.urlparse(opt.host).netloc,
+  result = gerrit_util.SetReview(urllib.parse.urlparse(opt.host).netloc,
                                  opt.change,
                                  labels={opt.label[0]: opt.label[1]})
   logging.info(result)
@@ -395,8 +386,7 @@ def CMDabandon(parser, args):
   (opt, args) = parser.parse_args(args)
   assert opt.change, "-c not defined"
   result = gerrit_util.AbandonChange(
-      urlparse.urlparse(opt.host).netloc,
-      opt.change, opt.message)
+      urllib.parse.urlparse(opt.host).netloc, opt.change, opt.message)
   logging.info(result)
   write_result(result, opt)
 
@@ -439,7 +429,7 @@ def CMDmass_abandon(parser, args):
   search_query.append(('status', 'open'))
   logging.info("Searching for: %s" % search_query)
 
-  host = urlparse.urlparse(opt.host).netloc
+  host = urllib.parse.urlparse(opt.host).netloc
 
   result = gerrit_util.QueryChanges(
       host,

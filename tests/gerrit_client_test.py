@@ -9,20 +9,11 @@ import logging
 import os
 import sys
 import unittest
-
-if sys.version_info.major == 2:
-  from StringIO import StringIO
-  import mock
-  BUILTIN_OPEN = '__builtin__.open'
-else:
-  from io import StringIO
-  from unittest import mock
-  BUILTIN_OPEN = 'builtins.open'
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import gerrit_client
-import gerrit_util
 
 
 class TestGerritClient(unittest.TestCase):
@@ -120,7 +111,7 @@ class TestGerritClient(unittest.TestCase):
                                       subject='subject',
                                       params=[('work_in_progress', 'true')])
 
-  @mock.patch(BUILTIN_OPEN, mock.mock_open())
+  @mock.patch('builtins.open', mock.mock_open())
   @mock.patch('gerrit_util.ChangeEdit', return_value='')
   def test_changeedit(self, util_mock):
     open().read.return_value = 'test_data'

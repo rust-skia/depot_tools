@@ -8,9 +8,6 @@ Utilities for requesting information for a Gerrit server via HTTPS.
 https://gerrit-review.googlesource.com/Documentation/rest-api.html
 """
 
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import base64
 import contextlib
 import httplib2
@@ -33,15 +30,10 @@ import metrics
 import metrics_utils
 import subprocess2
 
-from third_party import six
 from six.moves import urllib
 
-if sys.version_info.major == 2:
-  import cookielib
-  from StringIO import StringIO
-else:
-  import http.cookiejar as cookielib
-  from io import StringIO
+import http.cookiejar
+from io import StringIO
 
 LOGGER = logging.getLogger()
 # With a starting sleep time of 12.0 seconds, x <= [1.8-2.2]x backoff, and six
@@ -255,7 +247,7 @@ class CookiesAuthenticator(Authenticator):
 
   def _get_auth_for_host(self, host):
     for domain, creds in self.gitcookies.items():
-      if cookielib.domain_match(host, domain):
+      if http.cookiejar.domain_match(host, domain):
         return (creds[0], None, creds[1])
     return self.netrc.authenticators(host)
 

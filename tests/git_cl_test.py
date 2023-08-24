@@ -6,27 +6,18 @@
 
 """Unit tests for git_cl.py."""
 
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import datetime
 import json
 import logging
+from io import StringIO
 import multiprocessing
 import optparse
 import os
-import pprint
 import shutil
 import sys
 import tempfile
 import unittest
-
-if sys.version_info.major == 2:
-  from StringIO import StringIO
-  import mock
-else:
-  from io import StringIO
-  from unittest import mock
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
