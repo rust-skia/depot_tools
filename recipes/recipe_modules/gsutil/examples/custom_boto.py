@@ -5,7 +5,7 @@
 from recipe_engine import post_process
 from recipe_engine.recipe_api import Property
 
-PYTHON_VERSION_COMPATIBILITY = 'PY3'
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'gsutil',

@@ -5,6 +5,9 @@
 
 # TODO(hinoka): Use logging.
 
+from __future__ import division
+from __future__ import print_function
+
 import codecs
 from contextlib import contextmanager
 import copy
@@ -25,8 +28,18 @@ import uuid
 
 import os.path as path
 
+# TODO(crbug.com/1227140): Clean up when py2 is no longer supported.
 from io import BytesIO
-from urllib.parse import urlparse
+try:
+  import urlparse
+except ImportError:  # pragma: no cover
+  import urllib.parse as urlparse
+
+# Cache the string-escape codec to ensure subprocess can find it later.
+# See crbug.com/912292#c2 for context.
+# TODO(crbug.com/1227140): Clean up when py2 is no longer supported.
+if sys.version_info.major == 2:
+  codecs.lookup('string-escape')
 
 # How many bytes at a time to read from pipes.
 BUF_SIZE = 256
@@ -156,6 +169,13 @@ def _kill_process(proc):
   proc.kill()
 
 
+# TODO(crbug.com/1227140): Clean up when py2 is no longer supported.
+def _stdout_write(buf):
+  try:
+    sys.stdout.buffer.write(buf)
+  except AttributeError:
+    sys.stdout.write(buf)
+
 
 def call(*args, **kwargs):  # pragma: no cover
   """Interactive subprocess call."""
@@ -215,10 +235,10 @@ def call(*args, **kwargs):  # pragma: no cover
       if hanging_cr:
         buf = buf[:-1]
       buf = buf.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
-      sys.stdout.buffer.write(buf)
+      _stdout_write(buf)
       out.write(buf)
     if hanging_cr:
-      sys.stdout.buffer.write(b'\n')
+      _stdout_write(b'\n')
       out.write(b'\n')
 
     code = proc.wait()
@@ -311,7 +331,7 @@ def modify_solutions(input_solutions):
   solutions = copy.deepcopy(input_solutions)
   for solution in solutions:
     original_url = solution['url']
-    parsed_url = urlparse(original_url)
+    parsed_url = urlparse.urlparse(original_url)
     parsed_path = parsed_url.path
 
     solution['managed'] = False
@@ -458,7 +478,7 @@ def normalize_git_url(url):
   * Do not contain /a/ in their path.
   """
   try:
-    p = urlparse(url)
+    p = urlparse.urlparse(url)
   except Exception:
     # Not a url, just return it back.
     return url
@@ -873,7 +893,7 @@ def parse_revisions(revisions, root):
       # This is an alt_root@revision argument.
       current_root, current_rev = split_revision
 
-      parsed_root = urlparse(current_root)
+      parsed_root = urlparse.urlparse(current_root)
       if parsed_root.scheme in ['http', 'https']:
         # We want to normalize git urls into .git urls.
         normalized_root = 'https://' + parsed_root.netloc + parsed_root.path

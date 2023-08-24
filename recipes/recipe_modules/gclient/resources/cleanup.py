@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from __future__ import print_function
 import os, sys
 
 build_path = sys.argv[1]

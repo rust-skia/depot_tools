@@ -8,7 +8,7 @@ from recipe_engine.recipe_api import Property
 from PB.recipe_modules.depot_tools.presubmit import properties
 
 
-PYTHON_VERSION_COMPATIBILITY = 'PY3'
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'bot_update',

@@ -7,7 +7,7 @@ from recipe_engine import post_process
 from PB.go.chromium.org.luci.swarming.proto.api import swarming as swarming_pb
 from PB.recipe_modules.recipe_engine.led import properties as led_properties_pb
 
-PYTHON_VERSION_COMPATIBILITY = 'PY3'
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
     'tryserver',

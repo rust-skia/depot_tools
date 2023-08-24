@@ -5,7 +5,7 @@
 from recipe_engine.post_process import (DropExpectation, StatusSuccess,
                                         SummaryMarkdown)
 
-PYTHON_VERSION_COMPATIBILITY = 'PY3'
+PYTHON_VERSION_COMPATIBILITY = 'PY2+3'
 
 DEPS = [
   'recipe_engine/assertions',

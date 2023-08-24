@@ -2,8 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import division
+
 import base64
-import urllib.parse
+import sys
+
+try:
+  import urlparse
+except ImportError:  # pragma: no cover
+  import urllib.parse as urlparse
 
 from recipe_engine import recipe_api
 
@@ -154,8 +161,10 @@ class Gitiles(recipe_api.RecipeApi):
 
     value = base64.b64decode(step_result.json.output['value'])
     try:
+      # TODO(crbug.com/1227140): Clean up when py2 is no longer supported.
       # If the file is not utf-8 encodable, return the bytes
-      value = value.decode('utf-8')
+      if sys.version_info >= (3,):
+        value = value.decode('utf-8')
     finally:
       return value
 
@@ -231,9 +240,9 @@ class Gitiles(recipe_api.RecipeApi):
 
 def parse_http_host_and_path(url):
   # Copied from https://chromium.googlesource.com/infra/luci/recipes-py/+/809e57935211b3fcb802f74a7844d4f36eff6b87/recipe_modules/buildbucket/util.py
-  parsed = urllib.parse.urlparse(url)
+  parsed = urlparse.urlparse(url)
   if not parsed.scheme:
-    parsed = urllib.parse.urlparse('https://' + url)
+    parsed = urlparse.urlparse('https://' + url)
   if (parsed.scheme in ('http', 'https') and
       not parsed.params and
       not parsed.query and

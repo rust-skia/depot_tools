@@ -4,6 +4,12 @@
 
 import re
 
+# TODO(crbug.com/1227140): Clean up when py2 is no longer supported.
+try:
+  _STRING_TYPE = basestring
+except NameError:  # pragma: no cover
+  _STRING_TYPE = str
+
 from recipe_engine import recipe_api
 
 class DepsDiffException(Exception):
@@ -62,7 +68,7 @@ def jsonish_to_python(spec, is_top=False):
       ret += '['
       ret += ', '.join(jsonish_to_python(x) for x in spec)
       ret += ']'
-    elif isinstance(spec, str):
+    elif isinstance(spec, _STRING_TYPE):
       ret = repr(str(spec))
     else:
       ret = repr(spec)
