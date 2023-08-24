@@ -142,7 +142,7 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
   # Upload a CL.
   upload_args = ['-f']
   if reviewers:
-    upload_args.extend(['-r', ','.join(reviewers)])
+    upload_args.extend(['-r', ','.join(sorted(reviewers))])
   if cq_dry_run:
     upload_args.append('--cq-dry-run')
   if not comment:
@@ -262,16 +262,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     assert refactor_branch_upstream, \
         "Branch %s must have an upstream." % refactor_branch
 
-    # Verify that the description contains a bug link. Examples:
-    #   Bug: 123
-    #   Bug: chromium:456
-    bug_pattern = re.compile(r"^Bug:\s*(?:[a-zA-Z]+:)?[0-9]+", re.MULTILINE)
-    matches = re.findall(bug_pattern, description)
-    answer = 'y'
-    if not matches:
-      answer = gclient_utils.AskForData(
-          'Description does not include a bug link. Proceed? (y/n):')
-    if answer.lower() != 'y':
+    if not CheckDescriptionBugLink(description):
       return 0
 
     files_split_by_reviewers = SelectReviewersForFiles(cl, author, files,
@@ -325,6 +316,24 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     sys.stderr.write(cpe.stderr)
     return 1
   return 0
+
+
+def CheckDescriptionBugLink(description):
+  """Verifies that the description contains a bug link.
+
+  Examples:
+      Bug: 123
+      Bug: chromium:456
+
+  Prompts user if the description does not contain a bug link.
+  """
+  bug_pattern = re.compile(r"^Bug:\s*(?:[a-zA-Z]+:)?[0-9]+", re.MULTILINE)
+  matches = re.findall(bug_pattern, description)
+  answer = 'y'
+  if not matches:
+    answer = gclient_utils.AskForData(
+        'Description does not include a bug link. Proceed? (y/n):')
+  return answer.lower() == 'y'
 
 
 def SelectReviewersForFiles(cl, author, files, max_depth):
