@@ -5,6 +5,8 @@
 
 """Change the upstream of the current branch."""
 
+from __future__ import print_function
+
 import argparse
 import sys
 

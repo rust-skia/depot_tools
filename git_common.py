@@ -13,7 +13,9 @@ from multiprocessing.pool import IMapIterator
 
 def wrapper(func):
   def wrap(self, timeout=None):
-    return func(self, timeout=timeout or threading.TIMEOUT_MAX)
+    default_timeout = (1 << 31 if sys.version_info.major == 2 else
+                       threading.TIMEOUT_MAX)
+    return func(self, timeout=timeout or default_timeout)
 
   return wrap
 IMapIterator.next = wrapper(IMapIterator.next)

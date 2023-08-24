@@ -7,6 +7,8 @@
 Tool to update all branches to have the latest changes from their upstreams.
 """
 
+from __future__ import print_function
+
 import argparse
 import collections
 import logging

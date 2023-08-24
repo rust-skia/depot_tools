@@ -9,6 +9,8 @@ is more than one downstream branch, then this script will prompt you to select
 which branch.
 """
 
+from __future__ import print_function
+
 import argparse
 import sys
 

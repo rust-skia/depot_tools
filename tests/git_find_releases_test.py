@@ -5,16 +5,25 @@
 # found in the LICENSE file.
 """Unit tests for git_find_releases.py."""
 
-from io import StringIO
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import logging
 import os
 import sys
 import unittest
-from unittest import mock
+
+if sys.version_info.major == 2:
+  from StringIO import StringIO
+  import mock
+else:
+  from io import StringIO
+  from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import git_find_releases
+import git_common
 
 
 class TestGitFindReleases(unittest.TestCase):

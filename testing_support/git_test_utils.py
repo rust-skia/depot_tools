@@ -20,6 +20,10 @@ import gclient_utils
 
 DEFAULT_BRANCH = 'main'
 
+if sys.version_info.major == 3:
+  # pylint: disable=redefined-builtin
+  basestring = (str,)
+
 
 def git_hash_data(data, typ='blob'):
   """Calculate the git-style SHA1 for some data.
@@ -329,7 +333,7 @@ class GitRepo(object):
 
     for fname, file_data in commit_data.items():
       # If it isn't a string, it's one of the special keys.
-      if not isinstance(fname, str):
+      if not isinstance(fname, basestring):
         continue
 
       deleted = False
@@ -492,6 +496,8 @@ class GitRepoSchemaTestBase(unittest.TestCase):
   @classmethod
   def getRepoContent(cls, commit):
     commit = 'COMMIT_%s' % commit
+    if sys.version_info.major == 2:
+      commit = commit.encode('utf-8')
     return getattr(cls, commit, None)
 
   @classmethod

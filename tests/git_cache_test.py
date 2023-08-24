@@ -5,7 +5,6 @@
 
 """Unit tests for git_cache.py"""
 
-from io import StringIO
 import logging
 import os
 import shutil
@@ -13,7 +12,13 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from unittest import mock
+
+if sys.version_info.major == 2:
+  from StringIO import StringIO
+  import mock
+else:
+  from io import StringIO
+  from unittest import mock
 
 DEPOT_TOOLS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEPOT_TOOLS_ROOT)

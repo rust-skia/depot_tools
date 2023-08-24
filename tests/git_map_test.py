@@ -5,12 +5,14 @@
 # found in the LICENSE file.
 """Tests for git_map."""
 
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import io
 import os
 import re
 import sys
 import unittest
-from unittest import mock
 
 DEPOT_TOOLS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEPOT_TOOLS_ROOT)
@@ -19,6 +21,11 @@ from testing_support import git_test_utils
 
 import git_map
 import git_common
+
+if sys.version_info.major == 2:
+  import mock
+else:
+  from unittest import mock
 
 
 git_common.TEST_MODE = True
@@ -104,7 +111,7 @@ class GitMapTest(git_test_utils.GitRepoReadOnlyTestBase):
         '* 315457dbe8	(tag_B) 1970-01-04 ~ B',
         '* cd589e62d8	(tag_A, origin/root_A) 1970-01-02 ~ A',
         '* 7026d3d68e	(tag_", root_", main, branch_") 1970-01-02 ~ "',
-    ])
+		])
     outbuf = io.BytesIO()
     self.repo.run(git_map.main, [], outbuf)
     output = outbuf.getvalue()

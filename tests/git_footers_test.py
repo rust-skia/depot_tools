@@ -2,12 +2,18 @@
 
 """Tests for git_footers."""
 
-from io import StringIO
 import json
 import os
 import sys
+import tempfile
 import unittest
-from unittest import mock
+
+if sys.version_info.major == 2:
+  from StringIO import StringIO
+  import mock
+else:
+  from io import StringIO
+  from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

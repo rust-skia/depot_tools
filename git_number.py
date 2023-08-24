@@ -21,6 +21,9 @@ commit's entire history, this script caches all calculated data inside the git
 repo that it operates on in the ref 'refs/number/commits'.
 """
 
+from __future__ import print_function
+from __future__ import division
+
 import binascii
 import collections
 import logging
@@ -57,7 +60,10 @@ def pathlify(hash_prefix):
   >>> pathlify('\xDE\xAD')
   'de/ad'
   """
-  return '/'.join('%02x' % b for b in hash_prefix)
+  if sys.version_info.major == 3:
+    return '/'.join('%02x' % b for b in hash_prefix)
+
+  return '/'.join('%02x' % ord(b) for b in hash_prefix)
 
 
 @git.memoize_one(threadsafe=False)
@@ -178,7 +184,10 @@ def preload_tree(prefix):
 
 
 def all_prefixes(depth=PREFIX_LEN):
-  prefixes = [bytes([i]) for i in range(255)]
+  if sys.version_info.major == 3:
+    prefixes = [bytes([i]) for i in range(255)]
+  else:
+    prefixes = [chr(i) for i in range(255)]
   for x in prefixes:
     # This isn't covered because PREFIX_LEN currently == 1
     if depth > 1:  # pragma: no cover

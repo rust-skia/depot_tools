@@ -11,6 +11,8 @@ Note that it uses the "cherry picked from" annotation to find merges, so it will
 only work on merges that followed the "use cherry-pick -x" instructions.
 """
 
+from __future__ import print_function
+
 import optparse
 import re
 import sys

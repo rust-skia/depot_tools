@@ -7,6 +7,8 @@
 
 """A git-command for integrating reviews on Gerrit."""
 
+from __future__ import print_function
+
 import base64
 import collections
 import datetime
@@ -53,7 +55,12 @@ import subprocess2
 import swift_format
 import watchlists
 
+from third_party import six
 from six.moves import urllib
+
+
+if sys.version_info.major == 3:
+  basestring = (str,)  # pylint: disable=redefined-builtin
 
 
 __version__ = '2.0'
@@ -915,7 +922,7 @@ def ParseIssueNumberArgument(arg):
 
   if isinstance(arg, int):
     return _ParsedIssueNumberArgument(issue=arg)
-  if not isinstance(arg, str):
+  if not isinstance(arg, basestring):
     return fail_result
 
   if arg.isdigit():
@@ -3172,7 +3179,7 @@ class ChangeDescription(object):
     return '\n'.join(self._description_lines)
 
   def set_description(self, desc):
-    if isinstance(desc, str):
+    if isinstance(desc, basestring):
       lines = desc.splitlines()
     else:
       lines = [line.rstrip() for line in desc]
