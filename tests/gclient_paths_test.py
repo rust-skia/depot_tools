@@ -8,18 +8,15 @@ import os
 import sys
 import unittest
 
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from io import StringIO
+from unittest import mock
 
 import gclient_paths
 import gclient_utils
 import subprocess2
-
-if sys.version_info.major == 2:
-  from StringIO import StringIO
-  import mock
-else:
-  from io import StringIO
-  from unittest import mock
 
 
 EXCEPTION = subprocess2.CalledProcessError(

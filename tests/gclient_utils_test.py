@@ -4,29 +4,18 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import io
 import os
 import sys
-import tempfile
-import time
 import unittest
+from unittest import mock
 
-if sys.version_info.major == 2:
-  from StringIO import StringIO
-  import mock
-else:
-  from io import StringIO
-  from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from testing_support import trial_dir
-
 import gclient_utils
 import subprocess2
+from testing_support import trial_dir
 
 
 class CheckCallAndFilterTestCase(unittest.TestCase):

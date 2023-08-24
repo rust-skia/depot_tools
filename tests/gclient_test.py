@@ -8,33 +8,32 @@
 See gclient_smoketest.py for integration tests.
 """
 
-import copy
 import json
 import logging
 import ntpath
 import os
+import queue
 import sys
-import six
 import unittest
+from unittest import mock
 
-if sys.version_info.major == 2:
-  import mock
-  import Queue
-else:
-  from unittest import mock
-  import queue as Queue
+import six
+
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import metrics_utils
+
+
 # We have to disable monitoring before importing gclient.
 metrics_utils.COLLECT_METRICS = False
 
 import gclient
 import gclient_eval
-import gclient_utils
 import gclient_scm
+import gclient_utils
 from testing_support import trial_dir
+
 
 def write(filename, content):
   """Writes the content of a file and create the directories as needed."""
@@ -84,7 +83,7 @@ class SCMMock(object):
 class GclientTest(trial_dir.TestCase):
   def setUp(self):
     super(GclientTest, self).setUp()
-    self.processed = Queue.Queue()
+    self.processed = queue.Queue()
     self.previous_dir = os.getcwd()
     os.chdir(self.root_dir)
     # Manual mocks.
@@ -216,7 +215,7 @@ class GclientTest(trial_dir.TestCase):
     try:
       while True:
         items.append(self.processed.get_nowait())
-    except Queue.Empty:
+    except queue.Empty:
       pass
     return items
 

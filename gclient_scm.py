@@ -4,8 +4,6 @@
 
 """Gclient-specific SCM-specific operations."""
 
-from __future__ import print_function
-
 import collections
 import contextlib
 import errno
@@ -15,21 +13,16 @@ import os
 import platform
 import posixpath
 import re
+import shutil
 import sys
 import tempfile
 import threading
 import traceback
 
-try:
-  import urlparse
-except ImportError:  # For Py3 compatibility
-  import urllib.parse as urlparse
-
 import gclient_utils
 import gerrit_util
 import git_cache
 import scm
-import shutil
 import subprocess2
 
 

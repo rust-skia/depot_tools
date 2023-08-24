@@ -8,6 +8,7 @@ import os
 import re
 import sys
 
+
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GCLIENT_PATH = os.path.join(ROOT_DIR, 'gclient')
 sys.path.insert(0, ROOT_DIR)
@@ -25,7 +26,6 @@ class GClientSmokeBase(fake_repos.FakeReposTestBase):
     self.env['DEPOT_TOOLS_METRICS'] = '0'
     # Suppress Python 3 warnings and other test undesirables.
     self.env['GCLIENT_TEST'] = '1'
-    self.env['GCLIENT_PY3'] = '0' if sys.version_info.major == 2 else '1'
     self.maxDiff = None
 
   def gclient(self, cmd, cwd=None, error_ok=False):

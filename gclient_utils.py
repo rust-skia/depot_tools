@@ -4,8 +4,6 @@
 
 """Generic utils."""
 
-from __future__ import print_function
-
 import codecs
 import collections
 import contextlib
@@ -18,6 +16,7 @@ import operator
 import os
 import pipes
 import platform
+import queue
 import re
 import stat
 import subprocess
@@ -25,18 +24,9 @@ import sys
 import tempfile
 import threading
 import time
-import subprocess2
+import urllib.parse
 
-if sys.version_info.major == 2:
-  from cStringIO import StringIO
-  import collections as collections_abc
-  import Queue as queue
-  import urlparse
-else:
-  from collections import abc as collections_abc
-  from io import StringIO
-  import queue
-  import urllib.parse as urlparse
+import subprocess2
 
 
 # Git wrapper retries on a transient error, and some callees do retries too,
@@ -57,17 +47,13 @@ THREADED_INDEX_PACK_BLOCKLIST = [
   'https://chromium.googlesource.com/chromium/reference_builds/chrome_win.git'
 ]
 
-"""To support rethrowing exceptions with tracebacks on both Py2 and 3."""
-if sys.version_info.major == 2:
-  # We have to use exec to avoid a SyntaxError in Python 3.
-  exec("def reraise(typ, value, tb=None):\n  raise typ, value, tb\n")
-else:
-  def reraise(typ, value, tb=None):
-    if value is None:
-      value = typ()
-    if value.__traceback__ is not tb:
-      raise value.with_traceback(tb)
-    raise value
+def reraise(typ, value, tb=None):
+  """To support rethrowing exceptions with tracebacks."""
+  if value is None:
+    value = typ()
+  if value.__traceback__ is not tb:
+    raise value.with_traceback(tb)
+  raise value
 
 
 class Error(Exception):
@@ -202,10 +188,8 @@ def AskForData(message):
     # Windows. Fall back to simple input handling.
     pass
 
-  # Use this so that it can be mocked in tests on Python 2 and 3.
+  # Use this so that it can be mocked in tests.
   try:
-    if sys.version_info.major == 2:
-      return raw_input(message)
     return input(message)
   except KeyboardInterrupt:
     # Hide the exception.
@@ -840,7 +824,7 @@ class WorkItem(object):
   def __init__(self, name):
     # A unique string representing this work item.
     self._name = name
-    self.outbuf = StringIO()
+    self.outbuf = io.StringIO()
     self.start = self.finish = None
     self.resources = []  # List of resources this work item requires.
 
@@ -1201,11 +1185,11 @@ def UpgradeToHttps(url):
     # relative url and will use http:///foo. Note that it defaults to http://
     # for compatibility with naked url like "localhost:8080".
     url = 'http://%s' % url
-  parsed = list(urlparse.urlparse(url))
+  parsed = list(urllib.parse.urlparse(url))
   # Do not automatically upgrade http to https if a port number is provided.
   if parsed[0] == 'http' and not re.match(r'^.+?\:\d+$', parsed[1]):
     parsed[0] = 'https'
-  return urlparse.urlunparse(parsed)
+  return urllib.parse.urlunparse(parsed)
 
 
 def ParseCodereviewSettingsContent(content):
@@ -1310,7 +1294,7 @@ def freeze(obj):
 
   Will raise TypeError if you pass an object which is not hashable.
   """
-  if isinstance(obj, collections_abc.Mapping):
+  if isinstance(obj, collections.abc.Mapping):
     return FrozenDict((freeze(k), freeze(v)) for k, v in obj.items())
 
   if isinstance(obj, (list, tuple)):
@@ -1323,7 +1307,7 @@ def freeze(obj):
   return obj
 
 
-class FrozenDict(collections_abc.Mapping):
+class FrozenDict(collections.abc.Mapping):
   """An immutable OrderedDict.
 
   Modified From: http://stackoverflow.com/a/2704866
@@ -1337,7 +1321,7 @@ class FrozenDict(collections_abc.Mapping):
         operator.xor, (hash(i) for i in enumerate(self._d.items())), 0)
 
   def __eq__(self, other):
-    if not isinstance(other, collections_abc.Mapping):
+    if not isinstance(other, collections.abc.Mapping):
       return NotImplemented
     if self is other:
       return True

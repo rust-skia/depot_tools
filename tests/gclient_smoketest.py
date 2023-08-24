@@ -15,6 +15,7 @@ import unittest
 
 import gclient_smoketest_base
 
+
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
 
@@ -49,8 +50,7 @@ class GClientSmoke(gclient_smoketest_base.GClientSmokeBase):
         os.remove(p)
       results = self.gclient(cmd)
       self.check(('', '', 0), results)
-      mode = 'r' if sys.version_info.major == 3 else 'rU'
-      with open(p, mode) as f:
+      with open(p, 'r') as f:
         actual = {}
         exec(f.read(), {}, actual)
         self.assertEqual(expected, actual)

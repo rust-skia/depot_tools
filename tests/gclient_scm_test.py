@@ -9,33 +9,26 @@
 
 from __future__ import unicode_literals
 
-
-from subprocess import Popen, PIPE, STDOUT
-
+from io import StringIO
 import json
 import logging
 import os
 import re
+from subprocess import Popen, PIPE, STDOUT
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
-if sys.version_info.major == 2:
-  from cStringIO import StringIO
-  import mock
-else:
-  from io import StringIO
-  from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from testing_support import fake_repos
-from testing_support import test_case_utils
 
 import gclient_scm
 import gclient_utils
 import git_cache
 import subprocess2
+from testing_support import fake_repos
+from testing_support import test_case_utils
 
 
 GIT = 'git' if sys.platform != 'win32' else 'git.bat'

@@ -8,13 +8,12 @@
 # particularly for modules that are not builtin (see sys.builtin_modules_names,
 # os isn't built in, but it's essential to this file).
 
-from __future__ import print_function
-
-import gclient_utils
 import logging
 import os
-import subprocess2
 import sys
+
+import gclient_utils
+import subprocess2
 
 
 def FindGclientRoot(from_dir, filename='.gclient'):
@@ -78,8 +77,7 @@ def GetPrimarySolutionPath():
   try:
     top_dir = subprocess2.check_output(['git', 'rev-parse', '--show-toplevel'],
                                        stderr=subprocess2.DEVNULL)
-    if sys.version_info.major == 3:
-      top_dir = top_dir.decode('utf-8', 'replace')
+    top_dir = top_dir.decode('utf-8', 'replace')
     top_dir = os.path.normpath(top_dir.strip())
   except subprocess2.CalledProcessError:
     pass

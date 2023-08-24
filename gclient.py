@@ -80,11 +80,8 @@
 #   To specify a target CPU, the variables target_cpu and target_cpu_only
 #   are available and are analogous to target_os and target_os_only.
 
-from __future__ import print_function
-
 __version__ = '0.7'
 
-import collections
 import copy
 import json
 import logging
@@ -96,32 +93,21 @@ import pprint
 import re
 import sys
 import time
-
-try:
-  import urlparse
-except ImportError:  # For Py3 compatibility
-  import urllib.parse as urlparse
+import urllib.parse
 
 import detect_host_arch
 import fix_encoding
 import gclient_eval
-import gclient_scm
 import gclient_paths
+import gclient_scm
 import gclient_utils
 import git_cache
 import metrics
 import metrics_utils
-from third_party.repo.progress import Progress
+import setup_color
 import subcommand
 import subprocess2
-import setup_color
-
-from third_party import six
-
-# TODO(crbug.com/953884): Remove this when python3 migration is done.
-if six.PY3:
-  # pylint: disable=redefined-builtin
-  basestring = str
+from third_party.repo.progress import Progress
 
 
 DEPOT_TOOLS_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
@@ -148,15 +134,12 @@ def ToGNString(value, allow_dicts = True):
   allow_dicts indicates if this function will allow converting dictionaries
   to GN scopes. This is only possible at the top level, you can't nest a
   GN scope in a list, so this should be set to False for recursive calls."""
-  if isinstance(value, basestring):
+  if isinstance(value, str):
     if value.find('\n') >= 0:
       raise GNException("Trying to print a string with a newline in it.")
     return '"' + \
         value.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$') + \
         '"'
-
-  if sys.version_info.major == 2 and isinstance(value, unicode):
-    return ToGNString(value.encode('utf-8'))
 
   if isinstance(value, bool):
     if value:
@@ -176,11 +159,11 @@ class Hook(object):
     """Constructor.
 
     Arguments:
-      action (list of basestring): argv of the command to run
-      pattern (basestring regex): noop with git; deprecated
-      name (basestring): optional name; no effect on operation
-      cwd (basestring): working directory to use
-      condition (basestring): condition when to run the hook
+      action (list of str): argv of the command to run
+      pattern (str regex): noop with git; deprecated
+      name (str): optional name; no effect on operation
+      cwd (str): working directory to use
+      condition (str): condition when to run the hook
       variables (dict): variables for evaluating the condition
     """
     self._action = gclient_utils.freeze(action)
@@ -314,7 +297,7 @@ class DependencySettings(object):
     self._custom_hooks = custom_hooks or []
 
     # Post process the url to remove trailing slashes.
-    if isinstance(self.url, basestring):
+    if isinstance(self.url, str):
       # urls are sometime incorrectly written as proto://host/path/@rev. Replace
       # it to proto://host/path@rev.
       self.set_url(self.url.replace('/@', '@'))
@@ -479,7 +462,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     self._OverrideUrl()
     # This is inherited from WorkItem.  We want the URL to be a resource.
-    if self.url and isinstance(self.url, basestring):
+    if self.url and isinstance(self.url, str):
       # The url is usually given to gclient either as https://blah@123
       # or just https://blah.  The @123 portion is irrelevant.
       self.resources.append(self.url.split('@')[0])
@@ -509,7 +492,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       logging.info('Dependency(%s)._OverrideUrl(None) -> None', self._name)
       return
 
-    if not isinstance(self.url, basestring):
+    if not isinstance(self.url, str):
       raise gclient_utils.Error('Unknown url type')
 
     # self.url is a local path
@@ -518,7 +501,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       return
 
     # self.url is a URL
-    parsed_url = urlparse.urlparse(self.url)
+    parsed_url = urllib.parse.urlparse(self.url)
     if parsed_url[0] or re.match(r'^\w+\@[\w\.-]+\:[\w\/]+', parsed_url[2]):
       return
 
@@ -856,7 +839,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
 
     if 'recursedeps' in local_scope:
       for ent in local_scope['recursedeps']:
-        if isinstance(ent, basestring):
+        if isinstance(ent, str):
           self.recursedeps[ent] = self.deps_file
         else:  # (depname, depsfilename)
           self.recursedeps[ent[0]] = ent[1]
@@ -1035,8 +1018,8 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       # Don't enforce this for custom_deps.
       if dep.name in self._custom_deps:
         continue
-      if isinstance(dep.url, basestring):
-        parsed_url = urlparse.urlparse(dep.url)
+      if isinstance(dep.url, str):
+        parsed_url = urllib.parse.urlparse(dep.url)
         if parsed_url.netloc and parsed_url.netloc not in self._allowed_hosts:
           bad_deps.append(dep)
     return bad_deps
@@ -1258,7 +1241,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
       value = variables[arg]
       if isinstance(value, gclient_eval.ConstantString):
         value = value.value
-      elif isinstance(value, basestring):
+      elif isinstance(value, str):
         value = gclient_eval.EvaluateCondition(value, variables)
       lines.append('%s = %s' % (arg, ToGNString(value)))
 
@@ -2324,8 +2307,8 @@ class CipdDependency(Dependency):
       custom_vars, should_process, relative, condition):
     package = dep_value['package']
     version = dep_value['version']
-    url = urlparse.urljoin(
-        cipd_root.service_url, '%s@%s' % (package, version))
+    url = urllib.parse.urljoin(cipd_root.service_url,
+                               '%s@%s' % (package, version))
     super(CipdDependency, self).__init__(
         parent=parent,
         name=name + ':' + package,
