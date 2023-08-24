@@ -29,7 +29,6 @@ from __future__ import print_function
 import argparse
 import collections
 import metrics
-import os
 import subprocess2
 import sys
 

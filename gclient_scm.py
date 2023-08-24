@@ -1359,7 +1359,7 @@ class GitWrapper(SCMWrapper):
       os.path.isdir(os.path.join(g, "rebase-merge")) or
       os.path.isdir(os.path.join(g, "rebase-apply")))
 
-  def _CheckClean(self, revision, fixup=False):
+  def _CheckClean(self, revision):
     lockfile = os.path.join(self.checkout_path, ".git", "index.lock")
     if os.path.exists(lockfile):
       raise gclient_utils.Error(

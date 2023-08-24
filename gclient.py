@@ -128,12 +128,8 @@ class GNException(Exception):
   pass
 
 
-def ToGNString(value, allow_dicts = True):
-  """Returns a stringified GN equivalent of the Python value.
-
-  allow_dicts indicates if this function will allow converting dictionaries
-  to GN scopes. This is only possible at the top level, you can't nest a
-  GN scope in a list, so this should be set to False for recursive calls."""
+def ToGNString(value):
+  """Returns a stringified GN equivalent of the Python value."""
   if isinstance(value, str):
     if value.find('\n') >= 0:
       raise GNException("Trying to print a string with a newline in it.")

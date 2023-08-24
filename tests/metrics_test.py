@@ -56,8 +56,6 @@ class MetricsCollectorTest(unittest.TestCase):
 
     # Patch the methods used to get the system information, so we have a known
     # environment.
-    mock.patch('metrics.tempfile.mkstemp',
-               lambda: (None, '/tmp/metrics.json')).start()
     mock.patch('metrics.time.time',
                TimeMock()).start()
     mock.patch('metrics.metrics_utils.get_python_version',

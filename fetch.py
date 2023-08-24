@@ -24,10 +24,8 @@ import json
 import argparse
 import os
 import pipes
-import re
 import subprocess
 import sys
-import textwrap
 
 import git_common
 

@@ -10,7 +10,6 @@ import functools
 import json
 import os
 import sys
-import tempfile
 import threading
 import time
 import traceback
