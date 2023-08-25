@@ -97,6 +97,7 @@ import urllib.parse
 
 import detect_host_arch
 import fix_encoding
+import git_common
 import gclient_eval
 import gclient_paths
 import gclient_scm
@@ -2136,6 +2137,17 @@ it or fix the checkout.
           ('\n'.join(
               patch_repo + '@' + patch_ref
               for patch_repo, patch_ref in patch_refs.items())))
+
+    # TODO(crbug.com/1475405): Warn users if the project uses submodules and
+    # they have fsmonitor enabled.
+    if command == 'update':
+      # Check if any of the root dependency have submodules.
+      is_submoduled = any(
+          map(
+              lambda d: d.git_dependencies_state in
+              (gclient_eval.SUBMODULES, gclient_eval.SYNC), self.dependencies))
+      if is_submoduled:
+        git_common.warn_submodule()
 
     # Once all the dependencies have been processed, it's now safe to write
     # out the gn_args_file and run the hooks.

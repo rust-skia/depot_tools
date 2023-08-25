@@ -731,7 +731,12 @@ class TestGitCl(unittest.TestCase):
                          custom_cl_base=None, short_hostname='chromium',
                          change_id=None, default_branch='main',
                          reset_issue=False):
-    calls = []
+    calls = [
+        (
+            (['os.path.isfile', '.gitmodules'], ),
+            'True',
+        ),
+    ]
     if custom_cl_base:
       ancestor_revision = custom_cl_base
     else:

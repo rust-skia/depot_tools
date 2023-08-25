@@ -4738,6 +4738,11 @@ def CMDupload(parser, args):
                    if opt.help != optparse.SUPPRESS_HELP))
     return
 
+  # TODO(crbug.com/1475405): Warn users if the project uses submodules and
+  # they have fsmonitor enabled.
+  if os.path.isfile('.gitmodules'):
+    git_common.warn_submodule()
+
   if git_common.is_dirty_git_tree('upload'):
     return 1
 

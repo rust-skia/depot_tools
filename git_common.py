@@ -11,6 +11,9 @@ import threading
 
 from multiprocessing.pool import IMapIterator
 
+from third_party import colorama
+
+
 def wrapper(func):
   def wrap(self, timeout=None):
     default_timeout = (1 << 31 if sys.version_info.major == 2 else
@@ -408,6 +411,27 @@ def get_config_regexp(pattern):
     # ^'s by 2.
     pattern = pattern.replace('^', '^' * 8)
   return run('config', '--get-regexp', pattern).splitlines()
+
+
+def is_fsmonitor_enabled():
+  """Returns true if core.fsmonitor is enabled in git config."""
+  fsmonitor = get_config('core.fsmonitor', 'False')
+  return fsmonitor.strip().lower() == 'true'
+
+
+def warn_submodule():
+  """Print warnings for submodules."""
+  # TODO(crbug.com/1475405): Warn users if the project uses submodules and
+  # they have fsmonitor enabled.
+  if is_fsmonitor_enabled():
+    print(colorama.Fore.RED)
+    print('WARNING: You have fsmonitor enabled. There is a major issue '
+          'resulting in git diff-index returning wrong results. Please '
+          'disable it by running:')
+    print('    git config --global core.fsmonitor false')
+    print('We will remove this warning once https://crbug.com/1475405 is '
+          'fixed.')
+    print(colorama.Style.RESET_ALL)
 
 
 def current_branch():

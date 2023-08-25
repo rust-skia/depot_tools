@@ -454,6 +454,15 @@ class GitMutableFunctionsTest(git_test_utils.GitRepoReadWriteTestBase,
 
     self.assertEqual('catfood', self.repo.run(self.gc.root))
 
+    self.repo.git('config', '--add', 'core.fsmonitor', 'true')
+    self.assertEqual(True, self.repo.run(self.gc.is_fsmonitor_enabled))
+
+    self.repo.git('config', '--add', 'core.fsmonitor', 't')
+    self.assertEqual(False, self.repo.run(self.gc.is_fsmonitor_enabled))
+
+    self.repo.git('config', '--add', 'core.fsmonitor', 'false')
+    self.assertEqual(False, self.repo.run(self.gc.is_fsmonitor_enabled))
+
   def testRoot(self):
     origin_schema = git_test_utils.GitRepoSchema("""
     A B C
