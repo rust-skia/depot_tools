@@ -10,7 +10,6 @@ import os
 import copy
 
 
-import git_common
 import gclient_utils
 
 

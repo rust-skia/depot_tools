@@ -9,7 +9,6 @@ In theory you shouldn't need anything else in subprocess, or this module failed.
 
 import codecs
 import errno
-import io
 import logging
 import os
 import subprocess
@@ -19,12 +18,10 @@ import threading
 # Cache the string-escape codec to ensure subprocess can find it later.
 # See crbug.com/912292#c2 for context.
 if sys.version_info.major == 2:
-  import Queue
   codecs.lookup('string-escape')
   # Sends stdout or stderr to os.devnull.
   DEVNULL = open(os.devnull, 'r+')
 else:
-  import queue as Queue
   # pylint: disable=redefined-builtin
   basestring = (str, bytes)
   DEVNULL = subprocess.DEVNULL

@@ -12,7 +12,6 @@ import os
 import re
 import subprocess2
 import sys
-import tempfile
 
 import gclient_utils
 import git_footers

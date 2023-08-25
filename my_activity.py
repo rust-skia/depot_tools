@@ -46,7 +46,6 @@ import logging
 from multiprocessing.pool import ThreadPool
 import optparse
 import os
-import subprocess
 from string import Formatter
 import sys
 import urllib

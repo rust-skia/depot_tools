@@ -18,11 +18,8 @@ be used to restore your environment to its original state.
 import argparse
 import subprocess
 import os
-import platform
 import sys
 import shutil
-import json
-from pathlib import Path
 
 
 def main(argv):

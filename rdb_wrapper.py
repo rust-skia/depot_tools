@@ -7,7 +7,6 @@ import contextlib
 import json
 import os
 import requests
-import time
 
 # Constants describing TestStatus for ResultDB
 STATUS_PASS = 'PASS'

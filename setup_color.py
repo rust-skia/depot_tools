@@ -6,7 +6,6 @@
 from __future__ import print_function
 
 import ctypes
-import os
 import platform
 import subprocess
 import sys

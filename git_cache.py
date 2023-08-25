@@ -8,7 +8,6 @@
 from __future__ import print_function
 
 import contextlib
-import errno
 import logging
 import optparse
 import os
