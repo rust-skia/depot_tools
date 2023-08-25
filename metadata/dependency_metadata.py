@@ -15,7 +15,7 @@ _ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, ".."))
 # Add the repo's root directory for clearer imports.
 sys.path.insert(0, _ROOT_DIR)
 
-import metadata.fields.types as field_types
+import metadata.fields.field_types as field_types
 import metadata.fields.custom.license
 import metadata.fields.custom.version
 import metadata.fields.known as known_fields
@@ -119,7 +119,7 @@ class DependencyMetadata:
     if repeated_field_info:
       repeated = ", ".join(repeated_field_info)
       error = vr.ValidationError(
-          f"Multiple entries for the same field: {repeated}")
+          f"Multiple entries for the same field: {repeated}.")
       error.set_tag(tag="reason", value="repeated field")
       results.append(error)
 
@@ -128,7 +128,7 @@ class DependencyMetadata:
     for field in required_fields:
       if field not in self._metadata:
         field_name = field.get_name()
-        error = vr.ValidationError(f"Required field '{field_name}' is missing")
+        error = vr.ValidationError(f"Required field '{field_name}' is missing.")
         error.set_tag(tag="reason", value="missing required field")
         results.append(error)
 

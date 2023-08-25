@@ -16,7 +16,7 @@ _ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, "..", ".."))
 sys.path.insert(0, _ROOT_DIR)
 
 import metadata.fields.known as known_fields
-import metadata.fields.types as field_types
+import metadata.fields.field_types as field_types
 import metadata.validation_result as vr
 
 

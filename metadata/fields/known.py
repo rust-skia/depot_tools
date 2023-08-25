@@ -20,7 +20,7 @@ import metadata.fields.custom.license
 import metadata.fields.custom.license_file
 import metadata.fields.custom.url
 import metadata.fields.custom.version
-import metadata.fields.types as field_types
+import metadata.fields.field_types as field_types
 
 # Freeform text fields.
 NAME = field_types.FreeformTextField("Name")

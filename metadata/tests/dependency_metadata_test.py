@@ -16,7 +16,6 @@ sys.path.insert(0, _ROOT_DIR)
 
 import metadata.dependency_metadata as dm
 import metadata.fields.known as known_fields
-import metadata.fields.types as field_types
 import metadata.validation_result as vr
 
 

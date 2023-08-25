@@ -15,7 +15,7 @@ _ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, "..", "..", ".."))
 # Add the repo's root directory for clearer imports.
 sys.path.insert(0, _ROOT_DIR)
 
-import metadata.fields.types as field_types
+import metadata.fields.field_types as field_types
 import metadata.fields.util as util
 import metadata.validation_result as vr
 
