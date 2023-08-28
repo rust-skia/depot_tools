@@ -5,9 +5,6 @@
 
 """Unit tests for git_rebase_update.py"""
 
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import os
 import sys
 

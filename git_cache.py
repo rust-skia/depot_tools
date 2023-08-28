@@ -5,8 +5,6 @@
 
 """A git command for managing a local cache of git repositories."""
 
-from __future__ import print_function
-
 import contextlib
 import logging
 import optparse
@@ -17,11 +15,7 @@ import sys
 import tempfile
 import threading
 import time
-
-try:
-  import urlparse
-except ImportError:  # For Py3 compatibility
-  import urllib.parse as urlparse
+import urllib.parse
 
 from download_from_google_storage import Gsutil
 import gclient_utils
@@ -141,7 +135,7 @@ class Mirror(object):
     b = os.getenv('OVERRIDE_BOOTSTRAP_BUCKET')
     if b:
       return b
-    u = urlparse.urlparse(self.url)
+    u = urllib.parse.urlparse(self.url)
     if u.netloc == 'chromium.googlesource.com':
       return 'chromium-git-cache'
     # Not recognized.
@@ -163,7 +157,7 @@ class Mirror(object):
       url = os.path.splitdrive(url)[1]
       return url.replace('-', '--').replace(os.sep, '-')
 
-    parsed = urlparse.urlparse(url)
+    parsed = urllib.parse.urlparse(url)
     norm_url = parsed.netloc + parsed.path
     if norm_url.endswith('.git'):
       norm_url = norm_url[:-len('.git')]
@@ -358,7 +352,7 @@ class Mirror(object):
 
   def supported_project(self):
     """Returns true if this repo is known to have a bootstrap zip file."""
-    u = urlparse.urlparse(self.url)
+    u = urllib.parse.urlparse(self.url)
     return u.netloc in [
         'chromium.googlesource.com',
         'chrome-internal.googlesource.com']

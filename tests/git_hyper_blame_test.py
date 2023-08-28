@@ -4,23 +4,13 @@
 # found in the LICENSE file.
 """Tests for git_dates."""
 
-from __future__ import unicode_literals
-
-import datetime
+from io import BytesIO, StringIO
 import os
 import re
 import shutil
 import sys
 import tempfile
-import unittest
-
-from io import BytesIO
-if sys.version_info.major == 2:
-  from StringIO import StringIO
-  import mock
-else:
-  from io import StringIO
-  from unittest import mock
+from unittest import mock
 
 DEPOT_TOOLS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEPOT_TOOLS_ROOT)
@@ -29,7 +19,6 @@ from testing_support import coverage_utils
 from testing_support import git_test_utils
 
 import gclient_utils
-import git_common
 
 GitRepo = git_test_utils.GitRepo
 
@@ -590,11 +579,7 @@ class GitHyperBlameUnicodeTest(GitHyperBlameTestBase):
 
   # Add a line.
   COMMIT_B = {
-      # AUTHOR_NAME has .encode('utf-8') for py2 as Windows raises exception
-      # otherwise. Type remains str
-      GitRepo.AUTHOR_NAME:
-      ('\u4e2d\u56fd\u4f5c\u8005'.encode('utf-8')
-       if sys.version_info.major == 2 else '\u4e2d\u56fd\u4f5c\u8005'),
+      GitRepo.AUTHOR_NAME: '\u4e2d\u56fd\u4f5c\u8005',
       'file': {
           'data': b'red\ngreen\nblue\n'
       },
@@ -602,39 +587,11 @@ class GitHyperBlameUnicodeTest(GitHyperBlameTestBase):
 
   # Modify a line with non-UTF-8 author and file text.
   COMMIT_C = {
-      GitRepo.AUTHOR_NAME:
-      ('Lat\u00edn-1 Author'.encode('latin-1')
-       if sys.version_info.major == 2 else 'Lat\xedn-1 Author'),
+      GitRepo.AUTHOR_NAME: 'Lat\xedn-1 Author',
       'file': {
           'data': 'red\ngre\u00e9n\nblue\n'.encode('latin-1')
       },
   }
-
-  @unittest.skipIf(
-      sys.platform.startswith("win") and sys.version_info.major == 2,
-      "Known issue for Windows and py2")
-  def testNonASCIIAuthorName(self):
-    """Ensures correct tabulation.
-
-    Tests the case where there are non-ASCII (UTF-8) characters in the author
-    name.
-
-    Regression test for https://crbug.com/808905.
-
-    This test is disabled only for Windows and Python2 as `author` gets escaped
-    differently.
-    """
-    # Known issue with Windows and py2, skip test for such env
-    expected_output = [
-        self.blame_line('A', '1) red', author='ASCII Author'),
-        # Expect 8 spaces, to line up with the other name.
-        self.blame_line(
-            'B', '2) green', author='\u4e2d\u56fd\u4f5c\u8005        '),
-        self.blame_line('A', '3) blue', author='ASCII Author'),
-    ]
-    retval, output = self.run_hyperblame([], 'file', 'tag_B')
-    self.assertEqual(0, retval)
-    self.assertEqual(expected_output, output)
 
   def testNonUTF8Data(self):
     """Ensures correct behaviour even if author or file data is not UTF-8.

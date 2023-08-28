@@ -6,9 +6,6 @@
 
 """Unit tests for git_common.py"""
 
-from __future__ import print_function
-from __future__ import unicode_literals
-
 import binascii
 import collections
 import datetime

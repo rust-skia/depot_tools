@@ -17,8 +17,6 @@ point to them. Items are colorized as follows:
   * Blue background - The currently checked out commit
 """
 
-from __future__ import unicode_literals
-
 import os
 import sys
 
@@ -27,12 +25,6 @@ import setup_color
 import subprocess2
 
 from third_party import colorama
-
-
-if sys.version_info.major == 2:
-  # On Python 3, BrokenPipeError is raised instead.
-  # pylint:disable=redefined-builtin
-  BrokenPipeError = IOError
 
 
 RESET = colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL

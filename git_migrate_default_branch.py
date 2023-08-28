@@ -11,7 +11,7 @@ import metrics
 import scm
 import sys
 import logging
-from six.moves import urllib
+import urllib.parse
 
 
 def GetGerritProject(remote_url):
