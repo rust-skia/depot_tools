@@ -1699,21 +1699,18 @@ def CheckCIPDClientDigests(input_api, output_api, client_version_file):
 
 
 def CheckForCommitObjects(input_api, output_api):
-  """Validates that there are no commit objects in the repository.
+  """Validates that commit objects match DEPS.
 
   Commit objects are put into the git tree typically by submodule tooling.
   Because we use gclient to handle external repository references instead,
-  we want to avoid this. Having commit objects in the tree can confuse git
-  tooling in some scenarios into thinking that the tree is dirty (e.g. the
-  presence of a DEPS subrepo at a location where a commit object is stored
-  in the tree).
+  we want to ensure DEPS content and Git are in sync when desired.
 
   Args:
     input_api: Bag of input related interfaces.
     output_api: Bag of output related interfaces.
 
   Returns:
-    A presubmit error if a commit object is present in the tree.
+    A presubmit error if a commit object is not expected.
   """
 
   def parse_tree_entry(ent):
@@ -1730,68 +1727,96 @@ def CheckForCommitObjects(input_api, output_api):
     return (spaceparts[0], spaceparts[1], spaceparts[2], tabparts[1])
 
   full_tree = input_api.subprocess.check_output(
-          ['git', 'ls-tree', '-r', '--full-tree', 'HEAD'],
-          cwd=input_api.PresubmitLocalPath()
-        ).decode('utf8')
-  # deps_entry holds tree entry for the root DEPS file.
-  deps_entry = None
+      ['git', 'ls-tree', '-r', '--full-tree', '-z', 'HEAD'],
+      cwd=input_api.PresubmitLocalPath())
+
   # commit_tree_entries holds all commit entries (ie gitlink, submodule record).
   commit_tree_entries = []
-  for entry in full_tree.strip().split('\n'):
-    tree_entry = parse_tree_entry(entry)
+  for entry in full_tree.strip().split(b'\00'):
+    if not entry.startswith(b'160000'):
+      # Remove entries that we don't care about. 160000 indicates a gitlink.
+      continue
+    tree_entry = parse_tree_entry(entry.decode('utf-8'))
     if tree_entry[1] == 'commit':
       commit_tree_entries.append(tree_entry)
-    if tree_entry[3] == 'DEPS':
-      deps_entry = tree_entry
 
-  if len(commit_tree_entries) > 0:
-    if not deps_entry:
-      # No DEPS file, carry on!
-      return []
+  # No gitlinks found, return early.
+  if len(commit_tree_entries) == 0:
+    return []
 
-    # This gets DEPS file from HEAD (the same as local DEPS file if there's no
-    # modification).
-    deps_content = input_api.subprocess.check_output(
-        ['git', 'cat-file', 'blob', deps_entry[2]],
-        cwd=input_api.PresubmitLocalPath()).decode('utf8')
+  # This gets DEPS file.
+  deps_file = input_api.os_path.join(input_api.PresubmitLocalPath(), 'DEPS')
+  if not input_api.os_path.isfile(deps_file):
+    # No DEPS file, carry on!
+    return []
 
-    if 'use_git_submodules' in deps_content:
-      # git submodule is source of truth, so no further action needed.
-      return []
+  with open(deps_file) as f:
+    deps_content = f.read()
+  deps = _ParseDeps(deps_content)
 
-    if not 'SUBMODULE_MIGRATION' in deps_content:
-      commit_tree_entries = [x[3] for x in commit_tree_entries]
-      return [
-          output_api.PresubmitError(
-              'Commit objects present within tree.\n'
-              'This may be due to submodule-related interactions;\n'
-              'the presence of a commit object in the tree may lead to odd\n'
-              'situations where files are inconsistently checked-out.\n'
-              'Remove these commit entries and validate your changeset '
-              'again:\n', commit_tree_entries)
-      ]
+  if not 'git_dependencies' in deps or deps['git_dependencies'] == 'DEPS':
+    commit_tree_entries = [x[3] for x in commit_tree_entries]
+    return [
+        output_api.PresubmitError(
+            'Commit objects present within tree.\n'
+            'This may be due to submodule-related interactions;\n'
+            'the presence of a commit object in the tree may lead to odd\n'
+            'situations where files are inconsistently checked-out.\n'
+            'Remove these commit entries and validate your changeset '
+            'again:\n', commit_tree_entries)
+    ]
 
-    mismatch_entries = []
-    deps_msg = ""
-    for commit_tree_entry in commit_tree_entries:
-      # Search for commit hashes in DEPS file - they must be present
-      if commit_tree_entry[2] not in deps_content:
-        mismatch_entries.append(commit_tree_entry[3])
-        deps_msg += f"\n    {commit_tree_entry[3]} -> {commit_tree_entry[2]}"
-    if mismatch_entries:
-      return [
-          output_api.PresubmitError(
-              'DEPS file indicates git submodule migration is in progress,\n'
-              'but the commit objects do not match DEPS entries.\n\n'
-              'To reset all git submodule git entries to match DEPS, run\n'
-              'the following command in the root of this repository:\n'
-              '    gclient gitmodules'
-              '\n\n'
-              'If git submodule changes are correct, update the following DEPS '
-              'entries to: ' + deps_msg)
-      ]
+  if deps['git_dependencies'] == 'SUBMODULES':
+    # git submodule is source of truth, so no further action needed.
+    return []
 
-  return []
+  assert deps['git_dependencies'] == 'SYNC', 'unexpected git_dependencies.'
+
+  mismatch_entries = []
+  deps_msg = ""
+  for commit_tree_entry in commit_tree_entries:
+    # Search for commit hashes in DEPS file - they must be present
+    if commit_tree_entry[2] not in deps_content:
+      mismatch_entries.append(commit_tree_entry[3])
+      deps_msg += f"\n    {commit_tree_entry[3]} -> {commit_tree_entry[2]}"
+
+  if mismatch_entries:
+    return [
+        output_api.PresubmitError(
+            'DEPS file indicates git submodule migration is in progress,\n'
+            'but the commit objects do not match DEPS entries.\n\n'
+            'To reset all git submodule git entries to match DEPS, run\n'
+            'the following command in the root of this repository:\n'
+            '    gclient gitmodules'
+            '\n\n'
+            'If git submodule changes are correct, update the following DEPS '
+            'entries to: ' + deps_msg)
+    ]
+
+
+def _ParseDeps(contents):
+  """Simple helper for parsing DEPS files."""
+
+  # Stubs for handling special syntax in the root DEPS file.
+  class _VarImpl:
+    def __init__(self, local_scope):
+      self._local_scope = local_scope
+
+    def Lookup(self, var_name):
+      """Implements the Var syntax."""
+      try:
+        return self._local_scope['vars'][var_name]
+      except KeyError:
+        raise Exception('Var is not defined: %s' % var_name)
+
+  local_scope = {}
+  global_scope = {
+      'Var': _VarImpl(local_scope).Lookup,
+      'Str': str,
+  }
+
+  exec(contents, global_scope, local_scope)
+  return local_scope
 
 
 def CheckVPythonSpec(input_api, output_api, file_filter=None):
