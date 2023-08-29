@@ -768,12 +768,16 @@ class TestGitCl(unittest.TestCase):
         ]
 
     calls += [
-      ((['git', 'diff', '--no-ext-diff', '--stat', '-l100000', '-C50'] +
-         ([custom_cl_base] if custom_cl_base else
-          [ancestor_revision, 'HEAD']),),
-       '+dat'),
+        ((['git', 'rev-list', '--count'] +
+          ([f'{custom_cl_base}..HEAD']
+           if custom_cl_base else [f'{ancestor_revision}..HEAD']), ), '3'),
     ]
 
+    calls += [
+        ((['git', 'diff', '--no-ext-diff', '--stat', '-l100000', '-C50'] +
+          ([custom_cl_base] if custom_cl_base else [ancestor_revision, 'HEAD']),
+          ), '+dat'),
+    ]
     return calls
 
   def _gerrit_upload_calls(self,
@@ -1812,9 +1816,7 @@ class TestGitCl(unittest.TestCase):
         'commit4', 'commit3.5', 'commit3.5', 'commit2', 'commit1.5', 'commit1',
         'commit0.5'
     ]
-    mockRunGitSilent.side_effect = [
-        'diff', 'diff', None, None, 'diff', None, 'diff'
-    ]
+    mockRunGitSilent.side_effect = ['80', '81', '0', '0', '82', '0', '83']
 
     # Get gerrit squash hash. We only check this for branches that have a diff.
     # Set to None to trigger `must_upload_upstream`.
@@ -1876,7 +1878,7 @@ class TestGitCl(unittest.TestCase):
 
     # end commits
     mockRunGit.return_value = 'any-commit'
-    mockRunGitSilent.return_value = 'diff'
+    mockRunGitSilent.return_value = '42'
 
     # Get gerrit squash hash. We only check this for branches that have a diff.
     mockGitGetBranchConfigValue.return_value = None
@@ -1941,7 +1943,7 @@ class TestGitCl(unittest.TestCase):
 
     # end commits
     mockRunGit.return_value = 'commit4'
-    mockRunGitSilent.return_value = 'diff'
+    mockRunGitSilent.return_value = '42'
 
     # Get gerrit squash hash. We only check this for branches that have a diff.
     # Set to None to trigger `must_upload_upstream`.
@@ -1997,7 +1999,7 @@ class TestGitCl(unittest.TestCase):
 
     # end commits
     mockRunGit.return_value = 'commit4'
-    mockRunGitSilent.return_value = 'diff'
+    mockRunGitSilent.return_value = '42'
 
     # Get gerrit squash hash. We only check this for branches that have a diff.
     mockGitGetBranchConfigValue.return_value = 'just needs to exist'
@@ -2087,7 +2089,7 @@ class TestGitCl(unittest.TestCase):
 
     # end commits
     mockRunGit.return_value = 'commit4'
-    mockRunGitSilent.return_value = 'diff'
+    mockRunGitSilent.return_value = '42'
 
     # Get gerrit squash hash. We only check this for branches that have a diff.
     # Set to None to trigger `must_upload_upstream`.
@@ -2101,7 +2103,7 @@ class TestGitCl(unittest.TestCase):
     mockAskForData.assert_not_called()
 
     # No diff for current change
-    mockRunGitSilent.return_value = ''
+    mockRunGitSilent.return_value = '0'
     with self.assertRaises(SystemExitMock):
       git_cl._UploadAllPrecheck(options, orig_args)
 

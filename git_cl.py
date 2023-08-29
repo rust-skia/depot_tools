@@ -30,6 +30,9 @@ import webbrowser
 import zlib
 
 from third_party import colorama
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
 import auth
 import clang_format
 import fix_encoding
@@ -730,6 +733,21 @@ def _FilterYapfIgnoredFiles(filepaths, patterns):
   # Not inlined so that tests can use the same implementation.
   return [f for f in filepaths
           if not any(fnmatch.fnmatch(f, p) for p in patterns)]
+
+
+def _GetCommitCountSummary(begin_commit: str,
+                           end_commit: str = "HEAD") -> Optional[str]:
+  """Generate a summary of the number of commits in (begin_commit, end_commit).
+
+  Returns a string containing the summary, or None if the range is empty.
+  """
+  count = int(
+      RunGitSilent(['rev-list', '--count', f'{begin_commit}..{end_commit}']))
+
+  if not count:
+    return None
+
+  return f'{count} commit{"s"[:count!=1]}'
 
 
 def print_stats(args):
@@ -1814,6 +1832,8 @@ class Changelist(object):
     # not guarantee that uploading will not fail.
     self.EnsureAuthenticated(force=options.force)
     self.EnsureCanUploadPatchset(force=options.force)
+
+    print(f'Processing {_GetCommitCountSummary(*git_diff_args)}...')
 
     # Apply watchlists on upload.
     watchlist = watchlists.Watchlists(settings.GetRoot())
@@ -4843,13 +4863,13 @@ def CMDupload(parser, args):
   return ret
 
 
-def UploadAllSquashed(options, orig_args):
-  # type: (optparse.Values, Sequence[str]) -> Tuple[Sequence[Changelist], bool]
+def UploadAllSquashed(options: optparse.Values,
+                      orig_args: Sequence[str]) -> int:
   """Uploads the current and upstream branches (if necessary)."""
   cls, cherry_pick_current = _UploadAllPrecheck(options, orig_args)
 
   # Create commits.
-  uploads_by_cl = []  #type: Sequence[Tuple[Changelist, _NewUpload]]
+  uploads_by_cl: list[Tuple[Changelist, _NewUpload]] = []
   if cherry_pick_current:
     parent = cls[1]._GitGetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY)
     new_upload = cls[0].PrepareCherryPickSquashedCommit(options, parent)
@@ -4986,13 +5006,14 @@ def _UploadAllPrecheck(options, orig_args):
     base_commit = cl.GetCommonAncestorWithUpstream()
     end_commit = RunGit(['rev-parse', cl.GetBranchRef()]).strip()
 
-    diff = RunGitSilent(['diff', '%s..%s' % (base_commit, end_commit)])
-    if diff:
+    commit_summary = _GetCommitCountSummary(base_commit, end_commit)
+    if commit_summary:
       cls.append(cl)
       if (not first_pass and
           cl._GitGetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY) is None):
         # We are mid-stack and the user must upload their upstream branches.
         must_upload_upstream = True
+      print(f'Found change with {commit_summary}...')
     elif first_pass:  # The current branch has nothing to commit. Exit.
       DieWithError('Branch %s has nothing to commit' % cl.GetBranch())
     # Else: A mid-stack branch has nothing to commit. We do not add it to cls.
