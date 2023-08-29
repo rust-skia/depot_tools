@@ -14,6 +14,7 @@ _ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, "..", ".."))
 # Add the repo's root directory for clearer imports.
 sys.path.insert(0, _ROOT_DIR)
 
+import gclient_utils
 import metadata.parse
 
 
@@ -22,7 +23,8 @@ class ParseTest(unittest.TestCase):
     """Check parsing works for a single dependency's metadata."""
     filepath = os.path.join(_THIS_DIR, "data",
                             "README.chromium.test.single-valid")
-    all_metadata = metadata.parse.parse_file(filepath)
+    content = gclient_utils.FileRead(filepath)
+    all_metadata = metadata.parse.parse_content(content)
 
     self.assertEqual(len(all_metadata), 1)
     self.assertListEqual(
@@ -49,7 +51,8 @@ class ParseTest(unittest.TestCase):
     """Check parsing works for multiple dependencies' metadata."""
     filepath = os.path.join(_THIS_DIR, "data",
                             "README.chromium.test.multi-invalid")
-    all_metadata = metadata.parse.parse_file(filepath)
+    content = gclient_utils.FileRead(filepath)
+    all_metadata = metadata.parse.parse_content(content)
 
     # Dependency metadata with no entries at all are ignored.
     self.assertEqual(len(all_metadata), 3)

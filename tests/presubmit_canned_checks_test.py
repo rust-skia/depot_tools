@@ -328,6 +328,69 @@ class DescriptionChecksTest(unittest.TestCase):
     self.assertEqual(0, len(errors))
 
 
+class ChromiumDependencyMetadataCheckTest(unittest.TestCase):
+  def testDefaultFileFilter(self):
+    """Checks the default file filter limits the scope to Chromium dependency
+    metadata files.
+    """
+    input_api = MockInputApi()
+    input_api.change.RepositoryRoot = lambda: ''
+    input_api.files = [
+        MockFile(os.path.normpath('foo/README.md'), ['Shipped: no?']),
+        MockFile(os.path.normpath('foo/main.py'), ['Shipped: yes?']),
+    ]
+    results = presubmit_canned_checks.CheckChromiumDependencyMetadata(
+        input_api, MockOutputApi())
+    self.assertEqual(len(results), 0)
+
+  def testSkipDeletedFiles(self):
+    """Checks validation is skipped for deleted files."""
+    input_api = MockInputApi()
+    input_api.change.RepositoryRoot = lambda: ''
+    input_api.files = [
+        MockFile(os.path.normpath('foo/README.chromium'), ['No fields'],
+                 action='D'),
+    ]
+    results = presubmit_canned_checks.CheckChromiumDependencyMetadata(
+        input_api, MockOutputApi())
+    self.assertEqual(len(results), 0)
+
+  def testFeedbackForNoMetadata(self):
+    """Checks presubmit results are returned for files without any metadata."""
+    input_api = MockInputApi()
+    input_api.change.RepositoryRoot = lambda: ''
+    input_api.files = [
+        MockFile(os.path.normpath('foo/README.chromium'), ['No fields']),
+    ]
+    results = presubmit_canned_checks.CheckChromiumDependencyMetadata(
+        input_api, MockOutputApi())
+    self.assertEqual(len(results), 1)
+    self.assertTrue("No dependency metadata" in results[0].message)
+
+  def testFeedbackForInvalidMetadata(self):
+    """Checks presubmit results are returned for files with invalid metadata."""
+    input_api = MockInputApi()
+    input_api.change.RepositoryRoot = lambda: ''
+    test_file = MockFile(os.path.normpath('foo/README.chromium'),
+                         ['Shipped: yes?'])
+    input_api.files = [test_file]
+    results = presubmit_canned_checks.CheckChromiumDependencyMetadata(
+        input_api, MockOutputApi())
+
+    # There should be 10 results due to
+    # - missing 5 mandatory fields: Name, URL, Version, License, and
+    #                               Security Critical
+    # - missing 4 required fields: Date, Revision, License File, and
+    #                              License Android Compatible
+    # - Shipped should be only 'yes' or 'no'.
+    self.assertEqual(len(results), 10)
+
+    # Check each presubmit result is associated with the test file.
+    for result in results:
+      self.assertEqual(len(result.items), 1)
+      self.assertEqual(result.items[0], test_file)
+
+
 class CheckUpdateOwnersFileReferences(unittest.TestCase):
   def testShowsWarningIfDeleting(self):
     input_api = MockInputApi()
