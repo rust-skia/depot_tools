@@ -861,8 +861,8 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
     deps = local_scope.get('deps', {})
 
     # If dependencies are configured within git submodules, add them to deps.
-    if self.git_dependencies_state in (gclient_eval.SUBMODULES,
-                                       gclient_eval.SYNC):
+    # We don't add for SYNC since we expect submodules to be in sync.
+    if self.git_dependencies_state == gclient_eval.SUBMODULES:
       deps.update(self.ParseGitSubmodules())
 
     deps_to_add = self._deps_to_objects(
