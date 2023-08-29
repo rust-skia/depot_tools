@@ -598,10 +598,10 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
     with self.assertRaises(gclient_scm.gclient_utils.Error) as e:
       scm.update(options, (), [])
     self.assertEqual(
-        e.exception.args[0],
-        '\n____ . at refs/remotes/origin/main\n'
+        e.exception.args[0], '\n____ . at refs/remotes/origin/main\n'
         '\tYou have unstaged changes.\n'
-        '\tPlease commit, stash, or reset.\n')
+        '\tcd into ., run git status to see changes,\n'
+        '\tand commit, stash, or reset.\n')
 
     sys.stdout.close()
 
