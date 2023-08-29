@@ -426,7 +426,7 @@ def warn_submodule():
     print('WARNING: You have fsmonitor enabled. There is a major issue '
           'resulting in git diff-index returning wrong results. Please '
           'disable it by running:')
-    print('    git config --global core.fsmonitor false')
+    print('    git config core.fsmonitor false')
     print('We will remove this warning once https://crbug.com/1475405 is '
           'fixed.')
     print(colorama.Style.RESET_ALL)
