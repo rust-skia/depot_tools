@@ -1712,24 +1712,6 @@ def CheckForCommitObjects(input_api, output_api):
   Returns:
     A presubmit error if a commit object is not expected.
   """
-  # Get DEPS file.
-  deps_file = input_api.os_path.join(input_api.PresubmitLocalPath(), 'DEPS')
-  if not input_api.os_path.isfile(deps_file):
-    # No DEPS file, carry on!
-    return []
-
-  with open(deps_file) as f:
-    deps_content = f.read()
-  deps = _ParseDeps(deps_content)
-  # set default
-  if 'deps' not in deps:
-    deps['deps'] = {}
-  if 'git_dependencies' not in deps:
-    deps['git_dependencies'] = 'DEPS'
-
-  if deps['git_dependencies'] == 'SUBMODULES':
-    # git submodule is source of truth, so no further action needed.
-    return []
 
   def parse_tree_entry(ent):
     """Splits a tree entry into components
@@ -1762,7 +1744,17 @@ def CheckForCommitObjects(input_api, output_api):
   if len(commit_tree_entries) == 0:
     return []
 
-  if deps['git_dependencies'] == 'DEPS':
+  # This gets DEPS file.
+  deps_file = input_api.os_path.join(input_api.PresubmitLocalPath(), 'DEPS')
+  if not input_api.os_path.isfile(deps_file):
+    # No DEPS file, carry on!
+    return []
+
+  with open(deps_file) as f:
+    deps_content = f.read()
+  deps = _ParseDeps(deps_content)
+
+  if not 'git_dependencies' in deps or deps['git_dependencies'] == 'DEPS':
     commit_tree_entries = [x[3] for x in commit_tree_entries]
     return [
         output_api.PresubmitError(
@@ -1774,30 +1766,19 @@ def CheckForCommitObjects(input_api, output_api):
             'again:\n', commit_tree_entries)
     ]
 
-  assert deps['git_dependencies'] == 'SYNC', 'unexpected git_dependencies.'
+  if deps['git_dependencies'] == 'SUBMODULES':
+    # git submodule is source of truth, so no further action needed.
+    return []
 
-  # Create mapping HASH -> PATH
-  git_submodules = {}
-  for commit_tree_entry in commit_tree_entries:
-    git_submodules[commit_tree_entry[2]] = commit_tree_entry[3]
+  assert deps['git_dependencies'] == 'SYNC', 'unexpected git_dependencies.'
 
   mismatch_entries = []
   deps_msg = ""
-  for dep_path, dep in deps['deps'].items():
-    if 'dep_type' in dep and dep['dep_type'] != 'git':
-      continue
-
-    url = dep if isinstance(dep, str) else dep['url']
-    commit_hash = url.split('@')[-1]
-    if commit_hash in git_submodules:
-      git_submodules.pop(commit_hash)
-    else:
-      mismatch_entries.append(dep_path)
-      deps_msg += f"\n [DEPS]      {dep_path} -> {commit_hash}"
-
-  for commit_hash, path in git_submodules.items():
-    mismatch_entries.append(path)
-    deps_msg += f"\n [gitlink]   {path} -> {commit_hash}"
+  for commit_tree_entry in commit_tree_entries:
+    # Search for commit hashes in DEPS file - they must be present
+    if commit_tree_entry[2] not in deps_content:
+      mismatch_entries.append(commit_tree_entry[3])
+      deps_msg += f"\n    {commit_tree_entry[3]} -> {commit_tree_entry[2]}"
 
   if mismatch_entries:
     return [
@@ -1808,7 +1789,8 @@ def CheckForCommitObjects(input_api, output_api):
             'the following command in the root of this repository:\n'
             '    gclient gitmodules'
             '\n\n'
-            'The following entries diverged: ' + deps_msg)
+            'If git submodule changes are correct, update the following DEPS '
+            'entries to: ' + deps_msg)
     ]
 
   return []
