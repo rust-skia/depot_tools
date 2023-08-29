@@ -6093,8 +6093,11 @@ def CMDformat(parser, args):
       #   $ python pretty_print.py metadata/UMA/histograms.xml
       #   $ python pretty_print.py enums.xml
 
-      if (diff_xml.endswith('histograms.xml') or diff_xml.endswith('enums.xml')
-          or diff_xml.endswith('histogram_suffixes_list.xml')):
+      if xml_dir == os.path.join('tools', 'metrics', 'histograms'):
+        if os.path.basename(diff_xml) not in ('histograms.xml', 'enums.xml',
+                                              'histogram_suffixes_list.xml'):
+          # Skip this XML file if it's not one of the known types.
+          continue
         cmd.append(diff_xml)
 
       if opts.dry_run or opts.diff:
@@ -6124,7 +6127,6 @@ def GetMetricsDir(diff_xml):
   metrics_xml_dirs = [
     os.path.join('tools', 'metrics', 'actions'),
     os.path.join('tools', 'metrics', 'histograms'),
-    os.path.join('tools', 'metrics', 'rappor'),
     os.path.join('tools', 'metrics', 'structured'),
     os.path.join('tools', 'metrics', 'ukm'),
   ]
