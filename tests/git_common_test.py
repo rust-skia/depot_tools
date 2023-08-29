@@ -887,17 +887,30 @@ class GitFreezeThaw(git_test_utils.GitRepoReadWriteTestBase):
     def inner():
       with open('some/files/file2', 'a') as f2:
         print('cool appended line', file=f2)
+      with open('some/files/file3', 'w') as f3:
+        print('hello', file=f3)
+      self.repo.git('add', 'some/files/file3')
+      with open('some/files/file3', 'a') as f3:
+        print('world', file=f3)
       os.mkdir('some/other_files')
       with open('some/other_files/subdir_file', 'w') as f3:
         print('new file!', file=f3)
       with open('some/files/file5', 'w') as f5:
         print('New file!1!one!', file=f5)
+      with open('some/files/file6', 'w') as f6:
+        print('hello', file=f6)
+      self.repo.git('add', 'some/files/file6')
+      with open('some/files/file6', 'w') as f6:
+        print('world', file=f6)
+      with open('some/files/file7', 'w') as f7:
+        print('hello', file=f7)
+      self.repo.git('add', 'some/files/file7')
+      os.remove('some/files/file7')
 
-      STATUS_1 = '\n'.join((
-        ' M some/files/file2',
-        'A  some/files/file5',
-        '?? some/other_files/'
-      )) + '\n'
+      STATUS_1 = '\n'.join(
+          (' M some/files/file2', 'MM some/files/file3', 'A  some/files/file5',
+           'AM some/files/file6', 'AD some/files/file7',
+           '?? some/other_files/')) + '\n'
 
       self.repo.git('add', 'some/files/file5')
 
