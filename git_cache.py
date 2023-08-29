@@ -305,7 +305,7 @@ class Mirror(object):
     try:
       # create new temporary directory locally
       tempdir = tempfile.mkdtemp(prefix='_cache_tmp', dir=self.GetCachePath())
-      self.RunGit(['init', '--bare'], cwd=tempdir)
+      self.RunGit(['init', '-b', 'main', '--bare'], cwd=tempdir)
       self.print('Downloading files in %s/* into %s.' %
                  (latest_dir, tempdir))
       with self.print_duration_of('download'):
@@ -314,8 +314,6 @@ class Mirror(object):
                              tempdir)
       if code:
         return False
-      # Set HEAD to main.
-      self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/main'], cwd=tempdir)
       # A quick validation that all references are valid.
       self.RunGit(['for-each-ref'], print_stdout=False, cwd=tempdir)
     except Exception as e:
