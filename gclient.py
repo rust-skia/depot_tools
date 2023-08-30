@@ -105,6 +105,7 @@ import gclient_utils
 import git_cache
 import metrics
 import metrics_utils
+import scm as scm_git
 import setup_color
 import subcommand
 import subprocess2
@@ -945,17 +946,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         gitmodules[submodule][sub_key] = value
 
     paths = [module['path'] for module in gitmodules.values()]
-    # Get submodule commit hashes. We use `gitt ls-files -s` to ensure
-    # we capture gitlink changes from staged applied patches.
-    # Output Format: `<mode> SP <type> SP <object> TAB <file>`.
-    result = subprocess2.check_output(['git', 'ls-files', '-s'] + paths,
-                                      cwd=cwd).decode('utf-8')
-    commit_hashes = {}
-    for r in result.splitlines():
-      # ['<mode>', '<commit_hash>', '<stage_number>', '<path>'].
-      record = r.strip().split(maxsplit=3)  # path can contain spaces.
-      assert record[0] == '160000', 'file is not a gitlink: %s' % record
-      commit_hashes[record[3]] = record[1]
+    commit_hashes = scm_git.GIT.GetSubmoduleCommits(cwd, paths)
 
     # Structure git submodules into a dict of DEPS git url entries.
     submodules = {}
@@ -3428,6 +3419,14 @@ def CMDgetdep(parser, args):
   for var in options.vars:
     print(gclient_eval.GetVar(local_scope, var))
 
+  commits = {}
+  if local_scope.get('git_dependencies'
+                     ) == gclient_eval.SUBMODULES and options.getdep_revisions:
+    commits.update(
+        scm_git.GIT.GetSubmoduleCommits(
+            os.getcwd(),
+            [path for path in options.getdep_revisions if ':' not in path]))
+
   for name in options.getdep_revisions:
     if ':' in name:
       name, _, package = name.partition(':')
@@ -3436,6 +3435,8 @@ def CMDgetdep(parser, args):
             'Wrong CIPD format: %s:%s should be of the form path:pkg.'
             % (name, package))
       print(gclient_eval.GetCIPD(local_scope, name, package))
+    elif commits:
+      print(commits[name])
     else:
       try:
         print(gclient_eval.GetRevision(local_scope, name))

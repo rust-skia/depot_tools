@@ -1500,8 +1500,8 @@ class GclientTest(trial_dir.TestCase):
       subprocess2_check_output_mock.assert_has_calls([
           mock.call(['git', 'config', '--file', mock.ANY, '-l']),
           mock.call([
-              'git', 'ls-files', '-s', 'foo/bar', 'aaaaaa', 'a.a.a/a', 'a_b/c',
-              'a b/c'
+              'git', 'ls-files', '-s', '--', 'foo/bar', 'aaaaaa', 'a.a.a/a',
+              'a_b/c', 'a b/c'
           ],
                     cwd=mock.ANY)
       ])
@@ -1584,8 +1584,8 @@ class GclientTest(trial_dir.TestCase):
       subprocess2_check_output_mock.assert_has_calls([
           mock.call(['git', 'config', '--file', mock.ANY, '-l']),
           mock.call([
-              'git', 'ls-files', '-s', 'foo/bar', 'aaaaaa', 'a.a.a/a', 'a_b/c',
-              'a b/c'
+              'git', 'ls-files', '-s', '--', 'foo/bar', 'aaaaaa', 'a.a.a/a',
+              'a_b/c', 'a b/c'
           ],
                     cwd=mock.ANY)
       ])

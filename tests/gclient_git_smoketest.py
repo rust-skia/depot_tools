@@ -810,6 +810,22 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
         'bar_rev',
     ], results[0].splitlines())
 
+  def testGetDep_Submodule(self):
+    self.gclient(['config', self.git_base + 'repo_20', '--name', 'src'])
+    subprocess2.call([
+        'git', 'update-index', '--add', '--cacheinfo',
+        '160000,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,bar'
+    ],
+                     cwd=self.git_base + 'repo_20')
+
+    results = self.gclient(
+        ['getdep', '-r', 'foo/bar:lemur', '-r', 'bar', '--var', 'foo_checkout'],
+        cwd=self.git_base + 'repo_20')
+
+    self.assertEqual(
+        ['True', 'version:1234', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+        results[0].splitlines())
+
   def testGetDep_BuiltinVariables(self):
     self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'])
     fake_deps = os.path.join(self.root_dir, 'DEPS.fake')

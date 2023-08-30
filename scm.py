@@ -388,6 +388,23 @@ class GIT(object):
     return [f.split(maxsplit=3)[-1] for f in files if f.startswith('100')]
 
   @staticmethod
+  def GetSubmoduleCommits(cwd, submodules):
+    # type: (string, List[string]) => Mapping[string][string]
+    """Returns a mapping of staged or committed new commits for submodules."""
+    if not submodules:
+      return {}
+    result = subprocess2.check_output(['git', 'ls-files', '-s', '--'] +
+                                      submodules,
+                                      cwd=cwd).decode('utf-8')
+    commit_hashes = {}
+    for r in result.splitlines():
+      # ['<mode>', '<commit_hash>', '<stage_number>', '<path>'].
+      record = r.strip().split(maxsplit=3)  # path can contain spaces.
+      assert record[0] == '160000', 'file is not a gitlink: %s' % record
+      commit_hashes[record[3]] = record[1]
+    return commit_hashes
+
+  @staticmethod
   def GetPatchName(cwd):
     """Constructs a name for this patch."""
     short_sha = GIT.Capture(['rev-parse', '--short=4', 'HEAD'], cwd=cwd)
