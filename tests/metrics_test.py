@@ -7,11 +7,7 @@ import json
 import os
 import sys
 import unittest
-
-if sys.version_info.major == 2:
-  import mock
-else:
-  from unittest import mock
+from unittest import mock
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
@@ -35,7 +31,7 @@ class MetricsCollectorTest(unittest.TestCase):
     self.collector = metrics.MetricsCollector()
 
     # Keep track of the URL requests, file reads/writes and subprocess spawned.
-    self.urllib = mock.Mock()
+    self.urllib_request = mock.Mock()
     self.print_notice = mock.Mock()
     self.print_version_change = mock.Mock()
     self.Popen = mock.Mock()
@@ -45,7 +41,7 @@ class MetricsCollectorTest(unittest.TestCase):
     # So that we don't have to update the tests every time we change the
     # version.
     mock.patch('metrics.metrics_utils.CURRENT_VERSION', 0).start()
-    mock.patch('metrics.urllib', self.urllib).start()
+    mock.patch('metrics.urllib.request', self.urllib_request).start()
     mock.patch('metrics.subprocess2.Popen', self.Popen).start()
     mock.patch('metrics.gclient_utils.FileWrite', self.FileWrite).start()
     mock.patch('metrics.gclient_utils.FileRead', self.FileRead).start()
@@ -95,7 +91,7 @@ class MetricsCollectorTest(unittest.TestCase):
   def test_writes_config_if_not_exists(self):
     self.FileRead.side_effect = [IOError(2, "No such file or directory")]
     mock_response = mock.Mock()
-    self.urllib.urlopen.side_effect = [mock_response]
+    self.urllib_request.urlopen.side_effect = [mock_response]
     mock_response.getcode.side_effect = [200]
 
     self.assertTrue(self.collector.config.is_googler)
@@ -109,7 +105,7 @@ class MetricsCollectorTest(unittest.TestCase):
   def test_writes_config_if_not_exists_non_googler(self):
     self.FileRead.side_effect = [IOError(2, "No such file or directory")]
     mock_response = mock.Mock()
-    self.urllib.urlopen.side_effect = [mock_response]
+    self.urllib_request.urlopen.side_effect = [mock_response]
     mock_response.getcode.side_effect = [403]
 
     self.assertFalse(self.collector.config.is_googler)
@@ -123,7 +119,7 @@ class MetricsCollectorTest(unittest.TestCase):
   def test_disables_metrics_if_cant_write_config(self):
     self.FileRead.side_effect = [IOError(2, 'No such file or directory')]
     mock_response = mock.Mock()
-    self.urllib.urlopen.side_effect = [mock_response]
+    self.urllib_request.urlopen.side_effect = [mock_response]
     mock_response.getcode.side_effect = [200]
     self.FileWrite.side_effect = [IOError(13, 'Permission denied.')]
 

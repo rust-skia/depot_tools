@@ -13,11 +13,7 @@ import sys
 import threading
 import time
 import traceback
-
-try:
-  import urllib2 as urllib
-except ImportError:  # For Py3 compatibility
-  import urllib.request as urllib
+import urllib.request
 
 import detect_host_arch
 import gclient_utils
@@ -87,9 +83,9 @@ class _Config(object):
       # check if we can reach the page. An external developer would get access
       # denied.
       try:
-        req = urllib.urlopen(metrics_utils.APP_URL + '/should-upload')
+        req = urllib.request.urlopen(metrics_utils.APP_URL + '/should-upload')
         self._config['is-googler'] = req.getcode() == 200
-      except (urllib.URLError, urllib.HTTPError):
+      except (urllib.request.URLError, urllib.request.HTTPError):
         self._config['is-googler'] = False
 
     # Make sure the config variables we need are present, and initialize them to

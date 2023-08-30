@@ -10,11 +10,7 @@ import os
 import scm
 import subprocess2
 import sys
-
-try:
-  import urlparse
-except ImportError:  # For Py3 compatibility
-  import urllib.parse as urlparse
+import urllib.parse
 
 
 # Current version of metrics recording.
@@ -265,7 +261,7 @@ def extract_http_metrics(request_uri, method, status, response_time):
   if method in KNOWN_HTTP_METHODS:
     http_metrics['method'] = method
 
-  parsed_url = urlparse.urlparse(request_uri)
+  parsed_url = urllib.parse.urlparse(request_uri)
 
   if parsed_url.netloc in KNOWN_HTTP_HOSTS:
     http_metrics['host'] = parsed_url.netloc
@@ -275,7 +271,7 @@ def extract_http_metrics(request_uri, method, status, response_time):
       http_metrics['path'] = name
       break
 
-  parsed_query = urlparse.parse_qs(parsed_url.query)
+  parsed_query = urllib.parse.parse_qs(parsed_url.query)
 
   # Collect o-parameters from the request.
   args = [
