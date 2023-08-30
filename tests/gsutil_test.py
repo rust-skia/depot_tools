@@ -19,11 +19,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
-
-try:
-  import urllib2 as urllib
-except ImportError:  # For Py3 compatibility
-  import urllib.request as urllib
+import urllib.request
 
 # Add depot_tools to path
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -60,15 +56,15 @@ class GsutilUnitTests(unittest.TestCase):
   def setUp(self):
     self.fake = FakeCall()
     self.tempdir = tempfile.mkdtemp()
-    self.old_urlopen = getattr(urllib, 'urlopen')
+    self.old_urlopen = getattr(urllib.request, 'urlopen')
     self.old_call = getattr(subprocess, 'call')
-    setattr(urllib, 'urlopen', self.fake)
+    setattr(urllib.request, 'urlopen', self.fake)
     setattr(subprocess, 'call', self.fake)
 
   def tearDown(self):
     self.assertEqual(self.fake.expectations, [])
     shutil.rmtree(self.tempdir)
-    setattr(urllib, 'urlopen', self.old_urlopen)
+    setattr(urllib.request, 'urlopen', self.old_urlopen)
     setattr(subprocess, 'call', self.old_call)
 
   def test_download_gsutil(self):

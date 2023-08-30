@@ -10,11 +10,7 @@ from __future__ import print_function
 
 import optparse
 import os
-
-try:
-  import Queue as queue
-except ImportError:  # For Py3 compatibility
-  import queue
+import queue
 
 import shutil
 import sys

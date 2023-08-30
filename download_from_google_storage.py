@@ -9,11 +9,7 @@ from __future__ import print_function
 import hashlib
 import optparse
 import os
-
-try:
-  import Queue as queue
-except ImportError:  # For Py3 compatibility
-  import queue
+import queue
 
 import re
 import shutil
@@ -43,11 +39,6 @@ PLATFORM_MAPPING = {
     'aix6': 'aix',
     'aix7': 'aix',
 }
-
-if sys.version_info.major == 2:
-  # pylint: disable=redefined-builtin
-  class FileNotFoundError(IOError):
-    pass
 
 
 class InvalidFileError(IOError):

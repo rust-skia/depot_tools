@@ -8,11 +8,7 @@
 import optparse
 import os
 import posixpath
-
-try:
-  import Queue as queue
-except ImportError:  # For Py3 compatibility
-  import queue
+import queue
 
 import shutil
 import sys
