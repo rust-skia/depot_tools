@@ -30,6 +30,10 @@ import webbrowser
 import zlib
 
 from third_party import colorama
+from typing import Any
+from typing import List
+from typing import Mapping
+from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
@@ -167,7 +171,7 @@ class GitPushError(Exception):
   pass
 
 
-def DieWithError(message, change_desc=None):
+def DieWithError(message, change_desc=None) -> NoReturn:
   if change_desc:
     SaveDescriptionBackup(change_desc)
     print('\n ** Content of CL description **\n' +
@@ -1020,6 +1024,228 @@ _NewUpload = collections.namedtuple('NewUpload', [
 ])
 
 
+class ChangeDescription(object):
+  """Contains a parsed form of the change description."""
+  R_LINE = r'^[ \t]*(TBR|R)[ \t]*=[ \t]*(.*?)[ \t]*$'
+  CC_LINE = r'^[ \t]*(CC)[ \t]*=[ \t]*(.*?)[ \t]*$'
+  BUG_LINE = r'^[ \t]*(?:(BUG)[ \t]*=|Bug:)[ \t]*(.*?)[ \t]*$'
+  FIXED_LINE = r'^[ \t]*Fixed[ \t]*:[ \t]*(.*?)[ \t]*$'
+  CHERRY_PICK_LINE = r'^\(cherry picked from commit [a-fA-F0-9]{40}\)$'
+  STRIP_HASH_TAG_PREFIX = r'^(\s*(revert|reland)( "|:)?\s*)*'
+  BRACKET_HASH_TAG = r'\s*\[([^\[\]]+)\]'
+  COLON_SEPARATED_HASH_TAG = r'^([a-zA-Z0-9_\- ]+):($|[^:])'
+  BAD_HASH_TAG_CHUNK = r'[^a-zA-Z0-9]+'
+
+  def __init__(self, description, bug=None, fixed=None):
+    self._description_lines = (description or '').strip().splitlines()
+    if bug:
+      regexp = re.compile(self.BUG_LINE)
+      prefix = settings.GetBugPrefix()
+      if not any((regexp.match(line) for line in self._description_lines)):
+        values = list(_get_bug_line_values(prefix, bug))
+        self.append_footer('Bug: %s' % ', '.join(values))
+    if fixed:
+      regexp = re.compile(self.FIXED_LINE)
+      prefix = settings.GetBugPrefix()
+      if not any((regexp.match(line) for line in self._description_lines)):
+        values = list(_get_bug_line_values(prefix, fixed))
+        self.append_footer('Fixed: %s' % ', '.join(values))
+
+  @property  # www.logilab.org/ticket/89786
+  def description(self):  # pylint: disable=method-hidden
+    return '\n'.join(self._description_lines)
+
+  def set_description(self, desc):
+    if isinstance(desc, str):
+      lines = desc.splitlines()
+    else:
+      lines = [line.rstrip() for line in desc]
+    while lines and not lines[0]:
+      lines.pop(0)
+    while lines and not lines[-1]:
+      lines.pop(-1)
+    self._description_lines = lines
+
+  def ensure_change_id(self, change_id):
+    description = self.description
+    footer_change_ids = git_footers.get_footer_change_id(description)
+    # Make sure that the Change-Id in the description matches the given one.
+    if footer_change_ids != [change_id]:
+      if footer_change_ids:
+        # Remove any existing Change-Id footers since they don't match the
+        # expected change_id footer.
+        description = git_footers.remove_footer(description, 'Change-Id')
+        print('WARNING: Change-Id has been set to %s. Use `git cl issue 0` '
+              'if you want to set a new one.')
+      # Add the expected Change-Id footer.
+      description = git_footers.add_footer_change_id(description, change_id)
+      self.set_description(description)
+
+  def update_reviewers(self, reviewers):
+    """Rewrites the R= line(s) as a single line each.
+
+    Args:
+      reviewers (list(str)) - list of additional emails to use for reviewers.
+    """
+    if not reviewers:
+      return
+
+    reviewers = set(reviewers)
+
+    # Get the set of R= lines and remove them from the description.
+    regexp = re.compile(self.R_LINE)
+    matches = [regexp.match(line) for line in self._description_lines]
+    new_desc = [
+        l for i, l in enumerate(self._description_lines) if not matches[i]
+    ]
+    self.set_description(new_desc)
+
+    # Construct new unified R= lines.
+
+    # First, update reviewers with names from the R= lines (if any).
+    for match in matches:
+      if not match:
+        continue
+      reviewers.update(cleanup_list([match.group(2).strip()]))
+
+    new_r_line = 'R=' + ', '.join(sorted(reviewers))
+
+    # Put the new lines in the description where the old first R= line was.
+    line_loc = next((i for i, match in enumerate(matches) if match), -1)
+    if 0 <= line_loc < len(self._description_lines):
+      self._description_lines.insert(line_loc, new_r_line)
+    else:
+      self.append_footer(new_r_line)
+
+  def set_preserve_tryjobs(self):
+    """Ensures description footer contains 'Cq-Do-Not-Cancel-Tryjobs: true'."""
+    footers = git_footers.parse_footers(self.description)
+    for v in footers.get('Cq-Do-Not-Cancel-Tryjobs', []):
+      if v.lower() == 'true':
+        return
+    self.append_footer('Cq-Do-Not-Cancel-Tryjobs: true')
+
+  def prompt(self):
+    """Asks the user to update the description."""
+    self.set_description([
+        '# Enter a description of the change.',
+        '# This will be displayed on the codereview site.',
+        '# The first line will also be used as the subject of the review.',
+        '#--------------------This line is 72 characters long'
+        '--------------------',
+    ] + self._description_lines)
+    bug_regexp = re.compile(self.BUG_LINE)
+    fixed_regexp = re.compile(self.FIXED_LINE)
+    prefix = settings.GetBugPrefix()
+    has_issue = lambda l: bug_regexp.match(l) or fixed_regexp.match(l)
+
+    if not any((has_issue(line) for line in self._description_lines)):
+      self.append_footer('Bug: %s' % prefix)
+
+    print('Waiting for editor...')
+    content = gclient_utils.RunEditor(self.description,
+                                      True,
+                                      git_editor=settings.GetGitEditor())
+    if not content:
+      DieWithError('Running editor failed')
+    lines = content.splitlines()
+
+    # Strip off comments and default inserted "Bug:" line.
+    clean_lines = [
+        line.rstrip() for line in lines
+        if not (line.startswith('#') or line.rstrip() == "Bug:"
+                or line.rstrip() == "Bug: " + prefix)
+    ]
+    if not clean_lines:
+      DieWithError('No CL description, aborting')
+    self.set_description(clean_lines)
+
+  def append_footer(self, line):
+    """Adds a footer line to the description.
+
+    Differentiates legacy "KEY=xxx" footers (used to be called tags) and
+    Gerrit's footers in the form of "Footer-Key: footer any value" and ensures
+    that Gerrit footers are always at the end.
+    """
+    parsed_footer_line = git_footers.parse_footer(line)
+    if parsed_footer_line:
+      # Line is a gerrit footer in the form: Footer-Key: any value.
+      # Thus, must be appended observing Gerrit footer rules.
+      self.set_description(
+          git_footers.add_footer(self.description,
+                                 key=parsed_footer_line[0],
+                                 value=parsed_footer_line[1]))
+      return
+
+    if not self._description_lines:
+      self._description_lines.append(line)
+      return
+
+    top_lines, gerrit_footers, _ = git_footers.split_footers(self.description)
+    if gerrit_footers:
+      # git_footers.split_footers ensures that there is an empty line before
+      # actual (gerrit) footers, if any. We have to keep it that way.
+      assert top_lines and top_lines[-1] == ''
+      top_lines, separator = top_lines[:-1], top_lines[-1:]
+    else:
+      separator = []  # No need for separator if there are no gerrit_footers.
+
+    prev_line = top_lines[-1] if top_lines else ''
+    if (not presubmit_support.Change.TAG_LINE_RE.match(prev_line)
+        or not presubmit_support.Change.TAG_LINE_RE.match(line)):
+      top_lines.append('')
+    top_lines.append(line)
+    self._description_lines = top_lines + separator + gerrit_footers
+
+  def get_reviewers(self, tbr_only=False):
+    """Retrieves the list of reviewers."""
+    matches = [re.match(self.R_LINE, line) for line in self._description_lines]
+    reviewers = [
+        match.group(2).strip() for match in matches
+        if match and (not tbr_only or match.group(1).upper() == 'TBR')
+    ]
+    return cleanup_list(reviewers)
+
+  def get_cced(self):
+    """Retrieves the list of reviewers."""
+    matches = [re.match(self.CC_LINE, line) for line in self._description_lines]
+    cced = [match.group(2).strip() for match in matches if match]
+    return cleanup_list(cced)
+
+  def get_hash_tags(self):
+    """Extracts and sanitizes a list of Gerrit hashtags."""
+    subject = (self._description_lines or ('', ))[0]
+    subject = re.sub(self.STRIP_HASH_TAG_PREFIX,
+                     '',
+                     subject,
+                     flags=re.IGNORECASE)
+
+    tags = []
+    start = 0
+    bracket_exp = re.compile(self.BRACKET_HASH_TAG)
+    while True:
+      m = bracket_exp.match(subject, start)
+      if not m:
+        break
+      tags.append(self.sanitize_hash_tag(m.group(1)))
+      start = m.end()
+
+    if not tags:
+      # Try "Tag: " prefix.
+      m = re.match(self.COLON_SEPARATED_HASH_TAG, subject)
+      if m:
+        tags.append(self.sanitize_hash_tag(m.group(1)))
+    return tags
+
+  @classmethod
+  def sanitize_hash_tag(cls, tag):
+    """Returns a sanitized Gerrit hash tag.
+
+    A sanitized hashtag can be used as a git push refspec parameter value.
+    """
+    return re.sub(cls.BAD_HASH_TAG_CHUNK, '-', tag).strip('-').lower()
+
+
 class Changelist(object):
   """Changelist works with one changelist in local branch.
 
@@ -1199,7 +1425,7 @@ class Changelist(object):
         self._remote = (remote, 'refs/remotes/%s/%s' % (remote, branch))
     return self._remote
 
-  def GetRemoteUrl(self):
+  def GetRemoteUrl(self) -> Optional[str]:
     """Return the configured remote URL, e.g. 'git://example.org/foo.git/'.
 
     Returns None if there is no remote.
@@ -1340,8 +1566,9 @@ class Changelist(object):
       self.issue = None
       self.patchset = None
 
-  def GetAffectedFiles(self, upstream, end_commit=None):
-    # type: (str, Optional[str]) -> Sequence[str]
+  def GetAffectedFiles(self,
+                       upstream: str,
+                       end_commit: Optional[str] = None) -> Sequence[str]:
     """Returns the list of affected files for the given commit range."""
     try:
       return [
@@ -1442,13 +1669,11 @@ class Changelist(object):
                               realm=realm)
 
   def _RunPresubmit(self,
-                    args,
-                    description,
-                    resultdb=None,
-                    realm=None):
-    # type: (Sequence[str], str, bool, Optional[bool], Optional[str]
-    #    ) -> Mapping[str, Any]
-    args = args[:]
+                    args: Sequence[str],
+                    description: str,
+                    resultdb: bool = False,
+                    realm: Optional[str] = None) -> Mapping[str, Any]:
+    args = list(args)
 
     with gclient_utils.temporary_file() as description_file:
       with gclient_utils.temporary_file() as json_output:
@@ -1484,9 +1709,9 @@ class Changelist(object):
       args.extend(['--description_file', description_file])
       subprocess2.Popen(['vpython3', PRESUBMIT_SUPPORT] + args).wait()
 
-  def _GetDescriptionForUpload(self, options, git_diff_args, files):
-    # type: (optparse.Values, Sequence[str], Sequence[str]
-    #     ) -> ChangeDescription
+  def _GetDescriptionForUpload(self, options: optparse.Values,
+                               git_diff_args: Sequence[str],
+                               files: Sequence[str]) -> ChangeDescription:
     """Get description message for upload."""
     if self.GetIssue():
       description = self.FetchDescription()
@@ -1570,13 +1795,10 @@ class Changelist(object):
     return user_title or title
 
   def _GetRefSpecOptions(self,
-                         options,
-                         change_desc,
-                         multi_change_upload=False,
-                         dogfood_path=False):
-    # type: (optparse.Values, Sequence[Changelist], Optional[bool],
-    #      Optional[bool]) -> Sequence[str]
-
+                         options: optparse.Values,
+                         change_desc: ChangeDescription,
+                         multi_change_upload: bool = False,
+                         dogfood_path: bool = False) -> List[str]:
     # Extra options that can be specified at push time. Doc:
     # https://gerrit-review.googlesource.com/Documentation/user-upload.html
     refspec_opts = []
@@ -1647,11 +1869,10 @@ class Changelist(object):
     return refspec_opts
 
   def PrepareSquashedCommit(self,
-                            options,
-                            parent,
-                            orig_parent,
-                            end_commit=None):
-    # type: (optparse.Values, str, str, Optional[str]) -> _NewUpload()
+                            options: optparse.Values,
+                            parent: str,
+                            orig_parent: str,
+                            end_commit: Optional[str] = None) -> _NewUpload:
     """Create a squashed commit to upload.
 
 
@@ -1683,8 +1904,8 @@ class Changelist(object):
     return _NewUpload(reviewers, ccs, commit_to_push, end_commit, parent,
                       change_desc, prev_patchset)
 
-  def PrepareCherryPickSquashedCommit(self, options, parent):
-    # type: (optparse.Values, str) -> _NewUpload()
+  def PrepareCherryPickSquashedCommit(self, options: optparse.Values,
+                                      parent: str) -> _NewUpload:
     """Create a commit cherry-picked on parent to push."""
 
     # The `parent` is what we will cherry-pick on top of.
@@ -1719,9 +1940,9 @@ class Changelist(object):
     return _NewUpload(reviewers, ccs, commit_to_push, new_upload_hash,
                       cherry_pick_base, change_desc, prev_patchset)
 
-  def _PrepareChange(self, options, parent, end_commit):
-    # type: (optparse.Values, str, str) ->
-    #     Tuple[Sequence[str], Sequence[str], ChangeDescription]
+  def _PrepareChange(
+      self, options: optparse.Values, parent: str, end_commit: str
+  ) -> Tuple[Sequence[str], Sequence[str], ChangeDescription]:
     """Prepares the change to be uploaded."""
     self.EnsureCanUploadPatchset(options.force)
 
@@ -1790,8 +2011,8 @@ class Changelist(object):
 
     return change_desc.get_reviewers(), ccs, change_desc
 
-  def PostUploadUpdates(self, options, new_upload, change_number):
-    # type: (optparse.Values, _NewUpload, change_number) -> None
+  def PostUploadUpdates(self, options: optparse.Values, new_upload: _NewUpload,
+                        change_number: str) -> None:
     """Makes necessary post upload changes to the local and remote cl."""
     if not self.GetIssue():
       self.SetIssue(change_number)
@@ -2609,10 +2830,10 @@ class Changelist(object):
     env['GIT_TRACE_CURL_NO_DATA'] = '1'
     env['GIT_TRACE_PACKET'] = os.path.join(traces_dir, 'trace-packet')
 
+    push_returncode = 0
+    before_push = time_time()
     try:
-      push_returncode = 0
       remote_url = self.GetRemoteUrl()
-      before_push = time_time()
       push_cmd = ['git', 'push', remote_url, refspec]
       if git_push_options:
         for opt in git_push_options:
@@ -3158,222 +3379,6 @@ def _get_bug_line_values(default_project_prefix, bugs):
   for other in sorted(others):
     # Don't bother finding common prefixes, CLs with >2 bugs are very very rare.
     yield other
-
-
-class ChangeDescription(object):
-  """Contains a parsed form of the change description."""
-  R_LINE = r'^[ \t]*(TBR|R)[ \t]*=[ \t]*(.*?)[ \t]*$'
-  CC_LINE = r'^[ \t]*(CC)[ \t]*=[ \t]*(.*?)[ \t]*$'
-  BUG_LINE = r'^[ \t]*(?:(BUG)[ \t]*=|Bug:)[ \t]*(.*?)[ \t]*$'
-  FIXED_LINE = r'^[ \t]*Fixed[ \t]*:[ \t]*(.*?)[ \t]*$'
-  CHERRY_PICK_LINE = r'^\(cherry picked from commit [a-fA-F0-9]{40}\)$'
-  STRIP_HASH_TAG_PREFIX = r'^(\s*(revert|reland)( "|:)?\s*)*'
-  BRACKET_HASH_TAG = r'\s*\[([^\[\]]+)\]'
-  COLON_SEPARATED_HASH_TAG = r'^([a-zA-Z0-9_\- ]+):($|[^:])'
-  BAD_HASH_TAG_CHUNK = r'[^a-zA-Z0-9]+'
-
-  def __init__(self, description, bug=None, fixed=None):
-    self._description_lines = (description or '').strip().splitlines()
-    if bug:
-      regexp = re.compile(self.BUG_LINE)
-      prefix = settings.GetBugPrefix()
-      if not any((regexp.match(line) for line in self._description_lines)):
-        values = list(_get_bug_line_values(prefix, bug))
-        self.append_footer('Bug: %s' % ', '.join(values))
-    if fixed:
-      regexp = re.compile(self.FIXED_LINE)
-      prefix = settings.GetBugPrefix()
-      if not any((regexp.match(line) for line in self._description_lines)):
-        values = list(_get_bug_line_values(prefix, fixed))
-        self.append_footer('Fixed: %s' % ', '.join(values))
-
-  @property               # www.logilab.org/ticket/89786
-  def description(self):  # pylint: disable=method-hidden
-    return '\n'.join(self._description_lines)
-
-  def set_description(self, desc):
-    if isinstance(desc, str):
-      lines = desc.splitlines()
-    else:
-      lines = [line.rstrip() for line in desc]
-    while lines and not lines[0]:
-      lines.pop(0)
-    while lines and not lines[-1]:
-      lines.pop(-1)
-    self._description_lines = lines
-
-  def ensure_change_id(self, change_id):
-    description = self.description
-    footer_change_ids = git_footers.get_footer_change_id(description)
-    # Make sure that the Change-Id in the description matches the given one.
-    if footer_change_ids != [change_id]:
-      if footer_change_ids:
-        # Remove any existing Change-Id footers since they don't match the
-        # expected change_id footer.
-        description = git_footers.remove_footer(description, 'Change-Id')
-        print('WARNING: Change-Id has been set to %s. Use `git cl issue 0` '
-              'if you want to set a new one.')
-      # Add the expected Change-Id footer.
-      description = git_footers.add_footer_change_id(description, change_id)
-      self.set_description(description)
-
-  def update_reviewers(self, reviewers):
-    """Rewrites the R= line(s) as a single line each.
-
-    Args:
-      reviewers (list(str)) - list of additional emails to use for reviewers.
-    """
-    if not reviewers:
-      return
-
-    reviewers = set(reviewers)
-
-    # Get the set of R= lines and remove them from the description.
-    regexp = re.compile(self.R_LINE)
-    matches = [regexp.match(line) for line in self._description_lines]
-    new_desc = [l for i, l in enumerate(self._description_lines)
-                if not matches[i]]
-    self.set_description(new_desc)
-
-    # Construct new unified R= lines.
-
-    # First, update reviewers with names from the R= lines (if any).
-    for match in matches:
-      if not match:
-        continue
-      reviewers.update(cleanup_list([match.group(2).strip()]))
-
-    new_r_line = 'R=' + ', '.join(sorted(reviewers))
-
-    # Put the new lines in the description where the old first R= line was.
-    line_loc = next((i for i, match in enumerate(matches) if match), -1)
-    if 0 <= line_loc < len(self._description_lines):
-      self._description_lines.insert(line_loc, new_r_line)
-    else:
-      self.append_footer(new_r_line)
-
-  def set_preserve_tryjobs(self):
-    """Ensures description footer contains 'Cq-Do-Not-Cancel-Tryjobs: true'."""
-    footers = git_footers.parse_footers(self.description)
-    for v in footers.get('Cq-Do-Not-Cancel-Tryjobs', []):
-      if v.lower() == 'true':
-        return
-    self.append_footer('Cq-Do-Not-Cancel-Tryjobs: true')
-
-  def prompt(self):
-    """Asks the user to update the description."""
-    self.set_description([
-      '# Enter a description of the change.',
-      '# This will be displayed on the codereview site.',
-      '# The first line will also be used as the subject of the review.',
-      '#--------------------This line is 72 characters long'
-      '--------------------',
-    ] + self._description_lines)
-    bug_regexp = re.compile(self.BUG_LINE)
-    fixed_regexp = re.compile(self.FIXED_LINE)
-    prefix = settings.GetBugPrefix()
-    has_issue = lambda l: bug_regexp.match(l) or fixed_regexp.match(l)
-
-    if not any((has_issue(line) for line in self._description_lines)):
-      self.append_footer('Bug: %s' % prefix)
-
-    print('Waiting for editor...')
-    content = gclient_utils.RunEditor(self.description, True,
-                                      git_editor=settings.GetGitEditor())
-    if not content:
-      DieWithError('Running editor failed')
-    lines = content.splitlines()
-
-    # Strip off comments and default inserted "Bug:" line.
-    clean_lines = [line.rstrip() for line in lines if not
-                   (line.startswith('#') or
-                    line.rstrip() == "Bug:" or
-                    line.rstrip() == "Bug: " + prefix)]
-    if not clean_lines:
-      DieWithError('No CL description, aborting')
-    self.set_description(clean_lines)
-
-  def append_footer(self, line):
-    """Adds a footer line to the description.
-
-    Differentiates legacy "KEY=xxx" footers (used to be called tags) and
-    Gerrit's footers in the form of "Footer-Key: footer any value" and ensures
-    that Gerrit footers are always at the end.
-    """
-    parsed_footer_line = git_footers.parse_footer(line)
-    if parsed_footer_line:
-      # Line is a gerrit footer in the form: Footer-Key: any value.
-      # Thus, must be appended observing Gerrit footer rules.
-      self.set_description(
-          git_footers.add_footer(self.description,
-                                 key=parsed_footer_line[0],
-                                 value=parsed_footer_line[1]))
-      return
-
-    if not self._description_lines:
-      self._description_lines.append(line)
-      return
-
-    top_lines, gerrit_footers, _ = git_footers.split_footers(self.description)
-    if gerrit_footers:
-      # git_footers.split_footers ensures that there is an empty line before
-      # actual (gerrit) footers, if any. We have to keep it that way.
-      assert top_lines and top_lines[-1] == ''
-      top_lines, separator = top_lines[:-1], top_lines[-1:]
-    else:
-      separator = []  # No need for separator if there are no gerrit_footers.
-
-    prev_line = top_lines[-1] if top_lines else ''
-    if (not presubmit_support.Change.TAG_LINE_RE.match(prev_line) or
-        not presubmit_support.Change.TAG_LINE_RE.match(line)):
-      top_lines.append('')
-    top_lines.append(line)
-    self._description_lines = top_lines + separator + gerrit_footers
-
-  def get_reviewers(self, tbr_only=False):
-    """Retrieves the list of reviewers."""
-    matches = [re.match(self.R_LINE, line) for line in self._description_lines]
-    reviewers = [match.group(2).strip()
-                 for match in matches
-                 if match and (not tbr_only or match.group(1).upper() == 'TBR')]
-    return cleanup_list(reviewers)
-
-  def get_cced(self):
-    """Retrieves the list of reviewers."""
-    matches = [re.match(self.CC_LINE, line) for line in self._description_lines]
-    cced = [match.group(2).strip() for match in matches if match]
-    return cleanup_list(cced)
-
-  def get_hash_tags(self):
-    """Extracts and sanitizes a list of Gerrit hashtags."""
-    subject = (self._description_lines or ('',))[0]
-    subject = re.sub(
-        self.STRIP_HASH_TAG_PREFIX, '', subject, flags=re.IGNORECASE)
-
-    tags = []
-    start = 0
-    bracket_exp = re.compile(self.BRACKET_HASH_TAG)
-    while True:
-      m = bracket_exp.match(subject, start)
-      if not m:
-        break
-      tags.append(self.sanitize_hash_tag(m.group(1)))
-      start = m.end()
-
-    if not tags:
-      # Try "Tag: " prefix.
-      m = re.match(self.COLON_SEPARATED_HASH_TAG, subject)
-      if m:
-        tags.append(self.sanitize_hash_tag(m.group(1)))
-    return tags
-
-  @classmethod
-  def sanitize_hash_tag(cls, tag):
-    """Returns a sanitized Gerrit hash tag.
-
-    A sanitized hashtag can be used as a git push refspec parameter value.
-    """
-    return re.sub(cls.BAD_HASH_TAG_CHUNK, '-', tag).strip('-').lower()
 
 
 def FindCodereviewSettingsFile(filename='codereview.settings'):
@@ -4419,7 +4424,9 @@ def CMDlint(parser, args):
 
     # Process cpplint arguments, if any.
     filters = presubmit_canned_checks.GetCppLintFilters(options.filter)
-    command = ['--filter=' + ','.join(filters)] + args + files
+    command = ['--filter=' + ','.join(filters)]
+    command.extend(args)
+    command.extend(files)
     filenames = cpplint.ParseArguments(command)
 
     include_regex = re.compile(settings.GetLintRegex())
@@ -4869,7 +4876,7 @@ def UploadAllSquashed(options: optparse.Values,
   cls, cherry_pick_current = _UploadAllPrecheck(options, orig_args)
 
   # Create commits.
-  uploads_by_cl: list[Tuple[Changelist, _NewUpload]] = []
+  uploads_by_cl: List[Tuple[Changelist, _NewUpload]] = []
   if cherry_pick_current:
     parent = cls[1]._GitGetBranchConfigValue(GERRIT_SQUASH_HASH_CONFIG_KEY)
     new_upload = cls[0].PrepareCherryPickSquashedCommit(options, parent)
