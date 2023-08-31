@@ -421,7 +421,7 @@ def warn_submodule():
   """Print warnings for submodules."""
   # TODO(crbug.com/1475405): Warn users if the project uses submodules and
   # they have fsmonitor enabled.
-  if is_fsmonitor_enabled():
+  if sys.platform.startswith('darwin') and is_fsmonitor_enabled():
     print(colorama.Fore.RED)
     print('WARNING: You have fsmonitor enabled. There is a major issue '
           'resulting in git diff-index returning wrong results. Please '
