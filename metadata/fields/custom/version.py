@@ -40,12 +40,18 @@ class VersionField(field_types.MetadataField):
     """
     if value == "0" or util.is_unknown(value):
       return vr.ValidationWarning(
-          f"{self._name} is '{value}' - use 'N/A' if this package does not "
-          "version or is versioned by date or revision.")
+          reason=f"{self._name} is '{value}'.",
+          additional=[
+              "Set this field to 'N/A' if this package does not version or is "
+              "versioned by date or revision.",
+          ])
 
     if util.is_empty(value):
       return vr.ValidationError(
-          f"{self._name} is empty - use 'N/A' if this package is versioned by "
-          "date or revision.")
+          reason=f"{self._name} is empty.",
+          additional=[
+              "Set this field to 'N/A' if this package does not version or is "
+              "versioned by date or revision.",
+          ])
 
     return None

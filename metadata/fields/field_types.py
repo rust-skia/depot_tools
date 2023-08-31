@@ -66,7 +66,7 @@ class FreeformTextField(MetadataField):
   def validate(self, value: str) -> Union[vr.ValidationResult, None]:
     """Checks the given value has at least one non-whitespace character."""
     if util.is_empty(value):
-      return vr.ValidationError(f"{self._name} is empty.")
+      return vr.ValidationError(reason=f"{self._name} is empty.")
 
     return None
 
@@ -83,8 +83,15 @@ class YesNoField(MetadataField):
 
     if util.matches(_PATTERN_STARTS_WITH_YES_OR_NO, value):
       return vr.ValidationWarning(
-          f"{self._name} is '{value}' - should be only {util.YES} or {util.NO}."
-      )
+          reason=f"{self._name} is invalid.",
+          additional=[
+              f"This field should be only {util.YES} or {util.NO}.",
+              f"Current value is '{value}'.",
+          ])
 
     return vr.ValidationError(
-        f"{self._name} is '{value}' - must be {util.YES} or {util.NO}.")
+        reason=f"{self._name} is invalid.",
+        additional=[
+            f"This field must be {util.YES} or {util.NO}.",
+            f"Current value is '{value}'.",
+        ])

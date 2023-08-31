@@ -108,24 +108,22 @@ class LicenseField(field_types.MetadataField):
                                      atomic_delimiter=self.VALUE_DELIMITER)
     for license, allowed in licenses:
       if util.is_empty(license):
-        return vr.ValidationError(f"{self._name} has an empty value.")
+        return vr.ValidationError(reason=f"{self._name} has an empty value.")
       if not allowed:
         not_allowlisted.append(license)
 
     if not_allowlisted:
-      template = ("{field_name} has licenses not in the allowlist. If "
-                  "there are multiple license types, separate them with a "
-                  "'{delim}'. Invalid values: {values}.")
-      message = template.format(field_name=self._name,
-                                delim=self.VALUE_DELIMITER,
-                                values=util.quoted(not_allowlisted))
-      return vr.ValidationWarning(message)
+      return vr.ValidationWarning(
+          reason=f"{self._name} has a license not in the allowlist.",
+          additional=[
+              f"Separate licenses using a '{self.VALUE_DELIMITER}'.",
+              f"Licenses not allowlisted: {util.quoted(not_allowlisted)}.",
+          ])
 
     # Suggest using the standard value delimiter when possible.
     if (re.search(_PATTERN_VERBOSE_DELIMITER, value)
         and self.VALUE_DELIMITER not in value):
       return vr.ValidationWarning(
-          f"{self._name} should use '{self.VALUE_DELIMITER}' to delimit "
-          "values.")
+          reason=f"Separate licenses using a '{self.VALUE_DELIMITER}'.")
 
     return None

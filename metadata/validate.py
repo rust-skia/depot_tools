@@ -36,8 +36,7 @@ def validate_content(content: str, source_file_dir: str,
   results = []
   dependencies = metadata.parse.parse_content(content)
   if not dependencies:
-    result = vr.ValidationError("No dependency metadata found.")
-    result.set_tag("reason", "no metadata")
+    result = vr.ValidationError(reason="No dependency metadata found.")
     return [result]
 
   for dependency in dependencies:
@@ -49,8 +48,9 @@ def validate_content(content: str, source_file_dir: str,
 
 def _construct_file_read_error(filepath: str, cause: str) -> vr.ValidationError:
   """Helper function to create a validation error for a file reading issue."""
-  result = vr.ValidationError(f"Cannot read '{filepath}' - {cause}.")
-  result.set_tag(tag="reason", value="read error")
+  result = vr.ValidationError(
+      reason="Cannot read metadata file.",
+      additional=[f"Attempted to read '{filepath}' but {cause}."])
   return result
 
 

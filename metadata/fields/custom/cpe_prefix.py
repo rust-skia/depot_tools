@@ -19,7 +19,7 @@ import metadata.fields.field_types as field_types
 import metadata.fields.util as util
 import metadata.validation_result as vr
 
-_PATTERN_CPE_PREFIX = re.compile(r"^cpe:/.+:.+:.+(:.+)*$")
+_PATTERN_CPE_PREFIX = re.compile(r"^cpe:(2.3:|/).+:.+:.+(:.+)*$", re.IGNORECASE)
 
 
 class CPEPrefixField(field_types.MetadataField):
@@ -28,12 +28,16 @@ class CPEPrefixField(field_types.MetadataField):
     super().__init__(name="CPEPrefix", one_liner=True)
 
   def validate(self, value: str) -> Union[vr.ValidationResult, None]:
-    """Checks the given value is either 'unknown', or a valid
-    CPE in the URI form `cpe:/<part>:<vendor>:<product>[:<optional fields>]`.
+    """Checks the given value is either 'unknown', or conforms to either the
+    CPE 2.3 or 2.2 format.
     """
     if util.is_unknown(value) or util.matches(_PATTERN_CPE_PREFIX, value):
       return None
 
     return vr.ValidationError(
-        f"{self._name} is '{value}' - must be either 'unknown', or in the form "
-        "'cpe:/<part>:<vendor>:<product>[:<optional fields>]'.")
+        reason=f"{self._name} is invalid.",
+        additional=[
+            "This field should be a CPE (version 2.3 or 2.2), or 'unknown'.",
+            "Search for a CPE tag for the package at "
+            "https://nvd.nist.gov/products/cpe/search.",
+        ])

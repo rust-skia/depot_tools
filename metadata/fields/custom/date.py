@@ -32,5 +32,8 @@ class DateField(field_types.MetadataField):
     if util.matches(_PATTERN_DATE, value):
       return None
 
-    return vr.ValidationError(
-        f"{self._name} is '{value}' - must use format YYYY-MM-DD.")
+    return vr.ValidationError(reason=f"{self._name} is invalid.",
+                              additional=[
+                                  "The correct format is YYYY-MM-DD.",
+                                  f"Current value is '{value}'.",
+                              ])

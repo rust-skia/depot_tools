@@ -42,7 +42,10 @@ class LicenseFileField(field_types.MetadataField):
     """
     if value == _NOT_SHIPPED:
       return vr.ValidationWarning(
-          f"{self._name} uses deprecated value '{_NOT_SHIPPED}'.")
+          reason=f"{self._name} uses deprecated value '{_NOT_SHIPPED}'.",
+          additional=[
+              f"Remove this field and use 'Shipped: {util.NO}' instead.",
+          ])
 
     invalid_values = []
     for path in value.split(self.VALUE_DELIMITER):
@@ -51,13 +54,13 @@ class LicenseFileField(field_types.MetadataField):
         invalid_values.append(path)
 
     if invalid_values:
-      template = ("{field_name} has invalid values. Paths cannot be empty, "
-                  "or include '../'. If there are multiple license files, "
-                  "separate them with a '{delim}'. Invalid values: {values}.")
-      message = template.format(field_name=self._name,
-                                delim=self.VALUE_DELIMITER,
-                                values=util.quoted(invalid_values))
-      return vr.ValidationError(message)
+      return vr.ValidationError(
+          reason=f"{self._name} is invalid.",
+          additional=[
+              "File paths cannot be empty, or include '../'.",
+              f"Separate license files using a '{self.VALUE_DELIMITER}'.",
+              f"Invalid values: {util.quoted(invalid_values)}.",
+          ])
 
     return None
 
@@ -84,7 +87,10 @@ class LicenseFileField(field_types.MetadataField):
     """
     if value == _NOT_SHIPPED:
       return vr.ValidationWarning(
-          f"{self._name} uses deprecated value '{_NOT_SHIPPED}'.")
+          reason=f"{self._name} uses deprecated value '{_NOT_SHIPPED}'.",
+          additional=[
+              f"Remove this field and use 'Shipped: {util.NO}' instead.",
+          ])
 
     invalid_values = []
     for license_filename in value.split(self.VALUE_DELIMITER):
@@ -100,10 +106,12 @@ class LicenseFileField(field_types.MetadataField):
         invalid_values.append(license_filepath)
 
     if invalid_values:
-      template = ("{field_name} has invalid values. Failed to find file(s) on"
-                  "local disk. Invalid values: {values}.")
-      message = template.format(field_name=self._name,
-                                values=util.quoted(invalid_values))
-      return vr.ValidationError(message)
+      missing = ", ".join(invalid_values)
+      return vr.ValidationError(
+          reason=f"{self._name} is invalid.",
+          additional=[
+              "Failed to find all license files on local disk.",
+              f"Missing files:{missing}.",
+          ])
 
     return None

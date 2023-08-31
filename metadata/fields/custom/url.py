@@ -44,13 +44,12 @@ class URLField(field_types.MetadataField):
         invalid_values.append(url)
 
     if invalid_values:
-      template = ("{field_name} has invalid values. URLs must use a protocol "
-                  "scheme in [http, https, ftp, git]. If there are multiple "
-                  "URLs, separate them with a '{delim}'. Invalid values: "
-                  "{values}.")
-      message = template.format(field_name=self._name,
-                                delim=self.VALUE_DELIMITER,
-                                values=util.quoted(invalid_values))
-      return vr.ValidationError(message)
+      return vr.ValidationError(
+          reason=f"{self._name} is invalid.",
+          additional=[
+              "URLs must use a protocol scheme in [http, https, ftp, git].",
+              f"Separate URLs using a '{self.VALUE_DELIMITER}'.",
+              f"Invalid values: {util.quoted(invalid_values)}.",
+          ])
 
     return None

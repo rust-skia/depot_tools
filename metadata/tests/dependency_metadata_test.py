@@ -38,8 +38,7 @@ class DependencyValidationTest(unittest.TestCase):
     )
     self.assertEqual(len(results), 1)
     self.assertTrue(isinstance(results[0], vr.ValidationError))
-    self.assertDictEqual(results[0].get_all_tags(),
-                         {"reason": "repeated field"})
+    self.assertEqual(results[0].get_reason(), "There is a repeated field.")
 
   def test_required_field(self):
     """Check that a validation error is returned for a missing field."""
@@ -58,8 +57,8 @@ class DependencyValidationTest(unittest.TestCase):
     )
     self.assertEqual(len(results), 1)
     self.assertTrue(isinstance(results[0], vr.ValidationError))
-    self.assertDictEqual(results[0].get_all_tags(),
-                         {"reason": "missing required field"})
+    self.assertEqual(results[0].get_reason(),
+                     "Required field 'URL' is missing.")
 
   def test_invalid_field(self):
     """Check field validation issues are returned."""
@@ -78,8 +77,7 @@ class DependencyValidationTest(unittest.TestCase):
     )
     self.assertEqual(len(results), 1)
     self.assertTrue(isinstance(results[0], vr.ValidationError))
-    self.assertDictEqual(results[0].get_all_tags(),
-                         {"field": known_fields.SECURITY_CRITICAL.get_name()})
+    self.assertEqual(results[0].get_reason(), "Security Critical is invalid.")
 
   def test_invalid_license_file_path(self):
     """Check license file path validation issues are returned."""
@@ -99,8 +97,7 @@ class DependencyValidationTest(unittest.TestCase):
     )
     self.assertEqual(len(results), 1)
     self.assertTrue(isinstance(results[0], vr.ValidationError))
-    self.assertDictEqual(results[0].get_all_tags(),
-                         {"field": known_fields.LICENSE_FILE.get_name()})
+    self.assertEqual(results[0].get_reason(), "License File is invalid.")
 
   def test_multiple_validation_issues(self):
     """Check all validation issues are returned."""

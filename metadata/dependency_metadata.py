@@ -118,9 +118,10 @@ class DependencyMetadata:
     ]
     if repeated_field_info:
       repeated = ", ".join(repeated_field_info)
-      error = vr.ValidationError(
-          f"Multiple entries for the same field: {repeated}.")
-      error.set_tag(tag="reason", value="repeated field")
+      error = vr.ValidationError(reason="There is a repeated field.",
+                                 additional=[
+                                     f"Repeated fields: {repeated}",
+                                 ])
       results.append(error)
 
     # Check required fields are present.
@@ -128,8 +129,8 @@ class DependencyMetadata:
     for field in required_fields:
       if field not in self._metadata:
         field_name = field.get_name()
-        error = vr.ValidationError(f"Required field '{field_name}' is missing.")
-        error.set_tag(tag="reason", value="missing required field")
+        error = vr.ValidationError(
+            reason=f"Required field '{field_name}' is missing.")
         results.append(error)
 
     # Validate values for all present fields.

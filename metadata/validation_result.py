@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 import textwrap
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 
 _CHROMIUM_METADATA_PRESCRIPT = "Third party metadata issue:"
@@ -14,13 +14,23 @@ _CHROMIUM_METADATA_POSTSCRIPT = ("Check //third_party/README.chromium.template "
 
 class ValidationResult:
   """Base class for validation issues."""
-  def __init__(self, message: str, fatal: bool):
+  def __init__(self, reason: str, fatal: bool, additional: List[str] = []):
+    """Constructor for a validation issue.
+
+    Args:
+      reason: the root cause of the issue.
+      fatal: whether the issue is fatal.
+      additional: details that should be included in the validation message,
+                  e.g. advice on how to address the issue, or specific
+                  problematic values.
+    """
+    self._reason = reason
     self._fatal = fatal
-    self._message = message
+    self._message = " ".join([reason] + additional)
     self._tags = {}
 
   def __str__(self) -> str:
-    prefix = "ERROR" if self._fatal else "[non-fatal]"
+    prefix = self.get_severity_prefix()
     return f"{prefix} - {self._message}"
 
   def __repr__(self) -> str:
@@ -28,6 +38,14 @@ class ValidationResult:
 
   def is_fatal(self) -> bool:
     return self._fatal
+
+  def get_severity_prefix(self):
+    if self._fatal:
+      return "ERROR"
+    return "[non-fatal]"
+
+  def get_reason(self) -> str:
+    return self._reason
 
   def set_tag(self, tag: str, value: str) -> bool:
     self._tags[tag] = value
@@ -54,11 +72,11 @@ class ValidationResult:
 
 class ValidationError(ValidationResult):
   """Fatal validation issue. Presubmit should fail."""
-  def __init__(self, message: str):
-    super().__init__(message=message, fatal=True)
+  def __init__(self, reason: str, additional: List[str] = []):
+    super().__init__(reason=reason, fatal=True, additional=additional)
 
 
 class ValidationWarning(ValidationResult):
   """Non-fatal validation issue. Presubmit should pass."""
-  def __init__(self, message: str):
-    super().__init__(message=message, fatal=False)
+  def __init__(self, reason: str, additional: List[str] = []):
+    super().__init__(reason=reason, fatal=False, additional=additional)

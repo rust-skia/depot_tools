@@ -70,7 +70,11 @@ class FieldValidationTest(unittest.TestCase):
     self._run_field_validation(
         field=known_fields.CPE_PREFIX,
         valid_values=[
-            "unknown", "cpe:/a:sqlite:sqlite:3.0.0", "cpe:/a:sqlite:sqlite"
+            "unknown",
+            "Cpe:2.3:a:sqlite:sqlite:3.0.0",
+            "cpe:2.3:a:sqlite:sqlite",
+            "CPE:/a:sqlite:sqlite:3.0.0",
+            "cpe:/a:sqlite:sqlite",
         ],
         error_values=["", "\n"],
     )
