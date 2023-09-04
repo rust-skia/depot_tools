@@ -28,13 +28,13 @@ class FieldValidationTest(unittest.TestCase):
                             warning_values: List[str] = []):
     """Helper to run a field's validation for different values."""
     for value in valid_values:
-      self.assertIsNone(field.validate(value))
+      self.assertIsNone(field.validate(value), value)
 
     for value in error_values:
-      self.assertIsInstance(field.validate(value), vr.ValidationError)
+      self.assertIsInstance(field.validate(value), vr.ValidationError, value)
 
     for value in warning_values:
-      self.assertIsInstance(field.validate(value), vr.ValidationWarning)
+      self.assertIsInstance(field.validate(value), vr.ValidationWarning, value)
 
   def test_freeform_text_validation(self):
     # Check validation of a freeform text field that should be on one line.
@@ -71,12 +71,21 @@ class FieldValidationTest(unittest.TestCase):
         field=known_fields.CPE_PREFIX,
         valid_values=[
             "unknown",
-            "Cpe:2.3:a:sqlite:sqlite:3.0.0",
-            "cpe:2.3:a:sqlite:sqlite",
-            "CPE:/a:sqlite:sqlite:3.0.0",
-            "cpe:/a:sqlite:sqlite",
+            "cpe:2.3:a:sqlite:sqlite:3.0.0:*:*:*:*:*:*:*",
+            "cpe:2.3:a:sqlite:sqlite:*:*:*:*:*:*:*:*",
+            "cpe:/a:vendor:product:version:update:edition:lang",
+            "cpe:/a::product:",
+            "cpe:/:vendor::::edition",
+            "cpe:/:vendor",
         ],
-        error_values=["", "\n"],
+        error_values=[
+            "",
+            "\n",
+            "cpe:2.3:a:sqlite:sqlite:3.0.0",
+            "cpe:2.3:a:sqlite:sqlite::::::::",
+            "cpe:/",
+            "cpe:/a:vendor:product:version:update:edition:lang:",
+        ],
     )
 
   def test_date_validation(self):
