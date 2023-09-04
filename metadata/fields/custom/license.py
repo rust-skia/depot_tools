@@ -52,78 +52,85 @@ _PATTERN_VERBOSE_DELIMITER = re.compile(r" and | or | / ")
 
 def process_license_value(value: str,
                           atomic_delimiter: str) -> List[Tuple[str, bool]]:
-  """Process a license field value, which may list multiple licenses.
+    """Process a license field value, which may list multiple licenses.
 
-  Args:
-    value: the value to process, which may include both verbose and atomic
-           delimiters, e.g. "Apache, 2.0 and MIT and custom"
-    atomic_delimiter: the delimiter to use as a final step; values will not be
-                      further split after using this delimiter.
+    Args:
+        value: the value to process, which may include both verbose and
+               atomic delimiters, e.g. "Apache, 2.0 and MIT and custom"
+        atomic_delimiter: the delimiter to use as a final step; values
+                          will not be further split after using this
+                          delimiter.
 
-  Returns: a list of the constituent licenses within the given value,
-           and whether the constituent license is on the allowlist.
-           e.g. [("Apache, 2.0", True), ("MIT", True), ("custom", False)]
-  """
-  # Check if the value is on the allowlist as-is, and thus does not require
-  # further processing.
-  if is_license_allowlisted(value):
-    return [(value, True)]
+    Returns: a list of the constituent licenses within the given value,
+             and whether the constituent license is on the allowlist.
+             e.g. [("Apache, 2.0", True), ("MIT", True),
+                   ("custom", False)]
+    """
+    # Check if the value is on the allowlist as-is, and thus does not
+    # require further processing.
+    if is_license_allowlisted(value):
+        return [(value, True)]
 
-  breakdown = []
-  if re.search(_PATTERN_VERBOSE_DELIMITER, value):
-    # Split using the verbose delimiters.
-    for component in re.split(_PATTERN_VERBOSE_DELIMITER, value):
-      breakdown.extend(
-          process_license_value(component.strip(), atomic_delimiter))
-  else:
-    # Split using the standard value delimiter. This results in atomic values;
-    # there is no further splitting possible.
-    for atomic_value in value.split(atomic_delimiter):
-      atomic_value = atomic_value.strip()
-      breakdown.append((atomic_value, is_license_allowlisted(atomic_value)))
+    breakdown = []
+    if re.search(_PATTERN_VERBOSE_DELIMITER, value):
+        # Split using the verbose delimiters.
+        for component in re.split(_PATTERN_VERBOSE_DELIMITER, value):
+            breakdown.extend(
+                process_license_value(component.strip(), atomic_delimiter))
+    else:
+        # Split using the standard value delimiter. This results in
+        # atomic values; there is no further splitting possible.
+        for atomic_value in value.split(atomic_delimiter):
+            atomic_value = atomic_value.strip()
+            breakdown.append(
+                (atomic_value, is_license_allowlisted(atomic_value)))
 
-  return breakdown
+    return breakdown
 
 
 def is_license_allowlisted(value: str) -> bool:
-  """Returns whether the value is in the allowlist for license types."""
-  return util.matches(_PATTERN_LICENSE_ALLOWED, value)
+    """Returns whether the value is in the allowlist for license
+    types.
+    """
+    return util.matches(_PATTERN_LICENSE_ALLOWED, value)
 
 
 class LicenseField(field_types.MetadataField):
-  """Custom field for the package's license type(s).
+    """Custom field for the package's license type(s).
 
-  e.g. Apache 2.0, MIT, BSD, Public Domain.
-  """
-  def __init__(self):
-    super().__init__(name="License", one_liner=False)
-
-  def validate(self, value: str) -> Union[vr.ValidationResult, None]:
-    """Checks the given value consists of recognized license types.
-
-    Note: this field supports multiple values.
+    e.g. Apache 2.0, MIT, BSD, Public Domain.
     """
-    not_allowlisted = []
-    licenses = process_license_value(value,
-                                     atomic_delimiter=self.VALUE_DELIMITER)
-    for license, allowed in licenses:
-      if util.is_empty(license):
-        return vr.ValidationError(reason=f"{self._name} has an empty value.")
-      if not allowed:
-        not_allowlisted.append(license)
+    def __init__(self):
+        super().__init__(name="License", one_liner=False)
 
-    if not_allowlisted:
-      return vr.ValidationWarning(
-          reason=f"{self._name} has a license not in the allowlist.",
-          additional=[
-              f"Separate licenses using a '{self.VALUE_DELIMITER}'.",
-              f"Licenses not allowlisted: {util.quoted(not_allowlisted)}.",
-          ])
+    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+        """Checks the given value consists of recognized license types.
 
-    # Suggest using the standard value delimiter when possible.
-    if (re.search(_PATTERN_VERBOSE_DELIMITER, value)
-        and self.VALUE_DELIMITER not in value):
-      return vr.ValidationWarning(
-          reason=f"Separate licenses using a '{self.VALUE_DELIMITER}'.")
+        Note: this field supports multiple values.
+        """
+        not_allowlisted = []
+        licenses = process_license_value(value,
+                                         atomic_delimiter=self.VALUE_DELIMITER)
+        for license, allowed in licenses:
+            if util.is_empty(license):
+                return vr.ValidationError(
+                    reason=f"{self._name} has an empty value.")
+            if not allowed:
+                not_allowlisted.append(license)
 
-    return None
+        if not_allowlisted:
+            return vr.ValidationWarning(
+                reason=f"{self._name} has a license not in the allowlist.",
+                additional=[
+                    f"Separate licenses using a '{self.VALUE_DELIMITER}'.",
+                    "Licenses not allowlisted: "
+                    f"{util.quoted(not_allowlisted)}.",
+                ])
+
+        # Suggest using the standard value delimiter when possible.
+        if (re.search(_PATTERN_VERBOSE_DELIMITER, value)
+                and self.VALUE_DELIMITER not in value):
+            return vr.ValidationWarning(
+                reason=f"Separate licenses using a '{self.VALUE_DELIMITER}'.")
+
+        return None

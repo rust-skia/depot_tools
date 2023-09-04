@@ -25,31 +25,32 @@ _PATTERN_URL_CANONICAL_REPO = re.compile(
 
 
 class URLField(field_types.MetadataField):
-  """Custom field for the package URL(s)."""
-  def __init__(self):
-    super().__init__(name="URL", one_liner=False)
+    """Custom field for the package URL(s)."""
+    def __init__(self):
+        super().__init__(name="URL", one_liner=False)
 
-  def validate(self, value: str) -> Union[vr.ValidationResult, None]:
-    """Checks the given value has acceptable URL values only.
+    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+        """Checks the given value has acceptable URL values only.
 
-    Note: this field supports multiple values.
-    """
-    if util.matches(_PATTERN_URL_CANONICAL_REPO, value):
-      return None
+        Note: this field supports multiple values.
+        """
+        if util.matches(_PATTERN_URL_CANONICAL_REPO, value):
+            return None
 
-    invalid_values = []
-    for url in value.split(self.VALUE_DELIMITER):
-      url = url.strip()
-      if not util.matches(_PATTERN_URL_ALLOWED, url):
-        invalid_values.append(url)
+        invalid_values = []
+        for url in value.split(self.VALUE_DELIMITER):
+            url = url.strip()
+            if not util.matches(_PATTERN_URL_ALLOWED, url):
+                invalid_values.append(url)
 
-    if invalid_values:
-      return vr.ValidationError(
-          reason=f"{self._name} is invalid.",
-          additional=[
-              "URLs must use a protocol scheme in [http, https, ftp, git].",
-              f"Separate URLs using a '{self.VALUE_DELIMITER}'.",
-              f"Invalid values: {util.quoted(invalid_values)}.",
-          ])
+        if invalid_values:
+            return vr.ValidationError(
+                reason=f"{self._name} is invalid.",
+                additional=[
+                    "URLs must use a protocol scheme in "
+                    "[http, https, ftp, git].",
+                    f"Separate URLs using a '{self.VALUE_DELIMITER}'.",
+                    f"Invalid values: {util.quoted(invalid_values)}.",
+                ])
 
-    return None
+        return None

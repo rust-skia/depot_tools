@@ -22,72 +22,73 @@ import metadata.validate
 
 
 def parse_args() -> argparse.Namespace:
-  """Helper to parse args to this script."""
-  parser = argparse.ArgumentParser()
-  repo_root_dir = parser.add_argument(
-      "repo_root_dir",
-      help=("The path to the repository's root directory, which will be "
-            "scanned for Chromium metadata files, e.g. '~/chromium/src'."),
-  )
-
-  args = parser.parse_args()
-
-  # Check the repo root directory exists.
-  src_dir = os.path.abspath(args.repo_root_dir)
-  if not os.path.exists(src_dir) or not os.path.isdir(src_dir):
-    raise argparse.ArgumentError(
-        repo_root_dir,
-        f"Invalid repository root directory '{src_dir}' - not found",
+    """Helper to parse args to this script."""
+    parser = argparse.ArgumentParser()
+    repo_root_dir = parser.add_argument(
+        "repo_root_dir",
+        help=("The path to the repository's root directory, which will be "
+              "scanned for Chromium metadata files, e.g. '~/chromium/src'."),
     )
 
-  return args
+    args = parser.parse_args()
+
+    # Check the repo root directory exists.
+    src_dir = os.path.abspath(args.repo_root_dir)
+    if not os.path.exists(src_dir) or not os.path.isdir(src_dir):
+        raise argparse.ArgumentError(
+            repo_root_dir,
+            f"Invalid repository root directory '{src_dir}' - not found",
+        )
+
+    return args
 
 
 def main() -> None:
-  """Runs validation on all metadata files within the directory specified by the
-  repo_root_dir arg.
-  """
-  config = parse_args()
-  src_dir = os.path.abspath(config.repo_root_dir)
+    """Runs validation on all metadata files within the directory
+    specified by the repo_root_dir arg.
+    """
+    config = parse_args()
+    src_dir = os.path.abspath(config.repo_root_dir)
 
-  metadata_files = metadata.discover.find_metadata_files(src_dir)
-  file_count = len(metadata_files)
-  print(f"Found {file_count} metadata files.")
+    metadata_files = metadata.discover.find_metadata_files(src_dir)
+    file_count = len(metadata_files)
+    print(f"Found {file_count} metadata files.")
 
-  invalid_file_count = 0
+    invalid_file_count = 0
 
-  # Key is constructed from the result severity and reason;
-  # Value is a list of files affected by that reason at that severity.
-  all_reasons = defaultdict(list)
-  for filepath in metadata_files:
-    file_results = metadata.validate.validate_file(filepath,
-                                                   repo_root_dir=src_dir)
-    invalid = False
-    if file_results:
-      relpath = os.path.relpath(filepath, start=src_dir)
-      print(f"\n{len(file_results)} problem(s) in {relpath}:")
-      for result in file_results:
-        print(f"    {result}")
-        summary_key = "{severity} - {reason}".format(
-            severity=result.get_severity_prefix(), reason=result.get_reason())
-        all_reasons[summary_key].append(relpath)
-        if result.is_fatal():
-          invalid = True
+    # Key is constructed from the result severity and reason;
+    # Value is a list of files affected by that reason at that severity.
+    all_reasons = defaultdict(list)
+    for filepath in metadata_files:
+        file_results = metadata.validate.validate_file(filepath,
+                                                       repo_root_dir=src_dir)
+        invalid = False
+        if file_results:
+            relpath = os.path.relpath(filepath, start=src_dir)
+            print(f"\n{len(file_results)} problem(s) in {relpath}:")
+            for result in file_results:
+                print(f"    {result}")
+                summary_key = "{severity} - {reason}".format(
+                    severity=result.get_severity_prefix(),
+                    reason=result.get_reason())
+                all_reasons[summary_key].append(relpath)
+                if result.is_fatal():
+                    invalid = True
 
-    if invalid:
-      invalid_file_count += 1
+        if invalid:
+            invalid_file_count += 1
 
-  print("\n\nDone.\nSummary:")
-  for summary_key, affected_files in all_reasons.items():
-    count = len(affected_files)
-    plural = "s" if count > 1 else ""
-    print(f"\n  {count} file{plural}: {summary_key}")
-    for affected_file in affected_files:
-      print(f"    {affected_file}")
+    print("\n\nDone.\nSummary:")
+    for summary_key, affected_files in all_reasons.items():
+        count = len(affected_files)
+        plural = "s" if count > 1 else ""
+        print(f"\n  {count} file{plural}: {summary_key}")
+        for affected_file in affected_files:
+            print(f"    {affected_file}")
 
-  print(f"\n\n{invalid_file_count} / {file_count} metadata files are invalid, "
-        "i.e. the file has at least one fatal validation issue.")
+    print(f"\n\n{invalid_file_count} / {file_count} metadata files are "
+          "invalid, i.e. the file has at least one fatal validation issue.")
 
 
 if __name__ == "__main__":
-  main()
+    main()

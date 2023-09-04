@@ -65,4 +65,4 @@ _FIELD_MAPPING = {field.get_name().lower(): field for field in ALL_FIELDS}
 
 
 def get_field(label: str) -> Union[field_types.MetadataField, None]:
-  return _FIELD_MAPPING.get(label.lower())
+    return _FIELD_MAPPING.get(label.lower())

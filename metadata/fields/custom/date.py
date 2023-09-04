@@ -23,17 +23,17 @@ _PATTERN_DATE = re.compile(r"^\d{4}-(0|1)\d-[0-3]\d$")
 
 
 class DateField(field_types.MetadataField):
-  """Custom field for the date when the package was updated."""
-  def __init__(self):
-    super().__init__(name="Date", one_liner=True)
+    """Custom field for the date when the package was updated."""
+    def __init__(self):
+        super().__init__(name="Date", one_liner=True)
 
-  def validate(self, value: str) -> Union[vr.ValidationResult, None]:
-    """Checks the given value is a YYYY-MM-DD date."""
-    if util.matches(_PATTERN_DATE, value):
-      return None
+    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+        """Checks the given value is a YYYY-MM-DD date."""
+        if util.matches(_PATTERN_DATE, value):
+            return None
 
-    return vr.ValidationError(reason=f"{self._name} is invalid.",
-                              additional=[
-                                  "The correct format is YYYY-MM-DD.",
-                                  f"Current value is '{value}'.",
-                              ])
+        return vr.ValidationError(reason=f"{self._name} is invalid.",
+                                  additional=[
+                                      "The correct format is YYYY-MM-DD.",
+                                      f"Current value is '{value}'.",
+                                  ])
