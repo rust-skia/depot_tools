@@ -39,14 +39,10 @@ class CheckCallAndFilterTestCase(unittest.TestCase):
     self.printfn = io.StringIO()
     self.stdout = io.BytesIO()
     self.kids = []
-    if sys.version_info.major == 2:
-      mock.patch('sys.stdout', self.stdout).start()
-      mock.patch('__builtin__.print', self.printfn.write).start()
-    else:
-      mock.patch('sys.stdout', mock.Mock()).start()
-      mock.patch('sys.stdout.buffer', self.stdout).start()
-      mock.patch('sys.stdout.isatty', return_value=False).start()
-      mock.patch('builtins.print', self.printfn.write).start()
+    mock.patch('sys.stdout', mock.Mock()).start()
+    mock.patch('sys.stdout.buffer', self.stdout).start()
+    mock.patch('sys.stdout.isatty', return_value=False).start()
+    mock.patch('builtins.print', self.printfn.write).start()
     mock.patch('sys.stdout.flush', lambda: None).start()
     self.addCleanup(mock.patch.stopall)
 

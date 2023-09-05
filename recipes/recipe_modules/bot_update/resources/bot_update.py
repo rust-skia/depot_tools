@@ -533,11 +533,9 @@ def get_total_disk_space():
   if sys.platform.startswith('win'):
     _, total, free = (ctypes.c_ulonglong(), ctypes.c_ulonglong(), \
                       ctypes.c_ulonglong())
-    if sys.version_info >= (3,) or isinstance(cwd, unicode):
-      fn = ctypes.windll.kernel32.GetDiskFreeSpaceExW
-    else:
-      fn = ctypes.windll.kernel32.GetDiskFreeSpaceExA
-    ret = fn(cwd, ctypes.byref(_), ctypes.byref(total), ctypes.byref(free))
+    ret = ctypes.windll.kernel32.GetDiskFreeSpaceExW(cwd, ctypes.byref(_),
+                                                     ctypes.byref(total),
+                                                     ctypes.byref(free))
     if ret == 0:
       # WinError() will fetch the last error code.
       raise ctypes.WinError()

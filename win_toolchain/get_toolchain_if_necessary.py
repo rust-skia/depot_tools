@@ -31,13 +31,9 @@ import subprocess
 import sys
 import tempfile
 import time
-if sys.version_info[0] < 3:
-  from urllib2 import urlopen, URLError
-  from urlparse import urljoin
-else:
-  from urllib.request import urlopen
-  from urllib.parse import urljoin
-  from urllib.error import URLError
+from urllib.request import urlopen
+from urllib.parse import urljoin
+from urllib.error import URLError
 import zipfile
 
 # Environment variable that, if set, specifies the default Visual Studio
@@ -185,10 +181,7 @@ def CalculateHash(root, expected_hash):
     if expected_hash:
       path_without_hash = path_without_hash.replace(
           os.path.join(root, expected_hash).replace('/', '\\'), root)
-    if sys.version_info[0] < 3:
-      digest.update(path_without_hash.lower())
-    else:
-      digest.update(bytes(path_without_hash.lower(), 'utf-8'))
+    digest.update(bytes(path_without_hash.lower(), 'utf-8'))
     with open(path, 'rb') as f:
       digest.update(f.read())
 

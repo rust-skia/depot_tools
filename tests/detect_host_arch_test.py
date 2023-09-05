@@ -7,11 +7,7 @@ import os
 import platform
 import sys
 import unittest
-
-if sys.version_info.major == 2:
-  import mock
-else:
-  from unittest import mock
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

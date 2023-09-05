@@ -8,11 +8,7 @@
 import os
 import sys
 import unittest
-
-if sys.version_info.major == 2:
-  import mock
-else:
-  from unittest import mock
+from unittest import mock
 
 DEPOT_TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEPOT_TOOLS)
@@ -84,11 +80,8 @@ class DefaultsTest(unittest.TestCase):
 
   @mock.patch('subprocess.Popen.__init__')
   def test_env_type(self, mockPopen):
-    if sys.version_info.major != 2:
-      subprocess2.Popen(['foo'], env={b'key': b'value'})
-      mockPopen.assert_called_with(['foo'],
-                                   env={'key': 'value'},
-                                   shell=mock.ANY)
+    subprocess2.Popen(['foo'], env={b'key': b'value'})
+    mockPopen.assert_called_with(['foo'], env={'key': 'value'}, shell=mock.ANY)
 
 
 def _run_test(with_subprocess=True):
@@ -130,13 +123,8 @@ class SmokeTests(unittest.TestCase):
   def _check_exception(self, subp, e, stdout, stderr, returncode):
     """On exception, look if the exception members are set correctly."""
     self.assertEqual(returncode, e.returncode)
-    if subp is subprocess2 or sys.version_info.major == 3:
-      self.assertEqual(stdout, e.stdout)
-      self.assertEqual(stderr, e.stderr)
-    else:
-      # subprocess never save the output.
-      self.assertFalse(hasattr(e, 'stdout'))
-      self.assertFalse(hasattr(e, 'stderr'))
+    self.assertEqual(stdout, e.stdout)
+    self.assertEqual(stderr, e.stderr)
 
   def test_check_output_no_stdout(self):
     for subp in (subprocess, subprocess2):

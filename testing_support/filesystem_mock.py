@@ -6,12 +6,7 @@ import errno
 import fnmatch
 import os
 import re
-import sys
-
-if sys.version_info.major == 2:
-  from StringIO import StringIO
-else:
-  from io import StringIO
+from io import StringIO
 
 
 def _RaiseNotFound(path):

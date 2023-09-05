@@ -115,8 +115,7 @@ class GclientGitCheckout(GclientCheckout, GitCheckout):
 
   def _format_spec(self):
     def _format_literal(lit):
-      if isinstance(lit, str) or (sys.version_info.major == 2 and
-                                  isinstance(lit, unicode)):
+      if isinstance(lit, str):
         return '"%s"' % lit
       if isinstance(lit, list):
         return '[%s]' % ', '.join(_format_literal(i) for i in lit)

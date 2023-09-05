@@ -11,13 +11,7 @@ import json
 import os
 import unittest
 import sys
-
-if sys.version_info.major == 2:
-  import mock
-  BUILTIN_OPEN = '__builtin__.open'
-else:
-  from unittest import mock
-  BUILTIN_OPEN = 'builtins.open'
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -121,7 +115,7 @@ class AccessTokenTest(unittest.TestCase):
 class HasLuciContextLocalAuthTest(unittest.TestCase):
   def setUp(self):
     mock.patch('os.environ').start()
-    mock.patch(BUILTIN_OPEN, mock.mock_open()).start()
+    mock.patch('builtins.open', mock.mock_open()).start()
     self.addCleanup(mock.patch.stopall)
 
   def testNoLuciContextEnvVar(self):

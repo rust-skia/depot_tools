@@ -11,13 +11,8 @@ import sys
 import tempfile
 import threading
 import unittest
-
-if sys.version_info.major == 2:
-  import mock
-  import Queue
-else:
-  from unittest import mock
-  import queue as Queue
+from unittest import mock
+import queue
 
 DEPOT_TOOLS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEPOT_TOOLS_ROOT)
@@ -48,9 +43,9 @@ class LockTest(unittest.TestCase):
     to acquire the same file lock with timeout.'''
     # Queues q_f1 and q_sleep are used to controll execution of individual
     # threads.
-    q_f1 = Queue.Queue()
-    q_sleep = Queue.Queue()
-    results = Queue.Queue()
+    q_f1 = queue.Queue()
+    q_sleep = queue.Queue()
+    results = queue.Queue()
 
     def side_effect(arg):
       '''side_effect is called when with l.lock is blocked. In this unit test

@@ -15,21 +15,11 @@ import subprocess
 import sys
 import threading
 
-# Cache the string-escape codec to ensure subprocess can find it later.
-# See crbug.com/912292#c2 for context.
-if sys.version_info.major == 2:
-  codecs.lookup('string-escape')
-  # Sends stdout or stderr to os.devnull.
-  DEVNULL = open(os.devnull, 'r+')
-else:
-  # pylint: disable=redefined-builtin
-  basestring = (str, bytes)
-  DEVNULL = subprocess.DEVNULL
-
 
 # Constants forwarded from subprocess.
 PIPE = subprocess.PIPE
 STDOUT = subprocess.STDOUT
+DEVNULL = subprocess.DEVNULL
 
 
 class CalledProcessError(subprocess.CalledProcessError):
@@ -122,7 +112,7 @@ class Popen(subprocess.Popen):
     env = get_english_env(kwargs.get('env'))
     if env:
       kwargs['env'] = env
-    if kwargs.get('env') is not None and sys.version_info.major != 2:
+    if kwargs.get('env') is not None:
       # Subprocess expects environment variables to be strings in Python 3.
       def ensure_str(value):
         if isinstance(value, bytes):
@@ -140,7 +130,7 @@ class Popen(subprocess.Popen):
       # the list.
       kwargs['shell'] = bool(sys.platform=='win32')
 
-    if isinstance(args, basestring):
+    if isinstance(args, (str, bytes)):
       tmp_str = args
     elif isinstance(args, (list, tuple)):
       tmp_str = ' '.join(args)
@@ -183,7 +173,7 @@ def communicate(args, **kwargs):
   stdin = None
   # When stdin is passed as an argument, use it as the actual input data and
   # set the Popen() parameter accordingly.
-  if 'stdin' in kwargs and isinstance(kwargs['stdin'], basestring):
+  if 'stdin' in kwargs and isinstance(kwargs['stdin'], (str, bytes)):
     stdin = kwargs['stdin']
     kwargs['stdin'] = PIPE
 
@@ -245,7 +235,6 @@ def check_output(args, **kwargs):
   Captures stdout of a process call and returns stdout only.
 
   - Throws if return code is not 0.
-  - Works even prior to python 2.7.
   - Blocks stdin by default if not specified since no output will be visible.
   - As per doc, "The stdout argument is not allowed as it is used internally."
   """
