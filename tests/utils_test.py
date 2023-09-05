@@ -17,34 +17,34 @@ import utils
 
 
 class GitCacheTest(unittest.TestCase):
-  def setUp(self):
-    pass
+    def setUp(self):
+        pass
 
-  @mock.patch('subprocess.check_output', lambda x, **kwargs: b'foo')
-  def testVersionWithGit(self):
-    version = utils.depot_tools_version()
-    self.assertEqual(version, 'git-foo')
+    @mock.patch('subprocess.check_output', lambda x, **kwargs: b'foo')
+    def testVersionWithGit(self):
+        version = utils.depot_tools_version()
+        self.assertEqual(version, 'git-foo')
 
-  @mock.patch('subprocess.check_output')
-  @mock.patch('os.path.getmtime', lambda x: 42)
-  def testVersionWithNoGit(self, mock_subprocess):
-    mock_subprocess.side_effect = Exception
-    version = utils.depot_tools_version()
-    self.assertEqual(version, 'recipes.cfg-42')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('os.path.getmtime', lambda x: 42)
+    def testVersionWithNoGit(self, mock_subprocess):
+        mock_subprocess.side_effect = Exception
+        version = utils.depot_tools_version()
+        self.assertEqual(version, 'recipes.cfg-42')
 
-  @mock.patch('subprocess.check_output')
-  @mock.patch('os.path.getmtime')
-  def testVersionWithNoGit(self, mock_subprocess, mock_getmtime):
-    mock_subprocess.side_effect = Exception
-    mock_getmtime.side_effect = Exception
-    version = utils.depot_tools_version()
-    self.assertEqual(version, 'unknown')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('os.path.getmtime')
+    def testVersionWithNoGit(self, mock_subprocess, mock_getmtime):
+        mock_subprocess.side_effect = Exception
+        mock_getmtime.side_effect = Exception
+        version = utils.depot_tools_version()
+        self.assertEqual(version, 'unknown')
 
 
 if __name__ == '__main__':
-  logging.basicConfig(
-      level=logging.DEBUG if '-v' in sys.argv else logging.ERROR)
-  sys.exit(
-      coverage_utils.covered_main(
-          (os.path.join(DEPOT_TOOLS_ROOT, 'git_cache.py')),
-          required_percentage=0))
+    logging.basicConfig(
+        level=logging.DEBUG if '-v' in sys.argv else logging.ERROR)
+    sys.exit(
+        coverage_utils.covered_main(
+            (os.path.join(DEPOT_TOOLS_ROOT, 'git_cache.py')),
+            required_percentage=0))

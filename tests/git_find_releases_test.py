@@ -18,39 +18,40 @@ import git_find_releases
 
 
 class TestGitFindReleases(unittest.TestCase):
-  @mock.patch('sys.stdout', StringIO())
-  @mock.patch('git_common.run', return_value='')
-  def test_invalid_commit(self, git_run):
-    result = git_find_releases.main(['foo'])
-    self.assertEqual(1, result)
-    self.assertEqual('foo not found', sys.stdout.getvalue().strip())
-    git_run.assert_called_once_with('name-rev', '--tags', '--name-only', 'foo')
+    @mock.patch('sys.stdout', StringIO())
+    @mock.patch('git_common.run', return_value='')
+    def test_invalid_commit(self, git_run):
+        result = git_find_releases.main(['foo'])
+        self.assertEqual(1, result)
+        self.assertEqual('foo not found', sys.stdout.getvalue().strip())
+        git_run.assert_called_once_with('name-rev', '--tags', '--name-only',
+                                        'foo')
 
-  @mock.patch('sys.stdout', StringIO())
-  @mock.patch('git_common.run')
-  def test_no_merge(self, git_run):
-    def git_run_function(*args):
-      assert len(args) > 1
-      if args[0] == 'name-rev' and args[1] == '--tags':
-        return 'undefined'
+    @mock.patch('sys.stdout', StringIO())
+    @mock.patch('git_common.run')
+    def test_no_merge(self, git_run):
+        def git_run_function(*args):
+            assert len(args) > 1
+            if args[0] == 'name-rev' and args[1] == '--tags':
+                return 'undefined'
 
-      if args[0] == 'name-rev' and args[1] == '--refs':
-        return '1.0.0'
+            if args[0] == 'name-rev' and args[1] == '--refs':
+                return '1.0.0'
 
-      if args[0] == 'log':
-        return ''
-      assert False, "Unexpected arguments for git.run"
+            if args[0] == 'log':
+                return ''
+            assert False, "Unexpected arguments for git.run"
 
-    git_run.side_effect = git_run_function
-    result = git_find_releases.main(['foo'])
-    self.assertEqual(0, result)
-    stdout = sys.stdout.getvalue().strip()
-    self.assertIn('commit foo was', stdout)
-    self.assertIn('No merges found', stdout)
-    self.assertEqual(3, git_run.call_count)
+        git_run.side_effect = git_run_function
+        result = git_find_releases.main(['foo'])
+        self.assertEqual(0, result)
+        stdout = sys.stdout.getvalue().strip()
+        self.assertIn('commit foo was', stdout)
+        self.assertIn('No merges found', stdout)
+        self.assertEqual(3, git_run.call_count)
 
 
 if __name__ == '__main__':
-  logging.basicConfig(
-      level=logging.DEBUG if '-v' in sys.argv else logging.ERROR)
-  unittest.main()
+    logging.basicConfig(
+        level=logging.DEBUG if '-v' in sys.argv else logging.ERROR)
+    unittest.main()
