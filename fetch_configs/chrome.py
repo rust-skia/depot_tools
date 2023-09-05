@@ -10,27 +10,26 @@ import config_util  # pylint: disable=import-error
 # This class doesn't need an __init__ method, so we disable the warning
 # pylint: disable=no-init
 class Chrome(config_util.Config):
-  """Basic Config alias for Chrome -> Chromium."""
+    """Basic Config alias for Chrome -> Chromium."""
+    @staticmethod
+    def fetch_spec(props):
+        return {
+            'alias': {
+                'config': 'chromium',
+                'props': [
+                    '--internal=True',
+                ],
+            },
+        }
 
-  @staticmethod
-  def fetch_spec(props):
-    return {
-      'alias': {
-        'config': 'chromium',
-        'props': [
-            '--internal=True',
-        ],
-      },
-    }
-
-  @staticmethod
-  def expected_root(_props):
-    return ''
+    @staticmethod
+    def expected_root(_props):
+        return ''
 
 
 def main(argv=None):
-  return Chrome().handle_args(argv)
+    return Chrome().handle_args(argv)
 
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv))
