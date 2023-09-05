@@ -1235,9 +1235,7 @@ def GetPylint(input_api,
         args.append('--jobs=%s' % jobs)
         description += ' on %d processes' % jobs
 
-    kwargs['stdin'] = '\n'.join(args + flist)
-    if input_api.sys.version_info.major != 2:
-      kwargs['stdin'] = kwargs['stdin'].encode('utf-8')
+    kwargs['stdin'] = '\n'.join(args + flist).encode('utf-8')
 
     return input_api.Command(name='Pylint (%s)' % description,
                              cmd=cmd,
@@ -1679,9 +1677,7 @@ def CheckCIPDManifest(input_api, output_api, path=None, content=None):
   elif content:
     assert path is None, 'Cannot provide both "path" and "content".'
     cmd += ['-ensure-file=-']
-    kwargs['stdin'] = content
-    if input_api.sys.version_info.major != 2:
-      kwargs['stdin'] = kwargs['stdin'].encode('utf-8')
+    kwargs['stdin'] = content.encode('utf-8')
     # quick and dirty parser to extract checked packages.
     packages = [
       l.split()[0] for l in (ll.strip() for ll in content.splitlines())

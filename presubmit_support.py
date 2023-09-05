@@ -29,13 +29,15 @@ import os  # Somewhat exposed through the API.
 import random
 import re  # Exposed through the API.
 import signal
-import six
 import sys  # Parts exposed through API.
 import tempfile  # Exposed through the API.
 import threading
 import time
 import traceback
 import unittest  # Exposed through the API.
+import urllib.parse as urlparse
+import urllib.request as urllib_request
+import urllib.error as urllib_error
 from warnings import warn
 
 # Local imports.
@@ -51,16 +53,6 @@ import rdb_wrapper
 import scm
 import subprocess2 as subprocess  # Exposed through the API.
 
-if sys.version_info.major == 2:
-  # TODO(1009814): Expose urllib2 only through urllib_request and urllib_error
-  import urllib2  # Exposed through the API.
-  import urlparse
-  import urllib2 as urllib_request
-  import urllib2 as urllib_error
-else:
-  import urllib.parse as urlparse
-  import urllib.request as urllib_request
-  import urllib.error as urllib_error
 
 # Ask for feedback only once in program lifetime.
 _ASKED_FOR_FEEDBACK = False
@@ -338,19 +330,13 @@ class _PresubmitResult(object):
   @staticmethod
   def _ensure_str(val):
     """
-    val: A "stringish" value. Can be any of str, unicode or bytes.
+    val: A "stringish" value. Can be any of str or bytes.
     returns: A str after applying encoding/decoding as needed.
     Assumes/uses UTF-8 for relevant inputs/outputs.
-
-    We'd prefer to use six.ensure_str but our copy of six is old :(
     """
     if isinstance(val, str):
       return val
-
-    if six.PY2 and isinstance(val, unicode):
-      return val.encode()
-
-    if six.PY3 and isinstance(val, bytes):
+    if isinstance(val, bytes):
       return val.decode()
     raise ValueError("Unknown string type %s" % type(val))
 
@@ -616,9 +602,6 @@ class InputApi(object):
     self.cpplint = cpplint
     self.fnmatch = fnmatch
     self.gclient_paths = gclient_paths
-    # TODO(yyanagisawa): stop exposing this when python3 become default.
-    # Since python3's tempfile has TemporaryDirectory, we do not need this.
-    self.temporary_directory = gclient_utils.temporary_directory
     self.glob = glob.glob
     self.json = json
     self.logging = logging.getLogger('PRESUBMIT')
@@ -632,8 +615,6 @@ class InputApi(object):
     self.tempfile = tempfile
     self.time = time
     self.unittest = unittest
-    if sys.version_info.major == 2:
-      self.urllib2 = urllib2
     self.urllib_request = urllib_request
     self.urllib_error = urllib_error
 
