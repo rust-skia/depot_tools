@@ -7,6 +7,7 @@ handles the client lifecycle safely. It will automatically start
 reproxy before running ninja and stop reproxy when ninja stops
 for any reason eg. build completes, keyboard interupt etc."""
 
+import os
 import sys
 
 import ninja
@@ -14,6 +15,7 @@ import reclient_helper
 
 
 def main(argv):
+    os.environ.setdefault("RBE_exec_strategy", "racing")
     with reclient_helper.build_context(argv, 'ninja_reclient') as ret_code:
         if ret_code:
             return ret_code
