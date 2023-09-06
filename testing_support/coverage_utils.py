@@ -63,9 +63,8 @@ def covered_main(includes,
             sys.path.insert(0, os.path.join(ROOT_PATH, 'third_party'))
             import coverage
         else:
-            print(
-                "ERROR: python-coverage (%s) is required to be installed on "
-                "your PYTHONPATH to run this test." % require_native)
+            print("ERROR: python-coverage (%s) is required to be installed on "
+                  "your PYTHONPATH to run this test." % require_native)
             sys.exit(1)
 
     COVERAGE = coverage.coverage(include=includes)

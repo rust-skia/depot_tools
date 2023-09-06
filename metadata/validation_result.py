@@ -7,9 +7,8 @@ import textwrap
 from typing import Dict, List, Union
 
 _CHROMIUM_METADATA_PRESCRIPT = "Third party metadata issue:"
-_CHROMIUM_METADATA_POSTSCRIPT = (
-    "Check //third_party/README.chromium.template "
-    "for details.")
+_CHROMIUM_METADATA_POSTSCRIPT = ("Check //third_party/README.chromium.template "
+                                 "for details.")
 
 
 class ValidationResult:

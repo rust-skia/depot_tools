@@ -14,14 +14,14 @@ import reclient_helper
 
 
 def main(argv):
-  with reclient_helper.build_context(argv, 'ninja_reclient') as ret_code:
-    if ret_code:
-      return ret_code
-    try:
-      return ninja.main(argv)
-    except KeyboardInterrupt:
-      return 1
+    with reclient_helper.build_context(argv, 'ninja_reclient') as ret_code:
+        if ret_code:
+            return ret_code
+        try:
+            return ninja.main(argv)
+        except KeyboardInterrupt:
+            return 1
 
 
 if __name__ == '__main__':
-  sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv))

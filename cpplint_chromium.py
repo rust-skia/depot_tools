@@ -36,7 +36,7 @@ _RE_PATTERN_POINTER_DECLARATION_WHITESPACE = re.compile(
 
 
 def CheckPointerDeclarationWhitespace(filename, clean_lines, linenum, error):
-  """Checks for Foo *foo declarations.
+    """Checks for Foo *foo declarations.
 
   Args:
     filename: The name of the current file.
@@ -44,9 +44,10 @@ def CheckPointerDeclarationWhitespace(filename, clean_lines, linenum, error):
     linenum: The number of the line to check.
     error: The function to call with any errors found.
   """
-  line = clean_lines.elided[linenum]
-  matched = _RE_PATTERN_POINTER_DECLARATION_WHITESPACE.match(line)
-  if matched:
-    error(filename, linenum, 'whitespace/declaration', 3,
-          'Declaration has space between type name and %s in %s' %
-          (matched.group('pointer_operator'), matched.group(0).strip()))
+    line = clean_lines.elided[linenum]
+    matched = _RE_PATTERN_POINTER_DECLARATION_WHITESPACE.match(line)
+    if matched:
+        error(
+            filename, linenum, 'whitespace/declaration', 3,
+            'Declaration has space between type name and %s in %s' %
+            (matched.group('pointer_operator'), matched.group(0).strip()))

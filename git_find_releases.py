@@ -19,47 +19,51 @@ import git_common as git
 
 
 def GetNameForCommit(sha1):
-  name = re.sub(r'~.*$', '', git.run('name-rev', '--tags', '--name-only', sha1))
-  if name == 'undefined':
-    name = git.run(
-        'name-rev', '--refs', 'remotes/branch-heads/*', '--name-only',
-        sha1) + ' [untagged]'
-  return name
+    name = re.sub(r'~.*$', '', git.run('name-rev', '--tags', '--name-only',
+                                       sha1))
+    if name == 'undefined':
+        name = git.run('name-rev', '--refs', 'remotes/branch-heads/*',
+                       '--name-only', sha1) + ' [untagged]'
+    return name
 
 
 def GetMergesForCommit(sha1):
-  return [c.split()[0] for c in
-          git.run('log', '--oneline', '-F', '--all', '--no-abbrev', '--grep',
-                  'cherry picked from commit %s' % sha1).splitlines()]
+    return [
+        c.split()[0]
+        for c in git.run('log', '--oneline', '-F', '--all', '--no-abbrev',
+                         '--grep', 'cherry picked from commit %s' %
+                         sha1).splitlines()
+    ]
 
 
 def main(args):
-  parser = optparse.OptionParser(usage=sys.modules[__name__].__doc__)
-  _, args = parser.parse_args(args)
+    parser = optparse.OptionParser(usage=sys.modules[__name__].__doc__)
+    _, args = parser.parse_args(args)
 
-  if len(args) == 0:
-    parser.error('Need at least one commit.')
+    if len(args) == 0:
+        parser.error('Need at least one commit.')
 
-  for arg in args:
-    commit_name = GetNameForCommit(arg)
-    if not commit_name:
-      print('%s not found' % arg)
-      return 1
-    print('commit %s was:' % arg)
-    print('  initially in ' + commit_name)
-    merges = GetMergesForCommit(arg)
-    for merge in merges:
-      print('  merged to ' + GetNameForCommit(merge) + ' (as ' + merge + ')')
-    if not merges:
-      print('No merges found. If this seems wrong, be sure that you did:')
-      print('  git fetch origin && gclient sync --with_branch_heads')
+    for arg in args:
+        commit_name = GetNameForCommit(arg)
+        if not commit_name:
+            print('%s not found' % arg)
+            return 1
+        print('commit %s was:' % arg)
+        print('  initially in ' + commit_name)
+        merges = GetMergesForCommit(arg)
+        for merge in merges:
+            print('  merged to ' + GetNameForCommit(merge) + ' (as ' + merge +
+                  ')')
+        if not merges:
+            print('No merges found. If this seems wrong, be sure that you did:')
+            print('  git fetch origin && gclient sync --with_branch_heads')
 
-  return 0
+    return 0
 
 
 if __name__ == '__main__':
-  try:
-    sys.exit(main(sys.argv[1:]))
-  except KeyboardInterrupt:
-    sys.stderr.write('interrupted\n')
-    sys.exit(1)
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except KeyboardInterrupt:
+        sys.stderr.write('interrupted\n')
+        sys.exit(1)

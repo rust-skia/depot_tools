@@ -47,8 +47,7 @@ def validate_content(content: str, source_file_dir: str,
     return results
 
 
-def _construct_file_read_error(filepath: str,
-                               cause: str) -> vr.ValidationError:
+def _construct_file_read_error(filepath: str, cause: str) -> vr.ValidationError:
     """Helper function to create a validation error for a
     file reading issue.
     """

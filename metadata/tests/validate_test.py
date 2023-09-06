@@ -21,8 +21,8 @@ import metadata.validate
 _SOURCE_FILE_DIR = os.path.join(_THIS_DIR, "data")
 _VALID_METADATA_FILEPATH = os.path.join(_THIS_DIR, "data",
                                         "README.chromium.test.multi-valid")
-_INVALID_METADATA_FILEPATH = os.path.join(
-    _THIS_DIR, "data", "README.chromium.test.multi-invalid")
+_INVALID_METADATA_FILEPATH = os.path.join(_THIS_DIR, "data",
+                                          "README.chromium.test.multi-invalid")
 
 
 class ValidateContentTest(unittest.TestCase):

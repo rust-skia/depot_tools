@@ -25,29 +25,29 @@ from typing import List, Optional
 
 
 def _find_bazel_cros() -> Optional[Path]:
-  """Find the bazel launcher for ChromiumOS."""
-  cwd = Path.cwd()
-  for parent in itertools.chain([cwd], cwd.parents):
-    bazel_launcher = parent / "chromite" / "bin" / "bazel"
-    if bazel_launcher.exists():
-      return bazel_launcher
-  return None
+    """Find the bazel launcher for ChromiumOS."""
+    cwd = Path.cwd()
+    for parent in itertools.chain([cwd], cwd.parents):
+        bazel_launcher = parent / "chromite" / "bin" / "bazel"
+        if bazel_launcher.exists():
+            return bazel_launcher
+    return None
 
 
 def _find_next_bazel_in_path() -> Optional[Path]:
-  """The fallback method: search the remainder of PATH for bazel."""
-  # Remove depot_tools from PATH if present.
-  depot_tools = Path(__file__).resolve().parent
-  path_env = os.environ.get("PATH", os.defpath)
-  search_paths = []
-  for path in path_env.split(os.pathsep):
-    if Path(path).resolve() != depot_tools:
-      search_paths.append(path)
-  new_path_env = os.pathsep.join(search_paths)
-  bazel = shutil.which("bazel", path=new_path_env)
-  if bazel:
-    return Path(bazel)
-  return None
+    """The fallback method: search the remainder of PATH for bazel."""
+    # Remove depot_tools from PATH if present.
+    depot_tools = Path(__file__).resolve().parent
+    path_env = os.environ.get("PATH", os.defpath)
+    search_paths = []
+    for path in path_env.split(os.pathsep):
+        if Path(path).resolve() != depot_tools:
+            search_paths.append(path)
+    new_path_env = os.pathsep.join(search_paths)
+    bazel = shutil.which("bazel", path=new_path_env)
+    if bazel:
+        return Path(bazel)
+    return None
 
 
 # All functions used to search for Bazel (in order of search).
@@ -71,15 +71,15 @@ it's actually installed."""
 
 
 def main(argv: List[str]) -> int:
-  """Main."""
-  for search_func in _SEARCH_FUNCTIONS:
-    bazel = search_func()
-    if bazel:
-      os.execv(bazel, [str(bazel), *argv])
+    """Main."""
+    for search_func in _SEARCH_FUNCTIONS:
+        bazel = search_func()
+        if bazel:
+            os.execv(bazel, [str(bazel), *argv])
 
-  print(_FIND_FAILURE_MSG, file=sys.stderr)
-  return 1
+    print(_FIND_FAILURE_MSG, file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":
-  sys.exit(main(sys.argv[1:]))
+    sys.exit(main(sys.argv[1:]))

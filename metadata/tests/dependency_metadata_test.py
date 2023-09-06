@@ -52,8 +52,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
-        dependency.add_entry(known_fields.NAME.get_name(),
-                             "Test missing field")
+        dependency.add_entry(known_fields.NAME.get_name(), "Test missing field")
         # Leave URL field unspecified.
 
         results = dependency.validate(
@@ -70,8 +69,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency = dm.DependencyMetadata()
         dependency.add_entry(known_fields.URL.get_name(),
                              "https://www.example.com")
-        dependency.add_entry(known_fields.NAME.get_name(),
-                             "Test invalid field")
+        dependency.add_entry(known_fields.NAME.get_name(), "Test invalid field")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")

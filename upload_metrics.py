@@ -11,23 +11,24 @@ import urllib.request
 import auth
 import metrics_utils
 
-def main():
-  metrics = input()
-  try:
-    headers = {}
-    if 'bot_metrics' in metrics:
-      token = auth.Authenticator().get_access_token().token
-      headers = {'Authorization': 'Bearer ' + token}
-    urllib.request.urlopen(urllib.request.Request(
-        url=metrics_utils.APP_URL + '/upload',
-        data=metrics.encode('utf-8'),
-        headers=headers))
-  except (urllib.error.HTTPError, urllib.error.URLError,
-          http.client.RemoteDisconnected):
-    pass
 
-  return 0
+def main():
+    metrics = input()
+    try:
+        headers = {}
+        if 'bot_metrics' in metrics:
+            token = auth.Authenticator().get_access_token().token
+            headers = {'Authorization': 'Bearer ' + token}
+        urllib.request.urlopen(
+            urllib.request.Request(url=metrics_utils.APP_URL + '/upload',
+                                   data=metrics.encode('utf-8'),
+                                   headers=headers))
+    except (urllib.error.HTTPError, urllib.error.URLError,
+            http.client.RemoteDisconnected):
+        pass
+
+    return 0
 
 
 if __name__ == '__main__':
-  sys.exit(main())
+    sys.exit(main())

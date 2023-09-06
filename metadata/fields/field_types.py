@@ -58,8 +58,7 @@ class MetadataField:
         Raises: NotImplementedError if called. This method must be
                 overridden with the actual validation of the field.
         """
-        raise NotImplementedError(
-            f"{self._name} field validation not defined.")
+        raise NotImplementedError(f"{self._name} field validation not defined.")
 
 
 class FreeformTextField(MetadataField):
