@@ -7,6 +7,7 @@ import hashlib
 import os
 import os.path
 import sys
+import time
 import unittest
 import unittest.mock
 
@@ -42,8 +43,8 @@ class NinjaReclientTest(trial_dir.TestCase):
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
     @unittest.mock.patch('reclient_metrics.check_status', return_value=True)
-    def test_ninja_reclient_collect_metrics(self, mock_metrics_status,
-                                            mock_ninja, mock_call):
+    def test_ninja_reclient_collect_metrics_cache_missing(
+            self, mock_metrics_status, mock_ninja, mock_call):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
         reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
                                     'reproxy.cfg')
@@ -99,8 +100,185 @@ class NinjaReclientTest(trial_dir.TestCase):
                          "chromium-reclient-metrics")
         self.assertEqual(os.environ.get('RBE_metrics_table'),
                          "rbe_metrics.builds")
-        self.assertEqual(os.environ.get('RBE_metrics_labels'),
-                         "source=developer,tool=ninja_reclient")
+        self.assertEqual(
+            os.environ.get('RBE_metrics_labels'),
+            "source=developer,tool=ninja_reclient,"
+            "creds_cache_status=missing,creds_cache_mechanism=UNSPECIFIED")
+        self.assertEqual(os.environ.get('RBE_metrics_prefix'),
+                         "go.chromium.org")
+
+        mock_metrics_status.assert_called_once_with("out/a")
+        mock_ninja.assert_called_once_with(argv)
+        mock_call.assert_has_calls([
+            unittest.mock.call([
+                os.path.join(self.root_dir, reclient_bin_dir,
+                             'bootstrap' + gclient_paths.GetExeSuffix()),
+                "--re_proxy=" +
+                os.path.join(self.root_dir, reclient_bin_dir,
+                             'reproxy' + gclient_paths.GetExeSuffix()),
+                "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
+            ]),
+            unittest.mock.call([
+                os.path.join(self.root_dir, reclient_bin_dir,
+                             'bootstrap' + gclient_paths.GetExeSuffix()),
+                "--shutdown",
+                "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
+            ]),
+        ])
+
+    @unittest.mock.patch.dict(os.environ, {})
+    @unittest.mock.patch('subprocess.call', return_value=0)
+    @unittest.mock.patch('ninja.main', return_value=0)
+    @unittest.mock.patch('reclient_metrics.check_status', return_value=True)
+    def test_ninja_reclient_collect_metrics_cache_valid(self,
+                                                        mock_metrics_status,
+                                                        mock_ninja, mock_call):
+        reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
+        reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
+                                    'reproxy.cfg')
+        cache_dir = os.path.join(
+            self.root_dir, ".reproxy_cache",
+            hashlib.md5(
+                os.path.join(self.root_dir, "out", "a",
+                             ".reproxy_tmp").encode()).hexdigest())
+        write('.gclient', '')
+        write('.gclient_entries', 'entries = {"buildtools": "..."}')
+        write(os.path.join(reclient_bin_dir, 'version.txt'), '0.0')
+        write(reclient_cfg, '0.0')
+        write(
+            os.path.join(cache_dir, "reproxy.creds"), """
+mechanism:  GCLOUD
+expiry:  {
+  seconds:  %d
+}
+              """ % (int(time.time()) + 10 * 60))
+        argv = ["ninja_reclient.py", "-C", "out/a", "chrome"]
+
+        self.assertEqual(0, ninja_reclient.main(argv))
+
+        self.assertTrue(
+            os.path.isdir(
+                os.path.join(self.root_dir, "out", "a", ".reproxy_tmp")))
+        self.assertTrue(os.path.isdir(cache_dir))
+        self.assertTrue(
+            os.path.isdir(
+                os.path.join(self.root_dir, "out", "a", ".reproxy_tmp",
+                             "logs")))
+        self.assertEqual(
+            os.environ.get('RBE_output_dir'),
+            os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs"))
+        self.assertEqual(
+            os.environ.get('RBE_proxy_log_dir'),
+            os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs"))
+        self.assertEqual(os.environ.get('RBE_cache_dir'), cache_dir)
+        if sys.platform.startswith('win'):
+            self.assertEqual(
+                os.environ.get('RBE_server_address'),
+                "pipe://%s/reproxy.pipe" % hashlib.md5(
+                    os.path.join(self.root_dir, "out", "a",
+                                 ".reproxy_tmp").encode()).hexdigest())
+        else:
+            self.assertEqual(
+                os.environ.get('RBE_server_address'),
+                "unix:///tmp/reproxy_%s.sock" % hashlib.sha256(
+                    os.path.join(self.root_dir, "out", "a",
+                                 ".reproxy_tmp").encode()).hexdigest())
+
+        self.assertEqual(os.environ.get('RBE_metrics_project'),
+                         "chromium-reclient-metrics")
+        self.assertEqual(os.environ.get('RBE_metrics_table'),
+                         "rbe_metrics.builds")
+        self.assertEqual(
+            os.environ.get('RBE_metrics_labels'),
+            "source=developer,tool=ninja_reclient,"
+            "creds_cache_status=valid,creds_cache_mechanism=GCLOUD")
+        self.assertEqual(os.environ.get('RBE_metrics_prefix'),
+                         "go.chromium.org")
+
+        mock_metrics_status.assert_called_once_with("out/a")
+        mock_ninja.assert_called_once_with(argv)
+        mock_call.assert_has_calls([
+            unittest.mock.call([
+                os.path.join(self.root_dir, reclient_bin_dir,
+                             'bootstrap' + gclient_paths.GetExeSuffix()),
+                "--re_proxy=" +
+                os.path.join(self.root_dir, reclient_bin_dir,
+                             'reproxy' + gclient_paths.GetExeSuffix()),
+                "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
+            ]),
+            unittest.mock.call([
+                os.path.join(self.root_dir, reclient_bin_dir,
+                             'bootstrap' + gclient_paths.GetExeSuffix()),
+                "--shutdown",
+                "--cfg=" + os.path.join(self.root_dir, reclient_cfg)
+            ]),
+        ])
+
+    @unittest.mock.patch.dict(os.environ, {})
+    @unittest.mock.patch('subprocess.call', return_value=0)
+    @unittest.mock.patch('ninja.main', return_value=0)
+    @unittest.mock.patch('reclient_metrics.check_status', return_value=True)
+    def test_ninja_reclient_collect_metrics_cache_expired(
+            self, mock_metrics_status, mock_ninja, mock_call):
+        reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
+        reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
+                                    'reproxy.cfg')
+        cache_dir = os.path.join(
+            self.root_dir, ".reproxy_cache",
+            hashlib.md5(
+                os.path.join(self.root_dir, "out", "a",
+                             ".reproxy_tmp").encode()).hexdigest())
+        write('.gclient', '')
+        write('.gclient_entries', 'entries = {"buildtools": "..."}')
+        write(os.path.join(reclient_bin_dir, 'version.txt'), '0.0')
+        write(reclient_cfg, '0.0')
+        write(
+            os.path.join(cache_dir, "reproxy.creds"), """
+mechanism:  GCLOUD
+expiry:  {
+  seconds:  %d
+}
+              """ % (int(time.time())))
+        argv = ["ninja_reclient.py", "-C", "out/a", "chrome"]
+
+        self.assertEqual(0, ninja_reclient.main(argv))
+
+        self.assertTrue(
+            os.path.isdir(
+                os.path.join(self.root_dir, "out", "a", ".reproxy_tmp")))
+        self.assertTrue(os.path.isdir(cache_dir))
+        self.assertTrue(
+            os.path.isdir(
+                os.path.join(self.root_dir, "out", "a", ".reproxy_tmp",
+                             "logs")))
+        self.assertEqual(
+            os.environ.get('RBE_output_dir'),
+            os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs"))
+        self.assertEqual(
+            os.environ.get('RBE_proxy_log_dir'),
+            os.path.join(self.root_dir, "out", "a", ".reproxy_tmp", "logs"))
+        self.assertEqual(os.environ.get('RBE_cache_dir'), cache_dir)
+        if sys.platform.startswith('win'):
+            self.assertEqual(
+                os.environ.get('RBE_server_address'),
+                "pipe://%s/reproxy.pipe" % hashlib.md5(
+                    os.path.join(self.root_dir, "out", "a",
+                                 ".reproxy_tmp").encode()).hexdigest())
+        else:
+            self.assertEqual(
+                os.environ.get('RBE_server_address'),
+                "unix:///tmp/reproxy_%s.sock" % hashlib.sha256(
+                    os.path.join(self.root_dir, "out", "a",
+                                 ".reproxy_tmp").encode()).hexdigest())
+
+        self.assertEqual(os.environ.get('RBE_metrics_project'),
+                         "chromium-reclient-metrics")
+        self.assertEqual(os.environ.get('RBE_metrics_table'),
+                         "rbe_metrics.builds")
+        self.assertEqual(
+            os.environ.get('RBE_metrics_labels'),
+            "source=developer,tool=ninja_reclient,"
+            "creds_cache_status=expired,creds_cache_mechanism=GCLOUD")
         self.assertEqual(os.environ.get('RBE_metrics_prefix'),
                          "go.chromium.org")
 

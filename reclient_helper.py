@@ -94,6 +94,26 @@ def find_cache_dir(tmp_dir):
     return os.path.join(tmp_dir, 'cache')
 
 
+def auth_cache_status():
+    cred_file = os.path.join(os.environ["RBE_cache_dir"], "reproxy.creds")
+    if not os.path.isfile(cred_file):
+        return "missing", "UNSPECIFIED"
+    try:
+        with open(cred_file) as f:
+            status = "valid"
+            mechanism = "UNSPECIFIED"
+            for line in f.readlines():
+                if "seconds:" in line:
+                    exp = int(line.strip()[len("seconds:"):].strip())
+                    if exp < (time.time() + 5 * 60):
+                        status = "expired"
+                elif "mechanism:" in line:
+                    mechanism = line.strip()[len("mechanism:"):].strip()
+            return status, mechanism
+    except OSError:
+        return "missing", "UNSPECIFIED"
+
+
 def set_reproxy_metrics_flags(tool):
     """Helper to setup metrics collection flags for reproxy.
 
@@ -109,7 +129,11 @@ def set_reproxy_metrics_flags(tool):
         os.environ.setdefault("RBE_invocation_id", autoninja_id)
     os.environ.setdefault("RBE_metrics_project", "chromium-reclient-metrics")
     os.environ.setdefault("RBE_metrics_table", "rbe_metrics.builds")
-    os.environ.setdefault("RBE_metrics_labels", "source=developer,tool=" + tool)
+    labels = "source=developer,tool=" + tool
+    auth_status, auth_mechanism = auth_cache_status()
+    labels += ",creds_cache_status=" + auth_status
+    labels += ",creds_cache_mechanism=" + auth_mechanism
+    os.environ.setdefault("RBE_metrics_labels", labels)
     os.environ.setdefault("RBE_metrics_prefix", "go.chromium.org")
 
 
