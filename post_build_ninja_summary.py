@@ -116,6 +116,10 @@ def ReadTargets(log, show_all):
 
     The result is a list of Target objects."""
     header = log.readline()
+    # TODO: b/298594790 - Siso currently generates empty .ninja_log files.
+    # Handle them gracefully by silently returning an empty list of targets.
+    if not header:
+        return []
     assert header == '# ninja log v5\n', \
            'unrecognized ninja log version %r' % header
     targets_dict = {}
@@ -350,8 +354,9 @@ def main():
     try:
         with open(log_file, 'r') as log:
             entries = ReadTargets(log, False)
-            SummarizeEntries(entries, args.step_types,
-                             args.elapsed_time_sorting)
+            if entries:
+                SummarizeEntries(entries, args.step_types,
+                                 args.elapsed_time_sorting)
     except IOError:
         print('Log file %r not found, no build summary created.' % log_file)
         return errno.ENOENT
