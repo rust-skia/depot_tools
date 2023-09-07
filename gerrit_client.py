@@ -510,7 +510,7 @@ class OptionParser(optparse.OptionParser):
 
 
 def main(argv):
-    if sys.hexversion < 0x02060000:
+    if sys.version_info[0] < 3:
         print('\nYour python version %s is unsupported, please upgrade.\n' %
               (sys.version.split(' ', 1)[0], ),
               file=sys.stderr)

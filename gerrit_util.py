@@ -21,6 +21,7 @@ import stat
 import sys
 import tempfile
 import time
+import urllib.parse
 from multiprocessing.pool import ThreadPool
 
 import auth
@@ -28,8 +29,6 @@ import gclient_utils
 import metrics
 import metrics_utils
 import subprocess2
-
-from six.moves import urllib
 
 import http.cookiejar
 from io import StringIO

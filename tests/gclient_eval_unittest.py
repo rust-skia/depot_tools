@@ -3,7 +3,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import collections
 import itertools
 import logging
 import os
@@ -12,18 +11,19 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from third_party import schema
-
 import metrics_utils
 # We have to disable monitoring before importing gclient.
 metrics_utils.COLLECT_METRICS = False
 
-import gclient
 import gclient_eval
 import gclient_utils
 
 # TODO: Should fix these warnings.
 # pylint: disable=line-too-long
+
+
+def file_join(lines):
+    return ''.join([l + '\n' for l in lines])
 
 
 class GClientEvalTest(unittest.TestCase):
@@ -130,15 +130,16 @@ class ExecTest(unittest.TestCase):
             local_scope)
 
     def test_var(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'vars = {',
-            '  "foo": "bar",',
-            '  "baz": Str("quux")',
-            '}',
-            'deps = {',
-            '  "a_dep": "a" + Var("foo") + "b" + Var("baz"),',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'vars = {',
+                '  "foo": "bar",',
+                '  "baz": Str("quux")',
+                '}',
+                'deps = {',
+                '  "a_dep": "a" + Var("foo") + "b" + Var("baz"),',
+                '}',
+            ]))
         Str = gclient_eval.ConstantString
         self.assertEqual(
             {
@@ -152,15 +153,16 @@ class ExecTest(unittest.TestCase):
             }, local_scope)
 
     def test_braces_var(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'vars = {',
-            '  "foo": "bar",',
-            '  "baz": Str("quux")',
-            '}',
-            'deps = {',
-            '  "a_dep": "a{foo}b{baz}",',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'vars = {',
+                '  "foo": "bar",',
+                '  "baz": Str("quux")',
+                '}',
+                'deps = {',
+                '  "a_dep": "a{foo}b{baz}",',
+                '}',
+            ]))
         Str = gclient_eval.ConstantString
         self.assertEqual(
             {
@@ -178,7 +180,7 @@ class ExecTest(unittest.TestCase):
         self.assertEqual({'deps': {}}, local_scope)
 
     def test_overrides_vars(self):
-        local_scope = gclient_eval.Exec('\n'.join([
+        local_scope = gclient_eval.Exec(file_join([
             'vars = {',
             '  "foo": "bar",',
             '  "quux": Str("quuz")',
@@ -207,7 +209,7 @@ class ExecTest(unittest.TestCase):
 
     def test_doesnt_override_undeclared_vars(self):
         with self.assertRaises(KeyError) as cm:
-            gclient_eval.Exec('\n'.join([
+            gclient_eval.Exec(file_join([
                 'vars = {',
                 '  "foo": "bar",',
                 '}',
@@ -222,7 +224,7 @@ class ExecTest(unittest.TestCase):
     def test_doesnt_allow_duplicate_deps(self):
         with self.assertRaises(ValueError) as cm:
             gclient_eval.Parse(
-                '\n'.join([
+                file_join([
                     'deps = {',
                     '  "a_dep": {',
                     '    "url": "a_url@a_rev",',
@@ -438,10 +440,10 @@ class EvaluateConditionTest(unittest.TestCase):
 
 class VarTest(unittest.TestCase):
     def assert_adds_var(self, before, after):
-        local_scope = gclient_eval.Exec('\n'.join(before))
+        local_scope = gclient_eval.Exec(file_join(before))
         gclient_eval.AddVar(local_scope, 'baz', 'lemur')
         results = gclient_eval.RenderDEPSFile(local_scope)
-        self.assertEqual(results, '\n'.join(after))
+        self.assertEqual(results, file_join(after))
 
     def test_adds_var(self):
         before = [
@@ -458,18 +460,20 @@ class VarTest(unittest.TestCase):
         self.assert_adds_var(before, after)
 
     def test_adds_var_twice(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'vars = {',
-            '  "foo": "bar",',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'vars = {',
+                '  "foo": "bar",',
+                '}',
+            ]))
 
         gclient_eval.AddVar(local_scope, 'baz', 'lemur')
         gclient_eval.AddVar(local_scope, 'v8_revision', 'deadbeef')
         result = gclient_eval.RenderDEPSFile(local_scope)
 
         self.assertEqual(
-            result, '\n'.join([
+            result,
+            file_join([
                 'vars = {',
                 '  "v8_revision": "deadbeef",',
                 '  "baz": "lemur",',
@@ -478,12 +482,13 @@ class VarTest(unittest.TestCase):
             ]))
 
     def test_gets_and_sets_var(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'vars = {',
-            '  "foo": "bar",',
-            '  "quux": Str("quuz")',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'vars = {',
+                '  "foo": "bar",',
+                '  "quux": Str("quuz")',
+                '}',
+            ]))
 
         self.assertEqual(gclient_eval.GetVar(local_scope, 'foo'), "bar")
         self.assertEqual(gclient_eval.GetVar(local_scope, 'quux'), "quuz")
@@ -493,7 +498,8 @@ class VarTest(unittest.TestCase):
         result = gclient_eval.RenderDEPSFile(local_scope)
 
         self.assertEqual(
-            result, '\n'.join([
+            result,
+            file_join([
                 'vars = {',
                 '  "foo": "baz",',
                 '  "quux": Str("corge")',
@@ -501,11 +507,12 @@ class VarTest(unittest.TestCase):
             ]))
 
     def test_gets_and_sets_var_non_string(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'vars = {',
-            '  "foo": True,',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'vars = {',
+                '  "foo": True,',
+                '}',
+            ]))
 
         result = gclient_eval.GetVar(local_scope, 'foo')
         self.assertEqual(result, True)
@@ -513,11 +520,12 @@ class VarTest(unittest.TestCase):
         gclient_eval.SetVar(local_scope, 'foo', 'False')
         result = gclient_eval.RenderDEPSFile(local_scope)
 
-        self.assertEqual(result, '\n'.join([
-            'vars = {',
-            '  "foo": False,',
-            '}',
-        ]))
+        self.assertEqual(result,
+                         file_join([
+                             'vars = {',
+                             '  "foo": False,',
+                             '}',
+                         ]))
 
     def test_add_preserves_formatting(self):
         before = [
@@ -554,18 +562,20 @@ class VarTest(unittest.TestCase):
         self.assert_adds_var(before, after)
 
     def test_set_preserves_formatting(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'vars = {',
-            '   # Comment with trailing space ',
-            ' "foo": \'bar\',',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'vars = {',
+                '   # Comment with trailing space ',
+                ' "foo": \'bar\',',
+                '}',
+            ]))
 
         gclient_eval.SetVar(local_scope, 'foo', 'baz')
         result = gclient_eval.RenderDEPSFile(local_scope)
 
         self.assertEqual(
-            result, '\n'.join([
+            result,
+            file_join([
                 'vars = {',
                 '   # Comment with trailing space ',
                 ' "foo": \'baz\',',
@@ -575,24 +585,25 @@ class VarTest(unittest.TestCase):
 
 class CipdTest(unittest.TestCase):
     def test_gets_and_sets_cipd(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'deps = {',
-            '    "src/cipd/package": {',
-            '        "packages": [',
-            '            {',
-            '                "package": "some/cipd/package",',
-            '                "version": "deadbeef",',
-            '            },',
-            '            {',
-            '                "package": "another/cipd/package",',
-            '                "version": "version:5678",',
-            '            },',
-            '        ],',
-            '        "condition": "checkout_android",',
-            '        "dep_type": "cipd",',
-            '    },',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'deps = {',
+                '    "src/cipd/package": {',
+                '        "packages": [',
+                '            {',
+                '                "package": "some/cipd/package",',
+                '                "version": "deadbeef",',
+                '            },',
+                '            {',
+                '                "package": "another/cipd/package",',
+                '                "version": "version:5678",',
+                '            },',
+                '        ],',
+                '        "condition": "checkout_android",',
+                '        "dep_type": "cipd",',
+                '    },',
+                '}',
+            ]))
 
         self.assertEqual(
             gclient_eval.GetCIPD(local_scope, 'src/cipd/package',
@@ -609,7 +620,8 @@ class CipdTest(unittest.TestCase):
         result = gclient_eval.RenderDEPSFile(local_scope)
 
         self.assertEqual(
-            result, '\n'.join([
+            result,
+            file_join([
                 'deps = {',
                 '    "src/cipd/package": {',
                 '        "packages": [',
@@ -629,28 +641,29 @@ class CipdTest(unittest.TestCase):
             ]))
 
     def test_gets_and_sets_cipd_vars(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'vars = {',
-            '    "cipd-rev": "git_revision:deadbeef",',
-            '    "another-cipd-rev": "version:1.0.3",',
-            '}',
-            'deps = {',
-            '    "src/cipd/package": {',
-            '        "packages": [',
-            '            {',
-            '                "package": "some/cipd/package",',
-            '                "version": Var("cipd-rev"),',
-            '            },',
-            '            {',
-            '                "package": "another/cipd/package",',
-            '                "version": "{another-cipd-rev}",',
-            '            },',
-            '        ],',
-            '        "condition": "checkout_android",',
-            '        "dep_type": "cipd",',
-            '    },',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'vars = {',
+                '    "cipd-rev": "git_revision:deadbeef",',
+                '    "another-cipd-rev": "version:1.0.3",',
+                '}',
+                'deps = {',
+                '    "src/cipd/package": {',
+                '        "packages": [',
+                '            {',
+                '                "package": "some/cipd/package",',
+                '                "version": Var("cipd-rev"),',
+                '            },',
+                '            {',
+                '                "package": "another/cipd/package",',
+                '                "version": "{another-cipd-rev}",',
+                '            },',
+                '        ],',
+                '        "condition": "checkout_android",',
+                '        "dep_type": "cipd",',
+                '    },',
+                '}',
+            ]))
 
         self.assertEqual(
             gclient_eval.GetCIPD(local_scope, 'src/cipd/package',
@@ -667,7 +680,8 @@ class CipdTest(unittest.TestCase):
         result = gclient_eval.RenderDEPSFile(local_scope)
 
         self.assertEqual(
-            result, '\n'.join([
+            result,
+            file_join([
                 'vars = {',
                 '    "cipd-rev": "git_revision:foobar",',
                 '    "another-cipd-rev": "version:1.1.0",',
@@ -691,26 +705,28 @@ class CipdTest(unittest.TestCase):
             ]))
 
     def test_preserves_escaped_vars(self):
-        local_scope = gclient_eval.Exec('\n'.join([
-            'deps = {',
-            '    "src/cipd/package": {',
-            '        "packages": [',
-            '            {',
-            '                "package": "package/${{platform}}",',
-            '                "version": "version:abcd",',
-            '            },',
-            '        ],',
-            '        "dep_type": "cipd",',
-            '    },',
-            '}',
-        ]))
+        local_scope = gclient_eval.Exec(
+            file_join([
+                'deps = {',
+                '    "src/cipd/package": {',
+                '        "packages": [',
+                '            {',
+                '                "package": "package/${{platform}}",',
+                '                "version": "version:abcd",',
+                '            },',
+                '        ],',
+                '        "dep_type": "cipd",',
+                '    },',
+                '}',
+            ]))
 
         gclient_eval.SetCIPD(local_scope, 'src/cipd/package',
                              'package/${platform}', 'version:dcba')
         result = gclient_eval.RenderDEPSFile(local_scope)
 
         self.assertEqual(
-            result, '\n'.join([
+            result,
+            file_join([
                 'deps = {',
                 '    "src/cipd/package": {',
                 '        "packages": [',
@@ -730,13 +746,13 @@ class RevisionTest(unittest.TestCase):
                                       before,
                                       after,
                                       rev_before='deadbeef'):
-        local_scope = gclient_eval.Exec('\n'.join(before))
+        local_scope = gclient_eval.Exec(file_join(before))
 
         result = gclient_eval.GetRevision(local_scope, 'src/dep')
         self.assertEqual(result, rev_before)
 
         gclient_eval.SetRevision(local_scope, 'src/dep', 'deadfeed')
-        self.assertEqual('\n'.join(after),
+        self.assertEqual(file_join(after),
                          gclient_eval.RenderDEPSFile(local_scope))
 
     def test_revision(self):
@@ -788,7 +804,7 @@ class RevisionTest(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError) as e:
-            local_scope = gclient_eval.Exec('\n'.join(deps))
+            local_scope = gclient_eval.Exec(file_join(deps))
             gclient_eval.SetRevision(local_scope, 'src/dep', 'deadfeed')
         self.assertEqual(
             'Can\'t update value for src/dep. Multiline strings and implicitly '
@@ -802,7 +818,7 @@ class RevisionTest(unittest.TestCase):
             '}',
         ]
         with self.assertRaises(ValueError) as e:
-            local_scope = gclient_eval.Exec('\n'.join(deps))
+            local_scope = gclient_eval.Exec(file_join(deps))
             gclient_eval.SetRevision(local_scope, 'src/dep', 'deadfeed')
         self.assertEqual(
             'Can\'t update value for src/dep. Multiline strings and implicitly '
@@ -952,7 +968,7 @@ class RevisionTest(unittest.TestCase):
 class ParseTest(unittest.TestCase):
     def callParse(self, vars_override=None):
         return gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'vars = {',
                 '  "foo": "bar",',
                 '}',
@@ -962,7 +978,7 @@ class ParseTest(unittest.TestCase):
             ]), '<unknown>', vars_override)
 
     def test_supports_vars_inside_vars(self):
-        deps_file = '\n'.join([
+        deps_file = file_join([
             'vars = {',
             '  "foo": "bar",',
             '  "baz": "\\"{foo}\\" == \\"bar\\"",',
@@ -992,7 +1008,7 @@ class ParseTest(unittest.TestCase):
 
     def test_has_builtin_vars(self):
         builtin_vars = {'builtin_var': 'foo'}
-        deps_file = '\n'.join([
+        deps_file = file_join([
             'deps = {',
             '  "a_dep": "a{builtin_var}b",',
             '}',
@@ -1011,7 +1027,7 @@ class ParseTest(unittest.TestCase):
 
     def test_declaring_builtin_var_has_no_effect(self):
         builtin_vars = {'builtin_var': 'foo'}
-        deps_file = '\n'.join([
+        deps_file = file_join([
             'vars = {',
             '  "builtin_var": "bar",',
             '}',
@@ -1037,7 +1053,7 @@ class ParseTest(unittest.TestCase):
     def test_override_builtin_var(self):
         builtin_vars = {'builtin_var': 'foo'}
         vars_override = {'builtin_var': 'override'}
-        deps_file = '\n'.join([
+        deps_file = file_join([
             'deps = {',
             '  "a_dep": "a{builtin_var}b",',
             '}',
@@ -1085,7 +1101,7 @@ class ParseTest(unittest.TestCase):
             }, local_scope)
 
     def test_no_extra_vars(self):
-        deps_file = '\n'.join([
+        deps_file = file_join([
             'vars = {',
             '  "foo": "bar",',
             '}',
@@ -1101,7 +1117,7 @@ class ParseTest(unittest.TestCase):
 
     def test_standardizes_deps_string_dep(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'deps = {',
                 '  "a_dep": "a_url@a_rev",',
                 '}',
@@ -1118,7 +1134,7 @@ class ParseTest(unittest.TestCase):
 
     def test_standardizes_deps_dict_dep(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'deps = {',
                 '  "a_dep": {',
                 '     "url": "a_url@a_rev",',
@@ -1139,7 +1155,7 @@ class ParseTest(unittest.TestCase):
 
     def test_ignores_none_in_deps_os(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'deps = {',
                 '  "a_dep": "a_url@a_rev",',
                 '}',
@@ -1161,7 +1177,7 @@ class ParseTest(unittest.TestCase):
 
     def test_merges_deps_os_extra_dep(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'deps = {',
                 '  "a_dep": "a_url@a_rev",',
                 '}',
@@ -1188,7 +1204,7 @@ class ParseTest(unittest.TestCase):
 
     def test_merges_deps_os_existing_dep_with_no_condition(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'deps = {',
                 '  "a_dep": "a_url@a_rev",',
                 '}',
@@ -1210,7 +1226,7 @@ class ParseTest(unittest.TestCase):
 
     def test_merges_deps_os_existing_dep_with_condition(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'deps = {',
                 '  "a_dep": {',
                 '    "url": "a_url@a_rev",',
@@ -1236,7 +1252,7 @@ class ParseTest(unittest.TestCase):
 
     def test_merges_deps_os_multiple_os(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'deps_os = {',
                 '  "win": {'
                 '     "a_dep": "a_url@a_rev"',
@@ -1260,7 +1276,7 @@ class ParseTest(unittest.TestCase):
     def test_fails_to_merge_same_dep_with_different_revisions(self):
         with self.assertRaises(gclient_eval.gclient_utils.Error) as cm:
             gclient_eval.Parse(
-                '\n'.join([
+                file_join([
                     'deps = {',
                     '  "a_dep": {',
                     '    "url": "a_url@a_rev",',
@@ -1277,7 +1293,7 @@ class ParseTest(unittest.TestCase):
 
     def test_merges_hooks_os(self):
         local_scope = gclient_eval.Parse(
-            '\n'.join([
+            file_join([
                 'hooks = [',
                 '  {',
                 '    "action": ["a", "action"],',

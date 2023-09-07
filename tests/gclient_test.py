@@ -16,7 +16,6 @@ import sys
 import unittest
 from unittest import mock
 
-import six
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -27,7 +26,6 @@ metrics_utils.COLLECT_METRICS = False
 
 import gclient
 import gclient_eval
-import gclient_scm
 import gclient_utils
 from testing_support import trial_dir
 
@@ -840,7 +838,7 @@ class GclientTest(trial_dir.TestCase):
         options, _ = gclient.OptionParser().parse_args([])
         obj = gclient.GClient.LoadCurrentConfig(options)
         obj.RunOnDeps('None', [])
-        six.assertCountEqual(self, [
+        self.assertCountEqual([
             ('foo', 'svn://example.com/foo'),
             ('foo/bar', 'svn://example.com/override'),
             ('foo/foo/bar', 'svn://example.com/override'),
@@ -1264,10 +1262,10 @@ class GclientTest(trial_dir.TestCase):
         sol._should_sync = False
         sol.ParseDepsFile()
         self.assertEqual(1, len(sol.pre_deps_hooks))
-        six.assertCountEqual(self, expected_dep_names,
-                             [d.name for d in sol.dependencies])
-        six.assertCountEqual(self, expected_hook_names,
-                             [h.name for h in sol._deps_hooks])
+        self.assertCountEqual(expected_dep_names,
+                              [d.name for d in sol.dependencies])
+        self.assertCountEqual(expected_hook_names,
+                              [h.name for h in sol._deps_hooks])
 
     def testParseDepsFile_FalseShouldSync_NoCustoms(self):
         """Parse DEPS when should_sync is False and no custom hooks/deps."""

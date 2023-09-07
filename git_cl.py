@@ -24,6 +24,8 @@ import sys
 import tempfile
 import textwrap
 import time
+import urllib.parse
+import urllib.request
 import uuid
 import webbrowser
 import zlib
@@ -59,7 +61,6 @@ import subprocess2
 import swift_format
 import watchlists
 
-from six.moves import urllib
 
 __version__ = '2.0'
 
@@ -6436,7 +6437,9 @@ def CMDformat(parser, args):
 
             tool_dir = os.path.join(top_dir, xml_dir)
             pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
-            cmd = ['vpython3', pretty_print_tool, '--non-interactive']
+            cmd = [
+                shutil.which('vpython3'), pretty_print_tool, '--non-interactive'
+            ]
 
             # If the XML file is histograms.xml or enums.xml, add the xml path
             # to the command as histograms/pretty_print.py now needs a relative
@@ -6458,12 +6461,7 @@ def CMDformat(parser, args):
             if opts.dry_run or opts.diff:
                 cmd.append('--diff')
 
-            # TODO(isherman): Once this file runs only on Python 3.3+, drop the
-            # `shell` param and instead replace `'vpython'` with
-            # `shutil.which('frob')` above: https://stackoverflow.com/a/32799942
-            stdout = RunCommand(cmd,
-                                cwd=top_dir,
-                                shell=sys.platform.startswith('win32'))
+            stdout = RunCommand(cmd, cwd=top_dir)
             if opts.diff:
                 sys.stdout.write(stdout)
             if opts.dry_run and stdout:
@@ -6616,7 +6614,7 @@ class OptionParser(optparse.OptionParser):
 
 
 def main(argv):
-    if sys.hexversion < 0x02060000:
+    if sys.version_info[0] < 3:
         print('\nYour Python version %s is unsupported, please upgrade.\n' %
               (sys.version.split(' ', 1)[0], ),
               file=sys.stderr)

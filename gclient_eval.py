@@ -405,14 +405,6 @@ def Exec(content, filename='<unknown>', vars_override=None, builtin_vars=None):
         _validate_statement(statement, statements)
         statements[statement.targets[0].id] = statement.value
 
-    # The tokenized representation needs to end with a newline token, otherwise
-    # untokenization will trigger an assert later on.
-    # In Python 2.7 on Windows we need to ensure the input ends with a newline
-    # for a newline token to be generated.
-    # In other cases a newline token is always generated during tokenization so
-    # this has no effect.
-    # TODO: Remove this workaround after migrating to Python 3.
-    content += '\n'
     tokens = {
         token[2]: list(token)
         for token in tokenize.generate_tokens(StringIO(content).readline)
@@ -664,11 +656,7 @@ def EvaluateCondition(condition, variables, referenced_variables=None):
 
 def RenderDEPSFile(gclient_dict):
     contents = sorted(gclient_dict.tokens.values(), key=lambda token: token[2])
-    # The last token is a newline, which we ensure in Exec() for compatibility.
-    # However tests pass in inputs not ending with a newline and expect the same
-    # back, so for backwards compatibility need to remove that newline
-    # character. TODO: Fix tests to expect the newline
-    return tokenize.untokenize(contents)[:-1]
+    return tokenize.untokenize(contents)
 
 
 def _UpdateAstString(tokens, node, value):

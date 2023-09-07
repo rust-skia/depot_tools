@@ -25,8 +25,8 @@ import platform
 import subprocess
 import sys
 import time
+import urllib.request
 
-from third_party.six.moves.urllib import request
 
 # These build configs affect build performance.
 ALLOWLISTED_CONFIGS = ('symbol_level', 'use_goma', 'is_debug',
@@ -233,10 +233,10 @@ def main():
             logging.info('send metadata: %s', json.dumps(metadata))
             g.write(json.dumps(metadata).encode())
 
-    resp = request.urlopen(
-        request.Request('https://' + args.server + '/upload_ninja_log/',
-                        data=output.getvalue(),
-                        headers={'Content-Encoding': 'gzip'}))
+    resp = urllib.request.urlopen(
+        urllib.request.Request('https://' + args.server + '/upload_ninja_log/',
+                               data=output.getvalue(),
+                               headers={'Content-Encoding': 'gzip'}))
 
     if resp.status != 200:
         logging.warning("unexpected status code for response: %s", resp.status)

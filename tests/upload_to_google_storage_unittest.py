@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 """Unit tests for upload_to_google_storage.py."""
 
+from io import StringIO
 import optparse
 import os
 import posixpath
@@ -21,12 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import upload_to_google_storage
 from download_from_google_storage_unittest import GsutilMock
 from download_from_google_storage_unittest import ChangedWorkingDirectory
-from third_party import six
 
-if six.PY2:
-    from cStringIO import StringIO
-else:
-    from io import StringIO
 
 # ../third_party/gsutil/gsutil
 GSUTIL_DEFAULT_PATH = os.path.join(
