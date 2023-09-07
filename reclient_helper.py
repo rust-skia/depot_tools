@@ -10,6 +10,7 @@ import contextlib
 import hashlib
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -114,6 +115,14 @@ def auth_cache_status():
         return "missing", "UNSPECIFIED"
 
 
+def get_hostname():
+    hostname = socket.gethostname()
+    try:
+        return socket.gethostbyaddr(hostname)[0]
+    except socket.gaierror:
+        return hostname
+
+
 def set_reproxy_metrics_flags(tool):
     """Helper to setup metrics collection flags for reproxy.
 
@@ -126,7 +135,8 @@ def set_reproxy_metrics_flags(tool):
   """
     autoninja_id = os.environ.get("AUTONINJA_BUILD_ID")
     if autoninja_id is not None:
-        os.environ.setdefault("RBE_invocation_id", autoninja_id)
+        os.environ.setdefault("RBE_invocation_id",
+                              "%s/%s" % (get_hostname(), autoninja_id))
     os.environ.setdefault("RBE_metrics_project", "chromium-reclient-metrics")
     os.environ.setdefault("RBE_metrics_table", "rbe_metrics.builds")
     labels = "source=developer,tool=" + tool

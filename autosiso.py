@@ -12,6 +12,7 @@ Siso/Reclient builds.
 import os
 import re
 import sys
+import uuid
 
 import reclient_helper
 import siso
@@ -50,6 +51,7 @@ def main(argv):
             file=sys.stderr)
         return 1
 
+    os.environ.setdefault("AUTONINJA_BUILD_ID", str(uuid.uuid4()))
     with reclient_helper.build_context(argv, 'autosiso') as ret_code:
         if ret_code:
             return ret_code
