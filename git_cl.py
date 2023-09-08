@@ -1870,8 +1870,6 @@ class Changelist(object):
             refspec_opts.append('notify=ALL')
         elif (not self.GetIssue() and options.squash and not dogfood_path):
             refspec_opts.append('wip')
-        else:
-            refspec_opts.append('notify=NONE')
 
         # TODO(tandrii): options.message should be posted as a comment if
         # --send-mail or --send-email is set on non-initial upload as Rietveld

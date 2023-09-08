@@ -904,17 +904,13 @@ class TestGitCl(unittest.TestCase):
         ]
 
         metrics_arguments = []
-
+        ref_suffix_list = []
         if notify:
-            ref_suffix = '%ready,notify=ALL'
+            ref_suffix_list.append('ready,notify=ALL')
             metrics_arguments += ['ready', 'notify=ALL']
-        else:
-            if not issue and squash:
-                ref_suffix = '%wip'
-                metrics_arguments.append('wip')
-            else:
-                ref_suffix = '%notify=NONE'
-                metrics_arguments.append('notify=NONE')
+        elif not issue and squash:
+            ref_suffix_list.append('wip')
+            metrics_arguments.append('wip')
 
         # If issue is given, then description is fetched from Gerrit instead.
         if not title:
@@ -928,22 +924,23 @@ class TestGitCl(unittest.TestCase):
                 ]
                 title = 'User input'
         if title:
-            ref_suffix += ',m=' + gerrit_util.PercentEncodeForGitRef(title)
+            ref_suffix_list.append('m=' +
+                                   gerrit_util.PercentEncodeForGitRef(title))
             metrics_arguments.append('m')
 
         for k, v in sorted((labels or {}).items()):
-            ref_suffix += ',l=%s+%d' % (k, v)
+            ref_suffix_list.append('l=%s+%d' % (k, v))
             metrics_arguments.append('l=%s+%d' % (k, v))
 
         if short_hostname == 'chromium':
             # All reviewers and ccs get into ref_suffix.
             for r in sorted(reviewers):
-                ref_suffix += ',r=%s' % r
+                ref_suffix_list.append('r=%s' % r)
                 metrics_arguments.append('r')
             if issue is None:
                 cc += ['test-more-cc@chromium.org', 'joe@example.com']
             for c in sorted(cc):
-                ref_suffix += ',cc=%s' % c
+                ref_suffix_list.append('cc=%s' % c)
                 metrics_arguments.append('cc')
             reviewers, cc = [], []
         else:
@@ -960,17 +957,20 @@ class TestGitCl(unittest.TestCase):
                        })]
             for r in sorted(reviewers):
                 if r != 'bad-account-or-email':
-                    ref_suffix += ',r=%s' % r
+                    ref_suffix_list.append('r=%s' % r)
                     metrics_arguments.append('r')
                     reviewers.remove(r)
             if issue is None:
                 cc += ['joe@example.com']
             for c in sorted(cc):
-                ref_suffix += ',cc=%s' % c
+                ref_suffix_list.append('cc=%s' % c)
                 metrics_arguments.append('cc')
                 if c in cc:
                     cc.remove(c)
 
+        ref_suffix = ''
+        if ref_suffix_list:
+            ref_suffix = '%' + ','.join(ref_suffix_list)
         calls += [
             (
                 ('time.time', ),
@@ -1586,12 +1586,9 @@ class TestGitCl(unittest.TestCase):
         # Asserts
         mockCherryPickCommit.assert_called_once_with(options,
                                                      upstream_gerrit_commit)
-        expected_refspec = (
-            'commit-to-push:refs/for/refs/heads/main%notify=NONE,'
-            'm=honk_stonk,topic=circus,hashtag=cow')
-        expected_refspec_opts = [
-            'notify=NONE', 'm=honk_stonk', 'topic=circus', 'hashtag=cow'
-        ]
+        expected_refspec = ('commit-to-push:refs/for/refs/heads/main%'
+                            'm=honk_stonk,topic=circus,hashtag=cow')
+        expected_refspec_opts = ['m=honk_stonk', 'topic=circus', 'hashtag=cow']
         mockRunGitPush.assert_called_once_with(expected_refspec,
                                                expected_refspec_opts, mock.ANY,
                                                options.push_options)
@@ -1685,10 +1682,9 @@ class TestGitCl(unittest.TestCase):
                       end_commit=None)
         ])
 
-        expected_refspec = (
-            'commit-to-push:refs/for/refs/heads/main%notify=NONE,'
-            'topic=circus,hashtag=cow')
-        expected_refspec_opts = ['notify=NONE', 'topic=circus', 'hashtag=cow']
+        expected_refspec = ('commit-to-push:refs/for/refs/heads/main%'
+                            'topic=circus,hashtag=cow')
+        expected_refspec_opts = ['topic=circus', 'hashtag=cow']
         mockRunGitPush.assert_called_once_with(expected_refspec,
                                                expected_refspec_opts, mock.ANY,
                                                options.push_options)
@@ -1770,12 +1766,9 @@ class TestGitCl(unittest.TestCase):
                 options, 'external-commit', 'external-commit', end_commit=None)
         ])
 
-        expected_refspec = (
-            'commit-to-push:refs/for/refs/heads/main%notify=NONE,'
-            'm=honk_stonk,topic=circus,hashtag=cow')
-        expected_refspec_opts = [
-            'notify=NONE', 'm=honk_stonk', 'topic=circus', 'hashtag=cow'
-        ]
+        expected_refspec = ('commit-to-push:refs/for/refs/heads/main%'
+                            'm=honk_stonk,topic=circus,hashtag=cow')
+        expected_refspec_opts = ['m=honk_stonk', 'topic=circus', 'hashtag=cow']
         mockRunGitPush.assert_called_once_with(expected_refspec,
                                                expected_refspec_opts, mock.ANY,
                                                options.push_options)
