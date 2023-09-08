@@ -2050,6 +2050,9 @@ class CannedChecksUnittest(PresubmitTestsBase):
 
     def testCheckChangeTodoHasOwner(self):
         self.ContentTest(presubmit_canned_checks.CheckChangeTodoHasOwner,
+                         "TODO: foo - bar", None, "TODO: bar", None,
+                         presubmit.OutputApi.PresubmitPromptWarning)
+        self.ContentTest(presubmit_canned_checks.CheckChangeTodoHasOwner,
                          "TODO(foo): bar", None, "TODO: bar", None,
                          presubmit.OutputApi.PresubmitPromptWarning)
 

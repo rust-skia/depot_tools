@@ -539,12 +539,16 @@ def CheckChangeHasNoTabs(input_api, output_api, source_file_filter=None):
 
 
 def CheckChangeTodoHasOwner(input_api, output_api, source_file_filter=None):
-    """Checks that the user didn't add TODO(name) without an owner."""
-
-    unowned_todo = input_api.re.compile('TO' 'DO[^(]')
+    """Checks that the user didn't add `TODO(name)` or `TODO: name -` without
+    an owner.
+    """
+    legacyTODO = '\\s*\\(.+\\)\\s*:'
+    modernTODO = ':\\s*[^\\s]+\\s*\\-'
+    unowned_todo = input_api.re.compile('TODO(?!(%s|%s))' %
+                                        (legacyTODO, modernTODO))
     errors = _FindNewViolationsOfRule(lambda _, x: not unowned_todo.search(x),
                                       input_api, source_file_filter)
-    errors = ['Found TO' 'DO with no owner in ' + x for x in errors]
+    errors = ['Found TODO with no owner in ' + x for x in errors]
     if errors:
         return [output_api.PresubmitPromptWarning('\n'.join(errors))]
     return []
