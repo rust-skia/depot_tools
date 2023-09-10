@@ -68,13 +68,6 @@ class DependencyMetadata:
         """
         required = set(self._MANDATORY_FIELDS)
 
-        # The date and revision are required if the version has not
-        # been specified.
-        version_value = self._metadata.get(known_fields.VERSION)
-        if version_value is None or version_util.is_unknown(version_value):
-            required.add(known_fields.DATE)
-            required.add(known_fields.REVISION)
-
         # Assume the dependency is shipped if not specified.
         shipped_value = self._metadata.get(known_fields.SHIPPED)
         is_shipped = (shipped_value is None
@@ -137,6 +130,25 @@ class DependencyMetadata:
                 error = vr.ValidationError(
                     reason=f"Required field '{field_name}' is missing.")
                 results.append(error)
+
+        # At least one of the fields Version, Date or Revision must be
+        # provided.
+        version_value = self._metadata.get(known_fields.VERSION)
+        date_value = self._metadata.get(known_fields.DATE)
+        revision_value = self._metadata.get(known_fields.REVISION)
+        if ((not version_value or version_util.is_unknown(version_value))
+                and (not date_value or util.is_unknown(date_value))
+                and (not revision_value or util.is_unknown(revision_value))):
+            versioning_fields = [
+                known_fields.VERSION, known_fields.DATE, known_fields.REVISION
+            ]
+            names = util.quoted(
+                [field.get_name() for field in versioning_fields])
+            error = vr.ValidationError(
+                reason="Versioning fields are insufficient.",
+                additional=[f"Provide at least one of [{names}]."],
+            )
+            results.append(error)
 
         # Validate values for all present fields.
         for field, value in self._metadata.items():

@@ -390,13 +390,14 @@ class ChromiumDependencyMetadataCheckTest(unittest.TestCase):
         results = presubmit_canned_checks.CheckChromiumDependencyMetadata(
             input_api, MockOutputApi())
 
-        # There should be 10 results due to
+        # There should be 9 results due to
         # - missing 5 mandatory fields: Name, URL, Version, License, and
         #                               Security Critical
-        # - missing 4 required fields: Date, Revision, License File, and
+        # - 1 error for insufficent versioning info
+        # - missing 2 required fields: License File, and
         #                              License Android Compatible
         # - Shipped should be only 'yes' or 'no'.
-        self.assertEqual(len(results), 10)
+        self.assertEqual(len(results), 9)
 
         # Check each presubmit result is associated with the test file.
         for result in results:

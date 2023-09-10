@@ -44,6 +44,30 @@ class DependencyValidationTest(unittest.TestCase):
         self.assertTrue(isinstance(results[0], vr.ValidationError))
         self.assertEqual(results[0].get_reason(), "There is a repeated field.")
 
+    def test_versioning_field(self):
+        """Check that a validation error is returned for insufficient
+        versioning info."""
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.NAME.get_name(),
+                             "Test metadata missing versioning info")
+        dependency.add_entry(known_fields.URL.get_name(),
+                             "https://www.example.com")
+        dependency.add_entry(known_fields.VERSION.get_name(), "N/A")
+        dependency.add_entry(known_fields.REVISION.get_name(), "unknown")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
+        dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
+        dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
+
+        results = dependency.validate(
+            source_file_dir=os.path.join(_THIS_DIR, "data"),
+            repo_root_dir=_THIS_DIR,
+        )
+        self.assertEqual(len(results), 1)
+        self.assertTrue(isinstance(results[0], vr.ValidationError))
+        self.assertEqual(results[0].get_reason(),
+                         "Versioning fields are insufficient.")
+
     def test_required_field(self):
         """Check that a validation error is returned for a missing field."""
         dependency = dm.DependencyMetadata()
@@ -131,6 +155,25 @@ class DependencyValidationTest(unittest.TestCase):
             repo_root_dir=_THIS_DIR,
         )
         self.assertEqual(len(results), 4)
+
+    def test_valid_metadata(self):
+        """Check valid metadata returns no validation issues."""
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.NAME.get_name(),
+                             "Test valid metadata")
+        dependency.add_entry(known_fields.URL.get_name(),
+                             "https://www.example.com")
+        dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
+        dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
+        dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
+
+        results = dependency.validate(
+            source_file_dir=os.path.join(_THIS_DIR, "data"),
+            repo_root_dir=_THIS_DIR,
+        )
+        self.assertEqual(len(results), 0)
 
 
 if __name__ == "__main__":
