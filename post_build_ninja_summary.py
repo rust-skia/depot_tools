@@ -54,6 +54,7 @@ import argparse
 import errno
 import fnmatch
 import os
+import subprocess
 import sys
 
 # The number of long build times to report:
@@ -322,6 +323,7 @@ def SummarizeEntries(entries, extra_step_types, elapsed_time_sorting):
 
 def main():
     log_file = '.ninja_log'
+    metrics_file = 'siso_metrics.json'
     parser = argparse.ArgumentParser()
     parser.add_argument('-C', dest='build_directory', help='Build directory.')
     parser.add_argument(
@@ -339,6 +341,7 @@ def main():
     args, _extra_args = parser.parse_known_args()
     if args.build_directory:
         log_file = os.path.join(args.build_directory, log_file)
+        metrics_file = os.path.join(args.build_directory, metrics_file)
     if args.log_file:
         log_file = args.log_file
     if not args.step_types:
@@ -351,15 +354,27 @@ def main():
         global long_ext_count
         long_ext_count += len(args.step_types.split(';'))
 
-    try:
-        with open(log_file, 'r') as log:
-            entries = ReadTargets(log, False)
-            if entries:
-                SummarizeEntries(entries, args.step_types,
-                                 args.elapsed_time_sorting)
-    except IOError:
-        print('Log file %r not found, no build summary created.' % log_file)
-        return errno.ENOENT
+    if os.path.exists(metrics_file):
+        # Automatically handle summarizing siso builds.
+        cmd = ['siso.bat' if 'win32' in sys.platform else 'siso']
+        cmd.extend(['metrics', 'summary'])
+        if args.build_directory:
+            cmd.extend(['-C', args.build_directory])
+        if args.step_types:
+            cmd.extend(['--step_types', args.step_types])
+        if args.elapsed_time_sorting:
+            cmd.append('--elapsed_time_sorting')
+        subprocess.run(cmd)
+    else:
+        try:
+            with open(log_file, 'r') as log:
+                entries = ReadTargets(log, False)
+                if entries:
+                    SummarizeEntries(entries, args.step_types,
+                                     args.elapsed_time_sorting)
+        except IOError:
+            print('Log file %r not found, no build summary created.' % log_file)
+            return errno.ENOENT
 
 
 if __name__ == '__main__':
