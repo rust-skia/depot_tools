@@ -3384,8 +3384,10 @@ class Changelist(object):
                 'Continue with upload and override the latest changes?')
             return
 
-        diff = RunGitSilent(
-            ['diff', '%s..%s' % (last_uploaded, latest_external)])
+        diff = RunGitSilent([
+            'diff', '--no-ext-diff',
+            '%s..%s' % (last_uploaded, latest_external)
+        ])
 
         # Diff can be empty in the case of trivial rebases.
         if not diff:
