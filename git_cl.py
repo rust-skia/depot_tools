@@ -1417,8 +1417,9 @@ class Changelist(object):
         upstream_branch = self.GetUpstreamBranch()
         if not scm.GIT.IsValidRevision(settings.GetRoot(), upstream_branch):
             DieWithError(
-                'The upstream for the current branch (%s) does not exist '
-                'anymore.\nPlease fix it and try again.' % self.GetBranch())
+                'The current branch (%s) has an upstream (%s) that does not exist '
+                'anymore.\nPlease fix it and try again.' %
+                (self.GetBranch(), upstream_branch))
         return git_common.get_or_create_merge_base(self.GetBranch(),
                                                    upstream_branch)
 
