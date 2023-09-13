@@ -980,9 +980,13 @@ def squash_current_branch(header=None, merge_base=None):
         # is nothing to commit at this point.
         print('Nothing to commit; squashed branch is empty')
         return False
+
+    # git reset --soft will stage all changes so we can just commit those.
+    # Note: Just before reset --soft is called, we may have git submodules
+    # checked to an old commit (not latest state). We don't want to include
+    # those in our commit.
     run('commit',
         '--no-verify',
-        '-a',
         '-F',
         '-',
         indata=log_msg.encode('utf-8'))
