@@ -265,8 +265,9 @@ def build_context(argv, tool):
 
     start = time.time()
     reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
-    elapsed = time.time() - start
-    print('%1.3f s to start reproxy' % elapsed)
+    if os.environ.get('NINJA_SUMMARIZE_BUILD') == '1':
+        elapsed = time.time() - start
+        print('%1.3f s to start reproxy' % elapsed)
     if reproxy_ret_code != 0:
         yield reproxy_ret_code
         return
@@ -276,5 +277,6 @@ def build_context(argv, tool):
         print("Shutting down reproxy...", file=sys.stderr)
         start = time.time()
         stop_reproxy(reclient_cfg, reclient_bin_dir)
-        elapsed = time.time() - start
-        print('%1.3f s to stop reproxy' % elapsed)
+        if os.environ.get('NINJA_SUMMARIZE_BUILD') == '1':
+            elapsed = time.time() - start
+            print('%1.3f s to stop reproxy' % elapsed)
