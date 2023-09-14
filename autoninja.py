@@ -17,7 +17,7 @@ import re
 import subprocess
 import sys
 
-if sys.platform == 'darwin':
+if sys.platform in ['darwin', 'linux']:
     import resource
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -194,26 +194,26 @@ def main(args):
     offline_env = ['RBE_remote_disabled=1', 'GOMA_DISABLED=1'
                    ] if offline and not sys.platform.startswith('win') else []
 
-    # On macOS, the default limit of open file descriptors is too low (256).
+    # On macOS and most Linux distributions, the default limit of open file
+    # descriptors is too low (256 and 1024, respectively).
     # This causes a large j value to result in 'Too many open files' errors.
     # Check whether the limit can be raised to a large enough value. If yes,
     # use `ulimit -n .... &&` as a prefix to increase the limit when running
     # ninja.
-    if sys.platform == 'darwin':
-        wanted_limit = 200000  # Large enough to avoid any risk of exhaustion.
+    prepend_command = []
+    if sys.platform in ['darwin', 'linux']:
+        # Increase the number of allowed open file descriptors to the maximum.
         fileno_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
-        if fileno_limit <= wanted_limit:
+        if fileno_limit < hard_limit:
             try:
                 resource.setrlimit(resource.RLIMIT_NOFILE,
-                                   (wanted_limit, hard_limit))
+                                   (hard_limit, hard_limit))
             except Exception as _:
                 pass
             fileno_limit, hard_limit = resource.getrlimit(
                 resource.RLIMIT_NOFILE)
-            if fileno_limit >= wanted_limit:
-                prefix_args = ['ulimit', '-n', f'{wanted_limit}', '&&'
-                               ] + offline_env
-                offline_env = []
+            if fileno_limit == hard_limit:
+                prepend_command = ['ulimit', '-n', f'{fileno_limit}', '&&']
 
     # Call ninja.py so that it can find ninja binary installed by DEPS or one in
     # PATH.
@@ -223,8 +223,9 @@ def main(args):
     if use_remoteexec:
         ninja_path = os.path.join(SCRIPT_DIR, 'ninja_reclient.py')
 
-    args = offline_env + prefix_args + [sys.executable, ninja_path
-                                        ] + input_args[1:]
+    args = prepend_command + offline_env + prefix_args + [
+        sys.executable, ninja_path
+    ] + input_args[1:]
 
     num_cores = multiprocessing.cpu_count()
     if not j_specified and not t_specified:
@@ -244,24 +245,14 @@ def main(args):
             core_limit = int(os.environ.get('NINJA_CORE_LIMIT', j_value))
             j_value = min(j_value, core_limit)
 
-            if sys.platform.startswith('win'):
-                # On windows, j value higher than 1000 does not improve build
-                # performance.
-                j_value = min(j_value, 1000)
-            elif sys.platform == 'darwin':
-                # If the number of open file descriptors is large enough (or it
-                # can be raised to a large enough value), then set j value to
-                # 1000. This limit comes from ninja which is limited to at most
-                # FD_SETSIZE (1024) open file descriptors (using 1000 leave a
-                # bit of head room).
-                #
-                # If the number of open file descriptors cannot be raised, then
-                # use a j value of 200 which is the maximum value that reliably
-                # work with the default limit of 256.
-                if fileno_limit >= wanted_limit:
-                    j_value = min(j_value, 1000)
-                else:
-                    j_value = min(j_value, 200)
+            # On Windows, a -j higher than 1000 doesn't improve build times.
+            # On POSIX, ninja is limited to at most FD_SETSIZE (1024) open file
+            # descriptors.
+            j_value = min(j_value, 1000)
+            if sys.platform in ['darwin', 'linux']:
+                # Use a j value that reliably works with the open file
+                # descriptors limit.
+                j_value = min(j_value, int(fileno_limit * 0.8))
 
             args.append('%d' % j_value)
         else:
