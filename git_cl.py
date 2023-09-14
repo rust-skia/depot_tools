@@ -6058,10 +6058,6 @@ def BuildGitDiffCmd(diff_type, upstream_commit, args, allow_prefix=False):
 
 def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
     """Runs clang-format-diff and sets a return value if necessary."""
-
-    if not clang_diff_files:
-        return 0
-
     # Set to 2 to signal to CheckPatchFormatted() that this patch isn't
     # formatted. This is used to block during the presubmit.
     return_value = 0
@@ -6123,10 +6119,6 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
 def _RunRustFmt(opts, rust_diff_files, top_dir, upstream_commit):
     """Runs rustfmt.  Just like _RunClangFormatDiff returns 2 to indicate that
   presubmit checks have failed (and returns 0 otherwise)."""
-
-    if not rust_diff_files:
-        return 0
-
     # Locate the rustfmt binary.
     try:
         rustfmt_tool = rustfmt.FindRustfmtToolInChromiumTree()
@@ -6150,10 +6142,8 @@ def _RunRustFmt(opts, rust_diff_files, top_dir, upstream_commit):
 def _RunSwiftFormat(opts, swift_diff_files, top_dir, upstream_commit):
     """Runs swift-format.  Just like _RunClangFormatDiff returns 2 to indicate
   that presubmit checks have failed (and returns 0 otherwise)."""
-
-    if not swift_diff_files:
-        return 0
-
+    if sys.platform != 'darwin':
+        DieWithError('swift-format is only supported on macOS.')
     # Locate the swift-format binary.
     try:
         swift_format_tool = swift_format.FindSwiftFormatToolInChromiumTree()
@@ -6174,6 +6164,150 @@ def _RunSwiftFormat(opts, swift_diff_files, top_dir, upstream_commit):
     return 0
 
 
+def _RunYapf(opts, paths, top_dir, upstream_commit):
+    depot_tools_path = os.path.dirname(os.path.abspath(__file__))
+    yapf_tool = os.path.join(depot_tools_path, 'yapf')
+
+    # Used for caching.
+    yapf_configs = {}
+    for p in paths:
+        # Find the yapf style config for the current file, defaults to depot
+        # tools default.
+        _FindYapfConfigFile(p, yapf_configs, top_dir)
+
+    # Turn on python formatting by default if a yapf config is specified.
+    # This breaks in the case of this repo though since the specified
+    # style file is also the global default.
+    if opts.python is None:
+        paths = [
+            p for p in paths
+            if _FindYapfConfigFile(p, yapf_configs, top_dir) is not None
+        ]
+
+    # Note: yapf still seems to fix indentation of the entire file
+    # even if line ranges are specified.
+    # See https://github.com/google/yapf/issues/499
+    if not opts.full and paths:
+        py_line_diffs = _ComputeDiffLineRanges(paths, upstream_commit)
+
+    yapfignore_patterns = _GetYapfIgnorePatterns(top_dir)
+    paths = _FilterYapfIgnoredFiles(paths, yapfignore_patterns)
+
+    return_value = 0
+    for path in paths:
+        yapf_style = _FindYapfConfigFile(path, yapf_configs, top_dir)
+        # Default to pep8 if not .style.yapf is found.
+        if not yapf_style:
+            yapf_style = 'pep8'
+
+        with open(path, 'r') as py_f:
+            if 'python2' in py_f.readline():
+                vpython_script = 'vpython'
+            else:
+                vpython_script = 'vpython3'
+
+        cmd = [vpython_script, yapf_tool, '--style', yapf_style, path]
+
+        has_formattable_lines = False
+        if not opts.full:
+            # Only run yapf over changed line ranges.
+            for diff_start, diff_len in py_line_diffs[path]:
+                diff_end = diff_start + diff_len - 1
+                # Yapf errors out if diff_end < diff_start but this
+                # is a valid line range diff for a removal.
+                if diff_end >= diff_start:
+                    has_formattable_lines = True
+                    cmd += ['-l', '{}-{}'.format(diff_start, diff_end)]
+            # If all line diffs were removals we have nothing to format.
+            if not has_formattable_lines:
+                continue
+
+        if opts.diff or opts.dry_run:
+            cmd += ['--diff']
+            # Will return non-zero exit code if non-empty diff.
+            stdout = RunCommand(cmd,
+                                error_ok=True,
+                                stderr=subprocess2.PIPE,
+                                cwd=top_dir,
+                                shell=sys.platform.startswith('win32'))
+            if opts.diff:
+                sys.stdout.write(stdout)
+            elif len(stdout) > 0:
+                return_value = 2
+        else:
+            cmd += ['-i']
+            RunCommand(cmd, cwd=top_dir, shell=sys.platform.startswith('win32'))
+    return return_value
+
+
+def _RunGnFormat(opts, paths, top_dir, upstream_commit):
+    cmd = ['gn', 'format']
+    if opts.dry_run or opts.diff:
+        cmd.append('--dry-run')
+    return_value = 0
+    for path in paths:
+        gn_ret = subprocess2.call(cmd + [path],
+                                  shell=sys.platform.startswith('win'),
+                                  cwd=top_dir)
+        if opts.dry_run and gn_ret == 2:
+            return_value = 2  # Not formatted.
+        elif opts.diff and gn_ret == 2:
+            # TODO this should compute and print the actual diff.
+            print('This change has GN build file diff for ' + path)
+        elif gn_ret != 0:
+            # For non-dry run cases (and non-2 return values for dry-run), a
+            # nonzero error code indicates a failure, probably because the
+            # file doesn't parse.
+            DieWithError('gn format failed on ' + path +
+                         '\nTry running `gn format` on this file manually.')
+    return return_value
+
+
+def _FormatXml(opts, paths, top_dir, upstream_commit):
+    # Skip the metrics formatting from the global presubmit hook. These files
+    # have a separate presubmit hook that issues an error if the files need
+    # formatting, whereas the top-level presubmit script merely issues a
+    # warning. Formatting these files is somewhat slow, so it's important not to
+    # duplicate the work.
+    if opts.presubmit:
+        return 0
+
+    return_value = 0
+    for path in paths:
+        xml_dir = GetMetricsDir(path)
+        if not xml_dir:
+            continue
+
+        tool_dir = os.path.join(top_dir, xml_dir)
+        pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
+        cmd = [shutil.which('vpython3'), pretty_print_tool, '--non-interactive']
+
+        # If the XML file is histograms.xml or enums.xml, add the xml path
+        # to the command as histograms/pretty_print.py now needs a relative
+        # path argument after splitting the histograms into multiple
+        # directories. For example, in tools/metrics/ukm, pretty-print could
+        # be run using: $ python pretty_print.py But in
+        # tools/metrics/histogrmas, pretty-print should be run with an
+        # additional relative path argument, like: $ python pretty_print.py
+        # metadata/UMA/histograms.xml $ python pretty_print.py enums.xml
+        if xml_dir == os.path.join('tools', 'metrics', 'histograms'):
+            if os.path.basename(path) not in ('histograms.xml', 'enums.xml',
+                                              'histogram_suffixes_list.xml'):
+                # Skip this XML file if it's not one of the known types.
+                continue
+            cmd.append(path)
+
+        if opts.dry_run or opts.diff:
+            cmd.append('--diff')
+
+        stdout = RunCommand(cmd, cwd=top_dir)
+        if opts.diff:
+            sys.stdout.write(stdout)
+        if opts.dry_run and stdout:
+            return_value = 2  # Not formatted.
+    return return_value
+
+
 def MatchingFileType(file_name, extensions):
     """Returns True if the file name ends with one of the given extensions."""
     return bool([ext for ext in extensions if file_name.lower().endswith(ext)])
@@ -6183,10 +6317,8 @@ def MatchingFileType(file_name, extensions):
 @metrics.collector.collect_metrics('git cl format')
 def CMDformat(parser, args):
     """Runs auto-formatting tools (clang-format etc.) on the diff."""
-    CLANG_EXTS = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto', '.java']
+    clang_exts = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto', '.java']
     GN_EXTS = ['.gn', '.gni', '.typemap']
-    RUST_EXTS = ['.rs']
-    SWIFT_EXTS = ['.swift']
     parser.add_option('--full',
                       action='store_true',
                       help='Reformat the full content of all touched files')
@@ -6202,12 +6334,11 @@ def CMDformat(parser, args):
         help='Disables formatting of various file types using clang-format.')
     parser.add_option('--python',
                       action='store_true',
-                      default=None,
                       help='Enables python formatting on all python files.')
     parser.add_option(
         '--no-python',
-        action='store_true',
-        default=False,
+        action='store_false',
+        dest='python',
         help='Disables python formatting on all python files. '
         'If neither --python or --no-python are set, python files that have a '
         '.style.yapf file in an ancestor directory will be formatted. '
@@ -6250,11 +6381,6 @@ def CMDformat(parser, args):
 
     opts, args = parser.parse_args(args)
 
-    if opts.python is not None and opts.no_python:
-        raise parser.error('Cannot set both --python and --no-python')
-    if opts.no_python:
-        opts.python = False
-
     # Normalize any remaining args against the current path, so paths relative
     # to the current directory are still resolved as expected.
     args = [os.path.join(os.getcwd(), arg) for arg in args]
@@ -6289,193 +6415,31 @@ def CMDformat(parser, args):
     diff_files = [x for x in diff_files if os.path.isfile(x)]
 
     if opts.js:
-        CLANG_EXTS.extend(['.js', '.ts'])
+        clang_exts.extend(['.js', '.ts'])
 
-    clang_diff_files = []
-    if opts.clang_format:
-        clang_diff_files = [
-            x for x in diff_files if MatchingFileType(x, CLANG_EXTS)
-        ]
-    python_diff_files = [x for x in diff_files if MatchingFileType(x, ['.py'])]
-    rust_diff_files = [x for x in diff_files if MatchingFileType(x, RUST_EXTS)]
-    swift_diff_files = [
-        x for x in diff_files if MatchingFileType(x, SWIFT_EXTS)
+    formatters = [
+        (GN_EXTS, _RunGnFormat),
+        (['.xml'], _FormatXml),
     ]
-    gn_diff_files = [x for x in diff_files if MatchingFileType(x, GN_EXTS)]
+    if opts.clang_format:
+        formatters += [(clang_exts, _RunClangFormatDiff)]
+    if opts.use_rust_fmt:
+        formatters += [(['.rs'], _RunRustFmt)]
+    if opts.use_swift_format:
+        formatters += [(['.swift'], _RunSwiftFormat)]
+    if opts.python is not False:
+        formatters += [(['.py'], _RunYapf)]
 
     top_dir = settings.GetRoot()
-
-    return_value = _RunClangFormatDiff(opts, clang_diff_files, top_dir,
-                                       upstream_commit)
-
-    if opts.use_rust_fmt:
-        rust_fmt_return_value = _RunRustFmt(opts, rust_diff_files, top_dir,
-                                            upstream_commit)
-        if rust_fmt_return_value == 2:
-            return_value = 2
-
-    if opts.use_swift_format:
-        if sys.platform != 'darwin':
-            DieWithError('swift-format is only supported on macOS.')
-        swift_format_return_value = _RunSwiftFormat(opts, swift_diff_files,
-                                                    top_dir, upstream_commit)
-        if swift_format_return_value == 2:
-            return_value = 2
-
-    # Similar code to above, but using yapf on .py files rather than
-    # clang-format on C/C++ files
-    py_explicitly_disabled = opts.python is not None and not opts.python
-    if python_diff_files and not py_explicitly_disabled:
-        depot_tools_path = os.path.dirname(os.path.abspath(__file__))
-        yapf_tool = os.path.join(depot_tools_path, 'yapf')
-
-        # Used for caching.
-        yapf_configs = {}
-        for f in python_diff_files:
-            # Find the yapf style config for the current file, defaults to depot
-            # tools default.
-            _FindYapfConfigFile(f, yapf_configs, top_dir)
-
-        # Turn on python formatting by default if a yapf config is specified.
-        # This breaks in the case of this repo though since the specified
-        # style file is also the global default.
-        if opts.python is None:
-            filtered_py_files = []
-            for f in python_diff_files:
-                if _FindYapfConfigFile(f, yapf_configs, top_dir) is not None:
-                    filtered_py_files.append(f)
-        else:
-            filtered_py_files = python_diff_files
-
-        # Note: yapf still seems to fix indentation of the entire file
-        # even if line ranges are specified.
-        # See https://github.com/google/yapf/issues/499
-        if not opts.full and filtered_py_files:
-            py_line_diffs = _ComputeDiffLineRanges(filtered_py_files,
-                                                   upstream_commit)
-
-        yapfignore_patterns = _GetYapfIgnorePatterns(top_dir)
-        filtered_py_files = _FilterYapfIgnoredFiles(filtered_py_files,
-                                                    yapfignore_patterns)
-
-        for f in filtered_py_files:
-            yapf_style = _FindYapfConfigFile(f, yapf_configs, top_dir)
-            # Default to pep8 if not .style.yapf is found.
-            if not yapf_style:
-                yapf_style = 'pep8'
-
-            with open(f, 'r') as py_f:
-                if 'python2' in py_f.readline():
-                    vpython_script = 'vpython'
-                else:
-                    vpython_script = 'vpython3'
-
-            cmd = [vpython_script, yapf_tool, '--style', yapf_style, f]
-
-            has_formattable_lines = False
-            if not opts.full:
-                # Only run yapf over changed line ranges.
-                for diff_start, diff_len in py_line_diffs[f]:
-                    diff_end = diff_start + diff_len - 1
-                    # Yapf errors out if diff_end < diff_start but this
-                    # is a valid line range diff for a removal.
-                    if diff_end >= diff_start:
-                        has_formattable_lines = True
-                        cmd += ['-l', '{}-{}'.format(diff_start, diff_end)]
-                # If all line diffs were removals we have nothing to format.
-                if not has_formattable_lines:
-                    continue
-
-            if opts.diff or opts.dry_run:
-                cmd += ['--diff']
-                # Will return non-zero exit code if non-empty diff.
-                stdout = RunCommand(cmd,
-                                    error_ok=True,
-                                    stderr=subprocess2.PIPE,
-                                    cwd=top_dir,
-                                    shell=sys.platform.startswith('win32'))
-                if opts.diff:
-                    sys.stdout.write(stdout)
-                elif len(stdout) > 0:
-                    return_value = 2
-            else:
-                cmd += ['-i']
-                RunCommand(cmd,
-                           cwd=top_dir,
-                           shell=sys.platform.startswith('win32'))
-
-    # Format GN build files. Always run on full build files for canonical form.
-    if gn_diff_files:
-        cmd = ['gn', 'format']
-        if opts.dry_run or opts.diff:
-            cmd.append('--dry-run')
-        for gn_diff_file in gn_diff_files:
-            gn_ret = subprocess2.call(cmd + [gn_diff_file],
-                                      shell=sys.platform.startswith('win'),
-                                      cwd=top_dir)
-            if opts.dry_run and gn_ret == 2:
-                return_value = 2  # Not formatted.
-            elif opts.diff and gn_ret == 2:
-                # TODO this should compute and print the actual diff.
-                print('This change has GN build file diff for ' + gn_diff_file)
-            elif gn_ret != 0:
-                # For non-dry run cases (and non-2 return values for dry-run), a
-                # nonzero error code indicates a failure, probably because the
-                # file doesn't parse.
-                DieWithError('gn format failed on ' + gn_diff_file +
-                             '\nTry running `gn format` on this file manually.')
-
-    # Skip the metrics formatting from the global presubmit hook. These files
-    # have a separate presubmit hook that issues an error if the files need
-    # formatting, whereas the top-level presubmit script merely issues a
-    # warning. Formatting these files is somewhat slow, so it's important not to
-    # duplicate the work.
-    if not opts.presubmit:
-        for diff_xml in GetDiffXMLs(diff_files):
-            xml_dir = GetMetricsDir(diff_xml)
-            if not xml_dir:
-                continue
-
-            tool_dir = os.path.join(top_dir, xml_dir)
-            pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
-            cmd = [
-                shutil.which('vpython3'), pretty_print_tool, '--non-interactive'
-            ]
-
-            # If the XML file is histograms.xml or enums.xml, add the xml path
-            # to the command as histograms/pretty_print.py now needs a relative
-            # path argument after splitting the histograms into multiple
-            # directories. For example, in tools/metrics/ukm, pretty-print could
-            # be run using: $ python pretty_print.py But in
-            # tools/metrics/histogrmas, pretty-print should be run with an
-            # additional relative path argument, like: $ python pretty_print.py
-            # metadata/UMA/histograms.xml $ python pretty_print.py enums.xml
-
-            if xml_dir == os.path.join('tools', 'metrics', 'histograms'):
-                if os.path.basename(diff_xml) not in (
-                        'histograms.xml', 'enums.xml',
-                        'histogram_suffixes_list.xml'):
-                    # Skip this XML file if it's not one of the known types.
-                    continue
-                cmd.append(diff_xml)
-
-            if opts.dry_run or opts.diff:
-                cmd.append('--diff')
-
-            stdout = RunCommand(cmd, cwd=top_dir)
-            if opts.diff:
-                sys.stdout.write(stdout)
-            if opts.dry_run and stdout:
-                return_value = 2  # Not formatted.
+    return_value = 0
+    for file_types, format_func in formatters:
+        paths = [p for p in diff_files if MatchingFileType(p, file_types)]
+        if not paths:
+            continue
+        ret = format_func(opts, paths, top_dir, upstream_commit)
+        return_value = return_value or ret
 
     return return_value
-
-
-def GetDiffXMLs(diff_files):
-    return [
-        os.path.normpath(x) for x in diff_files
-        if MatchingFileType(x, ['.xml'])
-    ]
 
 
 def GetMetricsDir(diff_xml):
