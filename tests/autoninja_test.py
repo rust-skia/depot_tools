@@ -57,7 +57,7 @@ class AutoninjaTest(trial_dir.TestCase):
 
         self.assertIn('-j', args)
         parallel_j = int(args[args.index('-j') + 1])
-        self.assertGreater(parallel_j, multiprocessing.cpu_count())
+        self.assertGreater(parallel_j, multiprocessing.cpu_count() * 2)
         self.assertIn(os.path.join(autoninja.SCRIPT_DIR, 'ninja.py'), args)
 
     def test_autoninja_reclient(self):
@@ -73,7 +73,30 @@ class AutoninjaTest(trial_dir.TestCase):
 
         self.assertIn('-j', args)
         parallel_j = int(args[args.index('-j') + 1])
-        self.assertGreater(parallel_j, multiprocessing.cpu_count())
+        self.assertGreater(parallel_j, multiprocessing.cpu_count() * 2)
+        self.assertIn(os.path.join(autoninja.SCRIPT_DIR, 'ninja_reclient.py'),
+                      args)
+
+    def test_autoninja_import(self):
+        out_dir = os.path.join('out', 'dir')
+        # Make sure nested import directives work. This is based on the
+        # reclient test.
+        write(os.path.join(out_dir, 'args.gn'), 'import("//out/common.gni")')
+        write(os.path.join('out', 'common.gni'), 'import("//out/common_2.gni")')
+        # The test will only pass if both imports work and
+        # 'use_remoteexec=true' is seen.
+        write(os.path.join('out', 'common_2.gni'), 'use_remoteexec=true')
+        write('.gclient', '')
+        write('.gclient_entries', 'entries = {"buildtools": "..."}')
+        write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
+              'RBE_v=2')
+        write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
+
+        args = autoninja.main(['autoninja.py', '-C', out_dir]).split()
+
+        self.assertIn('-j', args)
+        parallel_j = int(args[args.index('-j') + 1])
+        self.assertGreater(parallel_j, multiprocessing.cpu_count() * 2)
         self.assertIn(os.path.join(autoninja.SCRIPT_DIR, 'ninja_reclient.py'),
                       args)
 
