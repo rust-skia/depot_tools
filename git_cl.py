@@ -41,6 +41,7 @@ from typing import Tuple
 import auth
 import clang_format
 import fix_encoding
+import gclient_paths
 import gclient_utils
 import gerrit_util
 import git_common
@@ -630,7 +631,7 @@ def _print_tryjobs(options, builds):
     print('Total: %d tryjobs' % total)
 
 
-def _ComputeDiffLineRanges(files, upstream_commit):
+def _ComputeFormatDiffLineRanges(files, upstream_commit):
     """Gets the changed line ranges for each file since upstream_commit.
 
   Parses a git diff on provided files and returns a dict that maps a file name
@@ -674,9 +675,11 @@ def _ComputeDiffLineRanges(files, upstream_commit):
 
             diff_start = int(diff_start)
             diff_count = int(diff_count)
+            diff_end = diff_start + diff_count - 1
 
-            # If diff_count == 0 this is a removal we can ignore.
-            line_diffs[curr_file].append((diff_start, diff_count))
+            # Only format added ranges (not removed ones).
+            if diff_end >= diff_start:
+                line_diffs[curr_file].append((diff_start, diff_end))
 
     return line_diffs
 
@@ -6116,6 +6119,60 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
     return return_value
 
 
+def _FindGoogleJavaFormat():
+    primary_solution_path = gclient_paths.GetPrimarySolutionPath()
+    if primary_solution_path:
+        path = os.path.join(primary_solution_path, 'third_party',
+                            'google-java-format', 'google-java-format')
+        if os.path.exists(path):
+            return path
+
+    return shutil.which('google-java-format')
+
+
+def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
+    """Runs google-java-format and sets a return value if necessary."""
+    google_java_format = _FindGoogleJavaFormat()
+    if google_java_format is None:
+        DieWithError('Could not find google-java-format.')
+
+    base_cmd = [google_java_format, '--aosp']
+    if opts.dry_run or opts.diff:
+        base_cmd += ['--dry-run']
+    else:
+        base_cmd += ['--replace']
+
+    changed_lines_only = not (opts.full or settings.GetFormatFullByDefault())
+    if changed_lines_only:
+        line_diffs = _ComputeFormatDiffLineRanges(paths, upstream_commit)
+
+    results = []
+    kwds = {'error_ok': True, 'cwd': top_dir}
+    with multiprocessing.pool.ThreadPool() as pool:
+        for path in paths:
+            cmd = base_cmd.copy()
+            if changed_lines_only:
+                ranges = line_diffs.get(path)
+                if not ranges:
+                    # E.g. There were only deleted lines.
+                    continue
+                cmd.extend('--lines={}:{}'.format(a, b) for a, b in ranges)
+
+            results.append(
+                pool.apply_async(RunCommand, args=[cmd + [path]], kwds=kwds))
+
+        return_value = 0
+        for result in results:
+            stdout = result.get()
+            if stdout:
+                if opts.diff:
+                    sys.stdout.write('Requires formatting: ' + stdout)
+                else:
+                    return_value = 2
+
+        return return_value
+
+
 def _RunRustFmt(opts, rust_diff_files, top_dir, upstream_commit):
     """Runs rustfmt.  Just like _RunClangFormatDiff returns 2 to indicate that
   presubmit checks have failed (and returns 0 otherwise)."""
@@ -6188,7 +6245,7 @@ def _RunYapf(opts, paths, top_dir, upstream_commit):
     # even if line ranges are specified.
     # See https://github.com/google/yapf/issues/499
     if not opts.full and paths:
-        py_line_diffs = _ComputeDiffLineRanges(paths, upstream_commit)
+        line_diffs = _ComputeFormatDiffLineRanges(paths, upstream_commit)
 
     yapfignore_patterns = _GetYapfIgnorePatterns(top_dir)
     paths = _FilterYapfIgnoredFiles(paths, yapfignore_patterns)
@@ -6208,19 +6265,13 @@ def _RunYapf(opts, paths, top_dir, upstream_commit):
 
         cmd = [vpython_script, yapf_tool, '--style', yapf_style, path]
 
-        has_formattable_lines = False
         if not opts.full:
-            # Only run yapf over changed line ranges.
-            for diff_start, diff_len in py_line_diffs[path]:
-                diff_end = diff_start + diff_len - 1
-                # Yapf errors out if diff_end < diff_start but this
-                # is a valid line range diff for a removal.
-                if diff_end >= diff_start:
-                    has_formattable_lines = True
-                    cmd += ['-l', '{}-{}'.format(diff_start, diff_end)]
-            # If all line diffs were removals we have nothing to format.
-            if not has_formattable_lines:
+            ranges = line_diffs.get(path)
+            if not ranges:
                 continue
+            # Only run yapf over changed line ranges.
+            for diff_start, diff_end in ranges:
+                cmd += ['-l', '{}-{}'.format(diff_start, diff_end)]
 
         if opts.diff or opts.dry_run:
             cmd += ['--diff']
@@ -6379,6 +6430,11 @@ def CMDformat(parser, args):
         action='store_false',
         help='Disables formatting of Swift file types using swift-format.')
 
+    # Temporary flag to test with google-java-format.
+    parser.add_option('--google-java-format',
+                      action='store_true',
+                      help=optparse.SUPPRESS_HELP)
+
     opts, args = parser.parse_args(args)
 
     # Normalize any remaining args against the current path, so paths relative
@@ -6421,6 +6477,9 @@ def CMDformat(parser, args):
         (GN_EXTS, _RunGnFormat),
         (['.xml'], _FormatXml),
     ]
+    if opts.google_java_format:
+        clang_exts.remove('.java')
+        formatters += [(['.java'], _RunGoogleJavaFormat)]
     if opts.clang_format:
         formatters += [(clang_exts, _RunClangFormatDiff)]
     if opts.use_rust_fmt:
