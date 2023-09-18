@@ -37,9 +37,14 @@ def _gn_lines(output_dir, path):
         for line in f:
             match = import_re.match(line)
             if match:
-                import_path = os.path.normpath(
-                    os.path.join(output_dir, '..', '..',
-                                 match.groups()[0][2:]))
+                raw_import_path = match.groups()[0]
+                if raw_import_path[:2] == "//":
+                    import_path = os.path.normpath(
+                        os.path.join(output_dir, '..', '..',
+                                     raw_import_path[2:]))
+                else:
+                    import_path = os.path.normpath(
+                        os.path.join(os.path.dirname(path), raw_import_path))
                 for import_line in _gn_lines(output_dir, import_path):
                     yield import_line
             else:
