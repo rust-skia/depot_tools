@@ -94,6 +94,8 @@ import sys
 import time
 import urllib.parse
 
+from collections.abc import Collection, Mapping, Sequence
+
 import detect_host_arch
 import fix_encoding
 import git_common
@@ -2377,7 +2379,8 @@ it or fix the checkout.
                 # Service URLs should be constant over the scope of a cipd
                 # root, so a var per DEPS file specifying the service URL
                 # should suffice.
-                'https://chrome-infra-packages.appspot.com')
+                'https://chrome-infra-packages.appspot.com',
+                log_level='info' if self._options.verbose else None)
         return self._cipd_root
 
     @property
