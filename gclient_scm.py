@@ -615,6 +615,14 @@ class GitWrapper(SCMWrapper):
                     subprocess2.capture(
                         ['git', 'config', 'fetch.recurseSubmodules', 'off'],
                         cwd=args[0].checkout_path)
+                if 'push.recursesubmodules=off' not in config:
+                    # The default is off, but if user sets submodules.recurse to
+                    # on, this becomes on too. We never want to push submodules
+                    # for gclient managed repositories. Push, even if a no-op,
+                    # will increase `git cl upload` latency.
+                    subprocess2.capture(
+                        ['git', 'config', 'push.recurseSubmodules', 'off'],
+                        cwd=args[0].checkout_path)
             return return_val
 
         return wrapper
