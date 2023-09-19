@@ -387,6 +387,41 @@ class GClientSmokeGIT(gclient_smoketest_base.GClientSmokeBase):
             self.githash('repo_2', 1),
             self.gitrevparse(os.path.join(self.root_dir, 'src/repo2')))
 
+    def testInstallHooks_no_existing_hook(self):
+        repo = os.path.join(self.git_base, 'repo_18')
+        self.gclient(['config', repo, '--name', 'src'], cwd=repo)
+        self.gclient(['sync'], cwd=repo)
+        self.gclient(['installhooks'], cwd=repo)
+
+        hook = os.path.join(repo, 'src', '.git', 'hooks', 'pre-commit')
+        with open(hook) as f:
+            contents = f.read()
+            self.assertIn('python3 "$GCLIENT_PRECOMMIT"', contents)
+
+        # Later runs should only inform that the hook was already installed.
+        stdout, _, _ = self.gclient(['installhooks'], cwd=repo)
+        self.assertIn(f'{hook} already contains the gclient pre-commit hook.',
+                      stdout)
+
+    def testInstallHooks_existing_hook(self):
+        repo = os.path.join(self.git_base, 'repo_19')
+        self.gclient(['config', repo, '--name', 'src'], cwd=repo)
+        self.gclient(['sync'], cwd=repo)
+
+        # Create an existing pre-commit hook.
+        hook = os.path.join(repo, 'src', '.git', 'hooks', 'pre-commit')
+        hook_contents = ['#!/bin/sh', 'echo hook']
+        with open(hook, 'w') as f:
+            f.write('\n'.join(hook_contents))
+
+        stdout, _, _ = self.gclient(['installhooks'], cwd=repo)
+        self.assertIn('Please append the following lines to the hook', stdout)
+
+        # The orignal hook is left unchanged.
+        with open(hook) as f:
+            contents = f.read().splitlines()
+            self.assertEqual(hook_contents, contents)
+
     def testRunHooks(self):
         self.gclient(['config', self.git_base + 'repo_1', '--name', 'src'])
         self.gclient(['sync', '--deps', 'mac'])
