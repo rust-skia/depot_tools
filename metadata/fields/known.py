@@ -33,6 +33,7 @@ LOCAL_MODIFICATIONS = field_types.FreeformTextField("Local Modifications",
 # Yes/no fields.
 SECURITY_CRITICAL = field_types.YesNoField("Security Critical")
 SHIPPED = field_types.YesNoField("Shipped")
+SHIPPED_IN_CHROMIUM = field_types.YesNoField("Shipped in Chromium")
 LICENSE_ANDROID_COMPATIBLE = field_types.YesNoField(
     "License Android Compatible")
 
@@ -55,6 +56,7 @@ ALL_FIELDS = (
     LICENSE_FILE,
     SECURITY_CRITICAL,
     SHIPPED,
+    SHIPPED_IN_CHROMIUM,
     LICENSE_ANDROID_COMPATIBLE,
     CPE_PREFIX,
     DESCRIPTION,

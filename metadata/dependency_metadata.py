@@ -36,6 +36,15 @@ class DependencyMetadata:
         known_fields.SHIPPED,
     }
 
+    # Aliases for fields, where:
+    #     * key is the alias field; and
+    #     * value is the main field to which it should be mapped.
+    # Note: if both the alias and main fields are specified in metadata,
+    #       the value from the alias field will be used.
+    _FIELD_ALIASES = {
+        known_fields.SHIPPED_IN_CHROMIUM: known_fields.SHIPPED,
+    }
+
     def __init__(self):
         # The record of all entries added, including repeated fields.
         self._entries: List[Tuple[str, str]] = []
@@ -122,6 +131,32 @@ class DependencyMetadata:
                                        ])
             results.append(error)
 
+        # Process alias fields.
+        sources = {}
+        for alias_field, main_field in self._FIELD_ALIASES.items():
+            if alias_field in self._metadata:
+                # Validate the value that was present for the main field
+                # before overwriting it with the alias field value.
+                if main_field in self._metadata:
+                    main_value = self._metadata.get(main_field)
+                    field_result = main_field.validate(main_value)
+                    if field_result:
+                        field_result.set_tag(tag="field",
+                                             value=main_field.get_name())
+                        results.append(field_result)
+
+                self._metadata[main_field] = self._metadata[alias_field]
+                sources[main_field] = alias_field
+                self._metadata.pop(alias_field)
+
+        # Validate values for all present fields.
+        for field, value in self._metadata.items():
+            source_field = sources.get(field) or field
+            field_result = source_field.validate(value)
+            if field_result:
+                field_result.set_tag(tag="field", value=source_field.get_name())
+                results.append(field_result)
+
         # Check required fields are present.
         required_fields = self._assess_required_fields()
         for field in required_fields:
@@ -149,13 +184,6 @@ class DependencyMetadata:
                 additional=[f"Provide at least one of [{names}]."],
             )
             results.append(error)
-
-        # Validate values for all present fields.
-        for field, value in self._metadata.items():
-            field_result = field.validate(value)
-            if field_result:
-                field_result.set_tag(tag="field", value=field.get_name())
-                results.append(field_result)
 
         # Check existence of the license file(s) on disk.
         license_file_value = self._metadata.get(known_fields.LICENSE_FILE)

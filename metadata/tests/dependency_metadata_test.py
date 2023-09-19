@@ -44,6 +44,74 @@ class DependencyValidationTest(unittest.TestCase):
         self.assertTrue(isinstance(results[0], vr.ValidationError))
         self.assertEqual(results[0].get_reason(), "There is a repeated field.")
 
+    def test_only_alias_field(self):
+        """Check that an alias field can be used for a main field."""
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(),
+                             "https://www.example.com")
+        dependency.add_entry(known_fields.NAME.get_name(),
+                             "Test alias field used")
+        dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
+        dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        # Use Shipped in Chromium instead of Shipped.
+        dependency.add_entry(known_fields.SHIPPED_IN_CHROMIUM.get_name(), "no")
+        dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
+
+        results = dependency.validate(
+            source_file_dir=os.path.join(_THIS_DIR, "data"),
+            repo_root_dir=_THIS_DIR,
+        )
+        self.assertEqual(len(results), 0)
+
+    def test_alias_overwrite_invalid_field(self):
+        """Check that the value for an overwritten field (from an alias
+        field) is still validated.
+        """
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(),
+                             "https://www.example.com")
+        dependency.add_entry(known_fields.NAME.get_name(),
+                             "Test alias field overwrite")
+        dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
+        dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.SHIPPED_IN_CHROMIUM.get_name(), "no")
+        dependency.add_entry(known_fields.SHIPPED.get_name(), "test")
+        dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
+
+        results = dependency.validate(
+            source_file_dir=os.path.join(_THIS_DIR, "data"),
+            repo_root_dir=_THIS_DIR,
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].get_reason(), "Shipped is invalid.")
+
+    def test_alias_invalid_field_attributed(self):
+        """Check that an invalid value from an alias field is attributed
+        to that alias field.
+        """
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(),
+                             "https://www.example.com")
+        dependency.add_entry(known_fields.NAME.get_name(),
+                             "Test alias field error attributed")
+        dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
+        dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.SHIPPED_IN_CHROMIUM.get_name(),
+                             "test")
+        dependency.add_entry(known_fields.SHIPPED.get_name(), "yes")
+        dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
+
+        results = dependency.validate(
+            source_file_dir=os.path.join(_THIS_DIR, "data"),
+            repo_root_dir=_THIS_DIR,
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].get_reason(),
+                         "Shipped in Chromium is invalid.")
+
     def test_versioning_field(self):
         """Check that a validation error is returned for insufficient
         versioning info."""
