@@ -110,7 +110,8 @@ class LicenseFileField(field_types.MetadataField):
                     source_file_dir, os.path.normpath(license_filename))
 
             if not os.path.exists(license_filepath):
-                invalid_values.append(license_filepath)
+                rel_filepath = os.path.relpath(license_filepath, repo_root_dir)
+                invalid_values.append(rel_filepath)
 
         if invalid_values:
             missing = ", ".join(invalid_values)
@@ -118,7 +119,7 @@ class LicenseFileField(field_types.MetadataField):
                 reason=f"{self._name} is invalid.",
                 additional=[
                     "Failed to find all license files on local disk.",
-                    f"Missing files:{missing}.",
+                    f"Missing files: {missing}.",
                 ])
 
         return None
