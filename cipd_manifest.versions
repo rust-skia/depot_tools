@@ -62,20 +62,20 @@ infra/chromeperf/pinpoint/windows-arm64
 	peMmYTAzWTqkVIGb7qSLKrW6TTat4K5SMnmfBMqWr74C
 
 infra/goma/client/linux-amd64
-	git_revision:3435fce1653aa1d611c2834901561be7e6ccfab0
-	6EmVw4-ll63s6BZJ_IqUnc4e0EhMfmuhZWlym7rNU34C
+	git_revision:f25b26723f9344697b3651ed7d07c5cce018da65
+	fyeEa31O__60il9riLHhVjSzlAHFAh_w9bSXuatILocC
 
 infra/goma/client/mac-amd64
-	git_revision:3435fce1653aa1d611c2834901561be7e6ccfab0
-	Q8Oi9o1glHbQ0OiNLg0j0CD78so89daZ3a3jhTcwahYC
+	git_revision:f25b26723f9344697b3651ed7d07c5cce018da65
+	P4XBF_dGce6yAE79Ryfisf0jWPbQC5zS41soggbbEpEC
 
 infra/goma/client/mac-arm64
-	git_revision:3435fce1653aa1d611c2834901561be7e6ccfab0
-	8A_rsX8IeV_S8J6Hn8zfwWab7vLsVjbsujR0vuDNxxcC
+	git_revision:f25b26723f9344697b3651ed7d07c5cce018da65
+	xWxOsHnm-jX5B3L92NvRxem_JVoazbOPdHBymkFntR4C
 
 infra/goma/client/windows-amd64
-	git_revision:3435fce1653aa1d611c2834901561be7e6ccfab0
-	T6Xs4ivcOHmuFd22Lf4mjDNhiZARmLvjK7P1RN2Q35kC
+	git_revision:f25b26723f9344697b3651ed7d07c5cce018da65
+	L1W7MJJCgZg7B3PWB7qGkt6qHZ5IEG-4nu5pSxieSSgC
 
 infra/rbe/client/linux-amd64
 	re_client_version:0.101.0.6210d0d-gomaip
