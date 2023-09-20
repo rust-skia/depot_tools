@@ -273,12 +273,14 @@ def main(args):
             j_value = min(j_value, core_limit)
 
             # On Windows, a -j higher than 1000 doesn't improve build times.
-            # On POSIX, ninja is limited to at most FD_SETSIZE (1024) open file
+            # On macOS, ninja is limited to at most FD_SETSIZE (1024) open file
             # descriptors.
-            j_value = min(j_value, 1000)
+            if sys.platform in ['darwin', 'win32']:
+                j_value = min(j_value, 1000)
+
+            # Use a j value that reliably works with the open file descriptors
+            # limit.
             if sys.platform in ['darwin', 'linux']:
-                # Use a j value that reliably works with the open file
-                # descriptors limit.
                 j_value = min(j_value, int(fileno_limit * 0.8))
 
             args.append('%d' % j_value)
