@@ -19,6 +19,12 @@ import metadata.parse
 import metadata.validation_result as vr
 
 
+_TRANSITION_PRESCRIPT = (
+    "The following issue should be addressed now, as it will become a "
+    "presubmit error (instead of warning) once third party metadata "
+    "validation is enforced.\nThird party metadata issue:")
+
+
 def validate_content(content: str, source_file_dir: str,
                      repo_root_dir: str) -> List[vr.ValidationResult]:
     """Validate the content as a metadata file.
@@ -129,17 +135,17 @@ def check_file(
     error_messages = []
     warning_messages = []
     for result in results:
-        message = result.get_message(width=60)
-
         # TODO(aredulla): Actually distinguish between validation errors
         # and warnings. The quality of metadata is currently being
         # uplifted, but is not yet guaranteed to pass validation. So for
         # now, all validation results will be returned as warnings so
         # CLs are not blocked by invalid metadata in presubmits yet.
         # Bug: b/285453019.
-        # if result.is_fatal():
-        #   error_messages.append(message)
-        # else:
+        if result.is_fatal():
+            message = result.get_message(prescript=_TRANSITION_PRESCRIPT,
+                                         width=60)
+        else:
+            message = result.get_message(width=60)
         warning_messages.append(message)
 
     return error_messages, warning_messages
