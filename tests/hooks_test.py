@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 import unittest.mock
+from unittest.mock import patch
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
@@ -25,6 +26,7 @@ class HooksTest(unittest.TestCase):
         self.repo = tempfile.mkdtemp()
         self.env = os.environ.copy()
         self.env['SKIP_GITLINK_PRECOMMIT'] = '0'
+        self.env['TESTING_ANSWER'] = 'n'
         self.populate()
 
     def tearDown(self):
@@ -118,12 +120,15 @@ class HooksTest(unittest.TestCase):
         _, stderr = git.run_with_stderr('commit',
                                         '-m',
                                         'regular file and gitlinks',
-                                        cwd=self.repo)
+                                        cwd=self.repo,
+                                        env=self.env)
 
         self.assertIn('dep_a', diff_before_commit)
         self.assertIn('dep_b', diff_before_commit)
         # Gitlinks should be dropped.
-        self.assertIn('unstaging 2 staged gitlink(s)', stderr)
+        self.assertIn(
+            'Found no change to DEPS, but found staged gitlink(s) in diff',
+            stderr)
         diff_after_commit = git.run('diff',
                                     '--name-only',
                                     'HEAD^',
@@ -131,6 +136,46 @@ class HooksTest(unittest.TestCase):
                                     cwd=self.repo)
         self.assertNotIn('dep_a', diff_after_commit)
         self.assertNotIn('dep_b', diff_after_commit)
+        self.assertIn('foo', diff_after_commit)
+
+    def testPreCommit_IntentionalGitlinkWithoutDEPS(self):
+        # Intentional Gitlink changes staged without a DEPS change.
+        self.write(self.repo, 'foo', 'foo')
+        git.run('add', '.', cwd=self.repo)
+        git.run('update-index',
+                '--replace',
+                '--cacheinfo',
+                f'160000,{"b"*40},dep_a',
+                cwd=self.repo)
+        git.run('update-index',
+                '--replace',
+                '--cacheinfo',
+                f'160000,{"a"*40},dep_b',
+                cwd=self.repo)
+        diff_before_commit = git.run('diff',
+                                     '--cached',
+                                     '--name-only',
+                                     cwd=self.repo)
+        self.env['TESTING_ANSWER'] = ''
+        _, stderr = git.run_with_stderr('commit',
+                                        '-m',
+                                        'regular file and gitlinks',
+                                        cwd=self.repo,
+                                        env=self.env)
+
+        self.assertIn('dep_a', diff_before_commit)
+        self.assertIn('dep_b', diff_before_commit)
+        # Gitlinks should be dropped.
+        self.assertIn(
+            'Found no change to DEPS, but found staged gitlink(s) in diff',
+            stderr)
+        diff_after_commit = git.run('diff',
+                                    '--name-only',
+                                    'HEAD^',
+                                    'HEAD',
+                                    cwd=self.repo)
+        self.assertIn('dep_a', diff_after_commit)
+        self.assertIn('dep_b', diff_after_commit)
         self.assertIn('foo', diff_after_commit)
 
     def testPreCommit_OnlyGitlinkWithoutDEPS(self):
@@ -148,7 +193,8 @@ class HooksTest(unittest.TestCase):
         ret = git.run_with_retcode('commit',
                                    '-m',
                                    'gitlink only',
-                                   cwd=self.repo)
+                                   cwd=self.repo,
+                                   env=self.env)
 
         self.assertIn('dep_a', diff_before_commit)
         # Gitlinks should be droppped and the empty commit should be aborted.
@@ -178,7 +224,8 @@ class HooksTest(unittest.TestCase):
                                    '--all',
                                    '-m',
                                    'commit all',
-                                   cwd=self.repo)
+                                   cwd=self.repo,
+                                   env=self.env)
 
         self.assertIn('dep_a', diff_before_commit)
         self.assertEqual(ret, 0)

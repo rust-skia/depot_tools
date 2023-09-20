@@ -17,6 +17,7 @@ import git_common
 from gclient_eval import SYNC
 
 SKIP_VAR = 'SKIP_GITLINK_PRECOMMIT'
+TESTING_ANSWER = 'TESTING_ANSWER'
 
 
 def main():
@@ -55,15 +56,39 @@ def main():
         # DEPS only has to be in sync with gitlinks when state is SYNC.
         exit(0)
 
-    print(f'Found no change to DEPS, unstaging {len(staged_gitlinks)} '
-          f'staged gitlink(s) found in diff:\n{diff}')
-    git_common.run('restore', '--staged', '--', *staged_gitlinks)
+    prompt = (
+        f'Found no change to DEPS, but found staged gitlink(s) in diff:\n{diff}\n'
+        'Press Enter/Return if you intended to include them or "n" to unstage '
+        '(exclude from commit) the gitlink(s): ')
+    print(prompt)
+
+    if os.getenv(TESTING_ANSWER) is not None:
+        answer = os.getenv(TESTING_ANSWER)
+    else:
+        try:
+            sys.stdin = open("/dev/tty", "r")
+        except (FileNotFoundError, OSError):
+            try:
+                sys.stdin = open('CON')
+            except:
+                print(
+                    'Unable to acquire input handle, proceeding without modifications'
+                )
+                exit(0)
+        answer = input()
 
     disable_msg = f'To disable this hook, set {SKIP_VAR}=1'
-    if len(staged_gitlinks) == len(diff.splitlines()):
-        print('Found no changes after unstaging gitlinks, aborting commit.')
-        print(disable_msg)
-        exit(1)
+    if answer.lower() == 'n':
+        print(
+            f'\nUnstaging {len(staged_gitlinks)} staged gitlink(s) found in diff'
+        )
+        git_common.run('restore', '--staged', '--', *staged_gitlinks)
+        if len(staged_gitlinks) == len(diff.splitlines()):
+            print(
+                '\nFound no changes after unstaging gitlinks, aborting commit.')
+            print(disable_msg)
+            exit(1)
+
     print(disable_msg)
 
 
