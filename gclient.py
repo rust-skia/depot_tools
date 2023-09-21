@@ -2006,6 +2006,9 @@ it or fix the checkout.
         if not os.path.exists(git_dir):
             return
 
+        git_hooks_dir = os.path.join(git_dir, 'hooks')
+        os.makedirs(git_hooks_dir, exist_ok=True)
+
         hook = os.path.join(git_dir, 'hooks', 'pre-commit')
         if os.path.exists(hook):
             with open(hook, 'r') as f:
