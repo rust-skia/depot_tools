@@ -2,10 +2,11 @@
 *.pyc
 
 # ignore cipd client files
-/.cipd_bin
+/.cipd_bin/
 /.cipd_bin_cros_python2
 /.cipd_client*
-/.versions
+/.cipd_client_cache/
+/.versions/
 
 # Ignore "disable auto update" sentinel file.
 .disable_auto_update
@@ -41,7 +42,7 @@
 /git_bin
 /git-*_bin
 /svn_bin
-/external_bin
+/external_bin/
 /win_toolchain/vs2013_files
 /win_toolchain/vs_files
 /win_toolchain/*.timestamps
