@@ -27,7 +27,6 @@ import sys
 import time
 import urllib.request
 
-
 # These build configs affect build performance.
 ALLOWLISTED_CONFIGS = ('symbol_level', 'use_goma', 'is_debug',
                        'is_component_build', 'enable_nacl', 'host_os',

@@ -50,7 +50,7 @@ def SaveConfig(config):
 
 
 def ShowMessage(countdown):
-    whitelisted = '\n'.join(
+    allowlisted = '\n'.join(
         ['  * %s' % config for config in ninjalog_uploader.ALLOWLISTED_CONFIGS])
     print("""
 Your ninjalog will be uploaded to build stats server. The uploaded log will be
@@ -80,7 +80,7 @@ You can find a more detailed explanation in
 or
 https://chromium.googlesource.com/chromium/tools/depot_tools/+/main/ninjalog.README.md
 
-""" % (whitelisted, countdown, __file__, __file__,
+""" % (allowlisted, countdown, __file__, __file__,
        os.path.abspath(os.path.join(THIS_DIR, "ninjalog.README.md"))))
 
 
@@ -122,13 +122,13 @@ def main():
 
     # Run upload script without wait.
     devnull = open(os.devnull, "w")
-    creationnflags = 0
+    creationflags = 0
     if platform.system() == 'Windows':
-        creationnflags = subprocess.CREATE_NEW_PROCESS_GROUP
+        creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
     subprocess2.Popen([sys.executable, UPLOADER] + sys.argv[1:],
                       stdout=devnull,
                       stderr=devnull,
-                      creationflags=creationnflags)
+                      creationflags=creationflags)
 
 
 if __name__ == '__main__':
