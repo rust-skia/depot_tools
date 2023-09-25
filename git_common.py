@@ -423,6 +423,13 @@ def warn_submodule():
     # TODO(crbug.com/1475405): Warn users if the project uses submodules and
     # they have fsmonitor enabled.
     if sys.platform.startswith('darwin') and is_fsmonitor_enabled():
+        version_string = run('--version')
+        if version_string.endswith('goog'):
+            return
+        version_tuple = _extract_git_tuple(version_string)
+        if version_tuple >= (2, 43):
+            return
+
         print(colorama.Fore.RED)
         print('WARNING: You have fsmonitor enabled. There is a major issue '
               'resulting in git diff-index returning wrong results. Please '
@@ -1119,6 +1126,10 @@ def get_git_version():
     """Returns a tuple that contains the numeric components of the current git
   version."""
     version_string = run('--version')
+    return _extract_git_tuple(version_string)
+
+
+def _extract_git_tuple(version_string):
     version_match = re.search(r'(\d+.)+(\d+)', version_string)
     version = version_match.group() if version_match else ''
 

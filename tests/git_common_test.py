@@ -16,6 +16,9 @@ import tempfile
 import time
 import unittest
 
+from io import StringIO
+from unittest import mock
+
 DEPOT_TOOLS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEPOT_TOOLS_ROOT)
 
@@ -1129,6 +1132,38 @@ class GitTestUtilsTest(git_test_utils.GitRepoReadOnlyTestBase):
             'Custom Committer committer@example.com '
             '1990-04-05 06:07:08 +0000',
             self.repo.show_commit('C', format_string='%cn %ce %ci'))
+
+
+class WarnSubmoduleTest(unittest.TestCase):
+    def setUp(self):
+        import git_common
+        self.warn_submodule = git_common.warn_submodule
+        mock.patch('sys.stdout', StringIO()).start()
+
+    def testWarnFSMonitorOldVersion(self):
+        mock.patch('git_common.is_fsmonitor_enabled', lambda: True).start()
+        mock.patch('sys.platform', 'darwin').start()
+        mock.patch('git_common.run', lambda _: 'git version 2.40.0').start()
+        self.warn_submodule()
+        self.assertTrue('WARNING: You have fsmonitor enabled.' in \
+                        sys.stdout.getvalue())
+
+    def testWarnFSMonitorNewVersion(self):
+        mock.patch('git_common.is_fsmonitor_enabled', lambda: True).start()
+        mock.patch('sys.platform', 'darwin').start()
+        mock.patch('git_common.run', lambda _: 'git version 2.43.1').start()
+        self.warn_submodule()
+        self.assertFalse('WARNING: You have fsmonitor enabled.' in \
+                        sys.stdout.getvalue())
+
+    def testWarnFSMonitorGoogVersion(self):
+        mock.patch('git_common.is_fsmonitor_enabled', lambda: True).start()
+        mock.patch('sys.platform', 'darwin').start()
+        mock.patch('git_common.run',
+                   lambda _: 'git version 2.42.0.515.A-goog').start()
+        self.warn_submodule()
+        self.assertFalse('WARNING: You have fsmonitor enabled.' in \
+                        sys.stdout.getvalue())
 
 
 if __name__ == '__main__':
