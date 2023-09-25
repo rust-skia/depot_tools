@@ -3,8 +3,6 @@
 # found in the LICENSE file.
 """Google OAuth2 related functions."""
 
-from __future__ import print_function
-
 import collections
 import datetime
 import functools

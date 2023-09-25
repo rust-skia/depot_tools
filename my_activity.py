@@ -32,8 +32,6 @@ To add additional gerrit instances, one can pass a JSON file as parameter:
 # check those details to determine if there was activity in the given period.
 # This means that query time scales mostly with (today() - begin).
 
-from __future__ import print_function
-
 import collections
 import contextlib
 from datetime import datetime

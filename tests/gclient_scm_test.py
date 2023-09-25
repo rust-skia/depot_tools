@@ -6,8 +6,6 @@
 
 # pylint: disable=E1103
 
-from __future__ import unicode_literals
-
 from io import StringIO
 import json
 import logging

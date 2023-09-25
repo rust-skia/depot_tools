@@ -3,8 +3,6 @@
 # found in the LICENSE file.
 """This module holds utilities which make writing configs easier."""
 
-from __future__ import print_function
-
 import json
 
 

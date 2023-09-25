@@ -6,8 +6,6 @@
 
 # pylint: disable=no-member,E1103
 
-from __future__ import unicode_literals
-
 import functools
 import io
 import itertools

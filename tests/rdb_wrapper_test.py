@@ -4,8 +4,6 @@
 # found in the LICENSE file.
 """Unit tests for rdb_wrapper.py"""
 
-from __future__ import print_function
-
 import contextlib
 import json
 import logging

@@ -4,8 +4,6 @@
 # found in the LICENSE file.
 """Run a pinned gsutil."""
 
-from __future__ import print_function
-
 import argparse
 import base64
 import contextlib

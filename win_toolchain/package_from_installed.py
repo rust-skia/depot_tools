@@ -30,8 +30,6 @@ useful as the resulting zip can't be redistributed, and most will presumably
 have a Pro license anyway).
 """
 
-from __future__ import print_function
-
 import collections
 import glob
 import json

@@ -17,8 +17,6 @@ the watchers for files given on the command line. This is useful to verify
 changes to WATCHLISTS files.
 """
 
-from __future__ import print_function
-
 import logging
 import os
 import re

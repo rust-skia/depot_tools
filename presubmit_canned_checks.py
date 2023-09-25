@@ -3,8 +3,6 @@
 # found in the LICENSE file.
 """Generic presubmit checks that can be reused by other presubmit checks."""
 
-from __future__ import print_function
-
 import io as _io
 import os as _os
 import zlib
@@ -1123,9 +1121,6 @@ def GetPythonUnitTests(input_api, output_api, unit_tests, python3=False):
                 '.',
                 input_api.os_path.pathsep.join(['..'] * (cwd.count('/') + 1))
             ]
-            # We convert to str, since on Windows on Python 2 only strings are
-            # allowed as environment variables, but literals are unicode since
-            # we're importing unicode_literals from __future__.
             if env.get('PYTHONPATH'):
                 backpath.append(env.get('PYTHONPATH'))
             env['PYTHONPATH'] = input_api.os_path.pathsep.join((backpath))

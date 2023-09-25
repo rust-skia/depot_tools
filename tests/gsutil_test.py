@@ -4,8 +4,6 @@
 # found in the LICENSE file.
 """Test gsutil.py."""
 
-from __future__ import unicode_literals
-
 import base64
 import hashlib
 import io

@@ -4,8 +4,6 @@
 # found in the LICENSE file.
 """Splits a branch into smaller branches and uploads CLs."""
 
-from __future__ import print_function
-
 import collections
 import os
 import re

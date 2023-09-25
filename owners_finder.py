@@ -3,8 +3,6 @@
 # found in the LICENSE file.
 """Interactive tool for finding reviewers/owners for a change."""
 
-from __future__ import print_function
-
 import os
 import copy
 

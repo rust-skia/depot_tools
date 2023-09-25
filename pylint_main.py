@@ -7,8 +7,6 @@
 This will be executed by vpython with the right pylint versions.
 """
 
-from __future__ import print_function
-
 import os
 import sys
 

@@ -8,8 +8,6 @@ clang-format binaries are pulled down from Google Cloud Storage whenever you
 sync Chrome, to platform-specific locations. This script knows how to locate
 those tools, assuming the script is invoked from inside a Chromium checkout."""
 
-from __future__ import print_function
-
 import gclient_paths
 import os
 import subprocess

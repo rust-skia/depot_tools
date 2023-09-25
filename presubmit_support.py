@@ -5,8 +5,6 @@
 """Enables directory-specific presubmit checks to run at upload and/or commit.
 """
 
-from __future__ import print_function
-
 __version__ = '2.0.0'
 
 # TODO(joi) Add caching where appropriate/needed. The API is designed to allow

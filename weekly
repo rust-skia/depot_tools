@@ -5,8 +5,6 @@
 """Display log of checkins of one particular developer since a particular
 date. Only works on git dependencies at the moment."""
 
-from __future__ import print_function
-
 import gclient_utils
 import optparse
 import os

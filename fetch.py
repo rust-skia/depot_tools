@@ -17,8 +17,6 @@ Optional arguments may be passed on the command line in key-value pairs.
 These parameters will be passed through to the config's main method.
 """
 
-from __future__ import print_function
-
 import json
 import argparse
 import os

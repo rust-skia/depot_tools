@@ -4,8 +4,6 @@
 # found in the LICENSE file.
 """Uploads files to Google Storage content addressed."""
 
-from __future__ import print_function
-
 import hashlib
 import optparse
 import os

@@ -17,8 +17,6 @@ the toolchain. This is likely to be a poorly tested code path that probably
 won't be properly maintained. See http://crbug.com/323300.
 """
 
-from __future__ import print_function
-
 import argparse
 from contextlib import closing
 import hashlib

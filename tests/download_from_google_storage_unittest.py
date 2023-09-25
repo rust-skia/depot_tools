@@ -5,8 +5,6 @@
 # pylint: disable=protected-access
 """Unit tests for download_from_google_storage.py."""
 
-from __future__ import print_function
-
 import optparse
 import os
 import queue

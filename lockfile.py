@@ -3,8 +3,6 @@
 # found in the LICENSE file.
 """Exclusive filelocking for all supported platforms."""
 
-from __future__ import print_function
-
 import contextlib
 import logging
 import os

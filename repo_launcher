@@ -22,8 +22,6 @@ It is used to get an initial repo client checkout, and after that it runs the
 copy of repo in the checkout.
 """
 
-from __future__ import print_function
-
 import datetime
 import os
 import platform

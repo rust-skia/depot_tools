@@ -5,8 +5,6 @@
 # found in the LICENSE file.
 """Unit tests for fix_encoding.py."""
 
-from __future__ import print_function
-
 import os
 import sys
 import unittest

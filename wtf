@@ -4,8 +4,6 @@
 # found in the LICENSE file.
 """Display active git branches and code changes in a chromiumos workspace."""
 
-from __future__ import print_function
-
 import gclient_utils
 import os
 import re

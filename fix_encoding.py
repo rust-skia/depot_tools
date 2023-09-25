@@ -5,8 +5,6 @@
 multiple platforms with python.
 """
 
-from __future__ import print_function
-
 import codecs
 import locale
 import os

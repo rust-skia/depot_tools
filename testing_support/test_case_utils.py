@@ -3,8 +3,6 @@
 # found in the LICENSE file.
 """Simplify unit tests based on pymox."""
 
-from __future__ import print_function
-
 import os
 import random
 import string

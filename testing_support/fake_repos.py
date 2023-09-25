@@ -5,8 +5,6 @@
 # found in the LICENSE file.
 """Generate fake repositories for testing."""
 
-from __future__ import print_function
-
 import atexit
 import datetime
 import errno
