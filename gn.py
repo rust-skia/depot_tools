@@ -35,6 +35,22 @@ def PruneVirtualEnv():
     ])
 
 
+def findGnInPath():
+    env_path = os.getenv('PATH')
+    if not env_path:
+        return
+    exe = 'gn'
+    if sys.platform in ('win32', 'cygwin'):
+        exe += '.exe'
+    for bin_dir in env_path.split(os.pathsep):
+        if bin_dir.rstrip(os.sep).endswith('depot_tools'):
+            # skip depot_tools to avoid calling gn.py infinitely.
+            continue
+        gn_path = os.path.join(bin_dir, exe)
+        if os.path.isfile(gn_path):
+            return gn_path
+
+
 def main(args):
     # Prune all evidence of VPython/VirtualEnv out of the environment. This
     # means that we 'unwrap' vpython VirtualEnv path/env manipulation.
@@ -58,6 +74,9 @@ def main(args):
     # inside of buildtools.
     bin_path = gclient_paths.GetBuildtoolsPlatformBinaryPath()
     if not bin_path:
+        gn_path = findGnInPath()
+        if gn_path:
+            return subprocess.call([gn_path] + args[1:])
         print(
             'gn.py: Could not find checkout in any parent of the current '
             'path.\nThis must be run inside a checkout.',

@@ -19,11 +19,11 @@ def findNinjaInPath():
     if not env_path:
         return
     exe = 'ninja'
-    if sys.platform in ['win32', 'cygwin']:
+    if sys.platform in ('win32', 'cygwin'):
         exe += '.exe'
     for bin_dir in env_path.split(os.pathsep):
         if bin_dir.rstrip(os.sep).endswith('depot_tools'):
-            # skip depot_tools to avoid calling ninja.py infitely.
+            # skip depot_tools to avoid calling ninja.py infinitely.
             continue
         ninja_path = os.path.join(bin_dir, exe)
         if os.path.isfile(ninja_path):
