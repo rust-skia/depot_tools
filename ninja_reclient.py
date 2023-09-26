@@ -22,6 +22,7 @@ def main(argv):
         try:
             return ninja.main(argv)
         except KeyboardInterrupt:
+            print("Shutting down reproxy...", file=sys.stderr)
             return 1
 
 

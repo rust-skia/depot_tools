@@ -274,7 +274,6 @@ def build_context(argv, tool):
     try:
         yield
     finally:
-        print("Shutting down reproxy...", file=sys.stderr)
         start = time.time()
         stop_reproxy(reclient_cfg, reclient_bin_dir)
         if os.environ.get('NINJA_SUMMARIZE_BUILD') == '1':
