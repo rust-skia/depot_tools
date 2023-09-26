@@ -1788,6 +1788,12 @@ class Changelist(object):
         bug = options.bug
         fixed = options.fixed
         if not self.GetIssue():
+            # There isn't any issue attached, so we shouldn't keep existing
+            # Change-Ids in the description.
+            if git_footers.get_footer_change_id(description):
+                description = git_footers.remove_footer(description,
+                                                        'Change-Id')
+
             # Extract bug number from branch name, but only if issue is being
             # created. It must start with bug or fix, followed by _ or - and
             # number. Optionally, it may contain _ or - after number with
@@ -1829,7 +1835,7 @@ class Changelist(object):
     def _GetTitleForUpload(self, options, multi_change_upload=False):
         # type: (optparse.Values, Optional[bool]) -> str
 
-        # Getting titles for multipl commits is not supported so we return the
+        # Getting titles for multiple commits is not supported so we return the
         # default.
         if not options.squash or multi_change_upload or options.title:
             return options.title

@@ -32,7 +32,6 @@ import gerrit_util
 import git_cl
 import git_common
 import git_footers
-import git_new_branch
 import owners_client
 import scm
 import subprocess2
@@ -847,7 +846,8 @@ class TestGitCl(unittest.TestCase):
             self.mockGit.config['gerrit.override-squash-uploads'] = (
                 'true' if squash_mode == 'override_squash' else 'false')
 
-        if not git_footers.get_footer_change_id(description) and not squash:
+        has_change_id = git_footers.get_footer_change_id(description)
+        if not squash and (not has_change_id or not issue):
             calls += [
                 (('DownloadGerritHook', False), ''),
             ]
@@ -1340,6 +1340,8 @@ class TestGitCl(unittest.TestCase):
         self._run_gerrit_upload_test(
             ['-r', 'foo@example.com', '--send-mail'],
             'desc ✔\n\nBUG=\n\nChange-Id: I123456789',
+            post_amend_description=
+            'desc ✔\n\nBUG=\nR=foo@example.com\n\nChange-Id: I123456789',
             reviewers=['foo@example.com'],
             squash=False,
             squash_mode='override_nosquash',
@@ -1352,6 +1354,8 @@ class TestGitCl(unittest.TestCase):
         self._run_gerrit_upload_test(
             ['-r', 'foo@example.com', '--send-email'],
             'desc ✔\n\nBUG=\n\nChange-Id: I123456789',
+            post_amend_description=
+            'desc ✔\n\nBUG=\nR=foo@example.com\n\nChange-Id: I123456789',
             reviewers=['foo@example.com'],
             squash=False,
             squash_mode='override_nosquash',
@@ -1377,6 +1381,14 @@ class TestGitCl(unittest.TestCase):
             fetched_description='desc=\n\nChange-Id: Ixxxx',
             title='Title',
             change_id='Ixxxx')
+
+    def test_gerrit_upload_resets_change_id(self):
+        self._run_gerrit_upload_test(
+            [],
+            'desc=\n\nChange-Id: Iyyy', [],
+            log_description='desc=\n\nChange-Id: Ixxx',
+            issue=None,
+            change_id='Iyyy')
 
     def test_gerrit_upload_force_sets_fixed(self):
         self._run_gerrit_upload_test(
