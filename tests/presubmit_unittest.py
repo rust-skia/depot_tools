@@ -2555,7 +2555,7 @@ the current line as well!
         self._LicenseCheck(text,
                            license_text,
                            False,
-                           presubmit.OutputApi.PresubmitError,
+                           presubmit.OutputApi.PresubmitPromptWarning,
                            new_file=True)
 
     def _GetLicenseText(self, current_year):
