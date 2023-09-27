@@ -4940,8 +4940,10 @@ def CMDupload(parser, args):
         'the current branch')
     parser.add_option(
         '-a',
+        '--auto-submit',
         '--enable-auto-submit',
         action='store_true',
+        dest='enable_auto_submit',
         help='Sends your change to the CQ after an approval. Only '
         'works on repos that have the Auto-Submit label '
         'enabled')
@@ -5400,6 +5402,7 @@ def CMDsplit(parser, args):
                       'infra-dev@chromium.org with any questions.')
     parser.add_option(
         '-a',
+        '--auto-submit',
         '--enable-auto-submit',
         action='store_true',
         dest='enable_auto_submit',
