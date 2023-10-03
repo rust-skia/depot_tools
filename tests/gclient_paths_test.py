@@ -26,6 +26,8 @@ class TestBase(unittest.TestCase):
         super(TestBase, self).setUp()
         self.file_tree = {}
         self.root = 'C:\\' if sys.platform == 'win32' else '/'
+        # Use unique roots for each test to avoid cache hits from @lru_cache.
+        self.root += self._testMethodName
         self.cwd = self.root
         mock.patch('gclient_utils.FileRead', self.read).start()
         mock.patch('os.environ', {}).start()
@@ -48,7 +50,7 @@ class TestBase(unittest.TestCase):
 
     def make_file_tree(self, file_tree):
         self.file_tree = {
-            self.root + path: content
+            os.path.join(self.root, path): content
             for path, content in file_tree.items()
         }
 
