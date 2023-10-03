@@ -6371,7 +6371,7 @@ def MatchingFileType(file_name, extensions):
 @metrics.collector.collect_metrics('git cl format')
 def CMDformat(parser, args):
     """Runs auto-formatting tools (clang-format etc.) on the diff."""
-    clang_exts = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto', '.java']
+    clang_exts = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto']
     GN_EXTS = ['.gn', '.gni', '.typemap']
     parser.add_option('--full',
                       action='store_true',
@@ -6433,10 +6433,9 @@ def CMDformat(parser, args):
         action='store_false',
         help='Disables formatting of Swift file types using swift-format.')
 
-    # Temporary flag to test with google-java-format.
-    parser.add_option('--google-java-format',
+    parser.add_option('--no-java',
                       action='store_true',
-                      help=optparse.SUPPRESS_HELP)
+                      help='Disable auto-formatting of .java')
 
     opts, args = parser.parse_args(args)
 
@@ -6480,8 +6479,7 @@ def CMDformat(parser, args):
         (GN_EXTS, _RunGnFormat),
         (['.xml'], _FormatXml),
     ]
-    if opts.google_java_format:
-        clang_exts.remove('.java')
+    if not opts.no_java:
         formatters += [(['.java'], _RunGoogleJavaFormat)]
     if opts.clang_format:
         formatters += [(clang_exts, _RunClangFormatDiff)]
