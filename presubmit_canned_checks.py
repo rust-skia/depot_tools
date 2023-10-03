@@ -5,7 +5,7 @@
 
 import io as _io
 import os as _os
-import zlib
+import time
 
 import metadata.discover
 import metadata.validate
@@ -2043,8 +2043,7 @@ def CheckChangedLUCIConfigs(input_api, output_api):
 
     import auth
     import git_cl
-
-    LUCI_CONFIG_HOST_NAME = 'luci-config.appspot.com'
+    LUCI_CONFIG_HOST_NAME = 'config.luci.app'
 
     cl = git_cl.Changelist()
     if input_api.change.issue and input_api.gerrit:
@@ -2070,30 +2069,69 @@ def CheckChangedLUCIConfigs(input_api, output_api):
 
     # authentication
     try:
-        acc_tkn = auth.Authenticator().get_access_token()
+        acc_tkn = auth.Authenticator(audience='https://%s' %
+                                     LUCI_CONFIG_HOST_NAME).get_id_token()
     except auth.LoginRequiredError as e:
         return [
             output_api.PresubmitError('Error in authenticating user.',
                                       long_text=str(e))
         ]
 
-    def request(endpoint, body=None):
-        api_url = ('https://%s/_ah/api/config/v1/%s' %
-                   (LUCI_CONFIG_HOST_NAME, endpoint))
+    def request(method, body, max_attempts=3):
+        """"Calls luci-config v2 method and returns a parsed json response."""
+        api_url = 'https://%s/prpc/config.service.v2.Configs/%s' % (
+            LUCI_CONFIG_HOST_NAME, method)
         req = input_api.urllib_request.Request(api_url)
         req.add_header('Authorization', 'Bearer %s' % acc_tkn.token)
-        if body is not None:
-            req.data = zlib.compress(json.dumps(body).encode('utf-8'))
-            req.add_header('Content-Type', 'application/json-zlib')
-        return json.load(input_api.urllib_request.urlopen(req))
+        req.data = json.dumps(body).encode('utf-8')
+        req.add_header('Accept', 'application/json')
+        req.add_header('Content-Type', 'application/json')
+
+        attempt = 0
+        res = None
+        time_to_sleep = 1
+        while True:
+            try:
+                res = input_api.urllib_request.urlopen(req)
+                break
+            except input_api.urllib_error.HTTPError as e:
+                if attempt < max_attempts and e.code >= 500:
+                    attempt += 1
+                    logging.debug('error when calling %s: %s\n'
+                                  'Sleeping for %d seconds and retrying...' %
+                                  (api_url, e, time_to_sleep))
+                    time.sleep(time_to_sleep)
+                    time_to_sleep *= 2
+                    continue
+                raise
+
+        assert res, 'response from luci-config v2 is impossible to be None'
+
+        # The JSON response has a XSSI protection prefix )]}'
+        return json.loads(res.read().decode('utf-8')[len(")]}'"):].strip())
+
+    def format_config_set(cs):
+        """convert luci-config v2 config_set object to v1 format"""
+        rev = cs.get('revision', {})
+        return {
+            'config_set': cs.get('name'),
+            'location': cs.get('url'),
+            'revision': {
+                'id': rev.get('id'),
+                'url': rev.get('url'),
+                'timestamp': rev.get('timestamp'),
+                'committer_email': rev.get('committerEmail')
+            }
+        }
 
     try:
-        config_sets = request('config-sets').get('config_sets')
+        config_sets = request('ListConfigSets', {}).get('configSets')
     except input_api.urllib_error.HTTPError as e:
         return [
             output_api.PresubmitError(
                 'Config set request to luci-config failed', long_text=str(e))
         ]
+    config_sets = [format_config_set(cs) for cs in config_sets]
     if not config_sets:
         return [
             output_api.PresubmitPromptWarning('No config_sets were returned')

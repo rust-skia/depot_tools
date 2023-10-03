@@ -2062,17 +2062,16 @@ class CannedChecksUnittest(PresubmitTestsBase):
         affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
         affected_file2.LocalPath.return_value = 'sub/bar.cfg'
 
-        mockGetAuth().get_access_token().token = 123
+        mockGetAuth().get_id_token().token = 123
 
         host = 'https://host.com'
         branch = 'branch'
-        http_resp = {
-            'config_sets': [{
-                'config_set': 'project/deadbeef',
-                'location': '%s/+/%s' % (host, branch)
+        http_resp = b")]}'\n" + json.dumps({
+            'configSets': [{
+                'name': 'project/deadbeef',
+                'url': '%s/+/%s' % (host, branch)
             }]
-        }
-        urllib_request.urlopen.return_value = http_resp
+        }).encode("utf-8")
 
         mockCl().GetRemoteBranch.return_value = ('remote', branch)
         mockCl().GetRemoteUrl.return_value = host
@@ -2080,6 +2079,8 @@ class CannedChecksUnittest(PresubmitTestsBase):
         change1 = presubmit.Change('foo', 'foo1', self.fake_root_dir, None, 0,
                                    0, None)
         input_api = self.MockInputApi(change1, False)
+        input_api.urllib_request.urlopen().read.return_value = http_resp
+
         affected_files = (affected_file1, affected_file2)
 
         input_api.AffectedFiles = lambda **_: affected_files
@@ -2106,7 +2107,7 @@ class CannedChecksUnittest(PresubmitTestsBase):
                 }]
             }
         }
-        json.load.side_effect = [http_resp, validation_result]
+        json.load.return_value = validation_result
 
         results = presubmit_canned_checks.CheckChangedLUCIConfigs(
             input_api, presubmit.OutputApi)
@@ -2133,19 +2134,17 @@ class CannedChecksUnittest(PresubmitTestsBase):
         affected_file2 = mock.MagicMock(presubmit.GitAffectedFile)
         affected_file2.LocalPath.return_value = 'bar.cfg'
 
-        mockGetAuth().get_access_token().token = 123
+        mockGetAuth().get_id_token().token = 123
 
         host = 'https://host.com'
         branch = 'branch'
-        http_resp = {
-            'config_sets': [{
-                'config_set': 'project/deadbeef',
-                'location': '%s/+/%s/generated' % (host, branch)
+        http_resp = b")]}'\n" + json.dumps({
+            'configSets': [{
+                'name': 'project/deadbeef',
+                'url': '%s/+/%s/generated' % (host, branch)
                 # no affected file in generated folder
             }]
-        }
-        urllib_request.urlopen.return_value = http_resp
-        json.load.return_value = http_resp
+        }).encode("utf-8")
 
         mockCl().GetRemoteBranch.return_value = ('remote', branch)
         mockCl().GetRemoteUrl.return_value = host
@@ -2153,6 +2152,7 @@ class CannedChecksUnittest(PresubmitTestsBase):
         change1 = presubmit.Change('foo', 'foo1', self.fake_root_dir, None, 0,
                                    0, None)
         input_api = self.MockInputApi(change1, False)
+        input_api.urllib_request.urlopen().read.return_value = http_resp
         affected_files = (affected_file1, affected_file2)
 
         input_api.AffectedFiles = lambda **_: affected_files
@@ -2173,13 +2173,12 @@ class CannedChecksUnittest(PresubmitTestsBase):
 
         host = 'https://host.com'
         branch = 'branch'
-        http_resp = {
-            'config_sets': [{
-                'config_set': 'project/deadbeef',
-                'location': '%s/+/%s/generated' % (host, branch)
+        http_resp = b")]}'\n" + json.dumps({
+            'configSets': [{
+                'name': 'project/deadbeef',
+                'url': '%s/+/%s/generated' % (host, branch)
             }]
-        }
-        urllib_request.urlopen.return_value = http_resp
+        }).encode("utf-8")
 
         mockCl().GetRemoteBranch.return_value = ('remote', branch)
         mockCl().GetRemoteUrl.return_value = host
@@ -2187,6 +2186,7 @@ class CannedChecksUnittest(PresubmitTestsBase):
         change1 = presubmit.Change('foo', 'foo1', self.fake_root_dir, None, 0,
                                    0, None)
         input_api = self.MockInputApi(change1, False)
+        input_api.urllib_request.urlopen().read.return_value = http_resp
         affected_files = (affected_file1, affected_file2)
 
         input_api.AffectedFiles = lambda **_: affected_files
@@ -2216,7 +2216,7 @@ class CannedChecksUnittest(PresubmitTestsBase):
                 }]
             }
         }
-        json.load.side_effect = [http_resp, validation_result]
+        json.load.return_value = validation_result
 
         results = presubmit_canned_checks.CheckChangedLUCIConfigs(
             input_api, presubmit.OutputApi)
