@@ -36,7 +36,7 @@ $VerifiedPlatform linux-armv6l linux-mips64 linux-mips64le linux-mipsle
 $VerifiedPlatform windows-arm64
 
 # vpython.
-infra/tools/luci/vpython/${platform} git_revision:3eb3c0a982ae06e72bdf8af6c1f68f8da5833853
+infra/tools/luci/vpython/${platform} git_revision:7c18303a74d8a6ae4bb3aae9de8f659cc8a6c571
 
 # LUCI editor
 infra/tools/luci/led/${platform} git_revision:0bb208f2de6f3e9c698b70a33cd01c6de9985db2
