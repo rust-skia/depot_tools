@@ -63,8 +63,6 @@ class AutoninjaTest(trial_dir.TestCase):
     def test_autoninja_reclient(self):
         out_dir = os.path.join('out', 'dir')
         write(os.path.join(out_dir, 'args.gn'), 'use_remoteexec=true')
-        write('.gclient', '')
-        write('.gclient_entries', 'entries = {"buildtools": "..."}')
         write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
               'RBE_v=2')
         write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
@@ -86,8 +84,6 @@ class AutoninjaTest(trial_dir.TestCase):
         # The test will only pass if both imports work and
         # 'use_remoteexec=true' is seen.
         write(os.path.join('out', 'common_2.gni'), 'use_remoteexec=true')
-        write('.gclient', '')
-        write('.gclient_entries', 'entries = {"buildtools": "..."}')
         write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
               'RBE_v=2')
         write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
