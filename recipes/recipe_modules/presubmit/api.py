@@ -85,6 +85,8 @@ class PresubmitApi(recipe_api.RecipeApi):
                    'user.email=commit-bot@chromium.org',
                    '-c',
                    'user.name=The Commit Bot',
+                   '-c',
+                   'diff.ignoreSubmodules=all',
                    'commit',
                    '-a',
                    '-m',
