@@ -17,6 +17,11 @@ import subprocess2
 # TODO: Should fix these warnings.
 # pylint: disable=line-too-long
 
+# constants used to identify the tree state of a directory.
+VERSIONED_NO = 0
+VERSIONED_DIR = 1
+VERSIONED_SUBMODULE = 2
+
 
 def ValidateEmail(email):
     return (re.match(r"^[a-zA-Z0-9._%\-+]+@[a-zA-Z0-9._%-]+.[a-zA-Z]{2,6}$",
@@ -440,9 +445,15 @@ class GIT(object):
             return False
 
     @staticmethod
-    def IsDirectoryVersioned(cwd, relative_dir):
+    def IsVersioned(cwd, relative_dir):
+        # type: (str, str) -> int
         """Checks whether the given |relative_dir| is part of cwd's repo."""
-        return bool(GIT.Capture(['ls-tree', 'HEAD', relative_dir], cwd=cwd))
+        output = GIT.Capture(['ls-tree', 'HEAD', '--', relative_dir], cwd=cwd)
+        if not output:
+            return VERSIONED_NO
+        if output.startswith('160000'):
+            return VERSIONED_SUBMODULE
+        return VERSIONED_DIR
 
     @staticmethod
     def CleanupDir(cwd, relative_dir):

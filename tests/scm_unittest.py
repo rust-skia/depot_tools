@@ -135,6 +135,22 @@ class GitWrapperTestCase(unittest.TestCase):
             scm.GIT.GetRemoteHeadRef('foo', 'proto://url', 'origin'))
         self.assertEqual(mockCapture.call_count, 2)
 
+    @mock.patch('scm.GIT.Capture')
+    def testIsVersioned(self, mockCapture):
+        mockCapture.return_value = (
+            '160000 blob 423dc77d2182cb2687c53598a1dcef62ea2804ae   dir')
+        actual_state = scm.GIT.IsVersioned('cwd', 'dir')
+        self.assertEqual(actual_state, scm.VERSIONED_SUBMODULE)
+
+        mockCapture.return_value = ''
+        actual_state = scm.GIT.IsVersioned('cwd', 'dir')
+        self.assertEqual(actual_state, scm.VERSIONED_NO)
+
+        mockCapture.return_value = (
+            '040000 tree ef016abffb316e47a02af447bc51342dcef6f3ca    dir')
+        actual_state = scm.GIT.IsVersioned('cwd', 'dir')
+        self.assertEqual(actual_state, scm.VERSIONED_DIR)
+
 
 class RealGitTest(fake_repos.FakeReposTestBase):
     def setUp(self):
