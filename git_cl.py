@@ -643,7 +643,10 @@ def _ComputeFormatDiffLineRanges(files, upstream_commit):
         return {}
 
     # Take the git diff and find the line ranges where there are changes.
-    diff_cmd = BuildGitDiffCmd('-U0', upstream_commit, files, allow_prefix=True)
+    diff_cmd = BuildGitDiffCmd(['-U0'],
+                               upstream_commit,
+                               files,
+                               allow_prefix=True)
     diff_output = RunGit(diff_cmd)
 
     pattern = r'(?:^diff --git a/(?:.*) b/(.*))|(?:^@@.*\+(.*) @@)'
@@ -6050,7 +6053,8 @@ def BuildGitDiffCmd(diff_type, upstream_commit, args, allow_prefix=False):
     else:
         diff_cmd += ['--no-prefix']
 
-    diff_cmd += [diff_type, upstream_commit, '--']
+    diff_cmd += diff_type
+    diff_cmd += [upstream_commit, '--']
 
     if args:
         for arg in args:
@@ -6103,7 +6107,7 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
         if not opts.dry_run and not opts.diff:
             cmd.append('-i')
 
-        diff_cmd = BuildGitDiffCmd('-U0', upstream_commit, clang_diff_files)
+        diff_cmd = BuildGitDiffCmd(['-U0'], upstream_commit, clang_diff_files)
         diff_output = RunGit(diff_cmd).encode('utf-8')
 
         env = os.environ.copy()
@@ -6466,11 +6470,11 @@ def CMDformat(parser, args):
         DieWithError('Could not find base commit for this branch. '
                      'Are you in detached state?')
 
-    changed_files_cmd = BuildGitDiffCmd('--name-only', upstream_commit, args)
+    # Filter out copied/renamed/deleted files
+    changed_files_cmd = BuildGitDiffCmd(['--name-only', '--diff-filter=crd'],
+                                        upstream_commit, args)
     diff_output = RunGit(changed_files_cmd)
     diff_files = diff_output.splitlines()
-    # Filter out files deleted by this CL
-    diff_files = [x for x in diff_files if os.path.isfile(x)]
 
     if opts.js:
         clang_exts.extend(['.js', '.ts'])
