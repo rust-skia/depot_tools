@@ -33,9 +33,16 @@ def _FindChromite(path):
     # Depending on the checkout type (whether repo chromeos or gclient chrome)
     # Chromite lives in a different location.
     roots = (
+        # CrOS checkout using normal manifest.
         ('.repo', 'chromite/.git'),
+        # CrOS checkout using CitC.
+        ('../.citc', 'chromite/__init__.py'),
+        # Chromium checkout using gclient+DEPS.
         ('.gclient', 'src/third_party/chromite/.git'),
+        # Chromium checkout using git submodules.
         ('src/.gitmodules', 'src/third_party/chromite/.git'),
+        # Chromium checkout using CitC.
+        ('../.citc', 'third_party/chromite/__init__.py'),
     )
 
     while path != '/':
