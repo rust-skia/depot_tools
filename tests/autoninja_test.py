@@ -75,26 +75,22 @@ class AutoninjaTest(trial_dir.TestCase):
         self.assertIn(os.path.join(autoninja.SCRIPT_DIR, 'ninja_reclient.py'),
                       args)
 
-    def test_autoninja_import(self):
+    def test_gn_lines(self):
         out_dir = os.path.join('out', 'dir')
         # Make sure nested import directives work. This is based on the
         # reclient test.
         write(os.path.join(out_dir, 'args.gn'), 'import("//out/common.gni")')
-        write(os.path.join('out', 'common.gni'), 'import("//out/common_2.gni")')
+        write(os.path.join('out', 'common.gni'), 'import("common_2.gni")')
+        write(os.path.join('out', 'common_2.gni'), 'use_remoteexec=true')
+
+        lines = list(
+            autoninja._gn_lines(out_dir, os.path.join(out_dir, 'args.gn')))
+
         # The test will only pass if both imports work and
         # 'use_remoteexec=true' is seen.
-        write(os.path.join('out', 'common_2.gni'), 'use_remoteexec=true')
-        write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
-              'RBE_v=2')
-        write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
-
-        args = autoninja.main(['autoninja.py', '-C', out_dir]).split()
-
-        self.assertIn('-j', args)
-        parallel_j = int(args[args.index('-j') + 1])
-        self.assertGreater(parallel_j, multiprocessing.cpu_count() * 2)
-        self.assertIn(os.path.join(autoninja.SCRIPT_DIR, 'ninja_reclient.py'),
-                      args)
+        self.assertListEqual(lines, [
+            'use_remoteexec=true',
+        ])
 
 
 if __name__ == '__main__':
