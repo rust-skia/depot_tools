@@ -6127,21 +6127,29 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
 
 
 def _FindGoogleJavaFormat():
+    # Allow non-chromium projects to use a custom location.
     primary_solution_path = gclient_paths.GetPrimarySolutionPath()
     if primary_solution_path:
+        override = os.environ.get('GOOGLE_JAVA_FORMAT_PATH')
+        if override:
+            # Make relative to solution root if not an absolute path.
+            return os.path.join(primary_solution_path, override)
+
         path = os.path.join(primary_solution_path, 'third_party',
                             'google-java-format', 'google-java-format')
         if os.path.exists(path):
             return path
-
-    return shutil.which('google-java-format')
+    return None
 
 
 def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
     """Runs google-java-format and sets a return value if necessary."""
     google_java_format = _FindGoogleJavaFormat()
     if google_java_format is None:
-        DieWithError('Could not find google-java-format.')
+        # Fail silently. It could be we are on an old chromium revision, or that
+        # it is a non-chromium project. https://crbug.com/1491627
+        print('google-java-format not found, skipping java formatting.')
+        return 0
 
     base_cmd = [google_java_format, '--aosp']
     if opts.dry_run or opts.diff:
