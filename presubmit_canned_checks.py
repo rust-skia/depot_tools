@@ -1962,7 +1962,7 @@ def CheckForCommitObjects(input_api, output_api):
                 'but the commit objects do not match DEPS entries.\n\n'
                 'To reset all git submodule git entries to match DEPS, run\n'
                 'the following command in the root of this repository:\n'
-                '    gclient gitmodules'
+                '    gclient gitmodules\n'
                 'This will update AND stage the entries to the correct revisions.\n'
                 'Then commit these staged changes only (`git commit` without -a).\n'
                 '\n\n'
