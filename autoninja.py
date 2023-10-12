@@ -18,13 +18,50 @@ import multiprocessing
 import os
 import platform
 import re
+import shlex
 import subprocess
 import sys
+
+import autosiso
+import ninja
+import ninja_reclient
+import siso
 
 if sys.platform in ['darwin', 'linux']:
     import resource
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+# See [1] and [2] for the painful details of this next section, which handles
+# escaping command lines so that they can be copied and pasted into a cmd
+# window.
+#
+# pylint: disable=line-too-long
+# [1] https://learn.microsoft.com/en-us/archive/blogs/twistylittlepassagesallalike/everyone-quotes-command-line-arguments-the-wrong-way # noqa
+# [2] https://web.archive.org/web/20150815000000*/https://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/set.mspx # noqa
+_UNSAFE_FOR_CMD = set('^<>&|()%')
+_ALL_META_CHARS = _UNSAFE_FOR_CMD.union(set('"'))
+
+
+def _quote_for_cmd(arg):
+    # First, escape the arg so that CommandLineToArgvW will parse it properly.
+    if arg == '' or ' ' in arg or '"' in arg:
+        quote_re = re.compile(r'(\\*)"')
+        arg = '"%s"' % (quote_re.sub(lambda mo: 2 * mo.group(1) + '\\"', arg))
+
+    # Then check to see if the arg contains any metacharacters other than
+    # double quotes; if it does, quote everything (including the double
+    # quotes) for safety.
+    if any(a in _UNSAFE_FOR_CMD for a in arg):
+        arg = ''.join('^' + a if a in _ALL_META_CHARS else a for a in arg)
+    return arg
+
+
+def _print_cmd(cmd):
+    shell_quoter = shlex.quote
+    if sys.platform.startswith('win'):
+        shell_quoter = _quote_for_cmd
+    print(*[shell_quoter(arg) for arg in cmd], file=sys.stderr)
 
 
 def _gn_lines(output_dir, path):
@@ -58,6 +95,7 @@ def main(args):
     offline = False
     output_dir = '.'
     input_args = args
+    summarize_build = os.environ.get('NINJA_SUMMARIZE_BUILD') == '1'
     # On Windows the autoninja.bat script passes along the arguments enclosed in
     # double quotes. This prevents multiple levels of parsing of the special '^'
     # characters needed when compiling a single file but means that this script
@@ -134,21 +172,19 @@ def main(args):
             # if there is a .ninja_log but no .siso_deps then that implies a
             # ninja build.
             if os.path.exists(ninja_marker) and not os.path.exists(siso_marker):
-                return (
-                    'echo Run gn clean before switching from ninja to siso in '
-                    '%s' % output_dir)
-            siso = ['autosiso'] if use_remoteexec else ['siso', 'ninja']
-            if sys.platform.startswith('win'):
-                # An explicit 'call' is needed to make sure the invocation of
-                # autosiso returns to autoninja.bat, and the command prompt
-                # title gets reset.
-                siso = ['call'] + siso
-            return ' '.join(siso + input_args[1:])
+                print('Run gn clean before switching from ninja to siso in %s' %
+                      output_dir,
+                      file=sys.stderr)
+                return 1
+            if use_remoteexec:
+                return autosiso.main(['autosiso'] + input_args[1:])
+            return siso.main(['siso', 'ninja'] + input_args[1:])
 
         if os.path.exists(siso_marker):
-            return (
-                'echo Run gn clean before switching from siso to ninja in %s' %
-                output_dir)
+            print('Run gn clean before switching from siso to ninja in %s' %
+                  output_dir,
+                  file=sys.stderr)
+            return 1
 
     else:
         for relative_path in [
@@ -207,19 +243,20 @@ def main(args):
                 sys.exit(1)
 
     # A large build (with or without goma) tends to hog all system resources.
-    # Launching the ninja process with 'nice' priorities improves this
-    # situation.
-    prefix_args = []
-    if (sys.platform.startswith('linux')
-            and os.environ.get('NINJA_BUILD_IN_BACKGROUND', '0') == '1'):
-        # nice -10 is process priority 10 lower than default 0
-        # ionice -c 3 is IO priority IDLE
-        prefix_args = ['nice'] + ['-10']
+    # Depending on the operating system, we might have mechanisms available
+    # to run at a lower priority, which improves this situation.
+    if os.environ.get('NINJA_BUILD_IN_BACKGROUND') == '1':
+        if sys.platform in ['darwin', 'linux']:
+            # nice-level 10 is usually considered a good default for background
+            # tasks. The niceness is inherited by child processes, so we can
+            # just set it here for us and it'll apply to the build tool we
+            # spawn later.
+            os.nice(10)
 
-    # Tell goma or reclient to do local compiles. On Windows these environment
-    # variables are set by the wrapper batch file.
-    offline_env = ['RBE_remote_disabled=1', 'GOMA_DISABLED=1'
-                   ] if offline and not sys.platform.startswith('win') else []
+    # Tell goma or reclient to do local compiles.
+    if offline:
+        os.environ['RBE_remote_disabled'] = '1'
+        os.environ['GOMA_DISABLED'] = '1'
 
     # On macOS and most Linux distributions, the default limit of open file
     # descriptors is too low (256 and 1024, respectively).
@@ -227,7 +264,6 @@ def main(args):
     # Check whether the limit can be raised to a large enough value. If yes,
     # use `ulimit -n .... &&` as a prefix to increase the limit when running
     # ninja.
-    prepend_command = []
     if sys.platform in ['darwin', 'linux']:
         # Increase the number of allowed open file descriptors to the maximum.
         fileno_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
@@ -235,12 +271,10 @@ def main(args):
             try:
                 resource.setrlimit(resource.RLIMIT_NOFILE,
                                    (hard_limit, hard_limit))
-            except Exception as _:
+            except Exception:
                 pass
             fileno_limit, hard_limit = resource.getrlimit(
                 resource.RLIMIT_NOFILE)
-            if fileno_limit == hard_limit:
-                prepend_command = ['ulimit', '-n', f'{fileno_limit}', '&&']
 
     # Call ninja.py so that it can find ninja binary installed by DEPS or one in
     # PATH.
@@ -250,9 +284,7 @@ def main(args):
     if use_remoteexec:
         ninja_path = os.path.join(SCRIPT_DIR, 'ninja_reclient.py')
 
-    args = prepend_command + offline_env + prefix_args + [
-        sys.executable, ninja_path
-    ] + input_args[1:]
+    args = [sys.executable, ninja_path] + input_args[1:]
 
     num_cores = multiprocessing.cpu_count()
     if not j_specified and not t_specified:
@@ -291,20 +323,20 @@ def main(args):
             args.append('-j')
             args.append('%d' % j_value)
 
-    # On Windows, fully quote the path so that the command processor doesn't
-    # think the whole output is the command. On Linux and Mac, if people put
-    # depot_tools in directories with ' ', shell would misunderstand ' ' as a
-    # path separation. TODO(yyanagisawa): provide proper quoting for Windows.
-    # see https://cs.chromium.org/chromium/src/tools/mb/mb.py
-    for i in range(len(args)):
-        if (i == 0 and sys.platform.startswith('win')) or ' ' in args[i]:
-            args[i] = '"%s"' % args[i].replace('"', '\\"')
-
-    if os.environ.get('NINJA_SUMMARIZE_BUILD', '0') == '1':
+    if summarize_build:
+        # Enable statistics collection in Ninja.
         args += ['-d', 'stats']
+        # Print the command-line to reassure the user that the right settings
+        # are being used.
+        _print_cmd(args)
 
-    return ' '.join(args)
+    if use_remoteexec:
+        return ninja_reclient.main(args[1:])
+    return ninja.main(args[1:])
 
 
 if __name__ == '__main__':
-    print(main(sys.argv))
+    try:
+        sys.exit(main(sys.argv))
+    except KeyboardInterrupt:
+        sys.exit(1)

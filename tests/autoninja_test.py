@@ -6,9 +6,11 @@
 import multiprocessing
 import os
 import os.path
+import io
 import sys
 import unittest
-import unittest.mock
+import contextlib
+from unittest import mock
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT_DIR)
@@ -38,42 +40,117 @@ class AutoninjaTest(trial_dir.TestCase):
         super(AutoninjaTest, self).tearDown()
 
     def test_autoninja(self):
-        autoninja.main([])
+        """Test that by default (= no GN args) autoninja delegates to ninja."""
+        with mock.patch('ninja.main', return_value=0) as ninja_main:
+            out_dir = os.path.join('out', 'dir')
+            write(os.path.join(out_dir, 'args.gn'), '')
+            autoninja.main(['autoninja.py', '-C', out_dir])
+            ninja_main.assert_called_once()
+            args = ninja_main.call_args.args[0]
+        self.assertIn('-C', args)
+        self.assertEqual(args[args.index('-C') + 1], out_dir)
+
+    @mock.patch('sys.platform', 'win32')
+    def test_autoninja_splits_args_on_windows(self):
+        """
+        Test that autoninja correctly handles the special case of being
+        passed its arguments as a quoted, whitespace-delimited string on
+        Windows.
+        """
+        with mock.patch('ninja.main', return_value=0) as ninja_main:
+            out_dir = os.path.join('out', 'dir')
+            write(os.path.join(out_dir, 'args.gn'), '')
+            autoninja.main([
+                'autoninja.py',
+                '-C {} base'.format(out_dir),
+            ])
+            ninja_main.assert_called_once()
+            args = ninja_main.call_args.args[0]
+        self.assertIn('-C', args)
+        self.assertEqual(args[args.index('-C') + 1], out_dir)
+        self.assertIn('base', args)
 
     def test_autoninja_goma(self):
-        with unittest.mock.patch(
-                'subprocess.call',
-                return_value=0) as mock_call, unittest.mock.patch.dict(
-                    os.environ,
-                    {"GOMA_DIR": os.path.join(self.root_dir, 'goma_dir')}):
+        """
+        Test that when specifying use_goma=true, autoninja verifies that Goma
+        is running and then delegates to ninja.
+        """
+        goma_dir = os.path.join(self.root_dir, 'goma_dir')
+        with mock.patch('subprocess.call', return_value=0), \
+             mock.patch('ninja.main', return_value=0) as ninja_main, \
+             mock.patch.dict(os.environ, {"GOMA_DIR": goma_dir}):
             out_dir = os.path.join('out', 'dir')
             write(os.path.join(out_dir, 'args.gn'), 'use_goma=true')
             write(
                 os.path.join(
                     'goma_dir', 'gomacc.exe'
                     if sys.platform.startswith('win') else 'gomacc'), 'content')
-            args = autoninja.main(['autoninja.py', '-C', out_dir]).split()
-            mock_call.assert_called_once()
-
+            autoninja.main(['autoninja.py', '-C', out_dir])
+            ninja_main.assert_called_once()
+            args = ninja_main.call_args.args[0]
+        self.assertIn('-C', args)
+        self.assertEqual(args[args.index('-C') + 1], out_dir)
+        # Check that autoninja correctly calculated the number of jobs to use
+        # as required for remote execution, instead of using the value for
+        # local execution.
         self.assertIn('-j', args)
         parallel_j = int(args[args.index('-j') + 1])
         self.assertGreater(parallel_j, multiprocessing.cpu_count() * 2)
-        self.assertIn(os.path.join(autoninja.SCRIPT_DIR, 'ninja.py'), args)
 
     def test_autoninja_reclient(self):
-        out_dir = os.path.join('out', 'dir')
-        write(os.path.join(out_dir, 'args.gn'), 'use_remoteexec=true')
-        write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
-              'RBE_v=2')
-        write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
-
-        args = autoninja.main(['autoninja.py', '-C', out_dir]).split()
-
+        """
+        Test that when specifying use_remoteexec=true, autoninja delegates to
+        ninja_reclient.
+        """
+        with mock.patch('ninja_reclient.main',
+                        return_value=0) as ninja_reclient_main:
+            out_dir = os.path.join('out', 'dir')
+            write(os.path.join(out_dir, 'args.gn'), 'use_remoteexec=true')
+            write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
+                  'RBE_v=2')
+            write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
+            autoninja.main(['autoninja.py', '-C', out_dir])
+            ninja_reclient_main.assert_called_once()
+            args = ninja_reclient_main.call_args.args[0]
+        self.assertIn('-C', args)
+        self.assertEqual(args[args.index('-C') + 1], out_dir)
+        # Check that autoninja correctly calculated the number of jobs to use
+        # as required for remote execution, instead of using the value for
+        # local execution.
         self.assertIn('-j', args)
         parallel_j = int(args[args.index('-j') + 1])
         self.assertGreater(parallel_j, multiprocessing.cpu_count() * 2)
-        self.assertIn(os.path.join(autoninja.SCRIPT_DIR, 'ninja_reclient.py'),
-                      args)
+
+    def test_autoninja_siso(self):
+        """
+        Test that when specifying use_siso=true, autoninja delegates to siso.
+        """
+        with mock.patch('siso.main', return_value=0) as siso_main:
+            out_dir = os.path.join('out', 'dir')
+            write(os.path.join(out_dir, 'args.gn'), 'use_siso=true')
+            autoninja.main(['autoninja.py', '-C', out_dir])
+            siso_main.assert_called_once()
+            args = siso_main.call_args.args[0]
+        self.assertIn('-C', args)
+        self.assertEqual(args[args.index('-C') + 1], out_dir)
+
+    def test_autoninja_siso_reclient(self):
+        """
+        Test that when specifying use_siso=true and use_remoteexec=true,
+        autoninja delegates to autosiso.
+        """
+        with mock.patch('autosiso.main', return_value=0) as autosiso_main:
+            out_dir = os.path.join('out', 'dir')
+            write(os.path.join(out_dir, 'args.gn'),
+                  'use_siso=true\nuse_remoteexec=true')
+            write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
+                  'RBE_v=2')
+            write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
+            autoninja.main(['autoninja.py', '-C', out_dir])
+            autosiso_main.assert_called_once()
+            args = autosiso_main.call_args.args[0]
+        self.assertIn('-C', args)
+        self.assertEqual(args[args.index('-C') + 1], out_dir)
 
     def test_gn_lines(self):
         out_dir = os.path.join('out', 'dir')
@@ -91,6 +168,34 @@ class AutoninjaTest(trial_dir.TestCase):
         self.assertListEqual(lines, [
             'use_remoteexec=true',
         ])
+
+    @mock.patch('sys.platform', 'win32')
+    def test_print_cmd_windows(self):
+        args = [
+            'C:\\Program Files\\Python 3\\bin\\python3.exe', 'ninja.py', '-C',
+            'out\\direc tory\\',
+            '../../base/types/expected_macros_unittest.cc^', '-j', '140'
+        ]
+        with contextlib.redirect_stderr(io.StringIO()) as f:
+            autoninja._print_cmd(args)
+            self.assertEqual(
+                f.getvalue(),
+                '"C:\\Program Files\\Python 3\\bin\\python3.exe" ninja.py -C ' +
+                '"out\\direc tory\\" ' +
+                '../../base/types/expected_macros_unittest.cc^^ -j 140\n')
+
+    @mock.patch('sys.platform', 'linux')
+    def test_print_cmd_linux(self):
+        args = [
+            '/home/user name/bin/python3', 'ninja.py', '-C', 'out/direc tory/',
+            '../../base/types/expected_macros_unittest.cc^', '-j', '140'
+        ]
+        with contextlib.redirect_stderr(io.StringIO()) as f:
+            autoninja._print_cmd(args)
+            self.assertEqual(
+                f.getvalue(),
+                "'/home/user name/bin/python3' ninja.py -C 'out/direc tory/' " +
+                "'../../base/types/expected_macros_unittest.cc^' -j 140\n")
 
 
 if __name__ == '__main__':

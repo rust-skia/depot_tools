@@ -24,28 +24,13 @@ if not defined AUTONINJA_BUILD_ID (
 :: Windows. The trailing space is intentional.
 if "%NINJA_SUMMARIZE_BUILD%" == "1" set "NINJA_STATUS=[%%r processes, %%f/%%t @ %%o/s : %%es ] "
 
-:loop
-IF NOT "%1"=="" (
-    :: Tell goma or reclient to not do network compiles.
-    IF "%1"=="--offline" (
-        SET GOMA_DISABLED=1
-        SET RBE_remote_disabled=1
-    )
-    IF "%1"=="-o" (
-        SET GOMA_DISABLED=1
-        SET RBE_remote_disabled=1
-    )
-    SHIFT
-    GOTO :loop
-)
-
-:: Execute whatever is printed by autoninja.py.
-:: Also print it to reassure that the right settings are being used.
+:: Execute autoninja.py and pass all arguments to it.
 :: Don't use vpython - it is too slow to start.
 :: Don't use python3 because it doesn't work in git bash on Windows and we
 :: should be consistent between autoninja.bat and the autoninja script used by
 :: git bash.
-FOR /f "usebackq tokens=*" %%a in (`%scriptdir%python-bin\python3.bat %scriptdir%autoninja.py "%*"`) do echo %%a & %%a
+
+@call %scriptdir%python-bin\python3.bat %scriptdir%autoninja.py "%%*"
 @if errorlevel 1 goto buildfailure
 
 :: Use call to invoke python script here, because we use python via python3.bat.
