@@ -5500,6 +5500,7 @@ def CMDland(parser, args):
 def CMDpatch(parser, args):
     """Applies (cherry-picks) a Gerrit changelist locally."""
     parser.add_option('-b',
+                      '--branch',
                       dest='newbranch',
                       help='create a new branch off trunk for the patch')
     parser.add_option('-f',
