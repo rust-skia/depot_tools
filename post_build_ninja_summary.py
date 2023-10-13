@@ -117,8 +117,8 @@ def ReadTargets(log, show_all):
 
     The result is a list of Target objects."""
     header = log.readline()
-    # TODO: b/298594790 - Siso currently generates empty .ninja_log files.
-    # Handle them gracefully by silently returning an empty list of targets.
+    # Handle empty ninja_log gracefully by silently returning an empty list of
+    # targets.
     if not header:
         return []
     assert header == '# ninja log v5\n', \

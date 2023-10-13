@@ -166,11 +166,11 @@ def main(args):
 
         siso_marker = os.path.join(output_dir, '.siso_deps')
         if use_siso:
-            ninja_marker = os.path.join(output_dir, '.ninja_log')
             # autosiso generates a .ninja_log file so the mere existence of a
             # .ninja_log file doesn't imply that a ninja build was done. However
             # if there is a .ninja_log but no .siso_deps then that implies a
             # ninja build.
+            ninja_marker = os.path.join(output_dir, '.ninja_log')
             if os.path.exists(ninja_marker) and not os.path.exists(siso_marker):
                 print('Run gn clean before switching from ninja to siso in %s' %
                       output_dir,
