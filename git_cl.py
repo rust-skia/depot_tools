@@ -6138,7 +6138,9 @@ def _FindGoogleJavaFormat():
 
         path = os.path.join(primary_solution_path, 'third_party',
                             'google-java-format', 'google-java-format')
-        if os.path.exists(path):
+        # Check that the .jar exists, since it is conditionally downloaded via
+        # DEPS conditions.
+        if os.path.exists(path) and os.path.exists(path + '.jar'):
             return path
     return None
 
