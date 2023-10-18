@@ -2407,8 +2407,10 @@ def CheckInclusiveLanguage(input_api,
                 warnings.extend(problems)
 
     excluded_paths = []
+    excluded_directories_relative_path = input_api.os_path.join(
+        *excluded_directories_relative_path)
     dirs_file_path = input_api.os_path.join(input_api.change.RepositoryRoot(),
-                                            *excluded_directories_relative_path)
+                                            excluded_directories_relative_path)
     f = input_api.ReadFile(dirs_file_path)
 
     for line in f.splitlines():
@@ -2428,12 +2430,16 @@ def CheckInclusiveLanguage(input_api,
     if (warnings):
         result.append(
             output_api.PresubmitPromptWarning(
-                'Banned non-inclusive language was used.\n' +
+                'Banned non-inclusive language was used.\n\n' +
+                'If this is third-party code, please consider updating ' +
+                excluded_directories_relative_path + ' if appropriate.\n\n' +
                 '\n'.join(warnings)))
     if (errors):
         result.append(
             output_api.PresubmitError(
-                'Banned non-inclusive language was used.\n' +
+                'Banned non-inclusive language was used.\n\n' +
+                'If this is third-party code, please consider updating ' +
+                excluded_directories_relative_path + ' if appropriate.\n\n' +
                 '\n'.join(errors)))
     return result
 
