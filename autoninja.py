@@ -176,6 +176,11 @@ def main(args):
                       output_dir,
                       file=sys.stderr)
                 return 1
+            if use_goma:
+                print('Siso does not support Goma.', file=sys.stderr)
+                print('Do not use use_siso=true and use_goma=true',
+                      file=sys.stderr)
+                return 1
             if use_remoteexec:
                 return autosiso.main(['autosiso'] + input_args[1:])
             return siso.main(['siso', 'ninja'] + input_args[1:])
