@@ -945,7 +945,7 @@ class GitWrapper(SCMWrapper):
                         # case 4b
                         force_switch = True
                     else:
-                        switch_error = '%s\n%s' % (e.message, switch_error)
+                        switch_error = '%s\n%s' % (str(e), switch_error)
             if force_switch:
                 self.Print("Switching upstream branch from %s to %s" %
                            (upstream_branch, new_base))
@@ -1104,7 +1104,7 @@ class GitWrapper(SCMWrapper):
             # origin. See also http://crbug.com/520067.
             logging.warning(
                 "Couldn't find usable revision, will retrying to update instead: %s",
-                e.message)
+                str(e))
             return self.update(options, [], file_list)
 
         if file_list is not None:
