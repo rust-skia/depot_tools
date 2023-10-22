@@ -55,8 +55,10 @@ def main() -> None:
     invalid_file_count = 0
 
     # Key is constructed from the result severity and reason;
-    # Value is a list of files affected by that reason at that severity.
-    all_reasons = defaultdict(list)
+    # Value is a dict for:
+    #  * list of files affected by that reason at that severity; and
+    #  * list of validation result strings for that reason and severity.
+    all_reasons = defaultdict(lambda: {"files": [], "results": set()})
     for filepath in metadata_files:
         file_results = metadata.validate.validate_file(filepath,
                                                        repo_root_dir=src_dir)
@@ -69,20 +71,33 @@ def main() -> None:
                 summary_key = "{severity} - {reason}".format(
                     severity=result.get_severity_prefix(),
                     reason=result.get_reason())
-                all_reasons[summary_key].append(relpath)
+                all_reasons[summary_key]["files"].append(relpath)
+                all_reasons[summary_key]["results"].add(str(result))
                 if result.is_fatal():
                     invalid = True
 
         if invalid:
             invalid_file_count += 1
 
-    print("\n\nDone.\nSummary:")
-    for summary_key, affected_files in all_reasons.items():
+    print("\n\nDone.")
+
+    print("\nSummary of files:")
+    for summary_key, data in all_reasons.items():
+        affected_files = data["files"]
         count = len(affected_files)
         plural = "s" if count > 1 else ""
         print(f"\n  {count} file{plural}: {summary_key}")
         for affected_file in affected_files:
             print(f"    {affected_file}")
+
+    print("\nSummary of results:")
+    for summary_key, data in all_reasons.items():
+        results = data["results"]
+        count = len(results)
+        plural = "s" if count > 1 else ""
+        print(f"\n  {count} issue{plural}: {summary_key}")
+        for result in results:
+            print(f"    {result}")
 
     print(f"\n\n{invalid_file_count} / {file_count} metadata files are "
           "invalid, i.e. the file has at least one fatal validation issue.")

@@ -97,8 +97,19 @@ class FieldValidationTest(unittest.TestCase):
     def test_date_validation(self):
         self._run_field_validation(
             field=known_fields.DATE,
-            valid_values=["2012-03-04"],
-            error_values=["", "\n", "April 3, 2012", "2012/03/04"],
+            valid_values=[
+                "2012-03-04", "2012-03-04 UTC", "2012-03-04 UTC+10:00"
+            ],
+            error_values=[
+                "",
+                "\n",
+                "N/A",
+            ],
+            warning_values=[
+                "2012/03/04 UTC+10:00", "20120304", "April 3, 2012",
+                "3 Apr 2012", "03-04-12", "04/03/2012",
+                "Tue Apr 3 05:06:07 2012 +0800"
+            ],
         )
 
     def test_license_validation(self):
