@@ -5073,7 +5073,7 @@ def CMDupload(parser, args):
             'branches that have un-uploaded updates.\n'
             'Patches can now be reapplied with --force:\n'
             '`git cl patch --reapply --force`.\n'
-            'Googlers may visit go/stacked-changes-dogfood for more information.\n'
+            'Googlers may visit http://go/stacked-changes-dogfood for more information.\n'
             '\n'
             'Depot Tools no longer sets new uploads to "WIP". Please update the\n'
             '"Set new changes to "work in progress" by default" checkbox at\n'
