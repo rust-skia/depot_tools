@@ -47,7 +47,10 @@ def main():
     #if extras:
     #    args.args = extras + args.args
 
+    #log_dir = os.path.join(args.ninja_out, '.reproxy_tmp', 'logs')
     #reclient_helper.set_reproxy_path_flags(args.ninja_out, make_dirs=False)
+    #os.environ["RBE_proxy_log_dir"] = ",".join(
+    #    os.path.join(log_dir, d) for d in os.listdir(log_dir))
     #reclient_bin_dir = reclient_helper.find_reclient_bin_dir()
     #code = subprocess.call([os.path.join(reclient_bin_dir, 'reclientreport')] +
     #                       args.args)

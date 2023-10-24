@@ -7,6 +7,7 @@ reproxy before running ninja and stop reproxy when build stops
 for any reason e.g. build completion, keyboard interrupt etc."""
 
 import contextlib
+import datetime
 import hashlib
 import os
 import shutil
@@ -14,9 +15,14 @@ import socket
 import subprocess
 import sys
 import time
+import uuid
 
 import gclient_paths
 import reclient_metrics
+
+
+THIS_DIR = os.path.dirname(__file__)
+RECLIENT_LOG_CLEANUP = os.path.join(THIS_DIR, 'reclient_log_cleanup.py')
 
 
 def find_reclient_bin_dir():
@@ -153,6 +159,30 @@ def remove_mdproxy_from_path():
         if "mdproxy" not in d)
 
 
+# Mockable datetime.datetime.utcnow for testing.
+def datetime_now():
+    return datetime.datetime.utcnow()
+
+
+_test_only_cleanup_logdir_handles = []
+
+
+def cleanup_logdir(log_dir):
+    # Run deletetion command without waiting
+    if sys.platform.startswith('win'):
+        _test_only_cleanup_logdir_handles.append(
+            subprocess.Popen(["rmdir", "/s/q", log_dir],
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL,
+                             shell=True,
+                             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP))
+    else:
+        _test_only_cleanup_logdir_handles.append(
+            subprocess.Popen(["rm", "-rf", log_dir],
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL))
+
+
 def set_reproxy_path_flags(out_dir, make_dirs=True):
     """Helper to setup the logs and cache directories for reclient.
 
@@ -181,15 +211,20 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
   Windows Only:
     RBE_server_address=pipe://md5(out_dir/.reproxy_tmp)/reproxy.pipe
   """
+    os.environ.setdefault("AUTONINJA_BUILD_ID", str(uuid.uuid4()))
     tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
     log_dir = os.path.join(tmp_dir, 'logs')
+    run_log_dir = os.path.join(
+        log_dir,
+        datetime_now().strftime('%Y%m%dT%H%M%S.%f') + "_" +
+        os.environ["AUTONINJA_BUILD_ID"])
     racing_dir = os.path.join(tmp_dir, 'racing')
     cache_dir = find_cache_dir(tmp_dir)
     if make_dirs:
-        if os.path.exists(log_dir):
+        if os.path.isfile(os.path.join(log_dir, "rbe_metrics.txt")):
             try:
-                # Clear log dir before each build to ensure correct metric
-                # aggregation.
+                # Delete entire log dir if it is in the old format
+                # which had no subdirectories for each build.
                 shutil.rmtree(log_dir)
             except OSError:
                 print(
@@ -198,11 +233,17 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
                     file=sys.stderr)
         os.makedirs(tmp_dir, exist_ok=True)
         os.makedirs(log_dir, exist_ok=True)
+        os.makedirs(run_log_dir, exist_ok=True)
         os.makedirs(cache_dir, exist_ok=True)
         os.makedirs(racing_dir, exist_ok=True)
-    os.environ.setdefault("RBE_output_dir", log_dir)
-    os.environ.setdefault("RBE_proxy_log_dir", log_dir)
-    os.environ.setdefault("RBE_log_dir", log_dir)
+    old_log_dirs = os.listdir(log_dir)
+    if len(old_log_dirs) > 5:
+        old_log_dirs.sort(key=lambda dir: dir.split("_"), reverse=True)
+        for d in old_log_dirs[5:]:
+            cleanup_logdir(os.path.join(log_dir, d))
+    os.environ.setdefault("RBE_output_dir", run_log_dir)
+    os.environ.setdefault("RBE_proxy_log_dir", run_log_dir)
+    os.environ.setdefault("RBE_log_dir", run_log_dir)
     os.environ.setdefault("RBE_cache_dir", cache_dir)
     os.environ.setdefault("RBE_racing_tmp_dir", racing_dir)
     if sys.platform.startswith('win'):
