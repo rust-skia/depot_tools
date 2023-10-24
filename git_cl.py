@@ -5077,11 +5077,11 @@ def CMDupload(parser, args):
             '\n'
             'Depot Tools no longer sets new uploads to "WIP". Please update the\n'
             '"Set new changes to "work in progress" by default" checkbox at\n'
-            'https://<host>-review.googlesource.com/settings/\n'
+            'https://%s/settings/\n'
             '\n'
             'To opt-out use `export DOGFOOD_STACKED_CHANGES=0`.\n'
             'To hide this message use `export DOGFOOD_STACKED_CHANGES=1`.\n'
-            'File bugs at https://bit.ly/3Y6opoI\n')
+            'File bugs at https://bit.ly/3Y6opoI\n' % cl.GetGerritHost())
 
     if options.squash and not disable_dogfood_stacked_changes:
         if options.dependencies:
