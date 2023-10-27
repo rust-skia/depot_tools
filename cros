@@ -11,11 +11,12 @@ possible.
 It is intended to used strictly outside of the chroot.
 """
 
+import enum
 import os
 from pathlib import Path
 import subprocess
 import sys
-from typing import Optional
+from typing import List, NamedTuple, Optional, Tuple
 
 # Min version of Python that we *want*.  We warn for older versions.
 MIN_PYTHON_VER_SOFT = (3, 8)
@@ -28,7 +29,14 @@ DEPOT_TOOLS_DIR = Path(__file__).resolve().parent
 CIPD_CACHE_DIR = DEPOT_TOOLS_DIR / '.cipd_bin_cros_python2'
 
 
-def _FindChromite(path: Path) -> Optional[Path]:
+class Checkout(NamedTuple):
+    """Some details about this checkout."""
+
+    root: Path
+    chromite_dir: Path
+
+
+def _FindChromite(path: Path) -> Optional[Checkout]:
     """Find the chromite dir in a repo, gclient, or submodule checkout."""
     path = path.resolve()
     # Depending on the checkout type (whether repo chromeos or gclient chrome)
@@ -48,10 +56,8 @@ def _FindChromite(path: Path) -> Optional[Path]:
 
     while path != Path("/"):
         for root, chromite_git_dir in roots:
-            if all(
-                    (path / x).exists()
-                    for x in [root, chromite_git_dir]):
-                return (path / chromite_git_dir).parent
+            if all((path / x).exists() for x in [root, chromite_git_dir]):
+                return Checkout(path, (path / chromite_git_dir).parent)
         path = path.parent
     return None
 
@@ -100,10 +106,16 @@ def _BootstrapVpython27():
 def main():
     _CheckPythonVersion()
 
-    chromite_dir = _FindChromite(Path.cwd())
+    result = _FindChromite(Path.cwd())
     target = os.path.basename(sys.argv[0])
-    if chromite_dir is None:
+    if result is None:
         return _MissingErrorOut(target)
+    root, chromite_dir = result
+
+    is_citc = (root.parent / ".citc").is_dir()
+    if is_citc:
+        # citc workspaces don't like dirty files like pyc.
+        os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
     path = chromite_dir / "bin" / target
 
