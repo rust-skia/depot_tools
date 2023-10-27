@@ -12,24 +12,25 @@ It is intended to used strictly outside of the chroot.
 """
 
 import os
-import pathlib
+from pathlib import Path
 import subprocess
 import sys
+from typing import Optional
 
 # Min version of Python that we *want*.  We warn for older versions.
 MIN_PYTHON_VER_SOFT = (3, 8)
 # Min version of Python that we *require*.  We abort for older versions.
 MIN_PYTHON_VER_HARD = (3, 8)
 
-DEPOT_TOOLS_DIR = pathlib.Path(__file__).resolve().parent
+DEPOT_TOOLS_DIR = Path(__file__).resolve().parent
 
 # Directory where cros-specific CIPD packages are installed.
 CIPD_CACHE_DIR = DEPOT_TOOLS_DIR / '.cipd_bin_cros_python2'
 
 
-def _FindChromite(path):
+def _FindChromite(path: Path) -> Optional[Path]:
     """Find the chromite dir in a repo, gclient, or submodule checkout."""
-    path = os.path.abspath(path)
+    path = path.resolve()
     # Depending on the checkout type (whether repo chromeos or gclient chrome)
     # Chromite lives in a different location.
     roots = (
@@ -45,13 +46,13 @@ def _FindChromite(path):
         ('../.citc', 'third_party/chromite/__init__.py'),
     )
 
-    while path != '/':
+    while path != Path("/"):
         for root, chromite_git_dir in roots:
             if all(
-                    os.path.exists(os.path.join(path, x))
+                    (path / x).exists()
                     for x in [root, chromite_git_dir]):
-                return os.path.dirname(os.path.join(path, chromite_git_dir))
-        path = os.path.dirname(path)
+                return (path / chromite_git_dir).parent
+        path = path.parent
     return None
 
 
@@ -99,15 +100,15 @@ def _BootstrapVpython27():
 def main():
     _CheckPythonVersion()
 
-    chromite_dir = _FindChromite(os.getcwd())
+    chromite_dir = _FindChromite(Path.cwd())
     target = os.path.basename(sys.argv[0])
     if chromite_dir is None:
         return _MissingErrorOut(target)
 
-    path = os.path.join(chromite_dir, 'bin', target)
+    path = chromite_dir / "bin" / target
 
     # Check to see if this is a script requiring vpython2.7.
-    with open(path, 'rb') as fp:
+    with path.open("rb") as fp:
         shebang = next(fp).strip()
     interpreter = shebang.split()[-1]
     if interpreter in (b'python', b'python2', b'python2.7', b'vpython'):
