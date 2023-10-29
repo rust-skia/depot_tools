@@ -2,7 +2,7 @@
 # Copyright (c) 2018 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-"""Summarize the last ninja build, invoked with ninja's -C syntax.
+r"""Summarize the last ninja build, invoked with ninja's -C syntax.
 
 This script is designed to be automatically run after each ninja build in
 order to summarize the build's performance. Making build performance information
