@@ -164,25 +164,6 @@ def datetime_now():
     return datetime.datetime.utcnow()
 
 
-_test_only_cleanup_logdir_handles = []
-
-
-def cleanup_logdir(log_dir):
-    # Run deletetion command without waiting
-    if sys.platform.startswith('win'):
-        _test_only_cleanup_logdir_handles.append(
-            subprocess.Popen(["rmdir", "/s/q", log_dir],
-                             stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL,
-                             shell=True,
-                             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP))
-    else:
-        _test_only_cleanup_logdir_handles.append(
-            subprocess.Popen(["rm", "-rf", log_dir],
-                             stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL))
-
-
 def set_reproxy_path_flags(out_dir, make_dirs=True):
     """Helper to setup the logs and cache directories for reclient.
 
@@ -240,7 +221,8 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
     if len(old_log_dirs) > 5:
         old_log_dirs.sort(key=lambda dir: dir.split("_"), reverse=True)
         for d in old_log_dirs[5:]:
-            cleanup_logdir(os.path.join(log_dir, d))
+            shutil.rmtree(os.path.join(log_dir, d))
+
     os.environ.setdefault("RBE_output_dir", run_log_dir)
     os.environ.setdefault("RBE_proxy_log_dir", run_log_dir)
     os.environ.setdefault("RBE_log_dir", run_log_dir)

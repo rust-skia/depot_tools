@@ -324,8 +324,6 @@ expiry:  {
             '20170316T200042.000000_SOME_RANDOM_ID_2',
             '20170316T200045.000000_SOME_RANDOM_ID_5',
         ]
-        for p in reclient_helper._test_only_cleanup_logdir_handles:
-            p.wait()
         self.assertCountEqual(os.listdir(log_dir), want_remaining_dirs)
         for d in want_remaining_dirs:
             self.assertTrue(
