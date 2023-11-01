@@ -146,11 +146,6 @@ class GclientGitCheckout(GclientCheckout, GitCheckout):
         wd = os.path.join(self.base, self.root)
         if self.options.dry_run:
             print('cd %s' % wd)
-        self.run_git(
-            'submodule',
-            'foreach',
-            'git config -f $toplevel/.git/config submodule.$name.ignore all',
-            cwd=wd)
         if not self.options.nohistory:
             self.run_git('config',
                          '--add',
