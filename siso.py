@@ -8,6 +8,7 @@ binary when run inside a gclient source tree, so users can just type
 "siso" on the command line."""
 
 import os
+import signal
 import subprocess
 import sys
 
@@ -15,6 +16,12 @@ import gclient_paths
 
 
 def main(args):
+    # Propagate signals to siso process so that it can run cleanup steps.
+    # Siso will be terminated immediately after the second Ctrl-C.
+    signal.signal(signal.SIGINT, lambda signum, frame: None)
+    if not sys.platform.startswith('win'):
+        signal.signal(signal.SIGTERM, lambda signum, frame: None)
+
     # On Windows the siso.bat script passes along the arguments enclosed in
     # double quotes. This prevents multiple levels of parsing of the special '^'
     # characters needed when compiling a single file.  When this case is
@@ -80,7 +87,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    try:
-        sys.exit(main(sys.argv))
-    except KeyboardInterrupt:
-        sys.exit(1)
+    sys.exit(main(sys.argv))
