@@ -183,7 +183,7 @@ def main(args):
                 return 1
             if use_remoteexec:
                 return autosiso.main(['autosiso'] + input_args[1:])
-            return siso.main(['siso', 'ninja'] + input_args[1:])
+            return siso.main(['siso', 'ninja', '--offline'] + input_args[1:])
 
         if os.path.exists(siso_marker):
             print('Run gn clean before switching from siso to ninja in %s' %
