@@ -162,14 +162,10 @@ class FakeReposBase(object):
         except (OSError, subprocess2.CalledProcessError):
             return False
         for repo in ['repo_%d' % r for r in range(1, self.NB_GIT_REPOS + 1)]:
-            # TODO(crbug.com/114712) use git.init -b and remove 'checkout' once
-            # git is upgraded to 2.28 on all builders.
-            subprocess2.check_call(
-                ['git', 'init', '-q',
-                 join(self.git_base, repo)])
-            subprocess2.check_call(
-                ['git', 'checkout', '-q', '-b', DEFAULT_BRANCH],
-                cwd=join(self.git_base, repo))
+            subprocess2.check_call([
+                'git', 'init', '-b', DEFAULT_BRANCH, '-q',
+                join(self.git_base, repo)
+            ])
             self.git_hashes[repo] = [(None, None)]
         self.populateGit()
         self.initialized = True
@@ -214,7 +210,7 @@ class FakeReposBase(object):
 
 class FakeRepos(FakeReposBase):
     """Implements populateGit()."""
-    NB_GIT_REPOS = 20
+    NB_GIT_REPOS = 21
 
     def populateGit(self):
         # Testing:
@@ -861,6 +857,29 @@ deps = {
                     'hash_3': self.git_hashes['repo_3'][1][0],
                 },
             })
+
+        # gitmodules already present, test migration
+        self._commit_git(
+            'repo_21',
+            {
+                'DEPS':
+                """
+use_relative_paths = True
+git_dependencies = "SYNC"
+deps = {
+  "bar": {
+    "url": 'https://example.googlesource.com/repo.git@%(hash)s',
+  },
+}""" % {
+                    'hash': self.git_hashes['repo_2'][1][0],
+                },
+                '.gitmodules':
+                """
+[submodule "bar"]
+	path = bar
+	url = invalid/repo_url.git"""
+            },
+        )
 
 
 class FakeRepoSkiaDEPS(FakeReposBase):
