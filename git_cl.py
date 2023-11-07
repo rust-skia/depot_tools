@@ -4923,8 +4923,10 @@ def CMDupload(parser, args):
                       help='tell the CQ to commit this patchset; '
                       'implies --send-mail')
     parser.add_option('-d',
+                      '--dry-run',
                       '--cq-dry-run',
                       action='store_true',
+                      dest='cq_dry_run',
                       default=False,
                       help='Send the patchset to do a CQ dry run right after '
                       'upload.')
