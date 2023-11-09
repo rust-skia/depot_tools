@@ -213,18 +213,6 @@ class GitWrapper(SCMWrapper):
     name = 'git'
     remote = 'origin'
 
-    _is_env_cog = None
-
-    @staticmethod
-    def _IsCog():
-        """Returns true if the env is cog"""
-        if not GitWrapper._is_env_cog:
-            GitWrapper._is_env_cog = any(
-                os.getcwd().startswith(x)
-                for x in ['/google/cog/cloud', '/google/src/cloud'])
-
-        return GitWrapper._is_env_cog
-
     @property
     def cache_dir(self):
         try:
@@ -1220,12 +1208,11 @@ class GitWrapper(SCMWrapper):
     def _Clone(self, revision, url, options):
         """Clone a git repository from the given URL.
 
-    Once we've cloned the repo, we checkout a working branch if the specified
-    revision is a branch head. If it is a tag or a specific commit, then we
-    leave HEAD detached as it makes future updates simpler -- in this case the
-    user should first create a new branch or switch to an existing branch before
-    making changes in the repo."""
-        in_cog_workspace = self._IsCog()
+        Once we've cloned the repo, we checkout a working branch if the
+        specified revision is a branch head. If it is a tag or a specific
+        commit, then we leave HEAD detached as it makes future updates simpler
+        -- in this case the user should first create a new branch or switch to
+        an existing branch before making changes in the repo."""
 
         if self.print_outbuf:
             print_stdout = True
@@ -1244,22 +1231,7 @@ class GitWrapper(SCMWrapper):
         parent_dir = os.path.dirname(self.checkout_path)
         gclient_utils.safe_makedirs(parent_dir)
 
-        if in_cog_workspace:
-            clone_cmd = ['citc', 'clone-repo', url, self.checkout_path]
-            clone_cmd.append(
-                gclient_utils.ExtractRefName(self.remote, revision) or revision)
-            try:
-                self._Run(clone_cmd,
-                          options,
-                          cwd=self._root_dir,
-                          retry=True,
-                          print_stdout=print_stdout,
-                          filter_fn=filter_fn)
-            except:
-                traceback.print_exc(file=self.out_fh)
-                raise
-            self._SetFetchConfig(options)
-        elif hasattr(options, 'no_history') and options.no_history:
+        if hasattr(options, 'no_history') and options.no_history:
             self._Run(['init', self.checkout_path], options, cwd=self._root_dir)
             self._Run(['remote', 'add', 'origin', url], options)
             revision = self._AutoFetchRef(options, revision, depth=1)

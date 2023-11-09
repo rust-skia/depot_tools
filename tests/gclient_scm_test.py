@@ -237,28 +237,6 @@ from :3
 
 
 class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
-    @mock.patch('gclient_scm.GitWrapper._IsCog')
-    @mock.patch('gclient_scm.GitWrapper._Run', return_value=True)
-    @mock.patch('gclient_scm.GitWrapper._SetFetchConfig')
-    @mock.patch('gclient_scm.GitWrapper._GetCurrentBranch')
-    def testCloneInCog(self, mockGetCurrentBranch, mockSetFetchConfig, mockRun,
-                       _mockIsCog):
-        """Test that we call the correct commands when in a cog workspace."""
-        if not self.enabled:
-            return
-        options = self.Options()
-        scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
-        scm._Clone('123123ab', self.url, options)
-        mockRun.assert_called_once_with(
-            ['citc', 'clone-repo', self.url, scm.checkout_path, '123123ab'],
-            options,
-            cwd=scm._root_dir,
-            retry=True,
-            print_stdout=False,
-            filter_fn=scm.filter)
-        mockSetFetchConfig.assert_called_once()
-        mockGetCurrentBranch.assert_called_once()
-
     def testRevertMissing(self):
         if not self.enabled:
             return
