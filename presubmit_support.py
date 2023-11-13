@@ -1728,18 +1728,7 @@ class PresubmitExecuter(object):
             sys.stdout.write('%6.1fs to run %s from %s.\n' %
                              (elapsed_time, function_name, presubmit_path))
         if sink:
-            failure_reason = None
-            status = rdb_wrapper.STATUS_PASS
-            if any(r.fatal for r in result):
-                status = rdb_wrapper.STATUS_FAIL
-                failure_reasons = []
-                for r in result:
-                    fields = r.json_format()
-                    message = fields['message']
-                    items = '\n'.join('  %s' % item for item in fields['items'])
-                    failure_reasons.append('\n'.join([message, items]))
-                if failure_reasons:
-                    failure_reason = '\n'.join(failure_reasons)
+            status, failure_reason = RDBStatusFrom(result)
             sink.report(function_name, status, elapsed_time, failure_reason)
 
         return result
@@ -1755,6 +1744,23 @@ class PresubmitExecuter(object):
             raise PresubmitFailure(
                 'All presubmit results must be of types derived from '
                 'output_api.PresubmitResult')
+
+
+def RDBStatusFrom(result):
+    """Returns the status and failure reason for a PresubmitResult."""
+    failure_reason = None
+    status = rdb_wrapper.STATUS_PASS
+    if any(r.fatal for r in result):
+        status = rdb_wrapper.STATUS_FAIL
+        failure_reasons = []
+        for r in result:
+            fields = r.json_format()
+            message = fields['message']
+            items = '\n'.join('  %s' % item for item in fields['items'])
+            failure_reasons.append('\n'.join([message, items]))
+        if failure_reasons:
+            failure_reason = '\n'.join(failure_reasons)
+    return status, failure_reason
 
 
 def DoPresubmitChecks(change,
