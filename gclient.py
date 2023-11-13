@@ -128,6 +128,13 @@ PREVIOUS_SYNC_COMMITS = 'GCLIENT_PREVIOUS_SYNC_COMMITS'
 
 NO_SYNC_EXPERIMENT = 'no-sync'
 
+# This experiment causes all dependencies of type 'git' to be skipped for all
+# commands. This can be useful if you need to build Chromium in a working
+# tree that is guaranteed to contain a consistent, pre-synced snapshot of the
+# code that's managed by Git, but still need to install cipd dependencies and
+# run the hooks to download the remaining dependencies.
+SKIP_GIT_EXPERIMENT = 'skip-git'
+
 PRECOMMIT_HOOK_VAR = 'GCLIENT_PRECOMMIT'
 
 
@@ -1105,6 +1112,10 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         # working copy state, so skip the SCM status check.
         run_scm = command not in ('flatten', 'runhooks', 'recurse', 'validate',
                                   None)
+        # See the description of the experiment for the logic behind this.
+        if SKIP_GIT_EXPERIMENT in options.experiments and isinstance(
+                self, GitDependency):
+            run_scm = False
         file_list = [] if not options.nohooks else None
         revision_override = revision_overrides.pop(
             self.FuzzyMatchUrl(revision_overrides), None)
