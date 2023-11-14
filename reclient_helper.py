@@ -125,7 +125,10 @@ def get_hostname():
     hostname = socket.gethostname()
     try:
         return socket.gethostbyaddr(hostname)[0]
-    except socket.gaierror:
+    except Exception as e:
+        print("socket.gethostbyaddr failed " +
+                "(falling back to socket.gethostname): %s" % e,
+                file=sys.stderr)
         return hostname
 
 
