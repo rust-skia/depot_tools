@@ -166,28 +166,28 @@ Returns (Path): The "depot_tools" root directory.
 
 #### **class [GclientApi](/recipes/recipe_modules/gclient/api.py#71)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&emsp; **@property**<br>&mdash; **def [DepsDiffException](/recipes/recipe_modules/gclient/api.py#418)(self):**
+&emsp; **@property**<br>&mdash; **def [DepsDiffException](/recipes/recipe_modules/gclient/api.py#420)(self):**
 
 &mdash; **def [\_\_call\_\_](/recipes/recipe_modules/gclient/api.py#81)(self, name, cmd, infra_step=True, \*\*kwargs):**
 
 Wrapper for easy calling of gclient steps.
 
-&mdash; **def [break\_locks](/recipes/recipe_modules/gclient/api.py#285)(self):**
+&mdash; **def [break\_locks](/recipes/recipe_modules/gclient/api.py#287)(self):**
 
 Remove all index.lock files. If a previous run of git crashed, bot was
 reset, etc... we might end up with leftover index.lock files.
 
-&mdash; **def [checkout](/recipes/recipe_modules/gclient/api.py#245)(self, gclient_config=None, revert=RevertOnTryserver, inject_parent_got_revision=True, extra_sync_flags=None, \*\*kwargs):**
+&mdash; **def [checkout](/recipes/recipe_modules/gclient/api.py#247)(self, gclient_config=None, revert=RevertOnTryserver, inject_parent_got_revision=True, extra_sync_flags=None, \*\*kwargs):**
 
 Return a step generator function for gclient checkouts.
 
 &emsp; **@staticmethod**<br>&mdash; **def [config\_to\_pythonish](/recipes/recipe_modules/gclient/api.py#133)(cfg):**
 
-&mdash; **def [diff\_deps](/recipes/recipe_modules/gclient/api.py#361)(self, cwd):**
+&mdash; **def [diff\_deps](/recipes/recipe_modules/gclient/api.py#363)(self, cwd):**
 
 &mdash; **def [get\_config\_defaults](/recipes/recipe_modules/gclient/api.py#127)(self):**
 
-&mdash; **def [get\_gerrit\_patch\_root](/recipes/recipe_modules/gclient/api.py#292)(self, gclient_config=None):**
+&mdash; **def [get\_gerrit\_patch\_root](/recipes/recipe_modules/gclient/api.py#294)(self, gclient_config=None):**
 
 Returns local path to the repo where gerrit patch will be applied.
 
@@ -200,7 +200,7 @@ Instead, properly map a repository to a local path using repo_path_map.
 TODO(nodir): remove this. Update all recipe tests to specify a git_repo
 matching the recipe.
 
-&mdash; **def [get\_repo\_path](/recipes/recipe_modules/gclient/api.py#319)(self, repo_url, gclient_config=None):**
+&mdash; **def [get\_repo\_path](/recipes/recipe_modules/gclient/api.py#321)(self, repo_url, gclient_config=None):**
 
 Returns local path to the repo checkout given its url.
 
@@ -216,7 +216,7 @@ Returns (dict): A mapping from property name -> project name. It merges the
     values of the deprecated got_revision_mapping and the new
     got_revision_reverse_mapping.
 
-&mdash; **def [inject\_parent\_got\_revision](/recipes/recipe_modules/gclient/api.py#220)(self, gclient_config=None, override=False):**
+&mdash; **def [inject\_parent\_got\_revision](/recipes/recipe_modules/gclient/api.py#222)(self, gclient_config=None, override=False):**
 
 Match gclient config to build revisions obtained from build_properties.
 
@@ -228,7 +228,7 @@ Args:
 
 &mdash; **def [resolve\_revision](/recipes/recipe_modules/gclient/api.py#155)(self, revision):**
 
-&mdash; **def [roll\_deps](/recipes/recipe_modules/gclient/api.py#422)(self, deps_path, dep_updates, strip_prefix_for_gitlink=None, test_data=None):**
+&mdash; **def [roll\_deps](/recipes/recipe_modules/gclient/api.py#424)(self, deps_path, dep_updates, strip_prefix_for_gitlink=None, test_data=None):**
 
 Updates DEPS file to desired revisions, and returns all requried file
 changes.
@@ -249,9 +249,9 @@ Returns:
   commit hash.
   Note: we expect DEPS to be in the root of the project.
 
-&mdash; **def [runhooks](/recipes/recipe_modules/gclient/api.py#279)(self, args=None, name='runhooks', \*\*kwargs):**
+&mdash; **def [runhooks](/recipes/recipe_modules/gclient/api.py#281)(self, args=None, name='runhooks', \*\*kwargs):**
 
-&mdash; **def [set\_patch\_repo\_revision](/recipes/recipe_modules/gclient/api.py#349)(self, gclient_config=None):**
+&mdash; **def [set\_patch\_repo\_revision](/recipes/recipe_modules/gclient/api.py#351)(self, gclient_config=None):**
 
 Updates config revision corresponding to patched project.
 
