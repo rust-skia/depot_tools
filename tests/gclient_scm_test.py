@@ -635,7 +635,6 @@ class ManagedGitWrapperTestCaseMock(unittest.TestCase):
         self.backup_base_path = os.path.join(self.root_dir,
                                              'old_%s.git' % self.relpath)
         mock.patch('gclient_scm.scm.GIT.ApplyEnvVars').start()
-        mock.patch('gclient_scm.GitWrapper._CheckMinVersion').start()
         mock.patch('gclient_scm.GitWrapper._Fetch').start()
         mock.patch('gclient_scm.GitWrapper._DeleteOrMove').start()
         mock.patch('sys.stdout', StringIO()).start()

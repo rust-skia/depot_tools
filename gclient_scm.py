@@ -628,8 +628,6 @@ class GitWrapper(SCMWrapper):
             raise gclient_utils.Error("Unsupported argument(s): %s" %
                                       ",".join(args))
 
-        self._CheckMinVersion("1.6.6")
-
         url, deps_revision = gclient_utils.SplitUrlRevision(self.url)
         revision = deps_revision
         managed = True
@@ -1384,13 +1382,6 @@ class GitWrapper(SCMWrapper):
             # Make the output a little prettier. It's nice to have some
             # whitespace between projects when syncing.
             self.Print('')
-
-    @staticmethod
-    def _CheckMinVersion(min_version):
-        (ok, current_version) = scm.GIT.AssertVersion(min_version)
-        if not ok:
-            raise gclient_utils.Error('git version %s < minimum required %s' %
-                                      (current_version, min_version))
 
     def _EnsureValidHeadObjectOrCheckout(self, revision, options, url):
         # Special case handling if all 3 conditions are met:
