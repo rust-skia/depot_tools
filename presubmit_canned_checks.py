@@ -1221,7 +1221,8 @@ def GetPylint(input_api,
     files_to_skip = tuple(files_to_skip or input_api.DEFAULT_FILES_TO_SKIP)
     extra_paths_list = extra_paths_list or []
 
-    assert version in ('2.6', '2.7'), 'Unsupported pylint version: %s' % version
+    assert version in ('2.6', '2.7', '2.13'), \
+        'Unsupported pylint version: %s' % version
 
     if input_api.is_committing or input_api.no_diffs:
         error_type = output_api.PresubmitError
