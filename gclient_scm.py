@@ -1932,3 +1932,42 @@ class CipdWrapper(SCMWrapper):
     CIPD packages should be updated at the root by running
     `CipdRoot.run('update')`.
     """
+
+
+class CogWrapper(SCMWrapper):
+    """Wrapper for Cog, all no-op."""
+    name = 'cog'
+
+    def __init__(self):
+        super(CogWrapper, self).__init__()
+
+    #override
+    def GetCacheMirror(self):
+        return None
+
+    #override
+    def GetActualRemoteURL(self, options):
+        return None
+
+    #override
+    def DoesRemoteURLMatch(self, options):
+        del options
+        return True
+
+    def revert(self, options, args, file_list):
+        pass
+
+    def diff(self, options, args, file_list):
+        pass
+
+    def pack(self, options, args, file_list):
+        pass
+
+    def revinfo(self, options, args, file_list):
+        pass
+
+    def status(self, options, args, file_list):
+        pass
+
+    def update(self, options, args, file_list):
+        pass
