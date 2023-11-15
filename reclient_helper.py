@@ -123,12 +123,11 @@ def auth_cache_status():
 
 def get_hostname():
     hostname = socket.gethostname()
+    # In case that returned an address, make a best effort attempt to get
+    # the hostname and ignore any errors.
     try:
         return socket.gethostbyaddr(hostname)[0]
-    except Exception as e:
-        print("socket.gethostbyaddr failed " +
-                "(falling back to socket.gethostname): %s" % e,
-                file=sys.stderr)
+    except Exception:
         return hostname
 
 
