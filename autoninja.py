@@ -130,7 +130,6 @@ def main(args):
 
     use_goma = False
     use_remoteexec = False
-    use_rbe = False
     use_siso = False
 
     # Attempt to auto-detect remote build acceleration. We support gn-based
@@ -138,7 +137,7 @@ def main(args):
     # builds where we look for rules.ninja.
     if os.path.exists(os.path.join(output_dir, 'args.gn')):
         for line in _gn_lines(output_dir, os.path.join(output_dir, 'args.gn')):
-            # use_goma, use_remoteexec, or use_rbe will activate build
+            # use_goma, or use_remoteexec will activate build
             # acceleration.
             #
             # This test can match multi-argument lines. Examples of this
@@ -154,10 +153,6 @@ def main(args):
             if re.search(r'(^|\s)(use_remoteexec)\s*=\s*true($|\s)',
                          line_without_comment):
                 use_remoteexec = True
-                continue
-            if re.search(r'(^|\s)(use_rbe)\s*=\s*true($|\s)',
-                         line_without_comment):
-                use_rbe = True
                 continue
             if re.search(r'(^|\s)(use_siso)\s*=\s*true($|\s)',
                          line_without_comment):
@@ -293,7 +288,7 @@ def main(args):
 
     num_cores = multiprocessing.cpu_count()
     if not j_specified and not t_specified:
-        if not offline and (use_goma or use_remoteexec or use_rbe):
+        if not offline and (use_goma or use_remoteexec):
             args.append('-j')
             default_core_multiplier = 80
             if platform.machine() in ('x86_64', 'AMD64'):
