@@ -121,8 +121,8 @@ def ReadTargets(log, show_all):
     # targets.
     if not header:
         return []
-    assert header == '# ninja log v5\n', \
-           'unrecognized ninja log version %r' % header
+    assert header == '# ninja log v5\n', ('unrecognized ninja log version %r' %
+                                          header)
     targets_dict = {}
     last_end_seen = 0.0
     for line in log:
@@ -165,9 +165,9 @@ def ReadTargets(log, show_all):
 def GetExtension(target, extra_patterns):
     """Return the file extension that best represents a target.
 
-  For targets that generate multiple outputs it is important to return a
-  consistent 'canonical' extension. Ultimately the goal is to group build steps
-  by type."""
+    For targets that generate multiple outputs it is important to return a
+    consistent 'canonical' extension. Ultimately the goal is to group build
+    steps by type."""
     for output in target.targets:
         if extra_patterns:
             for fn_pattern in extra_patterns.split(';'):
