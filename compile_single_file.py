@@ -59,7 +59,7 @@ def main():
 
     command = [
         'python3',
-        os.path.join(DEPOT_TOOLS_DIR, 'ninja.py'), '-C', abs_build_dir,
+        os.path.join(DEPOT_TOOLS_DIR, 'autoninja.py'), '-C', abs_build_dir,
         '%s%s' % (src_relpath, carets)
     ]
     # |shell| should be set to True on Windows otherwise the carets characters
