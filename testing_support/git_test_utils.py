@@ -29,7 +29,7 @@ def git_hash_data(data, typ='blob'):
     return hashlib.sha1(b'blob %d\0%s' % (len(data), data)).hexdigest()
 
 
-class OrderedSet(collections.MutableSet):
+class OrderedSet(collections.abc.MutableSet):
     # from http://code.activestate.com/recipes/576694/
     def __init__(self, iterable=None):
         self.end = end = []
@@ -73,20 +73,20 @@ class OrderedSet(collections.MutableSet):
             yield curr[0]
             curr = curr[1]
 
-    def add(self, key):
-        if key not in self.data:
+    def add(self, value):
+        if value not in self.data:
             end = self.end
             curr = end[1]
-            curr[2] = end[1] = self.data[key] = [key, curr, end]
+            curr[2] = end[1] = self.data[value] = [value, curr, end]
 
     def difference_update(self, *others):
         for other in others:
             for i in other:
                 self.discard(i)
 
-    def discard(self, key):
-        if key in self.data:
-            key, prev, nxt = self.data.pop(key)
+    def discard(self, value):
+        if value in self.data:
+            value, prev, nxt = self.data.pop(value)
             prev[2] = nxt
             nxt[1] = prev
 
