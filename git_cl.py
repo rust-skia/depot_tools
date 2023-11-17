@@ -6521,10 +6521,10 @@ def CMDformat(parser, args):
 
 def GetMetricsDir(diff_xml):
     metrics_xml_dirs = [
-        os.path.join('tools', 'metrics', 'actions'),
-        os.path.join('tools', 'metrics', 'histograms'),
-        os.path.join('tools', 'metrics', 'structured'),
-        os.path.join('tools', 'metrics', 'ukm'),
+        'tools/metrics/actions',
+        'tools/metrics/histograms',
+        'tools/metrics/structured',
+        'tools/metrics/ukm',
     ]
     for xml_dir in metrics_xml_dirs:
         if diff_xml.startswith(xml_dir):
