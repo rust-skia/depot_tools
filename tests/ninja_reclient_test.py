@@ -325,7 +325,12 @@ expiry:  {
             '20170316T200042.000000_SOME_RANDOM_ID_2',
             '20170316T200045.000000_SOME_RANDOM_ID_5',
         ]
-        self.assertCountEqual(os.listdir(log_dir), want_remaining_dirs)
+
+        existing_log_dirs = [
+            d for d in os.listdir(log_dir)
+            if os.path.isdir(os.path.join(log_dir, d))
+        ]
+        self.assertCountEqual(existing_log_dirs, want_remaining_dirs)
         for d in want_remaining_dirs:
             self.assertTrue(
                 os.path.isfile(

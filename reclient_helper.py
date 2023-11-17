@@ -219,7 +219,11 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
         os.makedirs(run_log_dir, exist_ok=True)
         os.makedirs(cache_dir, exist_ok=True)
         os.makedirs(racing_dir, exist_ok=True)
-    old_log_dirs = os.listdir(log_dir)
+    old_log_dirs = [
+        d for d in os.listdir(log_dir)
+        if os.path.isdir(os.path.join(log_dir, d))
+    ]
+
     if len(old_log_dirs) > 5:
         old_log_dirs.sort(key=lambda dir: dir.split("_"), reverse=True)
         for d in old_log_dirs[5:]:
@@ -269,8 +273,8 @@ def build_context(argv, tool):
 
     try:
         set_reproxy_path_flags(ninja_out)
-    except OSError:
-        print("Error creating reproxy_tmp in output dir", file=sys.stderr)
+    except OSError as e:
+        print(f"Error creating reproxy_tmp in output dir: {e}", file=sys.stderr)
         yield 1
         return
 
