@@ -371,17 +371,18 @@ def main():
             cmd.extend(["--step_types", args.step_types])
         if args.elapsed_time_sorting:
             cmd.append("--elapsed_time_sorting")
-        subprocess.run(cmd)
-    else:
-        try:
-            with open(log_file, "r") as log:
-                entries = ReadTargets(log, False)
-                if entries:
-                    SummarizeEntries(entries, args.step_types,
-                                     args.elapsed_time_sorting)
-        except IOError:
-            print("Log file %r not found, no build summary created." % log_file)
-            return errno.ENOENT
+        subprocess.run(cmd, check=True)
+        return 0
+
+    try:
+        with open(log_file, "r") as log:
+            entries = ReadTargets(log, False)
+            if entries:
+                SummarizeEntries(entries, args.step_types,
+                                 args.elapsed_time_sorting)
+    except IOError:
+        print("Log file %r not found, no build summary created." % log_file)
+        return errno.ENOENT
 
 
 if __name__ == "__main__":
