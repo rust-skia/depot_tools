@@ -2851,7 +2851,7 @@ class Flattener(object):
 def CMDgitmodules(parser, args):
     """Adds or updates Git Submodules based on the contents of the DEPS file.
 
-  This command should be run in the root director of the repo.
+  This command should be run in the root directory of the repo.
   It will create or update the .gitmodules file and include
   `gclient-condition` values. Commits in gitlinks will also be updated.
   """
