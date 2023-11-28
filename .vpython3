@@ -65,3 +65,33 @@ wheel: <
   name: "infra/python/wheels/certifi-py2_py3"
   version: "version:2021.5.30"
 >
+
+# Used by:
+#   autoninja.py
+wheel: <
+  name: "infra/python/wheels/google-auth-py3"
+  version: "version:2.16.2"
+>
+wheel: <
+  name: "infra/python/wheels/cachetools-py3"
+  version: "version:4.2.2"
+>
+wheel: <
+  name: "infra/python/wheels/pyasn1_modules-py2_py3"
+  version: "version:0.2.8"
+>
+wheel: <
+  name: "infra/python/wheels/rsa-py3"
+  version: "version:4.7.2"
+>
+wheel: <
+  name: "infra/python/wheels/pyasn1-py2_py3"
+  version: "version:0.4.8"
+>
+
+# Used by:
+#   tests/autoninja_test.py
+wheel: <
+  name: "infra/python/wheels/parameterized-py2_py3"
+  version: "version:0.8.1"
+>
