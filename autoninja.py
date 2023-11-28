@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython3
+#!/usr/bin/env python3
 # Copyright (c) 2017 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -14,19 +14,13 @@ does handle import statements, but it can't handle conditional setting of build
 settings.
 """
 
-import json
 import multiprocessing
 import os
 import platform
 import re
 import shlex
-import shutil
 import subprocess
 import sys
-import warnings
-
-import google.auth
-from google.auth.transport.requests import AuthorizedSession
 
 import autosiso
 import ninja
@@ -47,62 +41,6 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 # [2] https://web.archive.org/web/20150815000000*/https://www.microsoft.com/resources/documentation/windows/xp/all/proddocs/en-us/set.mspx # noqa
 _UNSAFE_FOR_CMD = set("^<>&|()%")
 _ALL_META_CHARS = _UNSAFE_FOR_CMD.union(set('"'))
-
-
-def _adc_account():
-    """Returns account used to authenticate with GCP application default credentials."""
-
-    try:
-        # Suppress warnings from google.auth.default.
-        # https://github.com/googleapis/google-auth-library-python/issues/271
-        warnings.filterwarnings(
-            "ignore",
-            "Your application has authenticated using end user credentials from"
-            " Google Cloud SDK without a quota project.",
-        )
-        credentials, _ = google.auth.default(
-            scopes=["https://www.googleapis.com/auth/userinfo.email"])
-    except google.auth.exceptions.DefaultCredentialsError:
-        # Application Default Crendetials is not configured.
-        return None
-    finally:
-        warnings.resetwarnings()
-
-    with AuthorizedSession(credentials) as session:
-        response = session.get("https://www.googleapis.com/oauth2/v1/userinfo")
-    return response.json().get("email")
-
-
-def _gcloud_auth_account():
-    """Returns active account authenticated with `gcloud auth login`."""
-    if shutil.which("gcloud") is None:
-        return None
-
-    accounts = json.loads(
-        subprocess.check_output("gcloud auth list --format=json",
-                                shell=True,
-                                text=True))
-    for account in accounts:
-        if account["status"] == "ACTIVE":
-            return account["account"]
-    return None
-
-
-def _is_google_corp_machine():
-    """This assumes that corp machine has gcert binary in known location."""
-    return shutil.which("gcert") is not None
-
-
-def _is_google_corp_machine_using_external_account():
-    if not _is_google_corp_machine():
-        return False
-
-    account = _adc_account()
-    if account and not account.endswith("@google.com"):
-        return True
-
-    account = _gcloud_auth_account()
-    return account and not account.endswith("@google.com")
 
 
 def _quote_for_cmd(arg):
@@ -270,18 +208,6 @@ def main(args):
                         if re.match(r"^\s*command\s*=\s*\S+gomacc", line):
                             use_goma = True
                             break
-
-    if use_remoteexec or use_siso:
-        if _is_google_corp_machine_using_external_account():
-            print(
-                "You can't use a non-@google.com account (%s and/or %s) on a"
-                " corp machine.\n"
-                "Please login via `gcloud auth login --update-adc` with your"
-                " @google.com account instead.\n" %
-                (_adc_account(), _gcloud_auth_account()),
-                file=sys.stderr,
-            )
-            return 1
 
     # Strip -o/--offline so ninja doesn't see them.
     input_args = [arg for arg in input_args if arg not in ("-o", "--offline")]
