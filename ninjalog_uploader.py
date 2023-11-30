@@ -51,10 +51,10 @@ ALLOWLISTED_CONFIGS = (
 def IsGoogler():
     """Check whether this user is Googler or not."""
     p = subprocess.run(
-        "goma_auth info",
+        "cipd auth-info",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        universal_newlines=True,
+        text=True,
         shell=True,
     )
     if p.returncode != 0:
@@ -63,8 +63,9 @@ def IsGoogler():
     if len(lines) == 0:
         return False
     l = lines[0]
-    # |l| will be like 'Login as <user>@google.com' for googler using goma.
-    return l.startswith("Login as ") and l.endswith("@google.com")
+    # |l| will be like 'Logged in as <user>@google.com.' for googler using
+    # reclient.
+    return l.startswith("Logged in as ") and l.endswith("@google.com.")
 
 
 def ParseGNArgs(gn_args):
