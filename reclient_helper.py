@@ -251,6 +251,13 @@ def set_racing_defaults():
     os.environ.setdefault("RBE_racing_bias", "0.95")
 
 
+def set_mac_defaults():
+    # Reduce the cas concurrency on macs.  Lower value doesn't impact
+    # performance when on high-speed connection, but does show improvements
+    # on easily congested networks.
+    os.environ.setdefault("RBE_cas_concurrency", "100")
+
+
 @contextlib.contextmanager
 def build_context(argv, tool):
     # If use_remoteexec is set, but the reclient binaries or configs don't
@@ -288,6 +295,8 @@ def build_context(argv, tool):
     remote_disabled = os.environ.get('RBE_remote_disabled')
     if remote_disabled not in ('1', 't', 'T', 'true', 'TRUE', 'True'):
         set_racing_defaults()
+        if sys.platform == "darwin":
+            set_mac_defaults()
 
     # TODO(b/292523514) remove this once a fix is landed in reproxy
     remove_mdproxy_from_path()
