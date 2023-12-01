@@ -6349,7 +6349,7 @@ def _FormatXml(opts, paths, top_dir, upstream_commit):
         if not xml_dir:
             continue
 
-        tool_dir = os.path.join(top_dir, xml_dir)
+        tool_dir = os.path.join(top_dir, xml_dir.replace('/', os.path.sep))
         pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
         cmd = [shutil.which('vpython3'), pretty_print_tool, '--non-interactive']
 
@@ -6361,12 +6361,12 @@ def _FormatXml(opts, paths, top_dir, upstream_commit):
         # tools/metrics/histogrmas, pretty-print should be run with an
         # additional relative path argument, like: $ python pretty_print.py
         # metadata/UMA/histograms.xml $ python pretty_print.py enums.xml
-        if xml_dir == os.path.join('tools', 'metrics', 'histograms'):
+        if xml_dir == 'tools/metrics/histograms':
             if os.path.basename(path) not in ('histograms.xml', 'enums.xml',
                                               'histogram_suffixes_list.xml'):
                 # Skip this XML file if it's not one of the known types.
                 continue
-            cmd.append(path)
+            cmd.append(path.replace('/', os.path.sep))
 
         if opts.dry_run or opts.diff:
             cmd.append('--diff')
