@@ -584,7 +584,7 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
             scm.update(options, (), [])
         self.assertEqual(
             e.exception.args[0], '\n____ . at refs/remotes/origin/main\n'
-            '\tYou have unstaged changes.\n'
+            '\tYou have uncommitted changes.\n'
             '\tcd into ., run git status to see changes,\n'
             '\tand commit, stash, or reset.\n')
 

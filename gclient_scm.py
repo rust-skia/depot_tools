@@ -1422,28 +1422,15 @@ class GitWrapper(SCMWrapper):
                 '\tIf no git executable is running, then clean up %r and try again.\n'
                 % (self.relpath, revision, lockfile))
 
-        # Make sure the tree is clean; see git-rebase.sh for reference
-        try:
-            scm.GIT.Capture(
-                ['update-index', '--ignore-submodules', '--refresh'],
-                cwd=self.checkout_path)
-        except subprocess2.CalledProcessError:
+        # Ensure that the tree is clean.
+        if scm.GIT.Capture([
+                'status', '--porcelain', '--untracked-files=no',
+                '--ignore-submodules'
+        ],
+                           cwd=self.checkout_path):
             raise gclient_utils.Error(
                 '\n____ %s at %s\n'
-                '\tYou have unstaged changes.\n'
-                '\tcd into %s, run git status to see changes,\n'
-                '\tand commit, stash, or reset.\n' %
-                (self.relpath, revision, self.relpath))
-        try:
-            scm.GIT.Capture([
-                'diff-index', '--cached', '--name-status', '-r',
-                '--ignore-submodules', 'HEAD', '--'
-            ],
-                            cwd=self.checkout_path)
-        except subprocess2.CalledProcessError:
-            raise gclient_utils.Error(
-                '\n____ %s at %s\n'
-                '\tYour index contains uncommitted changes\n'
+                '\tYou have uncommitted changes.\n'
                 '\tcd into %s, run git status to see changes,\n'
                 '\tand commit, stash, or reset.\n' %
                 (self.relpath, revision, self.relpath))
