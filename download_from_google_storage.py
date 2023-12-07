@@ -537,7 +537,7 @@ def main(args):
                       'Must be used with -d/--directory')
     parser.add_option('-t',
                       '--num_threads',
-                      default=1,
+                      default=0,
                       type='int',
                       help='Number of downloader threads to run.')
     parser.add_option('-d',
@@ -661,6 +661,10 @@ def main(args):
                      '--sha1_file or --directory')
 
     input_filename = args[0]
+    num_threads = options.num_threads
+    if not num_threads:
+        num_threads = max(
+            int(os.environ.get('DOWNLOAD_FROM_GOOGLE_STORAGE_THREADS', 1)), 1)
 
     # Set output filename if not specified.
     if not options.output and not options.directory:
@@ -684,8 +688,8 @@ def main(args):
 
     try:
         return download_from_google_storage(
-            input_filename, base_url, gsutil, options.num_threads,
-            options.directory, options.recursive, options.force, options.output,
+            input_filename, base_url, gsutil, num_threads, options.directory,
+            options.recursive, options.force, options.output,
             options.ignore_errors, options.sha1_file, options.verbose,
             options.auto_platform, options.extract)
     except FileNotFoundError as e:
