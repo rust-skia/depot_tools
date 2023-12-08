@@ -19,7 +19,8 @@
       "main",
       "--recurse-submodules",
       "--progress",
-      "--depth 1"
+      "--depth",
+      "1"
     ],
     "cwd": "[START_DIR]/src",
     "env": {

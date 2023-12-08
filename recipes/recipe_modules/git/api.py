@@ -262,7 +262,7 @@ class GitApi(recipe_api.RecipeApi):
 
       if depth:
         assert isinstance(depth, int)
-        fetch_args.append('--depth %d' % depth)
+        fetch_args += ['--depth', depth]
 
       fetch_step_name = 'git fetch%s' % step_suffix
       if display_fetch_size:
