@@ -75,4 +75,4 @@ infra/chromeperf/pinpoint/${platform} git_revision:bd3a982ae62b4820b71414b2340e8
 @Subdir reclient
 # reclient, currently this is only for ChromeOS build.
 # TODO(http://b/242680623): we may change how to distribute reclient.
-infra/rbe/client/${platform=linux-amd64} re_client_version:0.101.0.6210d0d-gomaip
+infra/rbe/client/${platform=linux-amd64} re_client_version:0.124.1.13f78cc-gomaip
