@@ -3999,7 +3999,9 @@ def upload_branch_deps(cl, args, force=False):
   Note: This function does not rebase your local dependent branches. Use it
         when you make a change to the parent branch that will not conflict
         with its dependent branches, and you would like their dependencies
-        updated in Rietveld.
+        updated in Gerrit.
+        If the new stacked change flow is used, and ancestor diverged, upload
+        will fail. To recover, `git rebase-update [-n]` must be executed.
   """
     if git_common.is_dirty_git_tree('upload-branch-deps'):
         return 1
@@ -4063,7 +4065,8 @@ def upload_branch_deps(cl, args, force=False):
                 if CMDupload(OptionParser(), args) != 0:
                     print('Upload failed for %s!' % dependent_branch)
                     failures[dependent_branch] = 1
-            except:  # pylint: disable=bare-except
+            except Exception as e:
+                print(f"Unexpected exception: {e}")
                 failures[dependent_branch] = 1
             print()
     finally:
@@ -5086,16 +5089,16 @@ def CMDupload(parser, args):
             'File bugs at https://bit.ly/3Y6opoI\n' % cl.GetGerritHost())
 
     if options.squash and not disable_dogfood_stacked_changes:
-        if options.dependencies:
-            parser.error(
-                '--dependencies is not available for this dogfood workflow.')
-
         if options.cherry_pick_stacked:
             try:
                 orig_args.remove('--cherry-pick-stacked')
             except ValueError:
                 orig_args.remove('--cp')
         UploadAllSquashed(options, orig_args)
+        if options.dependencies:
+            orig_args.remove('--dependencies')
+            return upload_branch_deps(cl, orig_args, options.force)
+
         return 0
 
     if options.cherry_pick_stacked:
