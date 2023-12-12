@@ -19,10 +19,12 @@ import multiprocessing
 import os
 import platform
 import re
+import shelve
 import shlex
 import shutil
 import subprocess
 import sys
+import time
 import warnings
 
 import google.auth
@@ -103,16 +105,29 @@ def _is_google_corp_machine_using_external_account():
     if not _is_google_corp_machine():
         return False
 
-    account = _adc_account()
-    if account and not account.endswith("@google.com"):
-        return True
+    with shelve.open(os.path.join(SCRIPT_DIR, ".autoninja")) as db:
+        last_false = db.get("last_false")
+        now = time.time()
+        if last_false is not None and now < last_false + 12 * 60 * 60:
+            # Do not check account if it is checked in last 12 hours.
+            return False
 
-    account = _gcloud_auth_account()
-    if not account:
+        account = _adc_account()
+        if account and not account.endswith("@google.com"):
+            return True
+
+        account = _gcloud_auth_account()
+        if not account:
+            db["last_false"] = now
+            return False
+
+        # Handle service account and google account as internal account.
+        if not (account.endswith("@google.com")
+                or account.endswith("gserviceaccount.com")):
+            return True
+
+        db["last_false"] = now
         return False
-    # Handle service account and google account as internal account.
-    return not (account.endswith("@google.com")
-                or account.endswith("gserviceaccount.com"))
 
 
 def _quote_for_cmd(arg):

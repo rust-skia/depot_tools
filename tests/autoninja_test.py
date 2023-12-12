@@ -3,6 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import glob
 import multiprocessing
 import os
 import os.path
@@ -165,6 +166,11 @@ class AutoninjaTest(trial_dir.TestCase):
                                                     adc_account,
                                                     gcloud_auth_account,
                                                     expected):
+        for shelve_file in glob.glob(
+                os.path.join(autoninja.SCRIPT_DIR, ".autoninja*")):
+            # Clear cache.
+            os.remove(shelve_file)
+
         with mock.patch('autoninja._is_google_corp_machine',
                         return_value=is_corp), mock.patch(
                             'autoninja._adc_account',
