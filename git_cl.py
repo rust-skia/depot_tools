@@ -1848,7 +1848,7 @@ class Changelist(object):
             return options.message.strip()
 
         # Use the subject of the last commit as title by default.
-        title = RunGit(['show', '-s', '--format=%s', 'HEAD']).strip()
+        title = RunGit(['show', '-s', '--format=%s', 'HEAD', '--']).strip()
         if options.force or options.skip_title:
             return title
         user_title = gclient_utils.AskForData('Title for patchset [%s]: ' %

@@ -897,7 +897,8 @@ def set_config(option, value, scope='local'):
 def get_dirty_files():
     # Make sure index is up-to-date before running diff-index.
     run_with_retcode('update-index', '--refresh', '-q')
-    return run('diff-index', '--ignore-submodules', '--name-status', 'HEAD')
+    return run('diff-index', '--ignore-submodules', '--name-status', 'HEAD',
+               '--')
 
 
 def is_dirty_git_tree(cmd):
@@ -1006,10 +1007,10 @@ def tags(*args):
 
 def thaw():
     took_action = False
-    with run_stream('rev-list', 'HEAD') as stream:
+    with run_stream('rev-list', 'HEAD', '--') as stream:
         for sha in stream:
             sha = sha.strip().decode('utf-8')
-            msg = run('show', '--format=%f%b', '-s', 'HEAD')
+            msg = run('show', '--format=%f%b', '-s', 'HEAD', '--')
             match = FREEZE_MATCHER.match(msg)
             if not match:
                 if not took_action:

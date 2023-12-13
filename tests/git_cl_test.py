@@ -919,7 +919,8 @@ class TestGitCl(unittest.TestCase):
                     title = 'Initial upload'
             else:
                 calls += [
-                    ((['git', 'show', '-s', '--format=%s', 'HEAD'], ), ''),
+                    ((['git', 'show', '-s', '--format=%s', 'HEAD',
+                       '--'], ), ''),
                     (('ask_for_data', 'Title for patchset []: '), 'User input'),
                 ]
                 title = 'User input'
@@ -3733,7 +3734,7 @@ class ChangelistTest(unittest.TestCase):
     LAST_COMMIT_SUBJECT = 'Fixes goat teleporter destination to be Australia'
 
     def _mock_run_git(commands):
-        if commands == ['show', '-s', '--format=%s', 'HEAD']:
+        if commands == ['show', '-s', '--format=%s', 'HEAD', '--']:
             return ChangelistTest.LAST_COMMIT_SUBJECT
 
     def setUp(self):
