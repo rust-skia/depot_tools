@@ -353,6 +353,35 @@ def main(args):
                     # script.
                     print("false")
                 sys.exit(1)
+        # Display a warning that goma is being deprecated, every time a build
+        # is executed with 'use_goma.
+        # Further changes to encourage switching may follow.
+        if sys.platform.startswith("win"):
+            print(
+                "The gn arg use_goma=true will be deprecated by EOY 2023. "
+                "Please use `use_remoteexec=true` instead. See "
+                "https://chromium.googlesource.com/chromium/src/+/main/docs/"
+                "windows_build_instructions.md#use-reclient "
+                "for setup instructions.",
+                file=sys.stderr,
+            )
+        elif sys.platform == "darwin":
+            print(
+                "The gn arg use_goma=true will be deprecated by EOY 2023. "
+                "Please use `use_remoteexec=true` instead. "
+                "If you are a googler see http://go/building-chrome-mac"
+                "#using-remote-execution for setup instructions.",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                "The gn arg use_goma=true will be deprecated by EOY 2023. "
+                "Please use `use_remoteexec=true` instead. See "
+                "https://chromium.googlesource.com/chromium/src/+/main/docs/"
+                "linux/build_instructions.md#use-reclient for setup instructions.",
+                file=sys.stderr,
+            )
+
 
     # A large build (with or without goma) tends to hog all system resources.
     # Depending on the operating system, we might have mechanisms available
