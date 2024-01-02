@@ -35,6 +35,7 @@ import unittest  # Exposed through the API.
 import urllib.parse as urlparse
 import urllib.request as urllib_request
 import urllib.error as urllib_error
+from typing import Mapping
 from warnings import warn
 
 # Local imports.
@@ -1798,12 +1799,7 @@ def DoPresubmitChecks(change,
   Return:
     1 if presubmit checks failed or 0 otherwise.
   """
-    old_environ = os.environ
-    try:
-        # Make sure python subprocesses won't generate .pyc files.
-        os.environ = os.environ.copy()
-        os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
-
+    with setup_environ({'PYTHONDONTWRITEBYTECODE': '1'}):
         python_version = 'Python %s' % sys.version_info.major
         if committing:
             sys.stdout.write('Running %s presubmit commit checks ...\n' %
@@ -1910,8 +1906,6 @@ def DoPresubmitChecks(change,
             _ASKED_FOR_FEEDBACK = True
 
         return 1 if presubmits_failed else 0
-    finally:
-        os.environ = old_environ
 
 
 def _scan_sub_dirs(mask, recursive):
@@ -2018,6 +2012,27 @@ def _parse_gerrit_options(parser, options):
     logging.info('Got description: """\n%s\n"""', options.description)
 
     return gerrit_obj
+
+
+@contextlib.contextmanager
+def setup_environ(kv: Mapping[str, str]):
+    """Update environment while in context, and reset back to original on exit.
+
+    Example usage:
+    with setup_environ({"key": "value"}):
+        # os.environ now has key set to value.
+        pass
+    """
+    old_kv = {}
+    for k, v in kv.items():
+        old_kv[k] = os.environ.get(k, None)
+        os.environ[k] = v
+    yield
+    for k, v in old_kv.items():
+        if v:
+            os.environ[k] = v
+        else:
+            os.environ.pop(k, None)
 
 
 @contextlib.contextmanager
