@@ -1116,15 +1116,18 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
             options.revision = revision_override
             self._used_revision = options.revision
             self._used_scm = self.CreateSCM(out_cb=work_queue.out_cb)
+            latest_commit = None
             if command != 'update' or self.GetScmName() != 'git':
                 self._got_revision = self._used_scm.RunCommand(
                     command, options, args, file_list)
             else:
+                # We are running update.
                 try:
                     start = time.time()
                     sync_status = metrics_utils.SYNC_STATUS_FAILURE
                     self._got_revision = self._used_scm.RunCommand(
                         command, options, args, file_list)
+                    latest_commit = self._got_revision
                     sync_status = metrics_utils.SYNC_STATUS_SUCCESS
                 finally:
                     url, revision = gclient_utils.SplitUrlRevision(self.url)
@@ -1146,7 +1149,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                     latest_commit = self._used_scm.apply_patch_ref(
                         patch_repo, patch_ref, target_branch, options,
                         file_list)
-                else:
+                elif latest_commit is None:
                     latest_commit = self._used_scm.revinfo(None, None, None)
                 existing_sync_commits = json.loads(
                     os.environ.get(PREVIOUS_SYNC_COMMITS, '{}'))
