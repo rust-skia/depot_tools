@@ -957,15 +957,13 @@ def GetUnitTestsInDirectory(input_api,
                             env=None,
                             run_on_python2=False,
                             run_on_python3=True,
-                            skip_shebang_check=True,
-                            allowlist=None,
-                            blocklist=None):
+                            skip_shebang_check=True):
     """Lists all files in a directory and runs them. Doesn't recurse.
 
-    It's mainly a wrapper for RunUnitTests. Use allowlist and blocklist to filter
-    tests accordingly. run_on_python2, run_on_python3, and skip_shebang_check are
-    no longer used but have to be retained because of the many callers in other
-    repos that pass them in.
+    It's mainly a wrapper for RunUnitTests. Use files_to_check and files_to_skip
+    to filter tests accordingly. run_on_python2, run_on_python3, and
+    skip_shebang_check are no longer used but have to be retained because of the
+    many callers in other repos that pass them in.
     """
     del run_on_python2
     del run_on_python3

@@ -2284,7 +2284,7 @@ class Changelist(object):
         # Fall back on still unique, but less efficient change number.
         return str(self.GetIssue())
 
-    def EnsureAuthenticated(self, force, refresh=None):
+    def EnsureAuthenticated(self, force):
         """Best effort check that user is authenticated with Gerrit server."""
         if settings.GetGerritSkipEnsureAuthenticated():
             # For projects with unusual authentication schemes.
@@ -2741,8 +2741,7 @@ class Changelist(object):
                 break
         return 0
 
-    def CMDPatchWithParsedIssue(self, parsed_issue_arg, nocommit, force,
-                                newbranch):
+    def CMDPatchWithParsedIssue(self, parsed_issue_arg, nocommit, force):
         assert parsed_issue_arg.valid
 
         self.issue = parsed_issue_arg.issue
@@ -3946,7 +3945,7 @@ def get_cl_statuses(changes, fine_grained, max_processes=None):
     # First, sort out authentication issues.
     logging.debug('ensuring credentials exist')
     for cl in changes:
-        cl.EnsureAuthenticated(force=False, refresh=True)
+        cl.EnsureAuthenticated(force=False)
 
     def fetch(cl):
         try:
@@ -5558,7 +5557,7 @@ def CMDpatch(parser, args):
 
         target_issue_arg = ParseIssueNumberArgument(cl.GetIssue())
         return cl.CMDPatchWithParsedIssue(target_issue_arg, options.nocommit,
-                                          options.force, False)
+                                          options.force)
 
     if len(args) != 1 or not args[0]:
         parser.error('Must specify issue number or URL.')
@@ -5585,7 +5584,7 @@ def CMDpatch(parser, args):
         print('canonical issue/change URL: %s\n' % cl.GetIssueURL())
 
     return cl.CMDPatchWithParsedIssue(target_issue_arg, options.nocommit,
-                                      options.force, options.newbranch)
+                                      options.force)
 
 
 def GetTreeStatus(url=None):

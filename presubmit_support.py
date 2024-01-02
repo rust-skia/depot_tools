@@ -772,9 +772,7 @@ class InputApi(object):
     def FilterSourceFile(self,
                          affected_file,
                          files_to_check=None,
-                         files_to_skip=None,
-                         allow_list=None,
-                         block_list=None):
+                         files_to_skip=None):
         """Filters out files that aren't considered 'source file'.
 
         If files_to_check or files_to_skip is None, InputApi.DEFAULT_FILES_TO_CHECK
