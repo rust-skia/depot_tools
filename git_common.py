@@ -1137,6 +1137,14 @@ def _extract_git_tuple(version_string):
     return tuple(int(x) for x in version.split('.'))
 
 
+def get_num_commits(branch):
+    base = get_or_create_merge_base(branch)
+    if base:
+        commits_list = run('rev-list', '--count', branch, '^%s' % base, '--')
+        return int(commits_list) or None
+    return None
+
+
 def get_branches_info(include_tracking_status):
     format_string = (
         '--format=%(refname:short):%(objectname:short):%(upstream:short):')
@@ -1156,11 +1164,7 @@ def get_branches_info(include_tracking_status):
 
         commits = None
         if include_tracking_status:
-            base = get_or_create_merge_base(branch)
-            if base:
-                commits_list = run('rev-list', '--count', branch, '^%s' % base,
-                                   '--')
-                commits = int(commits_list) or None
+            commits = get_num_commits(branch)
 
         behind_match = re.search(r'behind (\d+)', tracking_status)
         behind = int(behind_match.group(1)) if behind_match else None
