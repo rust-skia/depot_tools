@@ -80,13 +80,13 @@ def commit_git(repo):
 class FakeReposBase(object):
     """Generate git repositories to test gclient functionality.
 
-  Many DEPS functionalities need to be tested: Var, deps_os, hooks,
-  use_relative_paths.
+    Many DEPS functionalities need to be tested: Var, deps_os, hooks,
+    use_relative_paths.
 
-  And types of dependencies: Relative urls, Full urls, git.
+    And types of dependencies: Relative urls, Full urls, git.
 
-  populateGit() needs to be implemented by the subclass.
-  """
+    populateGit() needs to be implemented by the subclass.
+    """
     # Hostname
     NB_GIT_REPOS = 1
     USERS = [
@@ -1087,7 +1087,7 @@ class FakeReposTestBase(trial_dir.TestCase):
 
     def mangle_git_tree(self, *args):
         """Creates a 'virtual directory snapshot' to compare with the actual
-    result on disk."""
+        result on disk."""
         result = {}
         for item, new_root in args:
             repo, rev = item.split('@', 1)

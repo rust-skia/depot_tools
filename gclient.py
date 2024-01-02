@@ -1682,7 +1682,7 @@ solutions = %(solution_list)s
 
     def _CheckConfig(self):
         """Verify that the config matches the state of the existing checked-out
-    solutions."""
+        solutions."""
         for dep in self.dependencies:
             if dep.managed and dep.url:
                 scm = dep.CreateSCM()
@@ -1806,7 +1806,7 @@ it or fix the checkout.
     def LoadCurrentConfig(options):
         # type: (optparse.Values) -> GClient
         """Searches for and loads a .gclient file relative to the current working
-    dir."""
+        dir."""
         if options.spec:
             client = GClient('.', options)
             client.SetConfig(options.spec)
@@ -1862,8 +1862,8 @@ it or fix the checkout.
     def _SaveEntries(self):
         """Creates a .gclient_entries file to record the list of unique checkouts.
 
-    The .gclient_entries file lives in the same directory as .gclient.
-    """
+        The .gclient_entries file lives in the same directory as .gclient.
+        """
         # Sometimes pprint.pformat will use {', sometimes it'll use { ' ... It
         # makes testing a bit too fun.
         result = 'entries = {\n'
@@ -1878,10 +1878,10 @@ it or fix the checkout.
     def _ReadEntries(self):
         """Read the .gclient_entries file for the given client.
 
-    Returns:
-      A sequence of solution names, which will be empty if there is the
-      entries file hasn't been created yet.
-    """
+        Returns:
+            A sequence of solution names, which will be empty if there is the
+            entries file hasn't been created yet.
+        """
         scope = {}
         filename = os.path.join(self.root_dir, self._options.entries_filename)
         if not os.path.exists(filename):
@@ -2047,12 +2047,12 @@ it or fix the checkout.
     def _RemoveUnversionedGitDirs(self):
         """Remove directories that are no longer part of the checkout.
 
-    Notify the user if there is an orphaned entry in their working copy.
-    Only delete the directory if there are no changes in it, and
-    delete_unversioned_trees is set to true.
+        Notify the user if there is an orphaned entry in their working copy.
+        Only delete the directory if there are no changes in it, and
+        delete_unversioned_trees is set to true.
 
-    Returns CIPD packages that are no longer versioned.
-    """
+        Returns CIPD packages that are no longer versioned.
+        """
 
         entry_names_and_sync = [(i.name, i._should_sync)
                                 for i in self.root.subtree(False) if i.url]
@@ -2227,10 +2227,10 @@ it or fix the checkout.
                   progress=True):
         """Runs a command on each dependency in a client and its dependencies.
 
-    Args:
-      command: The command to use (e.g., 'status' or 'diff')
-      args: list of str - extra arguments to add to the command line.
-    """
+        Args:
+            command: The command to use (e.g., 'status' or 'diff')
+            args: list of str - extra arguments to add to the command line.
+        """
         if not self.dependencies:
             raise gclient_utils.Error('No solution specified')
 
@@ -2613,16 +2613,16 @@ class CipdDependency(Dependency):
 def CMDrecurse(parser, args):
     """Operates [command args ...] on all the dependencies.
 
-  Change directory to each dependency's directory, and call [command
-  args ...] there.  Sets GCLIENT_DEP_PATH environment variable as the
-  dep's relative location to root directory of the checkout.
+    Change directory to each dependency's directory, and call [command
+    args ...] there.  Sets GCLIENT_DEP_PATH environment variable as the
+    dep's relative location to root directory of the checkout.
 
-  Examples:
-  * `gclient recurse --no-progress -j1 sh -c 'echo "$GCLIENT_DEP_PATH"'`
-  print the relative path of each dependency.
-  * `gclient recurse --no-progress -j1 sh -c "pwd"`
-  print the absolute path of each dependency.
-  """
+    Examples:
+    * `gclient recurse --no-progress -j1 sh -c 'echo "$GCLIENT_DEP_PATH"'`
+    print the relative path of each dependency.
+    * `gclient recurse --no-progress -j1 sh -c "pwd"`
+    print the absolute path of each dependency.
+    """
     # Stop parsing at the first non-arg so that these go through to the command
     parser.disable_interspersed_args()
     parser.add_option('-s',
@@ -2676,8 +2676,8 @@ def CMDrecurse(parser, args):
 def CMDfetch(parser, args):
     """Fetches upstream commits for all modules.
 
-  Completely git-specific. Simply runs 'git fetch [args ...]' for each module.
-  """
+    Completely git-specific. Simply runs 'git fetch [args ...]' for each module.
+    """
     (options, args) = parser.parse_args(args)
     return CMDrecurse(
         OptionParser(),
@@ -2689,11 +2689,11 @@ class Flattener(object):
     def __init__(self, client, pin_all_deps=False):
         """Constructor.
 
-    Arguments:
-      client (GClient): client to flatten
-      pin_all_deps (bool): whether to pin all deps, even if they're not pinned
-          in DEPS
-    """
+        Arguments:
+            client (GClient): client to flatten
+            pin_all_deps (bool): whether to pin all deps, even if they're not pinned
+                in DEPS
+        """
         self._client = client
 
         self._deps_string = None
@@ -2725,9 +2725,9 @@ class Flattener(object):
     def _pin_dep(self, dep):
         """Pins a dependency to specific full revision sha.
 
-    Arguments:
-      dep (Dependency): dependency to process
-    """
+        Arguments:
+            dep (Dependency): dependency to process
+        """
         if dep.url is None:
             return
 
@@ -2742,10 +2742,10 @@ class Flattener(object):
     def _flatten(self, pin_all_deps=False):
         """Runs the flattener. Saves resulting DEPS string.
 
-    Arguments:
-      pin_all_deps (bool): whether to pin all deps, even if they're not pinned
-          in DEPS
-    """
+        Arguments:
+            pin_all_deps (bool): whether to pin all deps, even if they're not pinned
+                in DEPS
+        """
         for solution in self._client.dependencies:
             self._add_dep(solution)
             self._flatten_dep(solution)
@@ -2791,9 +2791,9 @@ class Flattener(object):
     def _add_dep(self, dep):
         """Helper to add a dependency to flattened DEPS.
 
-    Arguments:
-      dep (Dependency): dependency to add
-    """
+        Arguments:
+            dep (Dependency): dependency to add
+        """
         assert dep.name not in self._deps or self._deps.get(
             dep.name) == dep, (dep.name, self._deps.get(dep.name))
         if dep.url:
@@ -2802,9 +2802,9 @@ class Flattener(object):
     def _flatten_dep(self, dep):
         """Visits a dependency in order to flatten it (see CMDflatten).
 
-    Arguments:
-      dep (Dependency): dependency to process
-    """
+        Arguments:
+            dep (Dependency): dependency to process
+        """
         logging.debug('_flatten_dep(%s)', dep.name)
 
         assert dep.deps_parsed, (
@@ -2854,10 +2854,10 @@ class Flattener(object):
 def CMDgitmodules(parser, args):
     """Adds or updates Git Submodules based on the contents of the DEPS file.
 
-  This command should be run in the root directory of the repo.
-  It will create or update the .gitmodules file and include
-  `gclient-condition` values. Commits in gitlinks will also be updated.
-  """
+    This command should be run in the root directory of the repo.
+    It will create or update the .gitmodules file and include
+    `gclient-condition` values. Commits in gitlinks will also be updated.
+    """
     parser.add_option('--output-gitmodules',
                       help='name of the .gitmodules file to write to',
                       default='.gitmodules')
@@ -3028,7 +3028,7 @@ def _DepsToLines(deps):
 
 def _DepsToDotGraphLines(deps):
     # type: (Mapping[str, Dependency]) -> Sequence[str]
-    """Converts  |deps| dict to list of lines for dot graphs"""
+    """Converts  |deps| dict to list of lines for dot graphs."""
     if not deps:
         return []
     graph_lines = ["digraph {\n\trankdir=\"LR\";"]
@@ -3137,8 +3137,8 @@ def _VarsToLines(variables):
 def CMDgrep(parser, args):
     """Greps through git repos managed by gclient.
 
-  Runs 'git grep [args...]' for each module.
-  """
+    Runs 'git grep [args...]' for each module.
+    """
     # We can't use optparse because it will try to parse arguments sent
     # to git grep and throw an error. :-(
     if not args or re.match('(-h|--help)$', args[0]):
@@ -3180,12 +3180,12 @@ def CMDroot(parser, args):
 def CMDconfig(parser, args):
     """Creates a .gclient file in the current directory.
 
-  This specifies the configuration for further commands. After update/sync,
-  top-level DEPS files in each module are read to determine dependent
-  modules to operate on as well. If optional [url] parameter is
-  provided, then configuration is read from a specified Subversion server
-  URL.
-  """
+    This specifies the configuration for further commands. After update/sync,
+    top-level DEPS files in each module are read to determine dependent
+    modules to operate on as well. If optional [url] parameter is
+    provided, then configuration is read from a specified Subversion server
+    URL.
+    """
     # We do a little dance with the --gclientfile option.  'gclient config' is
     # the only command where it's acceptable to have both '--gclientfile' and
     # '--spec' arguments.  So, we temporarily stash any --gclientfile parameter
@@ -3279,11 +3279,11 @@ def CMDconfig(parser, args):
 def CMDpack(parser, args):
     """Generates a patch which can be applied at the root of the tree.
 
-  Internally, runs 'git diff' on each checked out module and
-  dependencies, and performs minimal postprocessing of the output. The
-  resulting patch is printed to stdout and can be applied to a freshly
-  checked out tree via 'patch -p0 < patchfile'.
-  """
+    Internally, runs 'git diff' on each checked out module and
+    dependencies, and performs minimal postprocessing of the output. The
+    resulting patch is printed to stdout and can be applied to a freshly
+    checked out tree via 'patch -p0 < patchfile'.
+    """
     parser.add_option('--deps',
                       dest='deps_os',
                       metavar='OS_LIST',
@@ -3582,8 +3582,8 @@ def CMDdiff(parser, args):
 def CMDrevert(parser, args):
     """Reverts all modifications in every dependencies.
 
-  That's the nuclear option to get back to a 'clean' state. It removes anything
-  that shows up in git status."""
+    That's the nuclear option to get back to a 'clean' state. It removes anything
+    that shows up in git status."""
     parser.add_option('--deps',
                       dest='deps_os',
                       metavar='OS_LIST',
@@ -3670,11 +3670,11 @@ def CMDinstallhooks(parser, args):
 def CMDrevinfo(parser, args):
     """Outputs revision info mapping for the client and its dependencies.
 
-  This allows the capture of an overall 'revision' for the source tree that
-  can be used to reproduce the same tree in the future. It is only useful for
-  'unpinned dependencies', i.e. DEPS/deps references without a git hash.
-  A git branch name isn't 'pinned' since the actual commit can change.
-  """
+    This allows the capture of an overall 'revision' for the source tree that
+    can be used to reproduce the same tree in the future. It is only useful for
+    'unpinned dependencies', i.e. DEPS/deps references without a git hash.
+    A git branch name isn't 'pinned' since the actual commit can change.
+    """
     parser.add_option('--deps',
                       dest='deps_os',
                       metavar='OS_LIST',
@@ -3719,8 +3719,8 @@ def CMDrevinfo(parser, args):
 def CMDgetdep(parser, args):
     """Gets revision information and variable values from a DEPS file.
 
-  If key doesn't exist or is incorrectly declared, this script exits with exit
-  code 2."""
+    If key doesn't exist or is incorrectly declared, this script exits with exit
+    code 2."""
     parser.add_option('--var',
                       action='append',
                       dest='vars',
@@ -4124,7 +4124,7 @@ def can_run_gclient_and_helpers():
 
 def main(argv):
     """Doesn't parse the arguments here, just find the right subcommand to
-  execute."""
+    execute."""
     if not can_run_gclient_and_helpers():
         return 2
     fix_encoding.fix_encoding()

@@ -1181,7 +1181,7 @@ class GerritChangesTest(fake_repos.FakeReposTestBase):
 
     def assertCommits(self, commits):
         """Check that all, and only |commits| are present in the current checkout.
-    """
+        """
         for i in commits:
             name = os.path.join(self.root_dir, 'commit ' + str(i))
             self.assertTrue(os.path.exists(name), 'Commit not found: %s' % name)
@@ -1264,10 +1264,10 @@ class GerritChangesTest(fake_repos.FakeReposTestBase):
     def testCheckoutOlderThanPatchBase(self):
         """Test applying a patch on an old checkout.
 
-    We first checkout commit 1, and try to patch refs/changes/35/1235/1, which
-    contains commits 5 and 6, and is based on top of commit 3.
-    The final result should contain commits 1, 5 and 6, but not commits 2 or 3.
-    """
+        We first checkout commit 1, and try to patch refs/changes/35/1235/1, which
+        contains commits 5 and 6, and is based on top of commit 3.
+        The final result should contain commits 1, 5 and 6, but not commits 2 or 3.
+        """
         scm = gclient_scm.GitWrapper(self.url, self.root_dir, '.')
         file_list = []
 
@@ -1349,8 +1349,7 @@ class GerritChangesTest(fake_repos.FakeReposTestBase):
                          self.gitrevparse(self.root_dir))
 
     def testDoesntRebasePatchMaster(self):
-        """Tests that we can apply a patch without rebasing it.
-    """
+        """Tests that we can apply a patch without rebasing it."""
         scm = gclient_scm.GitWrapper(self.url, self.root_dir, '.')
         file_list = []
 
@@ -1369,7 +1368,7 @@ class GerritChangesTest(fake_repos.FakeReposTestBase):
 
     def testDoesntRebasePatchOldCheckout(self):
         """Tests that we can apply a patch without rebasing it on an old checkout.
-    """
+        """
         scm = gclient_scm.GitWrapper(self.url, self.root_dir, '.')
         file_list = []
 

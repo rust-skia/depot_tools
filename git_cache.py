@@ -54,23 +54,23 @@ def exponential_backoff_retry(fn,
                               printerr=None):
     """Executes |fn| up to |count| times, backing off exponentially.
 
-  Args:
-    fn (callable): The function to execute. If this raises a handled
-        exception, the function will retry with exponential backoff.
-    excs (tuple): A tuple of Exception types to handle. If one of these is
-        raised by |fn|, a retry will be attempted. If |fn| raises an Exception
-        that is not in this list, it will immediately pass through. If |excs|
-        is empty, the Exception base class will be used.
-    name (str): Optional operation name to print in the retry string.
-    count (int): The number of times to try before allowing the exception to
-        pass through.
-    sleep_time (float): The initial number of seconds to sleep in between
-        retries. This will be doubled each retry.
-    printerr (callable): Function that will be called with the error string upon
-        failures. If None, |logging.warning| will be used.
+    Args:
+        fn (callable): The function to execute. If this raises a handled
+            exception, the function will retry with exponential backoff.
+        excs (tuple): A tuple of Exception types to handle. If one of these is
+            raised by |fn|, a retry will be attempted. If |fn| raises an
+            Exception that is not in this list, it will immediately pass
+            through. If |excs| is empty, the Exception base class will be used.
+        name (str): Optional operation name to print in the retry string.
+        count (int): The number of times to try before allowing the exception
+            to pass through.
+        sleep_time (float): The initial number of seconds to sleep in between
+            retries. This will be doubled each retry.
+        printerr (callable): Function that will be called with the error string
+            upon failures. If None, |logging.warning| will be used.
 
-  Returns: The return value of the successful fn.
-  """
+    Returns: The return value of the successful fn.
+    """
     printerr = printerr or logging.warning
     for i in range(count):
         try:
@@ -101,9 +101,9 @@ class Mirror(object):
     def parse_fetch_spec(spec):
         """Parses and canonicalizes a fetch spec.
 
-    Returns (fetchspec, value_regex), where value_regex can be used
-    with 'git config --replace-all'.
-    """
+        Returns (fetchspec, value_regex), where value_regex can be used
+        with 'git config --replace-all'.
+        """
         parts = spec.split(':', 1)
         src = parts[0].lstrip('+').rstrip('/')
         if not src.startswith('refs/'):
@@ -290,8 +290,9 @@ class Mirror(object):
     def bootstrap_repo(self, directory):
         """Bootstrap the repo from Google Storage if possible.
 
-    More apt-ly named bootstrap_repo_from_cloud_if_possible_else_do_nothing().
-    """
+        More apt-ly named
+        bootstrap_repo_from_cloud_if_possible_else_do_nothing().
+        """
         if not self.bootstrap_bucket:
             return False
 
@@ -369,8 +370,8 @@ class Mirror(object):
     def _preserve_fetchspec(self):
         """Read and preserve remote.origin.fetch from an existing mirror.
 
-    This modifies self.fetch_specs.
-    """
+        This modifies self.fetch_specs.
+        """
         if not self.exists():
             return
         try:

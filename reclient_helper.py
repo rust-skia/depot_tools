@@ -87,13 +87,13 @@ def find_ninja_out_dir(args):
 def find_cache_dir(tmp_dir):
     """Helper to find the correct cache directory for a build.
 
-  tmp_dir should be a build specific temp directory within the out directory.
+    tmp_dir should be a build specific temp directory within the out directory.
 
-  If this is called from within a gclient checkout, the cache dir will be:
-  <gclient_root>/.reproxy_cache/md5(tmp_dir)/
-  If this is not called from within a gclient checkout, the cache dir will be:
-  tmp_dir/cache
-  """
+    If this is called from within a gclient checkout, the cache dir will be:
+    <gclient_root>/.reproxy_cache/md5(tmp_dir)/
+    If this is not called from within a gclient checkout, the cache dir will be:
+    tmp_dir/cache
+    """
     gclient_root = gclient_paths.FindGclientRoot(os.getcwd())
     if gclient_root:
         return os.path.join(gclient_root, '.reproxy_cache',
@@ -134,13 +134,13 @@ def get_hostname():
 def set_reproxy_metrics_flags(tool):
     """Helper to setup metrics collection flags for reproxy.
 
-  The following env vars are set if not already set:
-    RBE_metrics_project=chromium-reclient-metrics
-    RBE_invocation_id=$AUTONINJA_BUILD_ID
-    RBE_metrics_table=rbe_metrics.builds
-    RBE_metrics_labels=source=developer,tool={tool}
-    RBE_metrics_prefix=go.chromium.org
-  """
+    The following env vars are set if not already set:
+        RBE_metrics_project=chromium-reclient-metrics
+        RBE_invocation_id=$AUTONINJA_BUILD_ID
+        RBE_metrics_table=rbe_metrics.builds
+        RBE_metrics_labels=source=developer,tool={tool}
+        RBE_metrics_prefix=go.chromium.org
+    """
     autoninja_id = os.environ.get("AUTONINJA_BUILD_ID")
     if autoninja_id is not None:
         os.environ.setdefault("RBE_invocation_id",
@@ -169,31 +169,31 @@ def datetime_now():
 def set_reproxy_path_flags(out_dir, make_dirs=True):
     """Helper to setup the logs and cache directories for reclient.
 
-  Creates the following directory structure if make_dirs is true:
-  If in a gclient checkout
-  out_dir/
-    .reproxy_tmp/
-      logs/
-  <gclient_root>
-    .reproxy_cache/
-      md5(out_dir/.reproxy_tmp)/
+    Creates the following directory structure if make_dirs is true:
+    If in a gclient checkout
+    out_dir/
+        .reproxy_tmp/
+        logs/
+    <gclient_root>
+        .reproxy_cache/
+        md5(out_dir/.reproxy_tmp)/
 
-  If not in a gclient checkout
-  out_dir/
-    .reproxy_tmp/
-      logs/
-      cache/
+    If not in a gclient checkout
+    out_dir/
+        .reproxy_tmp/
+        logs/
+        cache/
 
-  The following env vars are set if not already set:
-    RBE_output_dir=out_dir/.reproxy_tmp/logs
-    RBE_proxy_log_dir=out_dir/.reproxy_tmp/logs
-    RBE_log_dir=out_dir/.reproxy_tmp/logs
-    RBE_cache_dir=out_dir/.reproxy_tmp/cache
-  *Nix Only:
-    RBE_server_address=unix://out_dir/.reproxy_tmp/reproxy.sock
-  Windows Only:
-    RBE_server_address=pipe://md5(out_dir/.reproxy_tmp)/reproxy.pipe
-  """
+    The following env vars are set if not already set:
+        RBE_output_dir=out_dir/.reproxy_tmp/logs
+        RBE_proxy_log_dir=out_dir/.reproxy_tmp/logs
+        RBE_log_dir=out_dir/.reproxy_tmp/logs
+        RBE_cache_dir=out_dir/.reproxy_tmp/cache
+    *Nix Only:
+        RBE_server_address=unix://out_dir/.reproxy_tmp/reproxy.sock
+    Windows Only:
+        RBE_server_address=pipe://md5(out_dir/.reproxy_tmp)/reproxy.pipe
+    """
     os.environ.setdefault("AUTONINJA_BUILD_ID", str(uuid.uuid4()))
     tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
     log_dir = os.path.join(tmp_dir, 'logs')

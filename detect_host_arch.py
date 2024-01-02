@@ -59,7 +59,7 @@ def HostArch():
 
 def DoMain(_):
     """Hook to be called from gyp without starting a separate python
-  interpreter."""
+    interpreter."""
     return HostArch()
 
 

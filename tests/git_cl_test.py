@@ -146,15 +146,15 @@ class AuthenticatorMock(object):
 def CookiesAuthenticatorMockFactory(hosts_with_creds=None, same_auth=False):
     """Use to mock Gerrit/Git credentials from ~/.netrc or ~/.gitcookies.
 
-  Usage:
-    >>> self.mock(git_cl.gerrit_util, "CookiesAuthenticator",
-                  CookiesAuthenticatorMockFactory({'host': ('user', _, 'pass')})
+    Usage:
+        >>> self.mock(git_cl.gerrit_util, "CookiesAuthenticator",
+                    CookiesAuthenticatorMockFactory({'host': ('user', _, 'pass')})
 
-  OR
-    >>> self.mock(git_cl.gerrit_util, "CookiesAuthenticator",
-                  CookiesAuthenticatorMockFactory(
-                      same_auth=('user', '', 'pass'))
-  """
+    OR
+        >>> self.mock(git_cl.gerrit_util, "CookiesAuthenticator",
+                    CookiesAuthenticatorMockFactory(
+                        same_auth=('user', '', 'pass'))
+    """
     class CookiesAuthenticatorMock(git_cl.gerrit_util.CookiesAuthenticator):
         def __init__(self):  # pylint: disable=super-init-not-called
             # Intentionally not calling super() because it reads actual cookie

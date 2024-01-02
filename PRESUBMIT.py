@@ -100,7 +100,7 @@ def CheckJsonFiles(input_api, output_api):
 
 
 def CheckUnitTestsOnCommit(input_api, output_api):
-    """ Do not run integration tests on upload since they are way too slow."""
+    """Do not run integration tests on upload since they are way too slow."""
 
     input_api.SetTimeout(TEST_TIMEOUT_S)
 

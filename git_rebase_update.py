@@ -24,11 +24,11 @@ STARTING_WORKDIR_KEY = 'depot-tools.rebase-update.starting-workdir'
 
 def find_return_branch_workdir():
     """Finds the branch and working directory which we should return to after
-  rebase-update completes.
+    rebase-update completes.
 
-  These values may persist across multiple invocations of rebase-update, if
-  rebase-update runs into a conflict mid-way.
-  """
+    These values may persist across multiple invocations of rebase-update, if
+    rebase-update runs into a conflict mid-way.
+    """
     return_branch = git.get_config(STARTING_BRANCH_KEY)
     workdir = git.get_config(STARTING_WORKDIR_KEY)
     if not return_branch:

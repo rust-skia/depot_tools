@@ -1586,7 +1586,7 @@ class GitWrapper(SCMWrapper):
     def _AutoFetchRef(self, options, revision, depth=None):
         """Attempts to fetch |revision| if not available in local repo.
 
-    Returns possibly updated revision."""
+        Returns possibly updated revision."""
         if not scm.GIT.IsValidRevision(self.checkout_path, revision):
             self._Fetch(options, refspec=revision, depth=depth)
             revision = self._Capture(['rev-parse', 'FETCH_HEAD'])

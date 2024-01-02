@@ -72,8 +72,8 @@ def GenFakeDiff(filename):
 def determine_scm(root):
     """Similar to upload.py's version but much simpler.
 
-  Returns 'git' or None.
-  """
+    Returns 'git' or None.
+    """
     if os.path.isdir(os.path.join(root, '.git')):
         return 'git'
 
@@ -131,7 +131,7 @@ class GIT(object):
         # type: (str, str, Optional[str]) -> Sequence[Tuple[str, str]]
         """Returns git status.
 
-    Returns an array of (status, file) tuples."""
+        Returns an array of (status, file) tuples."""
         if end_commit is None:
             end_commit = ''
         if upstream_branch is None:
@@ -210,7 +210,7 @@ class GIT(object):
     @staticmethod
     def GetRemoteHeadRef(cwd, url, remote):
         """Returns the full default remote branch reference, e.g.
-    'refs/remotes/origin/main'."""
+        'refs/remotes/origin/main'."""
         if os.path.exists(cwd):
             try:
                 # Try using local git copy first
@@ -253,8 +253,8 @@ class GIT(object):
     @staticmethod
     def FetchUpstreamTuple(cwd, branch=None):
         """Returns a tuple containing remote and remote ref,
-       e.g. 'origin', 'refs/heads/main'
-    """
+        e.g. 'origin', 'refs/heads/main'
+        """
         try:
             branch = branch or GIT.GetBranch(cwd)
         except subprocess2.CalledProcessError:
@@ -286,10 +286,10 @@ class GIT(object):
     def RefToRemoteRef(ref, remote):
         """Convert a checkout ref to the equivalent remote ref.
 
-    Returns:
-      A tuple of the remote ref's (common prefix, unique suffix), or None if it
-      doesn't appear to refer to a remote ref (e.g. it's a commit hash).
-    """
+        Returns:
+            A tuple of the remote ref's (common prefix, unique suffix), or None if it
+            doesn't appear to refer to a remote ref (e.g. it's a commit hash).
+        """
         # TODO(mmoss): This is just a brute-force mapping based of the expected
         # git config. It's a bit better than the even more brute-force
         # replace('heads', ...), but could still be smarter (like maybe actually
@@ -360,8 +360,8 @@ class GIT(object):
                      files=None):
         """Diffs against the upstream branch or optionally another branch.
 
-    full_move means that move or copy operations should completely recreate the
-    files, usually in the prospect to apply the patch for a try job."""
+        full_move means that move or copy operations should completely recreate the
+        files, usually in the prospect to apply the patch for a try job."""
         if not branch:
             branch = GIT.GetUpstreamBranch(cwd)
         command = [
@@ -429,7 +429,7 @@ class GIT(object):
     @staticmethod
     def GetCheckoutRoot(cwd):
         """Returns the top level directory of a git checkout as an absolute path.
-    """
+        """
         root = GIT.Capture(['rev-parse', '--show-cdup'], cwd=cwd)
         return os.path.abspath(os.path.join(cwd, root))
 
@@ -488,8 +488,8 @@ class GIT(object):
     def IsValidRevision(cwd, rev, sha_only=False):
         """Verifies the revision is a proper git revision.
 
-    sha_only: Fail unless rev is a sha hash.
-    """
+        sha_only: Fail unless rev is a sha hash.
+        """
         try:
             sha = GIT.ResolveCommit(cwd, rev)
         except subprocess2.CalledProcessError:

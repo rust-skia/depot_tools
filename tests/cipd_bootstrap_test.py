@@ -41,11 +41,11 @@ windows-amd64   sha256  3e21561b45acb2845c309a04cbedb2ce1e0567b7b24bf89857e76736
 
 class CipdBootstrapTest(unittest.TestCase):
     """Tests that CIPD client can bootstrap from scratch and self-update from some
-  old version to a most recent one.
+    old version to a most recent one.
 
-  WARNING: This integration test touches real network and real CIPD backend and
-  downloads several megabytes of stuff.
-  """
+    WARNING: This integration test touches real network and real CIPD backend and
+    downloads several megabytes of stuff.
+    """
     def setUp(self):
         self.tempdir = tempfile.mkdtemp('depot_tools_cipd')
 
@@ -55,9 +55,9 @@ class CipdBootstrapTest(unittest.TestCase):
     def stage_files(self, cipd_version=None, digests=None):
         """Copies files needed for cipd bootstrap into the temp dir.
 
-    Args:
-      cipd_version: if not None, a value to put into cipd_client_version file.
-    """
+        Args:
+            cipd_version: if not None, a value to put into cipd_client_version file.
+        """
         names = (
             '.cipd_impl.ps1',
             'cipd',
@@ -80,8 +80,8 @@ class CipdBootstrapTest(unittest.TestCase):
     def call_cipd_help(self):
         """Calls 'cipd help' bootstrapping the client in tempdir.
 
-    Returns (exit code, merged stdout and stderr).
-    """
+        Returns (exit code, merged stdout and stderr).
+        """
         exe = 'cipd.bat' if sys.platform == 'win32' else 'cipd'
         p = subprocess.Popen([os.path.join(self.tempdir, exe), 'help'],
                              stdout=subprocess.PIPE,
