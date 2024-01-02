@@ -1036,11 +1036,6 @@ class GitWrapper(SCMWrapper):
                 'Fix the conflict and run gclient again.\n'
                 'See man git-rebase for details.\n' % (self.relpath, revision))
 
-        if verbose:
-            self.Print('Checked out revision %s' %
-                       self.revinfo(options, (), None),
-                       timestamp=False)
-
         # If --reset and --delete_unversioned_trees are specified, remove any
         # untracked directories.
         if options.reset and options.delete_unversioned_trees:
@@ -1058,7 +1053,10 @@ class GitWrapper(SCMWrapper):
                     self.Print('_____ removing unversioned directory %s' % path)
                     gclient_utils.rmtree(full_path)
 
-        return self._Capture(['rev-parse', '--verify', 'HEAD'])
+        rev_hash = self._Capture(['rev-parse', '--verify', 'HEAD'])
+        if verbose:
+            self.Print(f'Checked out revision {rev_hash}', timestamp=False)
+        return rev_hash
 
     def revert(self, options, _args, file_list):
         """Reverts local modifications.
