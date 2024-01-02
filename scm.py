@@ -96,6 +96,7 @@ def only_int(val):
 
 class GIT(object):
     current_version = None
+    rev_parse_cache = {}
 
     @staticmethod
     def ApplyEnvVars(kwargs):
@@ -461,20 +462,27 @@ class GIT(object):
 
     @staticmethod
     def ResolveCommit(cwd, rev):
+        cache_key = None
         # We do this instead of rev-parse --verify rev^{commit}, since on
         # Windows git can be either an executable or batch script, each of which
         # requires escaping the caret (^) a different way.
         if gclient_utils.IsFullGitSha(rev):
+            # Only cache full SHAs
+            cache_key = hash(cwd + rev)
+            if val := GIT.rev_parse_cache.get(cache_key):
+                return val
+
             # git-rev parse --verify FULL_GIT_SHA always succeeds, even if we
             # don't have FULL_GIT_SHA locally. Removing the last character
             # forces git to check if FULL_GIT_SHA refers to an object in the
             # local database.
             rev = rev[:-1]
-        try:
-            return GIT.Capture(['rev-parse', '--quiet', '--verify', rev],
-                               cwd=cwd)
-        except subprocess2.CalledProcessError:
-            return None
+        res = GIT.Capture(['rev-parse', '--quiet', '--verify', rev], cwd=cwd)
+        if cache_key:
+            # We don't expect concurrent execution, so we don't lock anything.
+            GIT.rev_parse_cache[cache_key] = res
+
+        return res
 
     @staticmethod
     def IsValidRevision(cwd, rev, sha_only=False):
@@ -482,9 +490,11 @@ class GIT(object):
 
     sha_only: Fail unless rev is a sha hash.
     """
-        sha = GIT.ResolveCommit(cwd, rev)
-        if sha is None:
-            return False
+        try:
+            sha = GIT.ResolveCommit(cwd, rev)
+        except subprocess2.CalledProcessError:
+            return None
+
         if sha_only:
             return sha == rev.lower()
         return True

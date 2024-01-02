@@ -143,8 +143,10 @@ class RealGitTest(fake_repos.FakeReposTestBase):
             self.skipTest('git fake repos not available')
 
     def testResolveCommit(self):
-        self.assertIsNone(scm.GIT.ResolveCommit(self.cwd, 'zebra'))
-        self.assertIsNone(scm.GIT.ResolveCommit(self.cwd, 'r123456'))
+        with self.assertRaises(Exception):
+            scm.GIT.ResolveCommit(self.cwd, 'zebra')
+        with self.assertRaises(Exception):
+            scm.GIT.ResolveCommit(self.cwd, 'r123456')
         first_rev = self.githash('repo_1', 1)
         self.assertEqual(first_rev, scm.GIT.ResolveCommit(self.cwd, first_rev))
         self.assertEqual(self.githash('repo_1', 2),
