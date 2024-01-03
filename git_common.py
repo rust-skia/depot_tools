@@ -682,10 +682,14 @@ def parse_commitrefs(*commitrefs):
         * 'origin/main'
         * 'cool_branch~2'
     """
+    hashes = []
     try:
-        return [binascii.unhexlify(h) for h in hash_multi(*commitrefs)]
+        hashes = hash_multi(*commitrefs)
+        return [binascii.unhexlify(h) for h in hashes]
     except subprocess2.CalledProcessError:
         raise BadCommitRefException(commitrefs)
+    except binascii.Error as e:
+        raise binascii.Error(f'{e}. Invalid hashes are {hashes}')
 
 
 RebaseRet = collections.namedtuple('RebaseRet', 'success stdout stderr')
