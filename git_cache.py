@@ -375,9 +375,10 @@ class Mirror(object):
         if not self.exists():
             return
         try:
-            config_fetchspecs = subprocess.check_output(
-                [self.git_exe, 'config', '--get-all', 'remote.origin.fetch'],
-                cwd=self.mirror_path).decode('utf-8', 'ignore')
+            config_fetchspecs = subprocess.check_output([
+                self.git_exe, '--git-dir', self.mirror_path, 'config',
+                '--get-all', 'remote.origin.fetch'
+            ]).decode('utf-8', 'ignore')
             for fetchspec in config_fetchspecs.splitlines():
                 self.fetch_specs.add(self.parse_fetch_spec(fetchspec))
         except subprocess.CalledProcessError:
@@ -414,9 +415,10 @@ class Mirror(object):
         if 'master' in head_ref:
             # Some repos could still have master so verify if the ref exists
             # first.
-            show_ref_master_cmd = subprocess.run(
-                [Mirror.git_exe, 'show-ref', '--verify', 'refs/heads/master'],
-                cwd=self.mirror_path)
+            show_ref_master_cmd = subprocess.run([
+                Mirror.git_exe, '--git-dir', self.mirror_path, 'show-ref',
+                '--verify', 'refs/heads/master'
+            ])
 
             if show_ref_master_cmd.returncode != 0:
                 # Remove mirror
@@ -564,9 +566,9 @@ class Mirror(object):
             gclient_utils.rmtree(recursed_dir)
 
         # The folder is <git number>
-        gen_number = subprocess.check_output([self.git_exe, 'number'],
-                                             cwd=self.mirror_path).decode(
-                                                 'utf-8', 'ignore').strip()
+        gen_number = subprocess.check_output(
+            [self.git_exe, '--git-dir', self.mirror_path,
+             'number']).decode('utf-8', 'ignore').strip()
         gsutil = Gsutil(path=self.gsutil_exe, boto_path=None)
 
         dest_prefix = '%s/%s' % (self._gs_path, gen_number)
@@ -805,21 +807,22 @@ def CMDfetch(parser, args):
     # 'git fetch'.  Note that in the case of "stacked" or "pipelined" branches,
     # this will NOT try to traverse up the branching structure to find the
     # ultimate remote to update.
+    git_cmd = [Mirror.git_exe, '--git-dir', os.getcwd()]
     remotes = []
     if options.all:
         assert not args, 'fatal: fetch --all does not take repository argument'
-        remotes = subprocess.check_output([Mirror.git_exe, 'remote'])
+        remotes = subprocess.check_output(git_cmd + ['remote'])
         remotes = remotes.decode('utf-8', 'ignore').splitlines()
     elif args:
         remotes = args
     else:
         current_branch = subprocess.check_output(
-            [Mirror.git_exe, 'rev-parse', '--abbrev-ref', 'HEAD'])
+            git_cmd + ['rev-parse', '--abbrev-ref', 'HEAD'])
         current_branch = current_branch.decode('utf-8', 'ignore').strip()
         if current_branch != 'HEAD':
             upstream = subprocess.check_output(
-                [Mirror.git_exe, 'config',
-                 'branch.%s.remote' % current_branch])
+                git_cmd +
+                ['config', 'branch.%s.remote' % current_branch])
             upstream = upstream.decode('utf-8', 'ignore').strip()
             if upstream and upstream != '.':
                 remotes = [upstream]
@@ -828,8 +831,8 @@ def CMDfetch(parser, args):
 
     cachepath = Mirror.GetCachePath()
     git_dir = os.path.abspath(
-        subprocess.check_output([Mirror.git_exe, 'rev-parse',
-                                 '--git-dir']).decode('utf-8', 'ignore'))
+        subprocess.check_output(git_cmd + ['rev-parse', '--git-dir']).decode(
+            'utf-8', 'ignore'))
     git_dir = os.path.abspath(git_dir)
     if git_dir.startswith(cachepath):
         mirror = Mirror.FromPath(git_dir)
@@ -839,8 +842,7 @@ def CMDfetch(parser, args):
         return 0
     for remote in remotes:
         remote_url = subprocess.check_output(
-            [Mirror.git_exe, 'config',
-             'remote.%s.url' % remote])
+            git_cmd + ['config', 'remote.%s.url' % remote])
         remote_url = remote_url.decode('utf-8', 'ignore').strip()
         if remote_url.startswith(cachepath):
             mirror = Mirror.FromPath(remote_url)
@@ -849,7 +851,7 @@ def CMDfetch(parser, args):
             mirror.populate(bootstrap=not options.no_bootstrap,
                             no_fetch_tags=options.no_fetch_tags,
                             lock_timeout=options.timeout)
-        subprocess.check_call([Mirror.git_exe, 'fetch', remote])
+        subprocess.check_call(git_cmd + ['fetch', remote])
     return 0
 
 
