@@ -5095,6 +5095,11 @@ def CMDupload(parser, args):
         UploadAllSquashed(options, orig_args)
         if options.dependencies:
             orig_args.remove('--dependencies')
+            if not cl.GetIssue():
+                # UploadAllSquashed stored an issue number for cl, but it
+                # doesn't have access to cl object. By unsetting lookedup_issue,
+                # we force code path that will read issue from the config.
+                cl.lookedup_issue = False
             return upload_branch_deps(cl, orig_args, options.force)
 
         return 0
