@@ -81,6 +81,7 @@ GIT_HASH_RE = re.compile(r'\b([a-f0-9]{6})[a-f0-9]{34}\b', flags=re.I)
 GITCOOKIES_REDACT_RE = re.compile(r'1/.*')
 
 MAX_ATTEMPTS = 3
+MAX_CONCURRENT_CONNECTION = 20
 
 # The maximum number of traces we will keep. Multiplied by 3 since we store
 # 3 files per trace.
@@ -3926,8 +3927,8 @@ def get_cl_statuses(changes, fine_grained, max_processes=None):
     Otherwise, simply indicate if there's a matching url for the given branches.
 
     If max_processes is specified, it is used as the maximum number of processes
-    to spawn to fetch CL status from the server. Otherwise 1 process per branch is
-    spawned.
+    to spawn to fetch CL status from the server. Otherwise 1 process per branch
+    is spawned, up to max of MAX_CONCURRENT_CONNECTION.
 
     See GetStatus() for a list of possible statuses.
     """
@@ -3956,7 +3957,7 @@ def get_cl_statuses(changes, fine_grained, max_processes=None):
                               cl.GetIssue())
             raise
 
-    threads_count = len(changes)
+    threads_count = min(MAX_CONCURRENT_CONNECTION, len(changes))
     if max_processes:
         threads_count = max(1, min(threads_count, max_processes))
     logging.debug('querying %d CLs using %d threads', len(changes),
