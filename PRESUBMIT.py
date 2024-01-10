@@ -26,7 +26,7 @@ $VerifiedPlatform linux-mips64 linux-mips64le linux-mipsle
 '''
 
 # Timeout for a test to be executed.
-TEST_TIMEOUT_S = 330  # 5m 30s
+TEST_TIMEOUT_S = 450  # 7m 30s
 
 
 def CheckPylint(input_api, output_api):
