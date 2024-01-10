@@ -48,7 +48,10 @@ class OwnersClient(object):
 
         Returns a dictionary {path: [owners]}.
         """
-        with git_common.ScopedPool(kind='threads') as pool:
+        if not paths:
+            return dict()
+        nproc = min(gerrit_util.MAX_CONCURRENT_CONNECTION, len(paths))
+        with git_common.ScopedPool(nproc, kind='threads') as pool:
             return dict(
                 pool.imap_unordered(lambda p: (p, self.ListOwners(p)), paths))
 

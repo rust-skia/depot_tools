@@ -49,6 +49,9 @@ MIN_BACKOFF = 1.8
 # This is parameterized primarily to enable GerritTestCase.
 GERRIT_PROTOCOL = 'https'
 
+# Controls how many concurrent Gerrit connections there can be.
+MAX_CONCURRENT_CONNECTION = 20
+
 
 def time_sleep(seconds):
     # Use this so that it can be mocked in tests without interfering with python
