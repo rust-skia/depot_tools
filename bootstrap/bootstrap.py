@@ -38,9 +38,6 @@ WIN_GIT_STUBS = {
 # Accumulated template parameters for generated stubs.
 class Template(
         collections.namedtuple('Template', (
-            'PYTHON_RELDIR',
-            'PYTHON_BIN_RELDIR',
-            'PYTHON_BIN_RELDIR_UNIX',
             'PYTHON3_BIN_RELDIR',
             'PYTHON3_BIN_RELDIR_UNIX',
             'GIT_BIN_RELDIR',
@@ -307,10 +304,6 @@ def main(argv):
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARN)
 
     template = Template.empty()._replace(
-        PYTHON_RELDIR=os.path.join(args.bootstrap_name, 'python'),
-        PYTHON_BIN_RELDIR=os.path.join(args.bootstrap_name, 'python', 'bin'),
-        PYTHON_BIN_RELDIR_UNIX=posixpath.join(args.bootstrap_name, 'python',
-                                              'bin'),
         PYTHON3_BIN_RELDIR=os.path.join(args.bootstrap_name, 'python3', 'bin'),
         PYTHON3_BIN_RELDIR_UNIX=posixpath.join(args.bootstrap_name, 'python3',
                                                'bin'),
@@ -326,7 +319,6 @@ def main(argv):
         git_postprocess(template, os.path.join(bootstrap_dir, 'git'))
         templates = [
             ('git-bash.template.sh', 'git-bash', ROOT_DIR),
-            ('python27.bat', 'python.bat', ROOT_DIR),
             ('python3.bat', 'python3.bat', ROOT_DIR),
         ]
         for src_name, dst_name, dst_dir in templates:
@@ -334,8 +326,7 @@ def main(argv):
             template.maybe_install(src_name, os.path.join(dst_dir, dst_name))
 
     # Emit our Python bin depot-tools-relative directory. This is read by
-    # python.bat, python3.bat, vpython[.bat] and vpython3[.bat] to identify the
-    # path of the current Python installation.
+    # python3.bat to identify the path of the current Python installation.
     #
     # We use this indirection so that upgrades can change this pointer to
     # redirect "python.bat" to a new Python installation. We can't just update
@@ -345,9 +336,6 @@ def main(argv):
     #
     # The intention is that the batch file itself never needs to change when
     # switching Python versions.
-
-    maybe_update(template.PYTHON_BIN_RELDIR,
-                 os.path.join(ROOT_DIR, 'python_bin_reldir.txt'))
 
     maybe_update(template.PYTHON3_BIN_RELDIR,
                  os.path.join(ROOT_DIR, 'python3_bin_reldir.txt'))
