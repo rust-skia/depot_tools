@@ -48,10 +48,15 @@ import getopt
 import math  # for log
 import os
 import re
-import sre_compile
 import string
 import sys
 import unicodedata
+
+# FIXME(https://crbug.com/1517826): Replace deprecated import of sre_compile.
+import warnings
+with warnings.catch_warnings():
+  warnings.filterwarnings("ignore", category=DeprecationWarning)
+  import sre_compile
 
 _USAGE = r"""
 Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
