@@ -52,7 +52,8 @@ def main(args):
     siso_override_path = os.environ.get('SISO_PATH')
     if siso_override_path:
         print('depot_tools/siso.py: Using Siso binary from SISO_PATH: %s.' %
-              siso_override_path)
+              siso_override_path,
+              file=sys.stderr)
         if not os.path.isfile(siso_override_path):
             print(
                 'depot_tools/siso.py: Could not find Siso at provided '
