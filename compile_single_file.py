@@ -58,7 +58,7 @@ def main():
         carets = '^^'
 
     command = [
-        'python3',
+        sys.executable,
         os.path.join(DEPOT_TOOLS_DIR, 'autoninja.py'), '-C', abs_build_dir,
         '%s%s' % (src_relpath, carets)
     ]
