@@ -6286,13 +6286,7 @@ def _RunYapf(opts, paths, top_dir, upstream_commit):
         if not yapf_style:
             yapf_style = 'pep8'
 
-        with open(path, 'r') as py_f:
-            if 'python2' in py_f.readline():
-                vpython_script = 'vpython'
-            else:
-                vpython_script = 'vpython3'
-
-        cmd = [vpython_script, yapf_tool, '--style', yapf_style, path]
+        cmd = ['vpython3', yapf_tool, '--style', yapf_style, path]
 
         if not opts.full:
             ranges = line_diffs.get(path)
