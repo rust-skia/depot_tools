@@ -367,18 +367,20 @@ def main(args):
             )
         elif sys.platform == "darwin":
             print(
-                "The gn arg use_goma=true will be deprecated by EOY 2023. "
+                "The gn arg use_goma=true will be removed on Feb 7th 2024. "
                 "Please use `use_remoteexec=true` instead. "
                 "If you are a googler see http://go/building-chrome-mac"
-                "#using-remote-execution for setup instructions.",
+                "#using-remote-execution for setup instructions. ",
+                "Goma-based builds will have startup delays added Jan 22nd 2024",
                 file=sys.stderr,
             )
         else:
             print(
-                "The gn arg use_goma=true will be deprecated by EOY 2023. "
+                "The gn arg use_goma=true will be removed on Feb 7th 2024. "
                 "Please use `use_remoteexec=true` instead. See "
                 "https://chromium.googlesource.com/chromium/src/+/main/docs/"
                 "linux/build_instructions.md#use-reclient for setup instructions.",
+                "Goma-based builds will have startup delays added Jan 22nd 2024",
                 file=sys.stderr,
             )
 
