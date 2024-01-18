@@ -462,7 +462,7 @@ class GIT(object):
         if not os.path.exists(os.path.join(repo_root, '.gitmodules')):
             return []
         config_output = GIT.Capture(
-            ['git', 'config', '--file', '.gitmodules', '--get-regexp', 'path'],
+            ['config', '--file', '.gitmodules', '--get-regexp', 'path'],
             cwd=repo_root)
         return [line.split()[-1] for line in config_output.splitlines()]
 
