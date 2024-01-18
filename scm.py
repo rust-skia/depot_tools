@@ -456,6 +456,17 @@ class GIT(object):
         return VERSIONED_DIR
 
     @staticmethod
+    def ListSubmodules(repo_root):
+        # type: (str) -> Collection[str]
+        """Returns the list of submodule paths for the given repo."""
+        if not os.path.exists(os.path.join(repo_root, '.gitmodules')):
+            return []
+        config_output = GIT.Capture(
+            ['git', 'config', '--file', '.gitmodules', '--get-regexp', 'path'],
+            cwd=repo_root)
+        return [line.split()[-1] for line in config_output.splitlines()]
+
+    @staticmethod
     def CleanupDir(cwd, relative_dir):
         """Cleans up untracked file inside |relative_dir|."""
         return bool(GIT.Capture(['clean', '-df', relative_dir], cwd=cwd))
