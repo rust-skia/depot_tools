@@ -879,6 +879,10 @@ class InputApi(object):
         self._named_temporary_files.append(temp_file.name)
         return temp_file
 
+    def ListSubmodules(self):
+        """Returns submodule paths for current change's repo."""
+        return scm.GIT.ListSubmodules(self.change.RepositoryRoot())
+
     @property
     def tbr(self):
         """Returns if a change is TBR'ed."""
@@ -1335,10 +1339,6 @@ class Change(object):
     def AbsoluteLocalPaths(self):
         """Convenience function."""
         return [af.AbsoluteLocalPath() for af in self.AffectedFiles()]
-
-    def ListSubmodules(self):
-        """Returns submodule paths for current change's repo."""
-        return scm.GIT.ListSubmodules(self.change.RepositoryRoot())
 
     def RightHandSideLines(self):
         """An iterator over all text lines in 'new' version of changed files.
