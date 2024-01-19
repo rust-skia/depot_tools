@@ -1076,7 +1076,8 @@ def CheckChangeOnCommit(input_api, output_api):
                                                     options.author,
                                                     upstream=options.upstream)
         scm.GIT.CaptureStatus.assert_called_once_with(options.root,
-                                                      options.upstream)
+                                                      options.upstream,
+                                                      ignore_submodules=False)
 
     @mock.patch('presubmit_support.GitChange', mock.Mock())
     @mock.patch('scm.GIT.GetAllFiles', mock.Mock())
@@ -1722,11 +1723,22 @@ class AffectedFileUnittest(PresubmitTestsBase):
 
 
 class ChangeUnittest(PresubmitTestsBase):
-    def testAffectedFiles(self):
-        change = presubmit.Change('', '', self.fake_root_dir, [('Y', 'AA')], 3,
+
+    @mock.patch('scm.GIT.ListSubmodules', return_value=['BB'])
+    def testAffectedFiles(self, mockListSubmodules):
+        change = presubmit.Change('', '', self.fake_root_dir, [('Y', 'AA'),
+                                                               ('A', 'BB')], 3,
                                   5, '')
         self.assertEqual(1, len(change.AffectedFiles()))
         self.assertEqual('Y', change.AffectedFiles()[0].Action())
+
+    @mock.patch('scm.GIT.ListSubmodules', return_value=['BB'])
+    def testAffectedSubmodules(self, mockListSubmodules):
+        change = presubmit.Change('', '', self.fake_root_dir, [('Y', 'AA'),
+                                                               ('A', 'BB')], 3,
+                                  5, '')
+        self.assertEqual(1, len(change.AffectedSubmodules()))
+        self.assertEqual('A', change.AffectedSubmodules()[0].Action())
 
     def testSetDescriptionText(self):
         change = presubmit.Change('', 'foo\nDRU=ro', self.fake_root_dir, [], 3,

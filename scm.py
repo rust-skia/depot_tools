@@ -127,7 +127,10 @@ class GIT(object):
         return output.strip() if strip_out else output
 
     @staticmethod
-    def CaptureStatus(cwd, upstream_branch, end_commit=None):
+    def CaptureStatus(cwd,
+                      upstream_branch,
+                      end_commit=None,
+                      ignore_submodules=True):
         # type: (str, str, Optional[str]) -> Sequence[Tuple[str, str]]
         """Returns git status.
 
@@ -138,11 +141,15 @@ class GIT(object):
             upstream_branch = GIT.GetUpstreamBranch(cwd)
             if upstream_branch is None:
                 raise gclient_utils.Error('Cannot determine upstream branch')
+
         command = [
             '-c', 'core.quotePath=false', 'diff', '--name-status',
-            '--no-renames', '--ignore-submodules=all', '-r',
-            '%s...%s' % (upstream_branch, end_commit)
+            '--no-renames'
         ]
+        if ignore_submodules:
+            command.append('--ignore-submodules=all')
+        command.extend(['-r', '%s...%s' % (upstream_branch, end_commit)])
+
         status = GIT.Capture(command, cwd)
         results = []
         if status:
@@ -398,10 +405,8 @@ class GIT(object):
     @staticmethod
     def GetAllFiles(cwd):
         """Returns the list of all files under revision control."""
-        command = ['-c', 'core.quotePath=false', 'ls-files', '-s', '--', '.']
-        files = GIT.Capture(command, cwd=cwd).splitlines(False)
-        # return only files
-        return [f.split(maxsplit=3)[-1] for f in files if f.startswith('100')]
+        command = ['-c', 'core.quotePath=false', 'ls-files', '--', '.']
+        return GIT.Capture(command, cwd=cwd).splitlines(False)
 
     @staticmethod
     def GetSubmoduleCommits(cwd, submodules):

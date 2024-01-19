@@ -1311,11 +1311,24 @@ class Change(object):
         Returns:
             [AffectedFile(path, action), AffectedFile(path, action)]
         """
-        affected = list(filter(file_filter, self._affected_files))
+        submodule_list = scm.GIT.ListSubmodules(self.RepositoryRoot())
+        files = [
+            af for af in self._affected_files
+            if af.LocalPath() not in submodule_list
+        ]
+        affected = list(filter(file_filter, files))
 
         if include_deletes:
             return affected
         return list(filter(lambda x: x.Action() != 'D', affected))
+
+    def AffectedSubmodules(self):
+        """Returns a list of AffectedFile instances for submodules in the change."""
+        submodule_list = scm.GIT.ListSubmodules(self.RepositoryRoot())
+        return [
+            af for af in self._affected_files
+            if af.LocalPath() in submodule_list
+        ]
 
     def AffectedTestableFiles(self, include_deletes=None, **kwargs):
         """Return a list of the existing text files in a change."""
@@ -1965,9 +1978,9 @@ def _parse_change(parser, options):
     elif options.all_files:
         change_files = [('M', f) for f in scm.GIT.GetAllFiles(options.root)]
     else:
-        change_files = scm.GIT.CaptureStatus(options.root, options.upstream
-                                             or None)
-
+        change_files = scm.GIT.CaptureStatus(options.root,
+                                             options.upstream or None,
+                                             ignore_submodules=False)
     logging.info('Found %d file(s).', len(change_files))
 
     change_class = GitChange if change_scm == 'git' else Change
