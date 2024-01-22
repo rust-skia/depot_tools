@@ -26,6 +26,7 @@ import subcommand
 GC_AUTOPACKLIMIT = 50
 
 GIT_CACHE_CORRUPT_MESSAGE = 'WARNING: The Git cache is corrupt.'
+INIT_SENTIENT_FILE = ".mirror_init"
 
 # gsutil creates many processes and threads. Creating too many gsutil cp
 # processes may result in running out of resources, and may perform worse due to
@@ -135,6 +136,10 @@ class Mirror(object):
         finally:
             self.print('%s took %.1f minutes' % (what,
                                                  (time.time() - start) / 60.0))
+
+    @property
+    def _init_sentient_file(self):
+        return os.path.join(self.mirror_path, INIT_SENTIENT_FILE)
 
     @property
     def bootstrap_bucket(self):
@@ -459,6 +464,9 @@ class Mirror(object):
                 # 2. Project doesn't have a bootstrap folder.
                 # Start with a bare git dir.
                 self.RunGit(['init', '--bare'])
+                with open(self._init_sentient_file, 'w'):
+                    # Create sentient file
+                    pass
                 # Set appropriate symbolic-ref
                 remote_info = exponential_backoff_retry(
                     lambda: subprocess.check_output(
@@ -523,6 +531,8 @@ class Mirror(object):
                     self.RunGit(['fetch', 'origin', commit], retry=True)
             except subprocess.CalledProcessError:
                 logging.warning('Fetch of %s failed' % commit)
+        if os.path.isfile(self._init_sentient_file):
+            os.remove(self._init_sentient_file)
 
     def populate(self,
                  depth=None,
@@ -537,20 +547,29 @@ class Mirror(object):
             depth = 10000
         gclient_utils.safe_makedirs(self.GetCachePath())
 
+        def bootstrap(force=False):
+            self._ensure_bootstrapped(depth,
+                                      bootstrap,
+                                      reset_fetch_config,
+                                      force=force)
+            self._fetch(verbose, depth, no_fetch_tags, reset_fetch_config)
+
+        def wipe_cache():
+            self.print(GIT_CACHE_CORRUPT_MESSAGE)
+            gclient_utils.rmtree(self.mirror_path)
+
         with lockfile.lock(self.mirror_path, lock_timeout):
+            if os.path.isfile(self._init_sentient_file):
+                # Previous bootstrap didn't finish
+                wipe_cache()
+
             try:
-                self._ensure_bootstrapped(depth, bootstrap, reset_fetch_config)
-                self._fetch(verbose, depth, no_fetch_tags, reset_fetch_config)
+                bootstrap()
             except ClobberNeeded:
                 # This is a major failure, we need to clean and force a
                 # bootstrap.
-                gclient_utils.rmtree(self.mirror_path)
-                self.print(GIT_CACHE_CORRUPT_MESSAGE)
-                self._ensure_bootstrapped(depth,
-                                          bootstrap,
-                                          reset_fetch_config,
-                                          force=True)
-                self._fetch(verbose, depth, no_fetch_tags, reset_fetch_config)
+                wipe_cache()
+                bootstrap(force=True)
 
     def update_bootstrap(self, prune=False, gc_aggressive=False):
         # NOTE: There have been cases where repos were being recursively
