@@ -1349,9 +1349,17 @@ class Change(object):
         """Convenience function."""
         return [af.LocalPath() for af in self.AffectedFiles()]
 
+    def LocalSubmodules(self):
+        """Returns local paths for affected submodules."""
+        return [af.LocalPath() for af in self.AffectedSubmodules()]
+
     def AbsoluteLocalPaths(self):
         """Convenience function."""
         return [af.AbsoluteLocalPath() for af in self.AffectedFiles()]
+
+    def AbsoluteLocalSubmodules(self):
+        """Returns absolute local paths for affected submodules"""
+        return [af.AbsoluteLocalPath() for af in self.AffectedSubmodules()]
 
     def RightHandSideLines(self):
         """An iterator over all text lines in 'new' version of changed files.
@@ -1521,8 +1529,8 @@ def DoPostUploadExecuter(change, gerrit_obj, verbose):
     """
     python_version = 'Python %s' % sys.version_info.major
     sys.stdout.write('Running %s post upload checks ...\n' % python_version)
-    presubmit_files = ListRelevantPresubmitFiles(change.LocalPaths(),
-                                                 change.RepositoryRoot())
+    presubmit_files = ListRelevantPresubmitFiles(
+        change.LocalPaths() + change.LocalSubmodules(), change.RepositoryRoot())
     if not presubmit_files and verbose:
         sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
     results = []
@@ -1824,7 +1832,8 @@ def DoPresubmitChecks(change,
                              python_version)
         start_time = time_time()
         presubmit_files = ListRelevantPresubmitFiles(
-            change.AbsoluteLocalPaths(), change.RepositoryRoot())
+            change.AbsoluteLocalPaths() + change.AbsoluteLocalSubmodules(),
+            change.RepositoryRoot())
         if not presubmit_files and verbose:
             sys.stdout.write('Warning, no PRESUBMIT.py found.\n')
         results = []
