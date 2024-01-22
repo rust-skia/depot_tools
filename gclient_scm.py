@@ -307,6 +307,7 @@ class GitWrapper(SCMWrapper):
         self._SetFetchConfig(options)
 
         self._Fetch(options, prune=True, quiet=options.verbose)
+        revision = self._AutoFetchRef(options, revision)
         self._Scrub(revision, options)
         if file_list is not None:
             files = self._Capture(['-c', 'core.quotePath=false',
