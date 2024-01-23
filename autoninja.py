@@ -379,7 +379,6 @@ def main(args):
                 "Please use `use_remoteexec=true` instead. "
                 "If you are a googler see http://go/building-chrome-mac"
                 "#using-remote-execution for setup instructions. ",
-                "Goma-based builds will have startup delays added Jan 22nd 2024",
                 file=sys.stderr,
             )
         else:
@@ -388,9 +387,18 @@ def main(args):
                 "Please use `use_remoteexec=true` instead. See "
                 "https://chromium.googlesource.com/chromium/src/+/main/docs/"
                 "linux/build_instructions.md#use-reclient for setup instructions.",
-                "Goma-based builds will have startup delays added Jan 22nd 2024",
                 file=sys.stderr,
             )
+        if not sys.platform.startswith("win"):
+            # Artificial build delay is for linux/mac for now.
+            t = 5
+            while t > 0:
+                print(
+                    f"The build will start in {t} seconds.",
+                    file=sys.stderr,
+                )
+                time.sleep(1)
+                t = t - 1
 
 
     # A large build (with or without goma) tends to hog all system resources.
