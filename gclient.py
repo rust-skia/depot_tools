@@ -2935,7 +2935,7 @@ def CMDgitmodules(parser, args):
     if cache_info:
         subprocess2.call(['git', 'update-index', '--add'] + cache_info)
     subprocess2.call(['git', 'add', '.gitmodules'])
-    print('.gitmodules and gitlinks updated. Please check `git diff --staged`'
+    print('.gitmodules and gitlinks updated. Please check `git diff --staged` '
           'and commit those staged changes (`git commit` without -a)')
 
 
