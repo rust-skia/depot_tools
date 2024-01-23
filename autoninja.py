@@ -102,6 +102,14 @@ def _is_google_corp_machine():
 
 
 def _is_google_corp_machine_using_external_account():
+    if os.environ.get("AUTONINJA_SKIP_EXTERNAL_ACCOUNT_CHECK") == "1":
+        print(
+            "WARNING: AUTONINJA_SKIP_EXTERNAL_ACCOUNT_CHECK env var is set.\n"
+            "This is only for some infra, do not set this in personal"
+            " development machine.",
+            file=sys.stderr)
+        return False
+
     if not _is_google_corp_machine():
         return False
 
