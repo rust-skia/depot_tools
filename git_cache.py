@@ -248,7 +248,7 @@ class Mirror(object):
         env.setdefault('GIT_ASKPASS', 'true')
         env.setdefault('SSH_ASKPASS', 'true')
         self.print('running "git %s" in "%s"' % (' '.join(cmd), cwd))
-        gclient_utils.CheckCallAndFilter([self.git_exe] + cmd, **kwargs)
+        return gclient_utils.CheckCallAndFilter([self.git_exe] + cmd, **kwargs)
 
     def config(self, reset_fetch_config=False):
         if reset_fetch_config:
@@ -467,26 +467,26 @@ class Mirror(object):
                 with open(self._init_sentient_file, 'w'):
                     # Create sentient file
                     pass
-                # Set appropriate symbolic-ref
-                remote_info = exponential_backoff_retry(
-                    lambda: subprocess.check_output(
-                        [
-                            self.git_exe, '--git-dir',
-                            os.path.abspath(self.mirror_path), 'remote', 'show',
-                            self.url
-                        ],
-                        cwd=self.mirror_path).decode('utf-8', 'ignore').strip())
-                default_branch_regexp = re.compile(r'HEAD branch: (.*)$')
-                m = default_branch_regexp.search(remote_info, re.MULTILINE)
-                if m:
-                    self.RunGit(
-                        ['symbolic-ref', 'HEAD', 'refs/heads/' + m.groups()[0]])
+                self._set_symbolic_ref()
             else:
                 # Bootstrap failed, previous cache exists; warn and continue.
                 logging.warning(
                     'Git cache has a lot of pack files (%d). Tried to '
                     're-bootstrap but failed. Continuing with non-optimized '
                     'repository.' % len(pack_files))
+
+    def _set_symbolic_ref(self):
+        remote_info = exponential_backoff_retry(lambda: subprocess.check_output(
+            [
+                self.git_exe, '--git-dir',
+                os.path.abspath(self.mirror_path), 'remote', 'show', self.url
+            ],
+            cwd=self.mirror_path).decode('utf-8', 'ignore').strip())
+        default_branch_regexp = re.compile(r'HEAD branch: (.*)')
+        m = default_branch_regexp.search(remote_info, re.MULTILINE)
+        if m:
+            self.RunGit(['symbolic-ref', 'HEAD', 'refs/heads/' + m.groups()[0]])
+
 
     def _fetch(self,
                verbose,
@@ -533,6 +533,13 @@ class Mirror(object):
                 logging.warning('Fetch of %s failed' % commit)
         if os.path.isfile(self._init_sentient_file):
             os.remove(self._init_sentient_file)
+
+        # Since --prune is used, it's possible that HEAD no longer exists (e.g.
+        # a repo uses new HEAD and old is removed). This ensures that HEAD still
+        # points to a valid commit, otherwise gets a new HEAD.
+        out = self.RunGit(['rev-parse', 'HEAD'], print_stdout=False)
+        if out.startswith(b'HEAD'):
+            self._set_symbolic_ref()
 
     def populate(self,
                  depth=None,
