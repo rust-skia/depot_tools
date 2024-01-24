@@ -197,7 +197,8 @@ class Mirror(object):
                 try:
                     cachepath = subprocess.check_output(
                         [cls.git_exe, 'config'] + cls._GIT_CONFIG_LOCATION +
-                        ['cache.cachepath']).decode('utf-8', 'ignore').strip()
+                        ['--type', 'path', 'cache.cachepath']).decode(
+                            'utf-8', 'ignore').strip()
                 except subprocess.CalledProcessError:
                     cachepath = os.environ.get('GIT_CACHE_PATH',
                                                cls.UNSET_CACHEPATH)
