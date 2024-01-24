@@ -888,6 +888,89 @@ def CheckChromiumDependencyMetadata(input_api, output_api, file_filter=None):
 ### Other checks
 
 
+_IGNORE_FREEZE_FOOTER = 'Ignore-Freeze'
+
+# The time module's handling of timezones is abysmal, so the boundaries are
+# precomputed in UNIX time
+# TODO: crbug.com/1521396 - Specify the timestamps using datetime and zoneinfo
+# once the tzdata package is available as a dependency for Windows (Windows
+# doesn't have a timezone database by default, so zoneinfo doesn't work)
+_FREEZE_START = 1702627200  # 2023/12/15 00:00 -0800
+_FREEZE_END = 1704182400  # 2024/01/02 00:00 -0800
+
+
+def CheckInfraFreeze(input_api,
+                     output_api,
+                     files_to_include=None,
+                     files_to_exclude=None):
+    """Prevent modifications during infra code freeze.
+
+    Args:
+        input_api: The InputApi.
+        output_api: The OutputApi.
+        files_to_include: A list of regexes identifying the files to
+            include in the freeze if not matched by a regex in
+            files_to_exclude. The regexes will be matched against the
+            paths of the affected files under the directory containing
+            the PRESUBMIT.py relative to the client root, using / as the
+            path separator. If not provided, all files under the
+            directory containing the PRESUBMIT.py will be included.
+        files_to_exclude: A list of regexes identifying the files to
+            exclude from the freeze. The regexes will be matched against
+            the paths of the affected files under the directory
+            containing the PRESUBMIT.py relative to the client root,
+            using / as the path separator. If not provided, no files
+            will be excluded.
+    """
+    # Not in the freeze time range
+    now = input_api.time.time()
+    if now < _FREEZE_START or now >= _FREEZE_END:
+        input_api.logging.info('No freeze is in effect')
+        return []
+
+    # The CL is ignoring the freeze
+    if _IGNORE_FREEZE_FOOTER in input_api.change.GitFootersFromDescription():
+        input_api.logging.info('Freeze is being ignored')
+        return []
+
+    def file_filter(affected_file):
+        files_to_check = files_to_include or ['.*']
+        files_to_skip = files_to_exclude or []
+        return input_api.FilterSourceFile(affected_file,
+                                          files_to_check=files_to_check,
+                                          files_to_skip=files_to_skip)
+
+    # Compute the affected files that are covered by the freeze
+    files = [
+        af.LocalPath()
+        for af in input_api.AffectedFiles(file_filter=file_filter)
+    ]
+
+    # The Cl does not touch ny files covered by the freeze
+    if not files:
+        input_api.logging.info('No affected files are covered by freeze')
+        return []
+
+    # TODO: crbug.com/1521396 - When _FREEZE_START and _FREEZE_END are datetime
+    # objects, they can be printed directly and this function can be removed
+    def convert(t):
+        ts = input_api.time.localtime(t)
+        return input_api.time.strftime('%Y/%m/%d %H:%M %z', ts)
+
+    # Don't report errors when on the presubmit --all bot or when testing with
+    # presubmit --files.
+    if input_api.no_diffs:
+        report_type = output_api.PresubmitPromptWarning
+    else:
+        report_type = output_api.PresubmitError
+    return [
+        report_type('There is a prod infra freeze in effect from {} until {},'
+                    'the following files cannot be modified:\n  {}'.format(
+                        convert(_FREEZE_START), convert(_FREEZE_END),
+                        '\n  '.join(files)))
+    ]
+
+
 def CheckDoNotSubmit(input_api, output_api):
     return (CheckDoNotSubmitInDescription(input_api, output_api) +
             CheckDoNotSubmitInFiles(input_api, output_api))
