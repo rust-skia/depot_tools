@@ -463,13 +463,19 @@ class GIT(object):
     @staticmethod
     def ListSubmodules(repo_root):
         # type: (str) -> Collection[str]
-        """Returns the list of submodule paths for the given repo."""
+        """Returns the list of submodule paths for the given repo.
+
+        Path separators will be adjusted for the current OS.
+        """
         if not os.path.exists(os.path.join(repo_root, '.gitmodules')):
             return []
         config_output = GIT.Capture(
             ['config', '--file', '.gitmodules', '--get-regexp', 'path'],
             cwd=repo_root)
-        return [line.split()[-1] for line in config_output.splitlines()]
+        return [
+            line.split()[-1].replace('/', os.path.sep)
+            for line in config_output.splitlines()
+        ]
 
     @staticmethod
     def CleanupDir(cwd, relative_dir):

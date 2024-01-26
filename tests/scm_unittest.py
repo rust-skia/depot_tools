@@ -132,14 +132,19 @@ class GitWrapperTestCase(unittest.TestCase):
         actual_state = scm.GIT.IsVersioned('cwd', 'dir')
         self.assertEqual(actual_state, scm.VERSIONED_DIR)
 
-    @mock.patch('scm.GIT.Capture')
     @mock.patch('os.path.exists', return_value=True)
-    def testListSubmodules(self, mockExists, mockCapture):
+    @mock.patch('scm.GIT.Capture')
+    def testListSubmodules(self, mockCapture, *_mock):
         mockCapture.return_value = (
             'submodule.submodulename.path foo/path/script'
             '\nsubmodule.submodule2name.path foo/path/script2')
         actual_list = scm.GIT.ListSubmodules('root')
-        self.assertEqual(actual_list, ['foo/path/script', 'foo/path/script2'])
+        if sys.platform.startswith('win'):
+            self.assertEqual(actual_list,
+                             ['foo\\path\\script', 'foo\\path\\script2'])
+        else:
+            self.assertEqual(actual_list,
+                             ['foo/path/script', 'foo/path/script2'])
 
     def testListSubmodules_missing(self):
         self.assertEqual(scm.GIT.ListSubmodules('root'), [])
