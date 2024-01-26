@@ -5405,6 +5405,7 @@ def CMDsplit(parser, args):
         'be created, but don\'t create branches or CLs.')
     parser.add_option('--cq-dry-run',
                       action='store_true',
+                      default=False,
                       help='If set, will do a cq dry run for each uploaded CL. '
                       'Please be careful when doing this; more than ~10 CLs '
                       'has the potential to overload our build '
