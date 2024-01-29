@@ -13,10 +13,10 @@ import io
 import logging
 import operator
 import os
-import pipes
 import platform
 import queue
 import re
+import shlex
 import stat
 import subprocess
 import sys
@@ -369,7 +369,7 @@ def safe_makedirs(tree):
 
 def CommandToStr(args):
     """Converts an arg list into a shell escaped string."""
-    return ' '.join(pipes.quote(arg) for arg in args)
+    return ' '.join(shlex.quote(arg) for arg in args)
 
 
 class Wrapper(object):
