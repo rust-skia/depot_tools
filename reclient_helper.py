@@ -258,6 +258,11 @@ def set_mac_defaults():
     os.environ.setdefault("RBE_cas_concurrency", "100")
 
 
+def set_win_defaults():
+    # Enable the deps cache on windows.  This makes a notable improvement
+    # in performance at the cost of a ~200MB cache file.
+    os.environ.setdefault("RBE_enable_deps_cache", "true")
+
 @contextlib.contextmanager
 def build_context(argv, tool):
     # If use_remoteexec is set, but the reclient binaries or configs don't
@@ -297,6 +302,8 @@ def build_context(argv, tool):
         set_racing_defaults()
         if sys.platform == "darwin":
             set_mac_defaults()
+        if sys.platform.startswith("win"):
+            set_win_defaults()
 
     # TODO(b/292523514) remove this once a fix is landed in reproxy
     remove_mdproxy_from_path()
