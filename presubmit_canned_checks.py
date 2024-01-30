@@ -3,9 +3,11 @@
 # found in the LICENSE file.
 """Generic presubmit checks that can be reused by other presubmit checks."""
 
+import datetime
 import io as _io
 import os as _os
 import time
+import zoneinfo
 
 import metadata.discover
 import metadata.validate
@@ -890,14 +892,9 @@ def CheckChromiumDependencyMetadata(input_api, output_api, file_filter=None):
 
 _IGNORE_FREEZE_FOOTER = 'Ignore-Freeze'
 
-# The time module's handling of timezones is abysmal, so the boundaries are
-# precomputed in UNIX time
-# TODO: crbug.com/1521396 - Specify the timestamps using datetime and zoneinfo
-# once the tzdata package is available as a dependency for Windows (Windows
-# doesn't have a timezone database by default, so zoneinfo doesn't work)
-_FREEZE_START = 1702627200  # 2023/12/15 00:00 -0800
-_FREEZE_END = 1704182400  # 2024/01/02 00:00 -0800
-
+_FREEZE_TZ = zoneinfo.ZoneInfo("America/Los_Angeles")
+_FREEZE_START = datetime.datetime(2023, 12, 15, 0, 0, tzinfo=_FREEZE_TZ)
+_FREEZE_END = datetime.datetime(2024, 1, 2, 0, 0, tzinfo=_FREEZE_TZ)
 
 def CheckInfraFreeze(input_api,
                      output_api,
@@ -923,7 +920,7 @@ def CheckInfraFreeze(input_api,
             will be excluded.
     """
     # Not in the freeze time range
-    now = input_api.time.time()
+    now = datetime.datetime.now(_FREEZE_TZ)
     if now < _FREEZE_START or now >= _FREEZE_END:
         input_api.logging.info('No freeze is in effect')
         return []
@@ -951,12 +948,6 @@ def CheckInfraFreeze(input_api,
         input_api.logging.info('No affected files are covered by freeze')
         return []
 
-    # TODO: crbug.com/1521396 - When _FREEZE_START and _FREEZE_END are datetime
-    # objects, they can be printed directly and this function can be removed
-    def convert(t):
-        ts = input_api.time.localtime(t)
-        return input_api.time.strftime('%Y/%m/%d %H:%M %z', ts)
-
     # Don't report errors when on the presubmit --all bot or when testing with
     # presubmit --files.
     if input_api.no_diffs:
@@ -966,8 +957,7 @@ def CheckInfraFreeze(input_api,
     return [
         report_type('There is a prod infra freeze in effect from {} until {},'
                     'the following files cannot be modified:\n  {}'.format(
-                        convert(_FREEZE_START), convert(_FREEZE_END),
-                        '\n  '.join(files)))
+                        _FREEZE_START, _FREEZE_END, '\n  '.join(files)))
     ]
 
 
