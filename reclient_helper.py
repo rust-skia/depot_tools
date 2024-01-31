@@ -262,6 +262,10 @@ def set_win_defaults():
     # Enable the deps cache on windows.  This makes a notable improvement
     # in performance at the cost of a ~200MB cache file.
     os.environ.setdefault("RBE_enable_deps_cache", "true")
+    # Reduce local resource fraction used to do local compile actions on
+    # windows, to try and prevent machine saturation.
+    os.environ.setdefault("RBE_local_resource_fraction", "0.05")
+
 
 @contextlib.contextmanager
 def build_context(argv, tool):
