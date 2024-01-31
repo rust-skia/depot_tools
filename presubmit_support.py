@@ -195,7 +195,7 @@ class ThreadPool(object):
 
         # On Windows, scripts on the current directory take precedence over
         # PATH, so that when testing depot_tools on Windows, calling
-        # `vpython.bat` will execute the copy of vpython of the depot_tools
+        # `vpython3.bat` will execute the copy of vpython of the depot_tools
         # under test instead of the one in the bot. As a workaround, we run the
         # tests from the parent directory instead.
         if (cmd[0] == vpython and 'cwd' in test.kwargs
