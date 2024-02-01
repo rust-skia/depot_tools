@@ -256,6 +256,10 @@ def set_mac_defaults():
     # performance when on high-speed connection, but does show improvements
     # on easily congested networks.
     os.environ.setdefault("RBE_cas_concurrency", "100")
+    # Enable the deps cache on macs.  Mac needs a larger deps cache as it
+    # seems to have larger dependency sets per action.
+    os.environ.setdefault("RBE_enable_deps_cache", "true")
+    os.environ.setdefault("RBE_deps_cache_max_mb", "1024")
 
 
 def set_win_defaults():
