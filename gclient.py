@@ -4003,7 +4003,8 @@ class OptionParser(optparse.OptionParser):
                                        **kwargs)
 
         # Some arm boards have issues with parallel sync.
-        if platform.machine().startswith('arm'):
+        # ARM Mac should be fine.
+        if sys.platform != 'darwin' and platform.machine().startswith('arm'):
             jobs = 1
         else:
             jobs = max(8, gclient_utils.NumLocalCpus())
