@@ -6338,6 +6338,29 @@ def _RunGnFormat(opts, paths, top_dir, upstream_commit):
     return return_value
 
 
+def _RunMojomFormat(opts, paths, top_dir, upstream_commit):
+    primary_solution_path = gclient_paths.GetPrimarySolutionPath()
+    if not primary_solution_path:
+        DieWithError('Could not find the primary solution path (e.g. '
+                     'the chromium checkout)')
+    mojom_format_path = os.path.join(primary_solution_path, 'mojo', 'public',
+                                     'tools', 'mojom', 'mojom_format.py')
+    if not os.path.exists(mojom_format_path):
+        DieWithError('Could not find mojom formater at '
+                     f'"{mojom_format_path}"')
+
+    cmd = [mojom_format_path]
+    if opts.dry_run:
+        cmd.append('--dry-run')
+    cmd.extend(paths)
+
+    ret = subprocess2.call(cmd)
+    if opts.dry_run and ret != 0:
+        return 2
+
+    return ret
+
+
 def _FormatXml(opts, paths, top_dir, upstream_commit):
     # Skip the metrics formatting from the global presubmit hook. These files
     # have a separate presubmit hook that issues an error if the files need
@@ -6454,6 +6477,10 @@ def CMDformat(parser, args):
         action='store_false',
         help='Disables formatting of Swift file types using swift-format.')
 
+    parser.add_option('--mojom',
+                      action='store_true',
+                      help='Enables formatting of .mojom files.')
+
     parser.add_option('--no-java',
                       action='store_true',
                       help='Disable auto-formatting of .java')
@@ -6510,6 +6537,8 @@ def CMDformat(parser, args):
         formatters += [(['.swift'], _RunSwiftFormat)]
     if opts.python is not False:
         formatters += [(['.py'], _RunYapf)]
+    if opts.mojom:
+        formatters += [(['.mojom'], _RunMojomFormat)]
 
     top_dir = settings.GetRoot()
     return_value = 0
