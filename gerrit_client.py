@@ -511,11 +511,6 @@ class OptionParser(optparse.OptionParser):
 
 
 def main(argv):
-    if sys.version_info[0] < 3:
-        print('\nYour python version %s is unsupported, please upgrade.\n' %
-              (sys.version.split(' ', 1)[0], ),
-              file=sys.stderr)
-        return 2
     dispatcher = subcommand.CommandDispatcher(__name__)
     return dispatcher.execute(OptionParser(), argv)
 

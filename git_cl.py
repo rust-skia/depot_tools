@@ -6689,12 +6689,6 @@ class OptionParser(optparse.OptionParser):
 
 
 def main(argv):
-    if sys.version_info[0] < 3:
-        print('\nYour Python version %s is unsupported, please upgrade.\n' %
-              (sys.version.split(' ', 1)[0], ),
-              file=sys.stderr)
-        return 2
-
     colorize_CMDstatus_doc()
     dispatcher = subcommand.CommandDispatcher(__name__)
     try:

@@ -4103,11 +4103,6 @@ def path_contains_tilde():
 
 
 def can_run_gclient_and_helpers():
-    if sys.version_info[0] < 3:
-        print('\nYour python version %s is unsupported, please upgrade.\n' %
-              sys.version.split(' ', 1)[0],
-              file=sys.stderr)
-        return False
     if not sys.executable:
         print('\nPython cannot find the location of it\'s own executable.\n',
               file=sys.stderr)
