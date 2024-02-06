@@ -904,47 +904,6 @@ def CheckChangeOnCommit(input_api, output_api):
                                 patchset=0,
                                 author=None)
 
-    def testMergeMasters(self):
-        merge = presubmit._MergeMasters
-        self.assertEqual({}, merge({}, {}))
-        self.assertEqual({'m1': {}}, merge({}, {'m1': {}}))
-        self.assertEqual({'m1': {}}, merge({'m1': {}}, {}))
-        parts = [
-            {
-                'try1.cr': {
-                    'win': set(['defaulttests'])
-                }
-            },
-            {
-                'try1.cr': {
-                    'linux1': set(['test1'])
-                },
-                'try2.cr': {
-                    'linux2': set(['defaulttests'])
-                }
-            },
-            {
-                'try1.cr': {
-                    'mac1': set(['defaulttests']),
-                    'mac2': set(['test1', 'test2']),
-                    'linux1': set(['defaulttests'])
-                }
-            },
-        ]
-        expected = {
-            'try1.cr': {
-                'win': set(['defaulttests']),
-                'linux1': set(['defaulttests', 'test1']),
-                'mac1': set(['defaulttests']),
-                'mac2': set(['test1', 'test2'])
-            },
-            'try2.cr': {
-                'linux2': set(['defaulttests'])
-            },
-        }
-        for permutation in itertools.permutations(parts):
-            self.assertEqual(expected, functools.reduce(merge, permutation, {}))
-
     def testMainPostUpload(self):
         os.path.isfile.side_effect = lambda f: 'PRESUBMIT.py' in f
         os.listdir.return_value = ['PRESUBMIT.py']

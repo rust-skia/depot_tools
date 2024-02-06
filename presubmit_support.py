@@ -1508,17 +1508,6 @@ class GetPostUploadExecuter(object):
         return post_upload_hook(self.gerrit, self.change, OutputApi(False))
 
 
-def _MergeMasters(masters1, masters2):
-    """Merges two master maps. Merges also the tests of each builder."""
-    result = {}
-    for (master, builders) in itertools.chain(masters1.items(),
-                                              masters2.items()):
-        new_builders = result.setdefault(master, {})
-        for (builder, tests) in builders.items():
-            new_builders.setdefault(builder, set([])).update(tests)
-    return result
-
-
 def DoPostUploadExecuter(change, gerrit_obj, verbose):
     """Execute the post upload hook.
 
