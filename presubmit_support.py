@@ -39,7 +39,6 @@ from typing import Mapping
 from warnings import warn
 
 # Local imports.
-import fix_encoding
 import gclient_paths  # Exposed through the API
 import gclient_utils
 import git_footers
@@ -2190,7 +2189,6 @@ def main(argv=None):
 
 
 if __name__ == '__main__':
-    fix_encoding.fix_encoding()
     try:
         sys.exit(main())
     except KeyboardInterrupt:

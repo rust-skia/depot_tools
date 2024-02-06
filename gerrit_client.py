@@ -15,7 +15,6 @@ import subcommand
 import sys
 import urllib.parse
 
-import fix_encoding
 import gerrit_util
 import setup_color
 
@@ -518,7 +517,6 @@ def main(argv):
 if __name__ == '__main__':
     # These affect sys.stdout so do it outside of main() to simplify mocks in
     # unit testing.
-    fix_encoding.fix_encoding()
     setup_color.init()
     try:
         sys.exit(main(sys.argv[1:]))

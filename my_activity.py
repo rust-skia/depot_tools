@@ -49,7 +49,6 @@ import urllib
 import re
 
 import auth
-import fix_encoding
 import gclient_utils
 import gerrit_util
 
@@ -1040,7 +1039,6 @@ def main():
 
 if __name__ == '__main__':
     # Fix encoding to support non-ascii issue titles.
-    fix_encoding.fix_encoding()
 
     try:
         sys.exit(main())

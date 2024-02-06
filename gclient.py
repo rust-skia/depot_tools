@@ -97,7 +97,6 @@ import urllib.parse
 from collections.abc import Collection, Mapping, Sequence
 
 import detect_host_arch
-import fix_encoding
 import git_common
 import gclient_eval
 import gclient_paths
@@ -4122,7 +4121,6 @@ def main(argv):
     execute."""
     if not can_run_gclient_and_helpers():
         return 2
-    fix_encoding.fix_encoding()
     disable_buffering()
     setup_color.init()
     dispatcher = subcommand.CommandDispatcher(__name__)

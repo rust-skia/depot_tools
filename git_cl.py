@@ -40,7 +40,6 @@ from typing import Sequence
 from typing import Tuple
 import auth
 import clang_format
-import fix_encoding
 import gclient_paths
 import gclient_utils
 import gerrit_util
@@ -6707,7 +6706,6 @@ def main(argv):
 if __name__ == '__main__':
     # These affect sys.stdout, so do it outside of main() to simplify mocks in
     # the unit tests.
-    fix_encoding.fix_encoding()
     setup_color.init()
     with metrics.collector.print_notice_and_exit():
         sys.exit(main(sys.argv[1:]))
