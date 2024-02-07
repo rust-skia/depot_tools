@@ -161,10 +161,6 @@ assert len(_KNOWN_GERRIT_TO_SHORT_URLS) == len(
 # at once. Picked arbitrarily.
 _MAX_STACKED_BRANCHES_UPLOAD = 20
 
-# Environment variable to indicate if user is participating in the stcked
-# changes dogfood.
-DOGFOOD_STACKED_CHANGES_VAR = 'DOGFOOD_STACKED_CHANGES'
-
 
 class GitPushError(Exception):
     pass
@@ -5061,31 +5057,7 @@ def CMDupload(parser, args):
         print('No previous patchsets, so --retry-failed has no effect.')
         options.retry_failed = False
 
-    disable_dogfood_stacked_changes = os.environ.get(
-        DOGFOOD_STACKED_CHANGES_VAR) == '0'
-    dogfood_stacked_changes = os.environ.get(DOGFOOD_STACKED_CHANGES_VAR) == '1'
-
-    # Only print message for folks who don't have DOGFOOD_STACKED_CHANGES set
-    # to an expected value.
-    if (options.squash and not dogfood_stacked_changes
-            and not disable_dogfood_stacked_changes):
-        print(
-            'This repo has been enrolled in the stacked changes dogfood.\n'
-            '`git cl upload` now uploads the current branch and all upstream '
-            'branches that have un-uploaded updates.\n'
-            'Patches can now be reapplied with --force:\n'
-            '`git cl patch --reapply --force`.\n'
-            'Googlers may visit http://go/stacked-changes-dogfood for more information.\n'
-            '\n'
-            'Depot Tools no longer sets new uploads to "WIP". Please update the\n'
-            '"Set new changes to "work in progress" by default" checkbox at\n'
-            'https://%s/settings/\n'
-            '\n'
-            'To opt-out use `export DOGFOOD_STACKED_CHANGES=0`.\n'
-            'To hide this message use `export DOGFOOD_STACKED_CHANGES=1`.\n'
-            'File bugs at https://bit.ly/3Y6opoI\n' % cl.GetGerritHost())
-
-    if options.squash and not disable_dogfood_stacked_changes:
+    if options.squash:
         if options.cherry_pick_stacked:
             try:
                 orig_args.remove('--cherry-pick-stacked')
@@ -5100,12 +5072,10 @@ def CMDupload(parser, args):
                 # we force code path that will read issue from the config.
                 cl.lookedup_issue = False
             return upload_branch_deps(cl, orig_args, options.force)
-
         return 0
-
     if options.cherry_pick_stacked:
         parser.error(
-            '--cherry-pick-stacked is not available for this workflow.')
+            '--cherry-pick-stacked is not available without squash=true,')
 
     # cl.GetMostRecentPatchset uses cached information, and can return the last
     # patchset before upload. Calling it here makes it clear that it's the
