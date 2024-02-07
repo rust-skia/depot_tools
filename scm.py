@@ -3,12 +3,14 @@
 # found in the LICENSE file.
 """SCM-specific utility classes."""
 
+from collections import defaultdict
 import glob
 import io
 import os
 import platform
 import re
 import sys
+from typing import Mapping, List
 
 import gclient_utils
 import subprocess2
@@ -98,6 +100,47 @@ class GIT(object):
     current_version = None
     rev_parse_cache = {}
 
+    # Maps cwd -> {config key, [config values]}
+    # This cache speeds up all `git config ...` operations by only running a
+    # single subcommand, which can greatly accelerate things like
+    # git-map-branches.
+    _CONFIG_CACHE: Mapping[str, Mapping[str, List[str]]] = {}
+
+    @staticmethod
+    def _load_config(cwd: str) -> Mapping[str, List[str]]:
+        """Loads git config for the given cwd.
+
+        The calls to this method are cached in-memory for performance. The
+        config is only reloaded on cache misses.
+
+        Args:
+            cwd: path to fetch `git config` for.
+
+        Returns:
+            A dict mapping git config keys to a list of its values.
+        """
+        if cwd not in GIT._CONFIG_CACHE:
+            try:
+                rawConfig = GIT.Capture(['config', '--list'],
+                                        cwd=cwd,
+                                        strip_out=False)
+            except subprocess2.CalledProcessError:
+                return {}
+
+            cfg = defaultdict(list)
+            for line in rawConfig.splitlines():
+                key, value = map(str.strip, line.split('=', 1))
+                cfg[key].append(value)
+
+            GIT._CONFIG_CACHE[cwd] = cfg
+
+        return GIT._CONFIG_CACHE[cwd]
+
+    @staticmethod
+    def _clear_config(cwd: str) -> None:
+        GIT._CONFIG_CACHE.pop(cwd, None)
+
+
     @staticmethod
     def ApplyEnvVars(kwargs):
         env = kwargs.pop('env', None) or os.environ.copy()
@@ -167,10 +210,28 @@ class GIT(object):
 
     @staticmethod
     def GetConfig(cwd, key, default=None):
-        try:
-            return GIT.Capture(['config', key], cwd=cwd)
-        except subprocess2.CalledProcessError:
+        values = GIT._load_config(cwd).get(key, None)
+        if not values:
             return default
+
+        return values[-1]
+
+    @staticmethod
+    def GetConfigBool(cwd, key):
+        return GIT.GetConfig(cwd, key) == 'true'
+
+    @staticmethod
+    def GetConfigList(cwd, key):
+        return GIT._load_config(cwd).get(key, [])
+
+    @staticmethod
+    def YieldConfigRegexp(cwd, pattern):
+        """Yields (key, value) pairs for any config keys matching `pattern`."""
+        p = re.compile(pattern)
+        for name, values in GIT._load_config(cwd).items():
+            if p.match(name):
+                for value in values:
+                    yield name, value
 
     @staticmethod
     def GetBranchConfig(cwd, branch, key, default=None):
@@ -179,11 +240,42 @@ class GIT(object):
         return GIT.GetConfig(cwd, key, default)
 
     @staticmethod
-    def SetConfig(cwd, key, value=None):
-        if value is None:
-            args = ['config', '--unset', key]
+    def SetConfig(cwd,
+                  key,
+                  value=None,
+                  *,
+                  value_pattern=None,
+                  modify_all=False,
+                  scope='local'):
+        """Sets or unsets one or more config values.
+
+        Args:
+            cwd: path to fetch `git config` for.
+            key: The specific config key to affect.
+            value: The value to set. If this is None, `key` will be unset.
+            value_pattern: For use with `all=True`, allows further filtering of
+                the set or unset operation based on the currently configured
+                value. Ignored for `all=False`.
+            modify_all: If True, this will change a set operation to
+                `--replace-all`, and will change an unset operation to
+                `--unset-all`.
+            scope: By default this is the local scope, but could be `system`,
+                `global`, or `worktree`, depending on which config scope you
+                want to affect.
+        """
+        GIT._clear_config(cwd)
+
+        args = ['config', f'--{scope}']
+        if value:
+            if modify_all:
+                args.append('--replace-all')
+
+            args.extend([key, value])
         else:
-            args = ['config', key, value]
+            args.extend(['--unset' + ('-all' if modify_all else ''), key])
+
+        if modify_all and value_pattern:
+            args.append(value_pattern)
         GIT.Capture(args, cwd=cwd)
 
     @staticmethod

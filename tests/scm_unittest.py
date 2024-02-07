@@ -29,10 +29,11 @@ class GitWrapperTestCase(unittest.TestCase):
 
     @mock.patch('scm.GIT.Capture')
     def testGetEmail(self, mockCapture):
-        mockCapture.return_value = 'mini@me.com'
+        mockCapture.return_value = 'user.email = mini@me.com'
         self.assertEqual(scm.GIT.GetEmail(self.root_dir), 'mini@me.com')
-        mockCapture.assert_called_with(['config', 'user.email'],
-                                       cwd=self.root_dir)
+        mockCapture.assert_called_with(['config', '--list'],
+                                       cwd=self.root_dir,
+                                       strip_out=False)
 
     def testRefToRemoteRef(self):
         remote = 'origin'
@@ -210,6 +211,50 @@ class RealGitTest(fake_repos.FakeReposTestBase):
         self.assertIsNone(scm.GIT.GetConfig(self.cwd, key))
         self.assertEqual('default-value',
                          scm.GIT.GetConfig(self.cwd, key, 'default-value'))
+
+    def testGetSetConfigBool(self):
+        key = 'scm.test-key'
+        self.assertFalse(scm.GIT.GetConfigBool(self.cwd, key))
+
+        scm.GIT.SetConfig(self.cwd, key, 'true')
+        self.assertTrue(scm.GIT.GetConfigBool(self.cwd, key))
+
+        scm.GIT.SetConfig(self.cwd, key)
+        self.assertFalse(scm.GIT.GetConfigBool(self.cwd, key))
+
+    def testGetSetConfigList(self):
+        key = 'scm.test-key'
+        self.assertListEqual([], scm.GIT.GetConfigList(self.cwd, key))
+
+        scm.GIT.SetConfig(self.cwd, key, 'foo')
+        scm.GIT.Capture(['config', '--add', key, 'bar'], cwd=self.cwd)
+        self.assertListEqual(['foo', 'bar'],
+                             scm.GIT.GetConfigList(self.cwd, key))
+
+        scm.GIT.SetConfig(self.cwd, key, modify_all=True, value_pattern='^f')
+        self.assertListEqual(['bar'], scm.GIT.GetConfigList(self.cwd, key))
+
+        scm.GIT.SetConfig(self.cwd, key)
+        self.assertListEqual([], scm.GIT.GetConfigList(self.cwd, key))
+
+    def testYieldConfigRegexp(self):
+        key1 = 'scm.aaa'
+        key2 = 'scm.aaab'
+
+        config = scm.GIT.YieldConfigRegexp(self.cwd, key1)
+        with self.assertRaises(StopIteration):
+            next(config)
+
+        scm.GIT.SetConfig(self.cwd, key1, 'foo')
+        scm.GIT.SetConfig(self.cwd, key2, 'bar')
+        scm.GIT.Capture(['config', '--add', key2, 'baz'], cwd=self.cwd)
+
+        config = scm.GIT.YieldConfigRegexp(self.cwd, '^scm\\.aaa')
+        self.assertEqual((key1, 'foo'), next(config))
+        self.assertEqual((key2, 'bar'), next(config))
+        self.assertEqual((key2, 'baz'), next(config))
+        with self.assertRaises(StopIteration):
+            next(config)
 
     def testGetSetBranchConfig(self):
         branch = scm.GIT.GetBranch(self.cwd)
