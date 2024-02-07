@@ -117,12 +117,16 @@ class CookiesAuthenticatorTest(unittest.TestCase):
             os.path.expanduser(os.path.join('~', '.gitcookies')),
             gerrit_util.CookiesAuthenticator().get_gitcookies_path())
 
-        subprocess2.check_output.side_effect = [b'http.cookiefile']
+        subprocess2.check_output.side_effect = [
+            b'http.cookiefile = http.cookiefile'
+        ]
         self.assertEqual(
             'http.cookiefile',
             gerrit_util.CookiesAuthenticator().get_gitcookies_path())
-        subprocess2.check_output.assert_called_with(
-            ['git', 'config', '--path', 'http.cookiefile'])
+        subprocess2.check_output.assert_called_with(['git', 'config', '--list'],
+                                                    cwd=os.getcwd(),
+                                                    env=mock.ANY,
+                                                    stderr=mock.ANY)
 
         os.getenv.return_value = 'git-cookies-path'
         self.assertEqual(
