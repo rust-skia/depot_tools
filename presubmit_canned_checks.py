@@ -1999,6 +1999,11 @@ def CheckForCommitObjects(input_api, output_api):
     for commit_tree_entry in commit_tree_entries:
         git_submodules[commit_tree_entry[2]] = commit_tree_entry[3]
 
+    gitmodules_file = input_api.os_path.join(input_api.PresubmitLocalPath(),
+                                             '.gitmodules')
+    with open(gitmodules_file) as f:
+        gitmodules_content = f.read()
+
     mismatch_entries = []
     deps_msg = ""
     for dep_path, dep in deps['deps'].items():
@@ -2019,7 +2024,23 @@ def CheckForCommitObjects(input_api, output_api):
             continue
 
         if commit_hash in git_submodules:
-            git_submodules.pop(commit_hash)
+            submodule_path = git_submodules.pop(commit_hash)
+            if not dep_path.endswith(submodule_path):
+                # DEPS entry path doesn't point to a gitlink.
+                return [
+                    output_api.PresubmitError(
+                        f'Unexpected DEPS entry {dep_path}.\n'
+                        f'Expected path to end with {submodule_path}.\n'
+                        'Make sure DEPS paths match those in .gitmodules \n'
+                        f'and a gitlink exists at {dep_path}.')
+                ]
+            if f'path = {submodule_path}' not in gitmodules_content:
+                return [
+                    output_api.PresubmitError(
+                        f'No submodule with path {submodule_path} in '
+                        '.gitmodules.\nMake sure entries in .gitmodules match '
+                        'gitlink locations in the tree.')
+                ]
         else:
             mismatch_entries.append(dep_path)
             deps_msg += f"\n [DEPS]      {dep_path} -> {commit_hash}"
