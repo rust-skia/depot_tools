@@ -38,7 +38,6 @@ import signal
 import tempfile
 import textwrap
 
-import scm
 import subprocess2
 
 from io import BytesIO
@@ -350,10 +349,8 @@ def branch_config_map(option):
     """Return {branch: <|option| value>} for all branches."""
     try:
         reg = re.compile(r'^branch\.(.*)\.%s$' % option)
-        return {
-            reg.match(k).group(1): v
-            for k, v in get_config_regexp(reg.pattern)
-        }
+        lines = get_config_regexp(reg.pattern)
+        return {reg.match(k).group(1): v for k, v in (l.split() for l in lines)}
     except subprocess2.CalledProcessError:
         return {}
 
@@ -387,7 +384,11 @@ def branches(use_limit=True, *args):
 
 
 def get_config(option, default=None):
-    return scm.GIT.GetConfig(os.getcwd(), option, default)
+    try:
+        return run('config', '--get', option) or default
+    except subprocess2.CalledProcessError:
+        return default
+
 
 def get_config_int(option, default=0):
     assert isinstance(default, int)
@@ -398,11 +399,19 @@ def get_config_int(option, default=0):
 
 
 def get_config_list(option):
-    return scm.GIT.GetConfigList(os.getcwd(), option)
+    try:
+        return run('config', '--get-all', option).split()
+    except subprocess2.CalledProcessError:
+        return []
 
 
 def get_config_regexp(pattern):
-    return scm.GIT.YieldConfigRegexp(os.getcwd(), pattern)
+    if IS_WIN:  # pragma: no cover
+        # this madness is because we call git.bat which calls git.exe which
+        # calls bash.exe (or something to that effect). Each layer divides the
+        # number of ^'s by 2.
+        pattern = pattern.replace('^', '^' * 8)
+    return run('config', '--get-regexp', pattern).splitlines()
 
 
 def is_fsmonitor_enabled():
@@ -446,7 +455,7 @@ def del_branch_config(branch, option, scope='local'):
 
 def del_config(option, scope='local'):
     try:
-        scm.GIT.SetConfig(os.getcwd(), option, scope=scope)
+        run('config', '--' + scope, '--unset', option)
     except subprocess2.CalledProcessError:
         pass
 
@@ -888,7 +897,7 @@ def set_branch_config(branch, option, value, scope='local'):
 
 
 def set_config(option, value, scope='local'):
-    scm.GIT.SetConfig(os.getcwd(), option, value, scope=scope)
+    run('config', '--' + scope, option, value)
 
 
 def get_dirty_files():
@@ -1107,7 +1116,10 @@ def tree(treeref, recurse=False):
 
 
 def get_remote_url(remote='origin'):
-    return scm.GIT.GetConfig(os.getcwd(), 'remote.%s.url' % remote)
+    try:
+        return run('config', 'remote.%s.url' % remote)
+    except subprocess2.CalledProcessError:
+        return None
 
 
 def upstream(branch):

@@ -3107,6 +3107,7 @@ class TestGitCl(unittest.TestCase):
         mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
                    lambda _, include_netrc=False: []).start()
         self.calls = [
+            ((['git', 'config', '--path', 'http.cookiefile'], ), CERR1),
             ((['git', 'config', '--global', 'http.cookiefile'], ), CERR1),
             (('os.path.exists', os.path.join('~', NETRC_FILENAME)), True),
             (('ask_for_data', 'Press Enter to setup .gitcookies, '
@@ -3129,6 +3130,7 @@ class TestGitCl(unittest.TestCase):
         custom_cookie_path = ('C:\\.gitcookies' if sys.platform == 'win32' else
                               '/custom/.gitcookies')
         self.calls = [
+            ((['git', 'config', '--path', 'http.cookiefile'], ), CERR1),
             ((['git', 'config', '--global',
                'http.cookiefile'], ), custom_cookie_path),
             (('os.path.exists', custom_cookie_path), False),
