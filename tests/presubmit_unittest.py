@@ -385,7 +385,7 @@ class PresubmitUnittest(PresubmitTestsBase):
                                      0,
                                      0,
                                      None,
-                                     upstream=None)
+                                     upstream='upstream')
         self.assertIsNotNone(change.Name() == 'mychange')
         self.assertIsNotNone(change.DescriptionText(
         ) == 'Hello there\nthis is a change\nand some more regular text')
@@ -444,8 +444,13 @@ class PresubmitUnittest(PresubmitTestsBase):
 
     def testInvalidChange(self):
         with self.assertRaises(AssertionError):
-            presubmit.GitChange('mychange', 'description', self.fake_root_dir,
-                                ['foo/blat.cc', 'bar'], 0, 0, None)
+            presubmit.GitChange('mychange',
+                                'description',
+                                self.fake_root_dir, ['foo/blat.cc', 'bar'],
+                                0,
+                                0,
+                                None,
+                                upstream='upstream')
 
     def testExecPresubmitScript(self):
         description_lines = ('Hello there', 'this is a change', 'BUG=123')
@@ -965,14 +970,10 @@ def CheckChangeOnCommit(input_api, output_api):
 
         change = presubmit._parse_change(None, options)
         self.assertEqual(presubmit.Change.return_value, change)
-        presubmit.Change.assert_called_once_with(options.name,
-                                                 options.description,
-                                                 options.root,
-                                                 [('M', 'random_file.txt')],
-                                                 options.issue,
-                                                 options.patchset,
-                                                 options.author,
-                                                 upstream=options.upstream)
+        presubmit.Change.assert_called_once_with(
+            options.name, options.description, options.root,
+            [('M', 'random_file.txt')], options.issue, options.patchset,
+            options.author)
         presubmit._parse_files.assert_called_once_with(options.files,
                                                        options.recursive)
 
@@ -1185,9 +1186,14 @@ class InputApiUnittest(PresubmitTestsBase):
         os.path.isfile.side_effect = lambda f: f in known_files
         presubmit.scm.GIT.GenerateDiff.return_value = '\n'.join(diffs)
 
-        change = presubmit.GitChange('mychange', '\n'.join(description_lines),
+        change = presubmit.GitChange('mychange',
+                                     '\n'.join(description_lines),
                                      self.fake_root_dir,
-                                     [[f[0], f[1]] for f in files], 0, 0, None)
+                                     [[f[0], f[1]] for f in files],
+                                     0,
+                                     0,
+                                     None,
+                                     upstream='upstream')
         input_api = presubmit.InputApi(
             change, os.path.join(self.fake_root_dir, 'foo', 'PRESUBMIT.py'),
             False, None, False)
@@ -1241,9 +1247,14 @@ class InputApiUnittest(PresubmitTestsBase):
         known_files = [os.path.join(self.fake_root_dir, f) for _, f in files]
         os.path.isfile.side_effect = lambda f: f in known_files
 
-        change = presubmit.GitChange('mychange', 'description\nlines\n',
+        change = presubmit.GitChange('mychange',
+                                     'description\nlines\n',
                                      self.fake_root_dir,
-                                     [[f[0], f[1]] for f in files], 0, 0, None)
+                                     [[f[0], f[1]] for f in files],
+                                     0,
+                                     0,
+                                     None,
+                                     upstream='upstream')
         input_api = presubmit.InputApi(
             change, os.path.join(self.fake_root_dir, 'foo', 'PRESUBMIT.py'),
             False, None, False)
@@ -1371,8 +1382,14 @@ class InputApiUnittest(PresubmitTestsBase):
         ]
         os.path.isfile.side_effect = lambda f: f in known_files
 
-        change = presubmit.GitChange('mychange', '', self.fake_root_dir, files,
-                                     0, 0, None)
+        change = presubmit.GitChange('mychange',
+                                     '',
+                                     self.fake_root_dir,
+                                     files,
+                                     0,
+                                     0,
+                                     None,
+                                     upstream='upstream')
         input_api = presubmit.InputApi(
             change, os.path.join(self.fake_root_dir, 'PRESUBMIT.py'), False,
             None, False)
@@ -1392,8 +1409,14 @@ class InputApiUnittest(PresubmitTestsBase):
         ]
         os.path.isfile.side_effect = lambda f: f in known_files
 
-        change = presubmit.GitChange('mychange', '', self.fake_root_dir, files,
-                                     0, 0, None)
+        change = presubmit.GitChange('mychange',
+                                     '',
+                                     self.fake_root_dir,
+                                     files,
+                                     0,
+                                     0,
+                                     None,
+                                     upstream='upstream')
         input_api = presubmit.InputApi(
             change, os.path.join(self.fake_root_dir, 'PRESUBMIT.py'), False,
             None, False)
@@ -1683,21 +1706,40 @@ class AffectedFileUnittest(PresubmitTestsBase):
 
 class ChangeUnittest(PresubmitTestsBase):
 
-    @mock.patch('scm.GIT.ListSubmodules', return_value=['BB'])
-    def testAffectedFiles(self, mockListSubmodules):
+    def testAffectedFiles(self):
         change = presubmit.Change('', '', self.fake_root_dir, [('Y', 'AA'),
                                                                ('A', 'BB')], 3,
                                   5, '')
-        self.assertEqual(1, len(change.AffectedFiles()))
+        self.assertEqual(2, len(change.AffectedFiles()))
         self.assertEqual('Y', change.AffectedFiles()[0].Action())
 
     @mock.patch('scm.GIT.ListSubmodules', return_value=['BB'])
     def testAffectedSubmodules(self, mockListSubmodules):
-        change = presubmit.Change('', '', self.fake_root_dir, [('Y', 'AA'),
-                                                               ('A', 'BB')], 3,
-                                  5, '')
+        change = presubmit.GitChange('',
+                                     '',
+                                     self.fake_root_dir, [('Y', 'AA'),
+                                                          ('A', 'BB')],
+                                     3,
+                                     5,
+                                     '',
+                                     upstream='upstream')
         self.assertEqual(1, len(change.AffectedSubmodules()))
         self.assertEqual('A', change.AffectedSubmodules()[0].Action())
+
+    @mock.patch('scm.GIT.ListSubmodules', return_value=['BB'])
+    def testAffectedSubmodulesCachesSubmodules(self, mockListSubmodules):
+        change = presubmit.GitChange('',
+                                     '',
+                                     self.fake_root_dir, [('Y', 'AA'),
+                                                          ('A', 'BB')],
+                                     3,
+                                     5,
+                                     '',
+                                     upstream='upstream')
+        change.AffectedSubmodules()
+        mockListSubmodules.assert_called_once()
+        change.AffectedSubmodules()
+        mockListSubmodules.assert_called_once()
 
     def testSetDescriptionText(self):
         change = presubmit.Change('', 'foo\nDRU=ro', self.fake_root_dir, [], 3,
