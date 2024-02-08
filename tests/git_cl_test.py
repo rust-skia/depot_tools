@@ -113,15 +113,6 @@ class GitMocks(object):
         del self.config[key]
 
 
-class WatchlistsMock(object):
-    def __init__(self, _):
-        pass
-
-    @staticmethod
-    def GetWatchersForPaths(_):
-        return ['joe@example.com']
-
-
 class CodereviewSettingsFileMock(object):
     def __init__(self):
         pass
@@ -612,7 +603,6 @@ class TestGitCl(unittest.TestCase):
                    return_value={
                        'more_cc': ['test-more-cc@chromium.org']
                    }).start()
-        mock.patch('git_cl.watchlists.Watchlists', WatchlistsMock).start()
         mock.patch('git_cl.auth.Authenticator', AuthenticatorMock).start()
         mock.patch('gerrit_util.GetChangeDetail').start()
         mock.patch(
@@ -939,7 +929,7 @@ class TestGitCl(unittest.TestCase):
                 ref_suffix_list.append('r=%s' % r)
                 metrics_arguments.append('r')
             if issue is None:
-                cc += ['test-more-cc@chromium.org', 'joe@example.com']
+                cc += ['test-more-cc@chromium.org']
             for c in sorted(cc):
                 ref_suffix_list.append('cc=%s' % c)
                 metrics_arguments.append('cc')
@@ -948,21 +938,18 @@ class TestGitCl(unittest.TestCase):
             # TODO(crbug/877717): remove this case.
             calls += [(('ValidAccounts',
                         '%s-review.googlesource.com' % short_hostname,
-                        sorted(reviewers) +
-                        ['joe@example.com', 'test-more-cc@chromium.org'] + cc),
+                        sorted(reviewers) + ['test-more-cc@chromium.org'] + cc),
                        {
                            e: {
                                'email': e
                            }
-                           for e in (reviewers + ['joe@example.com'] + cc)
+                           for e in (reviewers + cc)
                        })]
             for r in sorted(reviewers):
                 if r != 'bad-account-or-email':
                     ref_suffix_list.append('r=%s' % r)
                     metrics_arguments.append('r')
                     reviewers.remove(r)
-            if issue is None:
-                cc += ['joe@example.com']
             for c in sorted(cc):
                 ref_suffix_list.append('cc=%s' % c)
                 metrics_arguments.append('cc')
