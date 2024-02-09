@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from testing_support import fake_repos
 
 import scm
+import subprocess
 import subprocess2
 
 
@@ -29,9 +30,9 @@ class GitWrapperTestCase(unittest.TestCase):
 
     @mock.patch('scm.GIT.Capture')
     def testGetEmail(self, mockCapture):
-        mockCapture.return_value = 'user.email = mini@me.com'
+        mockCapture.return_value = 'user.email\nmini@me.com\x00'
         self.assertEqual(scm.GIT.GetEmail(self.root_dir), 'mini@me.com')
-        mockCapture.assert_called_with(['config', '--list'],
+        mockCapture.assert_called_with(['config', '--list', '-z'],
                                        cwd=self.root_dir,
                                        strip_out=False)
 
@@ -205,6 +206,14 @@ class RealGitTest(fake_repos.FakeReposTestBase):
         scm.GIT.SetConfig(self.cwd, key, 'set-value')
         self.assertEqual('set-value', scm.GIT.GetConfig(self.cwd, key))
         self.assertEqual('set-value',
+                         scm.GIT.GetConfig(self.cwd, key, 'default-value'))
+
+        scm.GIT._clear_config(self.cwd)
+        subprocess.run(['git', 'config', key, 'line 1\nline 2\nline 3'],
+                       cwd=self.cwd)
+        self.assertEqual('line 1\nline 2\nline 3',
+                         scm.GIT.GetConfig(self.cwd, key))
+        self.assertEqual('line 1\nline 2\nline 3',
                          scm.GIT.GetConfig(self.cwd, key, 'default-value'))
 
         scm.GIT.SetConfig(self.cwd, key)
