@@ -59,6 +59,7 @@ import split_cl
 import subcommand
 import subprocess2
 import swift_format
+import watchlists
 
 
 __version__ = '2.0'
@@ -2008,6 +2009,9 @@ class Changelist(object):
         files = self.GetAffectedFiles(parent, end_commit=end_commit)
         change_desc = self._GetDescriptionForUpload(options,
                                                     [parent, end_commit], files)
+
+        watchlist = watchlists.Watchlists(settings.GetRoot())
+        self.ExtendCC(watchlist.GetWatchersForPaths(files))
         if not options.bypass_hooks:
             hook_results = self.RunHook(committing=False,
                                         may_prompt=not options.force,
@@ -2117,7 +2121,12 @@ class Changelist(object):
 
         print(f'Processing {_GetCommitCountSummary(*git_diff_args)}...')
 
+        # Apply watchlists on upload.
+        watchlist = watchlists.Watchlists(settings.GetRoot())
         files = self.GetAffectedFiles(base_branch)
+        if not options.bypass_watchlists:
+            self.ExtendCC(watchlist.GetWatchersForPaths(files))
+
         change_desc = self._GetDescriptionForUpload(options, git_diff_args,
                                                     files)
         if not options.bypass_hooks:
@@ -4838,8 +4847,7 @@ def CMDupload(parser, args):
     parser.add_option('--bypass-watchlists',
                       action='store_true',
                       dest='bypass_watchlists',
-                      help='DEPRECATED: bypass watchlists auto CC-ing '
-                      'reviewers. This no longer has any effect.')
+                      help='bypass watchlists auto CC-ing reviewers')
     parser.add_option('-f',
                       '--force',
                       action='store_true',
@@ -5028,9 +5036,6 @@ def CMDupload(parser, args):
 
     if options.skip_title and options.title:
         parser.error('Only one of --title and --skip-title allowed.')
-
-    if options.bypass_watchlists:
-        print('The --bypass-watchlists flag is deprecated and has no effect.')
 
     if options.use_commit_queue:
         options.send_mail = True
