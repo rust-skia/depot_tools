@@ -6,6 +6,7 @@ the reclient lifecycle safely. It will automatically start
 reproxy before running ninja and stop reproxy when build stops
 for any reason e.g. build completion, keyboard interrupt etc."""
 
+import atexit
 import contextlib
 import datetime
 import hashlib
@@ -166,6 +167,11 @@ def datetime_now():
     return datetime.datetime.utcnow()
 
 
+# Deletes the tree at dir if it exists.
+def rmtree_if_exists(rm_dir):
+    if os.path.exists(rm_dir) and os.path.isdir(rm_dir):
+        shutil.rmtree(rm_dir)
+
 def set_reproxy_path_flags(out_dir, make_dirs=True):
     """Helper to setup the logs and cache directories for reclient.
 
@@ -195,14 +201,17 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
         RBE_server_address=pipe://md5(out_dir/.reproxy_tmp)/reproxy.pipe
     """
     os.environ.setdefault("AUTONINJA_BUILD_ID", str(uuid.uuid4()))
+    run_sub_dir = datetime_now().strftime(
+        '%Y%m%dT%H%M%S.%f') + "_" + os.environ["AUTONINJA_BUILD_ID"]
     tmp_dir = os.path.abspath(os.path.join(out_dir, '.reproxy_tmp'))
     log_dir = os.path.join(tmp_dir, 'logs')
-    run_log_dir = os.path.join(
-        log_dir,
-        datetime_now().strftime('%Y%m%dT%H%M%S.%f') + "_" +
-        os.environ["AUTONINJA_BUILD_ID"])
+    run_log_dir = os.path.join(log_dir, run_sub_dir)
     racing_dir = os.path.join(tmp_dir, 'racing')
+    run_racing_dir = os.path.join(racing_dir, run_sub_dir)
     cache_dir = find_cache_dir(tmp_dir)
+
+    atexit.register(rmtree_if_exists, run_racing_dir)
+
     if make_dirs:
         if os.path.isfile(os.path.join(log_dir, "rbe_metrics.txt")):
             try:
@@ -219,6 +228,8 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
         os.makedirs(run_log_dir, exist_ok=True)
         os.makedirs(cache_dir, exist_ok=True)
         os.makedirs(racing_dir, exist_ok=True)
+        os.makedirs(run_racing_dir, exist_ok=True)
+
     old_log_dirs = [
         d for d in os.listdir(log_dir)
         if os.path.isdir(os.path.join(log_dir, d))
@@ -233,7 +244,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
     os.environ.setdefault("RBE_proxy_log_dir", run_log_dir)
     os.environ.setdefault("RBE_log_dir", run_log_dir)
     os.environ.setdefault("RBE_cache_dir", cache_dir)
-    os.environ.setdefault("RBE_racing_tmp_dir", racing_dir)
+    os.environ.setdefault("RBE_racing_tmp_dir", run_racing_dir)
     if sys.platform.startswith('win'):
         pipe_dir = hashlib.md5(tmp_dir.encode()).hexdigest()
         os.environ.setdefault("RBE_server_address",
