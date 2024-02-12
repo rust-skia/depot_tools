@@ -4,12 +4,9 @@
 """SCM-specific utility classes."""
 
 from collections import defaultdict
-import glob
-import io
 import os
 import platform
 import re
-import sys
 from typing import Mapping, List
 
 import gclient_utils
@@ -22,53 +19,6 @@ import subprocess2
 VERSIONED_NO = 0
 VERSIONED_DIR = 1
 VERSIONED_SUBMODULE = 2
-
-
-def ValidateEmail(email):
-    return (re.match(r"^[a-zA-Z0-9._%\-+]+@[a-zA-Z0-9._%-]+.[a-zA-Z]{2,6}$",
-                     email) is not None)
-
-
-def GetCasedPath(path):
-    """Elcheapos way to get the real path case on Windows."""
-    if sys.platform.startswith('win') and os.path.exists(path):
-        # Reconstruct the path.
-        path = os.path.abspath(path)
-        paths = path.split('\\')
-        for i in range(len(paths)):
-            if i == 0:
-                # Skip drive letter.
-                continue
-            subpath = '\\'.join(paths[:i + 1])
-            prev = len('\\'.join(paths[:i]))
-            # glob.glob will return the cased path for the last item only. This
-            # is why we are calling it in a loop. Extract the data we want and
-            # put it back into the list.
-            paths[i] = glob.glob(subpath + '*')[0][prev + 1:len(subpath)]
-        path = '\\'.join(paths)
-    return path
-
-
-def GenFakeDiff(filename):
-    """Generates a fake diff from a file."""
-    file_content = gclient_utils.FileRead(filename, 'rb').splitlines(True)
-    filename = filename.replace(os.sep, '/')
-    nb_lines = len(file_content)
-    # We need to use / since patch on unix will fail otherwise.
-    data = io.StringIO()
-    data.write("Index: %s\n" % filename)
-    data.write('=' * 67 + '\n')
-    # Note: Should we use /dev/null instead?
-    data.write("--- %s\n" % filename)
-    data.write("+++ %s\n" % filename)
-    data.write("@@ -0,0 +1,%d @@\n" % nb_lines)
-    # Prepend '+' to every lines.
-    for line in file_content:
-        data.write('+')
-        data.write(line)
-    result = data.getvalue()
-    data.close()
-    return result
 
 
 def determine_scm(root):
@@ -87,13 +37,6 @@ def determine_scm(root):
         return 'git'
     except (OSError, subprocess2.CalledProcessError):
         return None
-
-
-def only_int(val):
-    if val.isdigit():
-        return int(val)
-
-    return 0
 
 
 class GIT(object):
