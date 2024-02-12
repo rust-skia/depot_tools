@@ -208,6 +208,10 @@ class RealGitTest(fake_repos.FakeReposTestBase):
         self.assertEqual('set-value',
                          scm.GIT.GetConfig(self.cwd, key, 'default-value'))
 
+        scm.GIT.SetConfig(self.cwd, key, '')
+        self.assertEqual('', scm.GIT.GetConfig(self.cwd, key))
+        self.assertEqual('', scm.GIT.GetConfig(self.cwd, key, 'default-value'))
+
         scm.GIT._clear_config(self.cwd)
         subprocess.run(['git', 'config', key, 'line 1\nline 2\nline 3'],
                        cwd=self.cwd)

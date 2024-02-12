@@ -268,13 +268,13 @@ class GIT(object):
         GIT._clear_config(cwd)
 
         args = ['config', f'--{scope}']
-        if value:
+        if value == None:
+            args.extend(['--unset' + ('-all' if modify_all else ''), key])
+        else:
             if modify_all:
                 args.append('--replace-all')
 
             args.extend([key, value])
-        else:
-            args.extend(['--unset' + ('-all' if modify_all else ''), key])
 
         if modify_all and value_pattern:
             args.append(value_pattern)
