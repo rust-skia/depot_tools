@@ -615,8 +615,10 @@ class GitWrapper(SCMWrapper):
                     config_updates.append(('push.recurseSubmodules', 'off'))
 
                 for update in config_updates:
-                    scm.GIT.SetConfig(args[0].checkout_path, update[0],
-                                      update[1])
+                    scm.GIT.SetConfig(args[0].checkout_path,
+                                      update[0],
+                                      update[1],
+                                      modify_all=True)
 
             return return_val
 
