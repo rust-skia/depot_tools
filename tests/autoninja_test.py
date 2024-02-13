@@ -91,8 +91,6 @@ class AutoninjaTest(trial_dir.TestCase):
                 with self.assertRaises(SystemExit):
                     self.assertEqual(
                         autoninja.main(['autoninja.py', '-C', out_dir]), 1)
-                self.maxDiff = None
-                print(f.getvalue())
                 self.assertIn(
                     "The gn arg `use_goma=true` is no longer supported.",
                     f.getvalue())
@@ -115,8 +113,6 @@ class AutoninjaTest(trial_dir.TestCase):
                 with self.assertRaises(SystemExit):
                     self.assertEqual(
                         autoninja.main(['autoninja.py', '-C', out_dir]), 1)
-                self.maxDiff = None
-                print(f.getvalue())
                 self.assertIn(
                     "The gn arg `use_goma=true` is no longer supported.",
                     f.getvalue())
