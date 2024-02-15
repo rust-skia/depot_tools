@@ -2035,6 +2035,33 @@ class CannedChecksUnittest(PresubmitTestsBase):
                          'chromium.git.corp.google.com', None,
                          presubmit.OutputApi.PresubmitPromptWarning)
 
+    def testCannedCheckLargeScaleChange(self):
+        input_api = self.MockInputApi(
+            presubmit.Change('foo', 'foo1', self.fake_root_dir, None, 0, 0,
+                             None), False)
+        affected_files = []
+        for i in range(100):
+            affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+            affected_file.LocalPath.return_value = f'foo{i}.cc'
+            affected_files.append(affected_file)
+        input_api.AffectedFiles = lambda **_: affected_files
+
+        # Don't warn if less than or equal to 100 files.
+        results = presubmit_canned_checks.CheckLargeScaleChange(
+            input_api, presubmit.OutputApi)
+        self.assertEqual(len(results), 0)
+
+        # Warn if greater than 100 files.
+        affected_files.append('bar.cc')
+
+        results = presubmit_canned_checks.CheckLargeScaleChange(
+            input_api, presubmit.OutputApi)
+        self.assertEqual(len(results), 1)
+        result = results[0]
+        self.assertEqual(result.__class__,
+                         presubmit.OutputApi.PresubmitPromptWarning)
+        self.assertIn("large scale change", result.json_format()['message'])
+
     def testCheckChangeHasNoStrayWhitespace(self):
         self.ContentTest(
             lambda x, y, z: presubmit_canned_checks.

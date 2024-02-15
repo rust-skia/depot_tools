@@ -2055,15 +2055,6 @@ class Changelist(object):
         if not options.private and not options.no_autocc and not self.GetIssue(
         ):
             ccs = self.GetCCList().split(',')
-            if len(ccs) > 100:
-                lsc = (
-                    'https://chromium.googlesource.com/chromium/src/+/HEAD/docs/'
-                    'process/lsc/lsc_workflow.md')
-                print('WARNING: This will auto-CC %s users.' % len(ccs))
-                print('LSC may be more appropriate: %s' % lsc)
-                print(
-                    'You can also use the --no-autocc flag to disable auto-CC.')
-                confirm_or_exit(action='continue')
 
         # Add ccs from the --cc flag.
         if options.cc:
@@ -3120,13 +3111,6 @@ class Changelist(object):
         if not options.private and not options.no_autocc and not self.GetIssue(
         ):
             cc = self.GetCCList().split(',')
-        if len(cc) > 100:
-            lsc = ('https://chromium.googlesource.com/chromium/src/+/HEAD/docs/'
-                   'process/lsc/lsc_workflow.md')
-            print('WARNING: This will auto-CC %s users.' % len(cc))
-            print('LSC may be more appropriate: %s' % lsc)
-            print('You can also use the --no-autocc flag to disable auto-CC.')
-            confirm_or_exit(action='continue')
         # Add cc's from the --cc flag.
         if options.cc:
             cc.extend(options.cc)
