@@ -246,7 +246,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
     os.environ.setdefault("RBE_cache_dir", cache_dir)
     os.environ.setdefault("RBE_racing_tmp_dir", run_racing_dir)
     if sys.platform.startswith('win'):
-        pipe_dir = hashlib.md5(tmp_dir.encode()).hexdigest()
+        pipe_dir = hashlib.sha256(run_log_dir.encode()).hexdigest()
         os.environ.setdefault("RBE_server_address",
                               "pipe://%s/reproxy.pipe" % pipe_dir)
     else:
@@ -254,7 +254,7 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
         # ref: https://www.man7.org/linux/man-pages/man7/unix.7.html
         os.environ.setdefault(
             "RBE_server_address", "unix:///tmp/reproxy_%s.sock" %
-            hashlib.sha256(tmp_dir.encode()).hexdigest())
+            hashlib.sha256(run_log_dir.encode()).hexdigest())
 
 
 def set_racing_defaults():
