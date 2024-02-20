@@ -31,6 +31,8 @@ def _UpdateDepotTools():
     while path != path.parent:
         if (path / '.repo').is_dir() and (path / 'chromite').is_dir():
             return
+        if (path / '.citc').is_dir():
+            return
         path = path.parent
 
     if UPDATE_DEPOT_TOOLS.exists():
