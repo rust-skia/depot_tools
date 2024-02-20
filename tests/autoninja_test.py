@@ -73,51 +73,6 @@ class AutoninjaTest(trial_dir.TestCase):
         self.assertEqual(args[args.index('-C') + 1], out_dir)
         self.assertIn('base', args)
 
-    @mock.patch('sys.platform', 'linux')
-    def test_autoninja_goma_not_supported_linux(self):
-        """
-        Test that when specifying use_goma=true and on linux, the
-        message that goma is not supported is displayed.
-        """
-        goma_dir = os.path.join(self.root_dir, 'goma_dir')
-        with mock.patch.dict(os.environ, {"GOMA_DIR": goma_dir}):
-            out_dir = os.path.join('out', 'dir')
-            write(os.path.join(out_dir, 'args.gn'), 'use_goma=true')
-            write(
-                os.path.join(
-                    'goma_dir', 'gomacc.exe'
-                    if sys.platform.startswith('win') else 'gomacc'), 'content')
-            with contextlib.redirect_stderr(io.StringIO()) as f:
-                with self.assertRaises(SystemExit):
-                    self.assertEqual(
-                        autoninja.main(['autoninja.py', '-C', out_dir]), 1)
-                self.assertIn(
-                    "The gn arg `use_goma=true` is no longer supported.",
-                    f.getvalue())
-
-    @mock.patch('sys.platform', 'darwin')
-    def test_autoninja_goma_not_supported_mac(self):
-        """
-        Test that when specifying use_goma=true and on mac, the
-        message that goma is not supported is displayed.
-        """
-        goma_dir = os.path.join(self.root_dir, 'goma_dir')
-        with mock.patch.dict(os.environ, {"GOMA_DIR": goma_dir}):
-            out_dir = os.path.join('out', 'dir')
-            write(os.path.join(out_dir, 'args.gn'), 'use_goma=true')
-            write(
-                os.path.join(
-                    'goma_dir', 'gomacc.exe'
-                    if sys.platform.startswith('win') else 'gomacc'), 'content')
-            with contextlib.redirect_stderr(io.StringIO()) as f:
-                with self.assertRaises(SystemExit):
-                    self.assertEqual(
-                        autoninja.main(['autoninja.py', '-C', out_dir]), 1)
-                self.assertIn(
-                    "The gn arg `use_goma=true` is no longer supported.",
-                    f.getvalue())
-
-    @mock.patch('sys.platform', 'win')
     def test_autoninja_goma(self):
         """
         Test that when specifying use_goma=true, autoninja verifies that Goma
@@ -125,8 +80,8 @@ class AutoninjaTest(trial_dir.TestCase):
         """
         goma_dir = os.path.join(self.root_dir, 'goma_dir')
         with mock.patch('subprocess.call', return_value=0), \
-            mock.patch('ninja.main', return_value=0) as ninja_main, \
-            mock.patch.dict(os.environ, {"GOMA_DIR": goma_dir}):
+             mock.patch('ninja.main', return_value=0) as ninja_main, \
+             mock.patch.dict(os.environ, {"GOMA_DIR": goma_dir}):
             out_dir = os.path.join('out', 'dir')
             write(os.path.join(out_dir, 'args.gn'), 'use_goma=true')
             write(
