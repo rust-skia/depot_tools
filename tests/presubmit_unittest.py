@@ -959,8 +959,8 @@ def CheckChangeOnCommit(input_api, output_api):
         self.assertEqual(
             sys.stderr.getvalue(),
             'usage: presubmit_unittest.py [options] <files...>\n'
-            'presubmit_unittest.py: error: <files> is not optional for unversioned '
-            'directories.\n')
+            'presubmit_unittest.py: error: unversioned directories must '
+            'specify <files> or <diff_file>.\n')
 
     @mock.patch('presubmit_support.Change', mock.Mock())
     def testParseChange_Files(self):
@@ -982,12 +982,12 @@ def CheckChangeOnCommit(input_api, output_api):
         scm.determine_scm.return_value = None
         parser = mock.Mock()
         parser.error.side_effect = [SystemExit]
-        options = mock.Mock(files=[], all_files=False)
+        options = mock.Mock(files=[], diff_file='', all_files=False)
 
         with self.assertRaises(SystemExit):
             presubmit._parse_change(parser, options)
         parser.error.assert_called_once_with(
-            '<files> is not optional for unversioned directories.')
+            'unversioned directories must specify <files> or <diff_file>.')
 
     def testParseChange_FilesAndAllFiles(self):
         parser = mock.Mock()
@@ -998,6 +998,16 @@ def CheckChangeOnCommit(input_api, output_api):
             presubmit._parse_change(parser, options)
         parser.error.assert_called_once_with(
             '<files> cannot be specified when --all-files is set.')
+
+    def testParseChange_DiffAndAllFiles(self):
+        parser = mock.Mock()
+        parser.error.side_effect = [SystemExit]
+        options = mock.Mock(files=[], all_files=True, diff_file='foo.diff')
+
+        with self.assertRaises(SystemExit):
+            presubmit._parse_change(parser, options)
+        parser.error.assert_called_once_with(
+            '<diff_file> cannot be specified when --all-files is set.')
 
     @mock.patch('presubmit_support.GitChange', mock.Mock())
     def testParseChange_FilesAndGit(self):
@@ -1023,7 +1033,7 @@ def CheckChangeOnCommit(input_api, output_api):
     def testParseChange_NoFilesAndGit(self):
         scm.determine_scm.return_value = 'git'
         scm.GIT.CaptureStatus.return_value = [('A', 'added.txt')]
-        options = mock.Mock(all_files=False, files=[])
+        options = mock.Mock(all_files=False, files=[], diff_file='')
 
         change = presubmit._parse_change(None, options)
         self.assertEqual(presubmit.GitChange.return_value, change)
@@ -1044,7 +1054,7 @@ def CheckChangeOnCommit(input_api, output_api):
     def testParseChange_AllFilesAndGit(self):
         scm.determine_scm.return_value = 'git'
         scm.GIT.GetAllFiles.return_value = ['foo.txt', 'bar.txt']
-        options = mock.Mock(all_files=True, files=[])
+        options = mock.Mock(all_files=True, files=[], diff_file='')
 
         change = presubmit._parse_change(None, options)
         self.assertEqual(presubmit.GitChange.return_value, change)
@@ -1058,6 +1068,49 @@ def CheckChangeOnCommit(input_api, output_api):
                                                     options.author,
                                                     upstream=options.upstream)
         scm.GIT.GetAllFiles.assert_called_once_with(options.root)
+
+    def testParseChange_EmptyDiffFile(self):
+        gclient_utils.FileRead.return_value = ''
+        options = mock.Mock(all_files=False, files=[], diff_file='foo.diff')
+        with self.assertRaises(presubmit.PresubmitFailure):
+            presubmit._parse_change(None, options)
+
+    @mock.patch('presubmit_support.ProvidedDiffChange', mock.Mock())
+    def testParseChange_ProvidedDiffFile(self):
+        diff = """
+diff --git a/foo b/foo
+new file mode 100644
+index 0000000..9daeafb
+--- /dev/null
++++ b/foo
+@@ -0,0 +1 @@
++test
+diff --git a/bar b/bar
+deleted file mode 100644
+index f675c2a..0000000
+--- a/bar
++++ /dev/null
+@@ -1,1 +0,0 @@
+-bar
+diff --git a/baz b/baz
+index d7ba659f..b7957f3 100644
+--- a/baz
++++ b/baz
+@@ -1,1 +1,1 @@
+-baz
++bat"""
+        gclient_utils.FileRead.return_value = diff
+        options = mock.Mock(all_files=False, files=[], diff_file='foo.diff')
+        change = presubmit._parse_change(None, options)
+        self.assertEqual(presubmit.ProvidedDiffChange.return_value, change)
+        presubmit.ProvidedDiffChange.assert_called_once_with(
+            options.name,
+            options.description,
+            options.root, [('A', 'foo'), ('D', 'bar'), ('M', 'baz')],
+            options.issue,
+            options.patchset,
+            options.author,
+            diff=diff)
 
     def testParseGerritOptions_NoGerritUrl(self):
         options = mock.Mock(gerrit_url=None,
