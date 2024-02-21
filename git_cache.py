@@ -555,7 +555,7 @@ class Mirror(object):
             depth = 10000
         gclient_utils.safe_makedirs(self.GetCachePath())
 
-        def bootstrap(force=False):
+        def bootstrap_cache(force=False):
             self._ensure_bootstrapped(depth,
                                       bootstrap,
                                       reset_fetch_config,
@@ -572,12 +572,12 @@ class Mirror(object):
                 wipe_cache()
 
             try:
-                bootstrap()
+                bootstrap_cache()
             except ClobberNeeded:
                 # This is a major failure, we need to clean and force a
                 # bootstrap.
                 wipe_cache()
-                bootstrap(force=True)
+                bootstrap_cache(force=True)
 
     def update_bootstrap(self, prune=False, gc_aggressive=False):
         # NOTE: There have been cases where repos were being recursively
