@@ -50,9 +50,6 @@ def main(argv):
     if argv and argv[0] == 'sync':
         _UpdateDepotTools()
 
-    # Set the default to our fork.
-    os.environ["REPO_URL"] = "https://chromium.googlesource.com/external/repo"
-
     os.execv(sys.executable, [sys.executable, str(REPO)] + argv)
 
 
