@@ -1536,6 +1536,7 @@ _PLATFORM_MAPPING = {
     'linux': 'linux',
     'win32': 'win',
     'aix6': 'aix',
+    'zos': 'zos',
 }
 
 
@@ -1624,6 +1625,7 @@ class GClient(GitDependency):
         "ios": "ios",
         "fuchsia": "fuchsia",
         "chromeos": "chromeos",
+        "zos": "zos",
     }
 
     DEFAULT_CLIENT_FILE_TEXT = ("""\
