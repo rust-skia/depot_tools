@@ -2286,9 +2286,15 @@ class Changelist(object):
         if remote_url is None:
             logging.warning('invalid remote')
             return
-        if urllib.parse.urlparse(remote_url).scheme not in ['https', 'sso']:
+
+        parsed_url = urllib.parse.urlparse(remote_url)
+        if parsed_url.scheme == 'sso':
+            # Skip checking authentication for projects with sso:// scheme.
+            return
+
+        if parsed_url.scheme != 'https':
             logging.warning(
-                'Ignoring branch %(branch)s with non-https/sso remote '
+                'Ignoring branch %(branch)s with non-https remote '
                 '%(remote)s', {
                     'branch': self.branch,
                     'remote': self.GetRemoteUrl()

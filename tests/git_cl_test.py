@@ -2548,6 +2548,19 @@ class TestGitCl(unittest.TestCase):
         cl = self._test_gerrit_ensure_authenticated_common(auth={})
         self.assertIsNone(cl.EnsureAuthenticated(force=False))
 
+    def test_gerrit_ensure_authenticated_sso(self):
+        self.mockGit.config['remote.origin.url'] = 'sso://repo'
+
+        mock.patch(
+            'git_cl.gerrit_util.CookiesAuthenticator',
+            CookiesAuthenticatorMockFactory(hosts_with_creds={})).start()
+
+        cl = git_cl.Changelist()
+        cl.branch = 'main'
+        cl.branchref = 'refs/heads/main'
+        cl.lookedup_issue = True
+        self.assertIsNone(cl.EnsureAuthenticated(force=False))
+
     def test_gerrit_ensure_authenticated_bearer_token(self):
         cl = self._test_gerrit_ensure_authenticated_common(
             auth={
@@ -2559,11 +2572,11 @@ class TestGitCl(unittest.TestCase):
             'chromium.googlesource.com')
         self.assertTrue('Bearer' in header)
 
-    def test_gerrit_ensure_authenticated_non_https(self):
+    def test_gerrit_ensure_authenticated_non_https_sso(self):
         self.mockGit.config['remote.origin.url'] = 'custom-scheme://repo'
         self.calls = [
             (('logging.warning',
-              'Ignoring branch %(branch)s with non-https/sso remote '
+              'Ignoring branch %(branch)s with non-https remote '
               '%(remote)s', {
                   'branch': 'main',
                   'remote': 'custom-scheme://repo'
