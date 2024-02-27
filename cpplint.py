@@ -3003,7 +3003,7 @@ class NestingState(object):
 
 def CheckForNonStandardConstructs(filename, clean_lines, linenum, nesting_state,
                                   error):
-    """Logs an error if we see certain non-ANSI constructs ignored by gcc-2.
+    r"""Logs an error if we see certain non-ANSI constructs ignored by gcc-2.
 
     Complain about several constructs which gcc-2 accepts, but which are
     not standard C++.  Warning about these in lint is one way to ease the
@@ -4839,7 +4839,7 @@ def CheckIncludeLine(filename, clean_lines, linenum, include_state, error):
 
 
 def _GetTextInside(text, start_pattern):
-    """Retrieves all the text between matching open and close parentheses.
+    r"""Retrieves all the text between matching open and close parentheses.
 
     Given a string of lines and a regular expression string, retrieve all the text
     following the expression and between opening punctuation symbols like
