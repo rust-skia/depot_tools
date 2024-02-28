@@ -27,6 +27,7 @@ import os  # Somewhat exposed through the API.
 import pathlib
 import random
 import re  # Exposed through the API.
+import shutil
 import signal
 import sys  # Parts exposed through API.
 import tempfile  # Exposed through the API.
@@ -977,8 +978,39 @@ class _ProvidedDiffCache(_DiffCache):
 
     def GetOldContents(self, path, local_root):
         """Get the old version for a particular path."""
-        # TODO(gavinmak): Implement with self._diff.
-        return ''
+        full_path = os.path.join(local_root, path)
+        diff = self.GetDiff(path, local_root)
+        is_file = os.path.isfile(full_path)
+        if not diff:
+            if is_file:
+                return gclient_utils.FileRead(full_path)
+            return ''
+
+        with gclient_utils.temporary_file() as diff_file:
+            gclient_utils.FileWrite(diff_file, diff)
+            try:
+                scm.GIT.Capture(['apply', '--reverse', '--check', diff_file],
+                                cwd=local_root)
+            except subprocess.CalledProcessError:
+                raise RuntimeError('Provided diff does not apply cleanly.')
+
+            # Apply the reverse diff to a temporary file and read its contents.
+            with gclient_utils.temporary_directory() as tmp_dir:
+                copy_dst = os.path.join(tmp_dir, path)
+                os.makedirs(os.path.dirname(copy_dst), exist_ok=True)
+                if is_file:
+                    shutil.copyfile(full_path, copy_dst)
+                scm.GIT.Capture([
+                    'apply', '--reverse', '--directory', tmp_dir,
+                    '--unsafe-paths', diff_file
+                ],
+                                cwd=tmp_dir)
+                # Applying the patch can create a new file if the file at
+                # full_path was deleted, so check if the new file at copy_dst
+                # exists.
+                if os.path.isfile(copy_dst):
+                    return gclient_utils.FileRead(copy_dst)
+                return ''
 
 
 class AffectedFile(object):
@@ -2064,10 +2096,10 @@ def _parse_change(parser, options):
         options.name, options.description, options.root, change_files,
         options.issue, options.patchset, options.author
     ]
-    if change_scm == 'git':
-        return GitChange(*change_args, upstream=options.upstream)
     if diff:
         return ProvidedDiffChange(*change_args, diff=diff)
+    if change_scm == 'git':
+        return GitChange(*change_args, upstream=options.upstream)
     return Change(*change_args)
 
 
@@ -2163,6 +2195,7 @@ def _process_diff_file(diff_file):
             action = 'M'
         change_files.append((action, file))
     return diff, change_files
+
 
 @contextlib.contextmanager
 def setup_environ(kv: Mapping[str, str]):
