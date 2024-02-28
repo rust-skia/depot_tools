@@ -5206,9 +5206,9 @@ def UploadAllSquashed(options: optparse.Values,
     return 0
 
 
-def _UploadAllPrecheck(options, orig_args):
-    # type: (optparse.Values, Sequence[str]) -> Tuple[Sequence[Changelist],
-    # bool]
+def _UploadAllPrecheck(
+        options: optparse.Values,
+        orig_args: Sequence[str]) -> Tuple[Sequence[Changelist], bool]:
     """Checks the state of the tree and gives the user uploading options
 
     Returns: A tuple of the ordered list of changes that have new commits
