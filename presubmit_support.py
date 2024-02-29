@@ -1332,6 +1332,13 @@ class Change(object):
     def TBR(self):
         return ','.join(self.TBRsFromDescription())
 
+    def UpstreamBranch(self):
+        """Returns the upstream branch for the change.
+
+        This is only applicable to Git changes.
+        """
+        return None
+
     def AllFiles(self, root=None):
         """List all files under source control in the repo."""
         raise NotImplementedError()
