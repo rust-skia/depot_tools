@@ -4665,6 +4665,9 @@ def CMDpresubmit(parser, args):
                       help='Run presubmit checks in the ResultSink environment '
                       'and send results to the ResultDB database.')
     parser.add_option('--realm', help='LUCI realm if reporting to ResultDB')
+    parser.add_option('-j',
+                      '--json',
+                      help='File to write JSON results to, or "-" for stdout')
     options, args = parser.parse_args(args)
 
     if not options.force and git_common.is_dirty_git_tree('presubmit'):
@@ -4697,16 +4700,18 @@ def CMDpresubmit(parser, args):
             return 1
         base_branch = 'HEAD'
 
-    cl.RunHook(committing=not options.upload,
-               may_prompt=False,
-               verbose=options.verbose,
-               parallel=options.parallel,
-               upstream=base_branch,
-               description=description,
-               all_files=options.all,
-               files=options.files,
-               resultdb=options.resultdb,
-               realm=options.realm)
+    result = cl.RunHook(committing=not options.upload,
+                        may_prompt=False,
+                        verbose=options.verbose,
+                        parallel=options.parallel,
+                        upstream=base_branch,
+                        description=description,
+                        all_files=options.all,
+                        files=options.files,
+                        resultdb=options.resultdb,
+                        realm=options.realm)
+    if options.json:
+        write_json(options.json, result)
     return 0
 
 

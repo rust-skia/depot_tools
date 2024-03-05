@@ -4268,6 +4268,13 @@ class CMDTestCaseBase(unittest.TestCase):
 
 
 class CMDPresubmitTestCase(CMDTestCaseBase):
+    _RUN_HOOK_RETURN = {
+        'errors': [],
+        'more_cc': [],
+        'notifications': [],
+        'warnings': []
+    }
+
     def setUp(self):
         super(CMDPresubmitTestCase, self).setUp()
         mock.patch('git_cl.Changelist.GetCommonAncestorWithUpstream',
@@ -4276,7 +4283,8 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
                    return_value='fetch description').start()
         mock.patch('git_cl._create_description_from_log',
                    return_value='get description').start()
-        mock.patch('git_cl.Changelist.RunHook').start()
+        mock.patch('git_cl.Changelist.RunHook',
+                   return_value=self._RUN_HOOK_RETURN).start()
 
     def testDefaultCase(self):
         self.assertEqual(0, git_cl.main(['presubmit']))
@@ -4339,6 +4347,12 @@ class CMDPresubmitTestCase(CMDTestCaseBase):
             files=None,
             resultdb=True,
             realm='chromium:public')
+
+    @mock.patch('git_cl.write_json')
+    def testJson(self, mock_write_json):
+        self.assertEqual(0, git_cl.main(['presubmit', '--json', 'file.json']))
+        mock_write_json.assert_called_once_with('file.json',
+                                                self._RUN_HOOK_RETURN)
 
 
 class CMDTryResultsTestCase(CMDTestCaseBase):
