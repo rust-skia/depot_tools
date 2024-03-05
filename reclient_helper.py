@@ -21,7 +21,6 @@ import uuid
 import gclient_paths
 import reclient_metrics
 
-
 THIS_DIR = os.path.dirname(__file__)
 RECLIENT_LOG_CLEANUP = os.path.join(THIS_DIR, 'reclient_log_cleanup.py')
 
@@ -172,6 +171,7 @@ def rmtree_if_exists(rm_dir):
     if os.path.exists(rm_dir) and os.path.isdir(rm_dir):
         shutil.rmtree(rm_dir)
 
+
 def set_reproxy_path_flags(out_dir, make_dirs=True):
     """Helper to setup the logs and cache directories for reclient.
 
@@ -282,6 +282,34 @@ def set_win_defaults():
     os.environ.setdefault("RBE_local_resource_fraction", "0.05")
 
 
+def get_filesystem(path):
+    try:
+        if sys.platform == "linux":
+            return subprocess.run(["findmnt", "-n", "-o", "FSTYPE", "-T", path],
+                                  check=True,
+                                  text=True,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT).stdout
+        if sys.platform == "darwin":
+            df = subprocess.run(["df", "-PY", path],
+                                check=True,
+                                text=True,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT).stdout
+            return df.splitlines()[1].split()[1]
+    except subprocess.CalledProcessError as e:
+        print("reclient_helper.py: Failed to get filesystem for {}: {}", path,
+              e.output)
+    return "unknown"
+
+
+def workspace_is_on_slow_filesystem():
+    fs = get_filesystem(os.getcwd())
+    if fs.startswith("fuse.") or fs in ["fuse", "nfs", "nfs4", "cifs", "smbfs"]:
+        return True
+    return False
+
+
 @contextlib.contextmanager
 def build_context(argv, tool):
     # If use_remoteexec is set, but the reclient binaries or configs don't
@@ -315,6 +343,11 @@ def build_context(argv, tool):
     if os.environ.get('RBE_instance', None):
         print('WARNING: Using RBE_instance=%s\n' %
               os.environ.get('RBE_instance', ''))
+
+    # If the workspace is on a slow filesystem (e.g. FUSE or a network
+    # filesystem), racing is likely not a performance improvement.
+    if workspace_is_on_slow_filesystem():
+        os.environ.setdefault("RBE_exec_strategy", "remote_local_fallback")
 
     remote_disabled = os.environ.get('RBE_remote_disabled')
     if remote_disabled not in ('1', 't', 'T', 'true', 'TRUE', 'True'):
