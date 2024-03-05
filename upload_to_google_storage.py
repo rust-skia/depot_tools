@@ -16,10 +16,10 @@ import tarfile
 import threading
 import time
 
+from call_google_storage import Gsutil
+from call_google_storage import GSUTIL_DEFAULT_PATH
 from download_from_google_storage import get_sha1
-from download_from_google_storage import Gsutil
 from download_from_google_storage import PrinterThread
-from download_from_google_storage import GSUTIL_DEFAULT_PATH
 
 USAGE_STRING = """%prog [options] target [target2 ...].
 Target is the file intended to be uploaded to Google Storage.

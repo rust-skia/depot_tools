@@ -16,7 +16,7 @@ import threading
 import time
 import urllib.parse
 
-from download_from_google_storage import Gsutil
+from call_google_storage import Gsutil
 import gclient_utils
 import lockfile
 import metrics

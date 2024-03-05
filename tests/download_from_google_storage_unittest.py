@@ -18,6 +18,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import call_google_storage
 import upload_to_google_storage
 import download_from_google_storage
 
@@ -151,7 +152,7 @@ class GstoolsUnitTests(unittest.TestCase):
 
     def test_gsutil(self):
         # This will download a real gsutil package from Google Storage.
-        gsutil = download_from_google_storage.Gsutil(GSUTIL_DEFAULT_PATH, None)
+        gsutil = call_google_storage.Gsutil(GSUTIL_DEFAULT_PATH, None)
         self.assertEqual(gsutil.path, GSUTIL_DEFAULT_PATH)
         code, _, err = gsutil.check_call()
         self.assertEqual(code, 0, err)
