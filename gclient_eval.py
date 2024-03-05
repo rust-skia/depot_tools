@@ -131,14 +131,6 @@ _GCLIENT_DEPS_SCHEMA = _NodeDictSchema({
             schema.Optional('dep_type', default='cipd'):
             str,
         }),
-        # GCS content.
-        _NodeDictSchema({
-            'bucket': str,
-            'object_name': str,
-            'sha256sum': str,
-            schema.Optional('condition'): str,
-            schema.Optional('dep_type', default='gcs'): str,
-        }),
     ),
 })
 

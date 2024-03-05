@@ -60,7 +60,7 @@ BASEDIR = os.path.dirname(os.path.abspath(__file__))
 DEPOT_TOOLS_PATH = os.path.join(BASEDIR, '..')
 sys.path.append(DEPOT_TOOLS_PATH)
 try:
-    import call_google_storage
+    import download_from_google_storage
 except ImportError:
     # Allow use of utility functions in this script from package_from_installed
     # on bare VM that doesn't have a full depot_tools.
@@ -255,8 +255,8 @@ def LooksLikeGoogler():
 
 def CanAccessToolchainBucket():
     """Checks whether the user has access to gs://chrome-wintoolchain/."""
-    gsutil = call_google_storage.Gsutil(call_google_storage.GSUTIL_DEFAULT_PATH,
-                                        boto_path=None)
+    gsutil = download_from_google_storage.Gsutil(
+        download_from_google_storage.GSUTIL_DEFAULT_PATH, boto_path=None)
     code, stdout, stderr = gsutil.check_call('ls', 'gs://chrome-wintoolchain/')
     if code != 0:
         # Make sure any error messages are made visible to the user.
@@ -294,7 +294,7 @@ def RequestGsAuthentication():
     print('I\'m sorry for the hassle, but you need to do a one-time manual')
     print('authentication. Please run:')
     print()
-    print('    call_google_storage --config')
+    print('    download_from_google_storage --config')
     print()
     print('and follow the instructions.')
     print()
@@ -342,8 +342,8 @@ def DownloadUsingGsutil(filename):
     temp_dir = tempfile.mkdtemp()
     assert os.path.basename(filename) == filename
     target_path = os.path.join(temp_dir, filename)
-    gsutil = call_google_storage.Gsutil(call_google_storage.GSUTIL_DEFAULT_PATH,
-                                        boto_path=None)
+    gsutil = download_from_google_storage.Gsutil(
+        download_from_google_storage.GSUTIL_DEFAULT_PATH, boto_path=None)
     code = gsutil.call('cp', 'gs://chrome-wintoolchain/' + filename,
                        target_path)
     if code != 0:
