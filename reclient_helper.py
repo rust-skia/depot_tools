@@ -11,6 +11,7 @@ import contextlib
 import datetime
 import hashlib
 import os
+import platform
 import shutil
 import socket
 import subprocess
@@ -290,16 +291,18 @@ def get_filesystem(path):
                                   text=True,
                                   stdout=subprocess.PIPE,
                                   stderr=subprocess.STDOUT).stdout
-        if sys.platform == "darwin":
+        # The -Y option was added in macOS 14.0 aka Darwin 23.0.
+        if sys.platform == "darwin" and int(
+                platform.release().split('.')[0]) >= 23:
             df = subprocess.run(["df", "-PY", path],
                                 check=True,
                                 text=True,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT).stdout
             return df.splitlines()[1].split()[1]
-    except subprocess.CalledProcessError as e:
-        print("reclient_helper.py: Failed to get filesystem for {}: {}", path,
-              e.output)
+    except (TypeError, IndexError, subprocess.CalledProcessError) as e:
+        print("reclient_helper.py: Failed to get filesystem for {}: {}".format(
+            path, e))
     return "unknown"
 
 
