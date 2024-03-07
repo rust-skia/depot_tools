@@ -313,6 +313,15 @@ def workspace_is_on_slow_filesystem():
     return False
 
 
+# pylint: disable=line-too-long
+def reclient_setup_docs_url():
+    if sys.platform == "darwin":
+        return "https://chromium.googlesource.com/chromium/src/+/main/docs/mac_build_instructions.md#use-reclient"
+    if sys.platform.startswith("win"):
+        return "https://chromium.googlesource.com/chromium/src/+/main/docs/windows_build_instructions.md#use-reclient"
+    return "https://chromium.googlesource.com/chromium/src/+/main/docs/linux/build_instructions.md#use-reclient"
+
+
 @contextlib.contextmanager
 def build_context(argv, tool):
     # If use_remoteexec is set, but the reclient binaries or configs don't
@@ -369,6 +378,11 @@ def build_context(argv, tool):
         elapsed = time.time() - start
         print('%1.3f s to start reproxy' % elapsed)
     if reproxy_ret_code != 0:
+        print(f'''Failed to start reproxy!
+See above error message for details.
+Ensure you have completed the reproxy setup instructions:
+{reclient_setup_docs_url()}''',
+              file=sys.stderr)
         yield reproxy_ret_code
         return
     try:
