@@ -6032,7 +6032,7 @@ def BuildGitDiffCmd(diff_type, upstream_commit, args, allow_prefix=False):
 
     if args:
         for arg in args:
-            if os.path.isdir(arg) or os.path.isfile(arg):
+            if arg == '-' or os.path.isdir(arg) or os.path.isfile(arg):
                 diff_cmd.append(arg)
             else:
                 DieWithError('Argument "%s" is not a file or a directory' % arg)
@@ -6128,14 +6128,23 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
         return 0
 
     base_cmd = [google_java_format, '--aosp']
-    if opts.dry_run or opts.diff:
+    if opts.dry_run:
         base_cmd += ['--dry-run']
-    else:
+    elif not opts.diff:
         base_cmd += ['--replace']
 
     changed_lines_only = not (opts.full or settings.GetFormatFullByDefault())
     if changed_lines_only:
         line_diffs = _ComputeFormatDiffLineRanges(paths, upstream_commit)
+
+    def RunFormat(cmd, path, **kwds):
+        stdout = RunCommand(cmd + [path], **kwds)
+        # If --diff is passed, google-java-format will output formatted content.
+        # Diff it with the existing file in the checkout and output the result.
+        if opts.diff:
+            diff_cmd = BuildGitDiffCmd(['-U3'], '--no-index', [path, '-'])
+            stdout = RunGit(diff_cmd, stdin=stdout.encode(), **kwds)
+        return stdout
 
     results = []
     kwds = {'error_ok': True, 'cwd': top_dir}
@@ -6150,7 +6159,7 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
                 cmd.extend('--lines={}:{}'.format(a, b) for a, b in ranges)
 
             results.append(
-                pool.apply_async(RunCommand, args=[cmd + [path]], kwds=kwds))
+                pool.apply_async(RunFormat, args=[cmd, path], kwds=kwds))
 
         return_value = 0
         for result in results:
