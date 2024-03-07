@@ -1022,33 +1022,6 @@ class CipdWrapperTestCase(unittest.TestCase):
         scm.update(None, (), [])
 
 
-class GcsWrapperTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.workdir = tempfile.mkdtemp()
-        self.url = 'gs://123bucket/path_to_tar.gz'
-
-    def createScm(self):
-        return gclient_scm.GcsWrapper(url=self.url,
-                                      root_dir=self.workdir,
-                                      relpath='fake_relpath')
-
-    def testRevert(self):
-        """Checks that revert does nothing."""
-        scm = self.createScm()
-        scm.revert(None, (), [])
-
-    def testRevinfo(self):
-        """Checks that revinfo does nothing."""
-        scm = self.createScm()
-        scm.revinfo(None, (), [])
-
-    def testUpdate(self):
-        """Checks that update does nothing."""
-        scm = self.createScm()
-        scm.update(None, (), [])
-
-
 class BranchHeadsFakeRepo(fake_repos.FakeReposBase):
     def populateGit(self):
         # Creates a tree that looks like this:
