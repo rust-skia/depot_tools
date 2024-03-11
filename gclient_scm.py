@@ -1913,6 +1913,57 @@ class CipdWrapper(SCMWrapper):
     """
 
 
+class GcsWrapper(SCMWrapper):
+    """Wrapper for GCS.
+
+  Currently only supports content from Google Cloud Storage.
+  """
+    name = 'gcs'
+
+    def __init__(self,
+                 url=None,
+                 root_dir=None,
+                 relpath=None,
+                 out_fh=None,
+                 out_cb=None):
+        super(GcsWrapper, self).__init__(url=url,
+                                         root_dir=root_dir,
+                                         relpath=relpath,
+                                         out_fh=out_fh,
+                                         out_cb=out_cb)
+
+    #override
+    def GetCacheMirror(self):
+        return None
+
+    #override
+    def GetActualRemoteURL(self, options):
+        return None
+
+    #override
+    def DoesRemoteURLMatch(self, options):
+        del options
+        return True
+
+    def revert(self, options, args, file_list):
+        """Does nothing."""
+
+    def diff(self, options, args, file_list):
+        """GCS has no notion of diffing."""
+
+    def pack(self, options, args, file_list):
+        """GCS has no notion of diffing."""
+
+    def revinfo(self, options, args, file_list):
+        """Does nothing"""
+
+    def status(self, options, args, file_list):
+        pass
+
+    def update(self, options, args, file_list):
+        """Does nothing."""
+
+
 class CogWrapper(SCMWrapper):
     """Wrapper for Cog, all no-op."""
     name = 'cog'
