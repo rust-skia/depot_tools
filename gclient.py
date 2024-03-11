@@ -2630,8 +2630,9 @@ class GcsDependency(Dependency):
                                 calculated=calculated_sha256sum,
                             ))
 
-        with tarfile.open(output_file, 'r:*') as tar:
-            tar.extractall(path=output_dir)
+        if tarfile.is_tarfile(output_file):
+            with tarfile.open(output_file, 'r:*') as tar:
+                tar.extractall(path=output_dir)
         self.WriteFilenameHash(calculated_sha256sum, hash_file)
 
     #override
