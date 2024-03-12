@@ -6128,10 +6128,11 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
         return 0
 
     base_cmd = [google_java_format, '--aosp']
-    if opts.dry_run:
-        base_cmd += ['--dry-run']
-    elif not opts.diff:
-        base_cmd += ['--replace']
+    if not opts.diff:
+        if opts.dry_run:
+            base_cmd += ['--dry-run']
+        else:
+            base_cmd += ['--replace']
 
     changed_lines_only = not (opts.full or settings.GetFormatFullByDefault())
     if changed_lines_only:
