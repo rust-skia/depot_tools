@@ -903,6 +903,13 @@ deps = {
             'dep_type': 'gcs',
             'sha256sum': 'abcd123',
           },
+          'src/gcs_dep_with_output_file': {
+            'bucket': '789bucket',
+            'object_name': 'clang-format-version123',
+            'dep_type': 'gcs',
+            'sha256sum': 'abcd123',
+            'output_file': 'clang-format-no-extract',
+          },
         }"""),
                 'origin':
                 'git/repo_22@1\n'

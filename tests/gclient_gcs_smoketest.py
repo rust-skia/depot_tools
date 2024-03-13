@@ -47,6 +47,10 @@ class GClientSmokeGcs(gclient_smoketest_base.GClientSmokeBase):
             'abcd123\n',
             'src/gcs_dep/extracted_dir/extracted_file':
             'extracted text',
+            'src/gcs_dep_with_output_file/hash':
+            'abcd123\n',
+            'src/gcs_dep_with_output_file/clang-format-no-extract':
+            'non-extractable file',
         })
         self.assertTree(tree)
 
@@ -115,7 +119,9 @@ class GClientSmokeGcs(gclient_smoketest_base.GClientSmokeBase):
         results = self.gclient(['revinfo'])
         out = ('src: %(base)srepo_22\n'
                'src/another_gcs_dep: gs://456bucket/Linux/llvmfile.tar.gz\n'
-               'src/gcs_dep: gs://123bucket/deadbeef\n' % {
+               'src/gcs_dep: gs://123bucket/deadbeef\n'
+               'src/gcs_dep_with_output_file: '
+               'gs://789bucket/clang-format-version123\n' % {
                    'base': self.git_base,
                })
         self.check((out, '', 0), results)
@@ -127,7 +133,9 @@ class GClientSmokeGcs(gclient_smoketest_base.GClientSmokeBase):
         out = (
             'src: %(base)srepo_22@%(hash1)s\n'
             'src/another_gcs_dep: gs://456bucket/Linux/llvmfile.tar.gz@None\n'
-            'src/gcs_dep: gs://123bucket/deadbeef@None\n' % {
+            'src/gcs_dep: gs://123bucket/deadbeef@None\n'
+            'src/gcs_dep_with_output_file: '
+            'gs://789bucket/clang-format-version123@None\n' % {
                 'base': self.git_base,
                 'hash1': self.githash('repo_22', 1),
             })
