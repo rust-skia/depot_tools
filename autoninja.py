@@ -220,7 +220,7 @@ def main(args):
             offline = True
         elif arg == "-h":
             print(
-                "autoninja: Use -o/--offline to temporary disable goma.",
+                "autoninja: Use -o/--offline to temporary disable remote execution.",
                 file=sys.stderr,
             )
             print(file=sys.stderr)
