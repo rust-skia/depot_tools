@@ -626,12 +626,20 @@ def _print_tryjobs(options, builds):
     print('Total: %d tryjobs' % total)
 
 
-def _ComputeFormatDiffLineRanges(files, upstream_commit):
+def _ComputeFormatDiffLineRanges(files, upstream_commit, expand=0):
     """Gets the changed line ranges for each file since upstream_commit.
 
     Parses a git diff on provided files and returns a dict that maps a file name
     to an ordered list of range tuples in the form (start_line, count).
     Ranges are in the same format as a git diff.
+
+    Args:
+        files: List of paths to diff.
+        upstream_commit: Commit to diff against to find changed lines.
+        expand: Expand diff ranges by this many lines before & after.
+
+    Returns:
+        A dict of path->[(start_line, end_line), ...]
     """
     # If files is empty then diff_output will be a full diff.
     if len(files) == 0:
@@ -662,6 +670,7 @@ def _ComputeFormatDiffLineRanges(files, upstream_commit):
             # Will match the second filename in diff --git a/a.py b/b.py.
             curr_file = match[0]
             line_diffs[curr_file] = []
+            prev_end = 1
         else:
             # Matches +14,3
             if ',' in match[1]:
@@ -673,10 +682,10 @@ def _ComputeFormatDiffLineRanges(files, upstream_commit):
 
             diff_start = int(diff_start)
             diff_count = int(diff_count)
-            diff_end = diff_start + diff_count - 1
-
-            # Only format added ranges (not removed ones).
-            if diff_end >= diff_start:
+            diff_end = diff_start + diff_count + expand
+            diff_start = max(prev_end + 1, diff_start - expand)
+            if diff_start <= diff_end:
+                prev_end = diff_end
                 line_diffs[curr_file].append((diff_start, diff_end))
 
     return line_diffs
@@ -6136,10 +6145,26 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
 
     changed_lines_only = not (opts.full or settings.GetFormatFullByDefault())
     if changed_lines_only:
-        line_diffs = _ComputeFormatDiffLineRanges(paths, upstream_commit)
+        # Format two lines around each changed line so that the correct amount
+        # of blank lines will be added between symbols.
+        line_diffs = _ComputeFormatDiffLineRanges(paths,
+                                                  upstream_commit,
+                                                  expand=2)
 
-    def RunFormat(cmd, path, **kwds):
-        stdout = RunCommand(cmd + [path], **kwds)
+    def RunFormat(cmd, path, range_args, **kwds):
+        stdout = RunCommand(cmd + range_args + [path], **kwds)
+
+        if changed_lines_only:
+            # google-java-format will not remove unused imports because they
+            # do not fall within the changed lines. Run the command again to
+            # remove them.
+            if opts.diff:
+                stdout = RunCommand(cmd + ['--fix-imports-only', '-'],
+                                    stdin=stdout.encode(),
+                                    **kwds)
+            else:
+                stdout += RunCommand(cmd + ['--fix-imports-only', path], **kwds)
+
         # If --diff is passed, google-java-format will output formatted content.
         # Diff it with the existing file in the checkout and output the result.
         if opts.diff:
@@ -6152,15 +6177,18 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
     with multiprocessing.pool.ThreadPool() as pool:
         for path in paths:
             cmd = base_cmd.copy()
+            range_args = []
             if changed_lines_only:
                 ranges = line_diffs.get(path)
                 if not ranges:
                     # E.g. There were only deleted lines.
                     continue
-                cmd.extend('--lines={}:{}'.format(a, b) for a, b in ranges)
+                range_args = ['--lines={}:{}'.format(a, b) for a, b in ranges]
 
             results.append(
-                pool.apply_async(RunFormat, args=[cmd, path], kwds=kwds))
+                pool.apply_async(RunFormat,
+                                 args=[cmd, path, range_args],
+                                 kwds=kwds))
 
         return_value = 0
         for result in results:
