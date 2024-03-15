@@ -218,7 +218,7 @@ def main(args):
             output_dir = arg[2:]
         elif arg in ("-o", "--offline"):
             offline = True
-        elif arg == "-h":
+        elif arg in ("-h", "--help"):
             print(
                 "autoninja: Use -o/--offline to temporary disable remote execution.",
                 file=sys.stderr,
