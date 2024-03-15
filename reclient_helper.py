@@ -11,7 +11,6 @@ import contextlib
 import datetime
 import hashlib
 import os
-import platform
 import shutil
 import socket
 import subprocess
@@ -21,6 +20,7 @@ import uuid
 
 import gclient_paths
 import reclient_metrics
+
 
 THIS_DIR = os.path.dirname(__file__)
 RECLIENT_LOG_CLEANUP = os.path.join(THIS_DIR, 'reclient_log_cleanup.py')
@@ -283,34 +283,9 @@ def set_win_defaults():
     os.environ.setdefault("RBE_local_resource_fraction", "0.05")
 
 
-def get_filesystem(path):
-    try:
-        if sys.platform == "linux":
-            return subprocess.run(["findmnt", "-n", "-o", "FSTYPE", "-T", path],
-                                  check=True,
-                                  text=True,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT).stdout
-        # The -Y option was added in macOS 14.0 aka Darwin 23.0.
-        if sys.platform == "darwin" and int(
-                platform.release().split('.')[0]) >= 23:
-            df = subprocess.run(["df", "-PY", path],
-                                check=True,
-                                text=True,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT).stdout
-            return df.splitlines()[1].split()[1]
-    except (TypeError, IndexError, subprocess.CalledProcessError) as e:
-        print("reclient_helper.py: Failed to get filesystem for {}: {}".format(
-            path, e))
-    return "unknown"
-
-
-def workspace_is_on_slow_filesystem():
-    fs = get_filesystem(os.getcwd())
-    if fs.startswith("fuse.") or fs in ["fuse", "nfs", "nfs4", "cifs", "smbfs"]:
-        return True
-    return False
+def workspace_is_cog():
+    return sys.platform == "linux" and os.path.realpath(
+        os.getcwd()).startswith("/google/cog")
 
 
 # pylint: disable=line-too-long
@@ -356,13 +331,12 @@ def build_context(argv, tool):
         print('WARNING: Using RBE_instance=%s\n' %
               os.environ.get('RBE_instance', ''))
 
-    # If the workspace is on a slow filesystem (e.g. FUSE or a network
-    # filesystem), racing is likely not a performance improvement.
-    if workspace_is_on_slow_filesystem():
-        os.environ.setdefault("RBE_exec_strategy", "remote_local_fallback")
-
     remote_disabled = os.environ.get('RBE_remote_disabled')
     if remote_disabled not in ('1', 't', 'T', 'true', 'TRUE', 'True'):
+        # If we are building inside a Cog workspace, racing is likely not a
+        # performance improvement, so we disable it by default.
+        if workspace_is_cog():
+            os.environ.setdefault("RBE_exec_strategy", "remote_local_fallback")
         set_racing_defaults()
         if sys.platform == "darwin":
             set_mac_defaults()
