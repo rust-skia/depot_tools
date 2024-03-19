@@ -51,7 +51,7 @@ infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:05fe195bf77656743f3daa9
 infra/tools/prpc/${platform} git_revision:bd3a982ae62b4820b71414b2340e86019a1fbd26
 
 # LUCI authentication command line tool
-infra/tools/luci-auth/${platform} git_revision:bd3a982ae62b4820b71414b2340e86019a1fbd26
+infra/tools/luci-auth/${platform} git_revision:02ffe6e2b222aa1f56776b8e5385f49687451bb2
 
 # LUCI Buildbucket CLI
 infra/tools/bb/${platform} git_revision:b1ef34e3c86269b1261ccbc039ff2cfe3baaa961
