@@ -28,11 +28,11 @@ def find_metadata_files(root: str) -> List[str]:
              the root directory.
     """
     metadata_files = []
-    for item in os.listdir(root):
-        full_path = os.path.join(root, item)
-        if is_metadata_file(item):
-            metadata_files.append(full_path)
-        elif os.path.isdir(full_path):
-            metadata_files.extend(find_metadata_files(full_path))
+
+    for (dirpath, _, filenames) in os.walk(root, followlinks=True):
+        for filename in filenames:
+            if is_metadata_file(filename):
+                full_path = os.path.join(root, dirpath, filename)
+                metadata_files.append(full_path)
 
     return metadata_files
