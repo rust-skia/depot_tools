@@ -170,7 +170,7 @@ def datetime_now():
 # Deletes the tree at dir if it exists.
 def rmtree_if_exists(rm_dir):
     if os.path.exists(rm_dir) and os.path.isdir(rm_dir):
-        shutil.rmtree(rm_dir)
+        shutil.rmtree(rm_dir, ignore_errors=True)
 
 
 def set_reproxy_path_flags(out_dir, make_dirs=True):
