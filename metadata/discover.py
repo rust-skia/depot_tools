@@ -25,7 +25,7 @@ def find_metadata_files(root: str) -> List[str]:
             search.
 
     Returns: the absolute full paths for all the metadata files within
-             the root directory.
+             the root directory, sorted in ascending order.
     """
     metadata_files = []
 
@@ -35,4 +35,4 @@ def find_metadata_files(root: str) -> List[str]:
                 full_path = os.path.join(root, dirpath, filename)
                 metadata_files.append(full_path)
 
-    return metadata_files
+    return sorted(metadata_files)

@@ -36,6 +36,33 @@ class ValidationResult:
     def __repr__(self) -> str:
         return str(self)
 
+    # PEP 8 recommends implementing all 6 rich comparisons.
+    # Here we make use of tuple comparison, and order based on the severity
+    # (e.g. fatal comes before non-fatal), then the message.
+    def __lt__(self, other) -> bool:
+        return (not self._fatal, self._message) < (not other._fatal,
+                                                   other._message)
+
+    def __le__(self, other) -> bool:
+        return (not self._fatal, self._message) <= (not other._fatal,
+                                                    other._message)
+
+    def __gt__(self, other) -> bool:
+        return (not self._fatal, self._message) > (not other._fatal,
+                                                   other._message)
+
+    def __ge__(self, other) -> bool:
+        return (not self._fatal, self._message) >= (not other._fatal,
+                                                    other._message)
+
+    def __eq__(self, other) -> bool:
+        return (not self._fatal, self._message) == (not other._fatal,
+                                                    other._message)
+
+    def __ne__(self, other) -> bool:
+        return (not self._fatal, self._message) != (not other._fatal,
+                                                    other._message)
+
     def is_fatal(self) -> bool:
         return self._fatal
 
