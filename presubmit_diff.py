@@ -13,9 +13,11 @@ import base64
 import os
 import platform
 import sys
+import concurrent.futures
 
 import gclient_utils
-from gerrit_util import CreateHttpConn, ReadHttpResponse
+from gerrit_util import (CreateHttpConn, ReadHttpResponse,
+                         MAX_CONCURRENT_CONNECTION)
 import subprocess2
 
 DEV_NULL = "/dev/null"
@@ -89,6 +91,28 @@ def _process_diff(diff: str, src_root: str, dst_root: str) -> str:
     return header + HEADER_DELIMITER + body
 
 
+def _create_diff(host: str, repo: str, ref: str, root: str, file: str) -> str:
+    new_file = os.path.join(root, file)
+    if not os.path.exists(new_file):
+        new_file = None
+
+    with gclient_utils.temporary_directory() as tmp_root:
+        old_file = None
+        old_content = fetch_content(host, repo, ref, file)
+        if old_content:
+            old_file = os.path.join(tmp_root, file)
+            os.makedirs(os.path.dirname(old_file), exist_ok=True)
+            with open(old_file, "w") as f:
+                f.write(old_content)
+
+        if not old_file and not new_file:
+            raise RuntimeError(f"Could not access file {file} from {root} "
+                               f"or from {host}/{repo}:{ref}.")
+
+        diff = git_diff(old_file, new_file)
+        return _process_diff(diff, tmp_root, root)
+
+
 def create_diffs(host: str, repo: str, ref: str, root: str,
                  files: list[str]) -> dict[str, str]:
     """Calculates diffs of files in a directory against a commit.
@@ -107,28 +131,15 @@ def create_diffs(host: str, repo: str, ref: str, root: str,
         RuntimeError: If a file is missing in both the root and the repo.
     """
     diffs = {}
-    with gclient_utils.temporary_directory() as tmp_root:
-        # TODO(gavinmak): Parallelize fetching content.
-        for file in files:
-            new_file = os.path.join(root, file)
-            if not os.path.exists(new_file):
-                new_file = None
-
-            old_file = None
-            old_content = fetch_content(host, repo, ref, file)
-            if old_content:
-                old_file = os.path.join(tmp_root, file)
-                os.makedirs(os.path.dirname(old_file), exist_ok=True)
-                with open(old_file, "w") as f:
-                    f.write(old_content)
-
-            if not old_file and not new_file:
-                raise RuntimeError(f"Could not access file {file} from {root} "
-                                   f"or from {host}/{repo}:{ref}.")
-
-            diff = git_diff(old_file, new_file)
-            diffs[file] = _process_diff(diff, tmp_root, root)
-
+    with concurrent.futures.ThreadPoolExecutor(
+            max_workers=MAX_CONCURRENT_CONNECTION) as executor:
+        futures_to_file = {
+            executor.submit(_create_diff, host, repo, ref, root, file): file
+            for file in files
+        }
+        for future in concurrent.futures.as_completed(futures_to_file):
+            file = futures_to_file[future]
+            diffs[file] = future.result()
     return diffs
 
 
