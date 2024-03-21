@@ -33,9 +33,13 @@ class MetadataField:
     # The delimiter used to separate multiple values.
     VALUE_DELIMITER = ","
 
-    def __init__(self, name: str, one_liner: bool = True):
+    def __init__(self,
+                 name: str,
+                 one_liner: bool = True,
+                 structured: bool = True):
         self._name = name
         self._one_liner = one_liner
+        self._structured = structured
 
     def __eq__(self, other):
         if not isinstance(other, MetadataField):
@@ -51,6 +55,17 @@ class MetadataField:
 
     def is_one_liner(self):
         return self._one_liner
+
+    def is_structured(self):
+        """Whether the field represents structured data, such as a list of
+        URLs.
+
+        If true, parser will treat `Field Name Like Pattern:` in subsequent
+        lines as a new field, in addition to all known field names.
+        If false, parser will only recognize known field names, and unknown
+        fields will be merged into the preceding field value.
+        """
+        return self._structured
 
     def validate(self, value: str) -> Union[vr.ValidationResult, None]:
         """Checks the given value is acceptable for the field.

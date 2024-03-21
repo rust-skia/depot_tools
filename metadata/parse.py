@@ -24,9 +24,16 @@ DEPENDENCY_DIVIDER = re.compile(r"^-{20} DEPENDENCY DIVIDER -{20}$")
 # Delimiter used to separate a field's name from its value.
 FIELD_DELIMITER = ":"
 
+# Heuristic for detecting unknown field names.
+_PATTERN_FIELD_NAME_WORD_HEURISTIC = r"[A-Z]\w+"
+_PATTERN_FIELD_NAME_HEURISTIC = re.compile(r"^({}(?: {})*){}[\b\s]".format(
+    _PATTERN_FIELD_NAME_WORD_HEURISTIC, _PATTERN_FIELD_NAME_WORD_HEURISTIC,
+    FIELD_DELIMITER))
+_DEFAULT_TO_STRUCTURED_TEXT = False
+
 # Pattern used to check if a line from a metadata file declares a new
 # field.
-_PATTERN_FIELD_DECLARATION = re.compile(
+_PATTERN_KNOWN_FIELD_DECLARATION = re.compile(
     "^({}){}".format("|".join(known_fields.ALL_FIELD_NAMES), FIELD_DELIMITER),
     re.IGNORECASE)
 
@@ -44,6 +51,7 @@ def parse_content(content: str) -> List[dm.DependencyMetadata]:
     current_metadata = dm.DependencyMetadata()
     current_field_name = None
     current_field_value = ""
+    current_field_is_structured = _DEFAULT_TO_STRUCTURED_TEXT
     for line in content.splitlines(keepends=True):
         # Check if a new dependency is being described.
         if DEPENDENCY_DIVIDER.match(line):
@@ -59,8 +67,11 @@ def parse_content(content: str) -> List[dm.DependencyMetadata]:
             current_metadata = dm.DependencyMetadata()
             current_field_name = None
             current_field_value = ""
+            current_field_is_structured = False
 
-        elif _PATTERN_FIELD_DECLARATION.match(line):
+        elif (_PATTERN_KNOWN_FIELD_DECLARATION.match(line)
+              or (current_field_is_structured
+                  and _PATTERN_FIELD_NAME_HEURISTIC.match(line))):
             # Save the field value to the current dependency's metadata.
             if current_field_name:
                 current_metadata.add_entry(current_field_name,
@@ -69,6 +80,11 @@ def parse_content(content: str) -> List[dm.DependencyMetadata]:
             current_field_name, current_field_value = line.split(
                 FIELD_DELIMITER, 1)
             field = known_fields.get_field(current_field_name)
+
+            # Treats unknown fields as `_DEFAULT_TO_STRUCTURED_TEXT`.
+            current_field_is_structured = field.is_structured(
+            ) if field else _DEFAULT_TO_STRUCTURED_TEXT
+
             if field and field.is_one_liner():
                 # The field should be on one line, so add it now.
                 current_metadata.add_entry(current_field_name,

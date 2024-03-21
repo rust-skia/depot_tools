@@ -26,9 +26,12 @@ import metadata.fields.field_types as field_types
 NAME = field_types.FreeformTextField("Name")
 SHORT_NAME = field_types.FreeformTextField("Short Name")
 REVISION = field_types.FreeformTextField("Revision")
-DESCRIPTION = field_types.FreeformTextField("Description", one_liner=False)
+DESCRIPTION = field_types.FreeformTextField("Description",
+                                            one_liner=False,
+                                            structured=False)
 LOCAL_MODIFICATIONS = field_types.FreeformTextField("Local Modifications",
-                                                    one_liner=False)
+                                                    one_liner=False,
+                                                    structured=False)
 
 # Yes/no fields.
 SECURITY_CRITICAL = field_types.YesNoField("Security Critical")

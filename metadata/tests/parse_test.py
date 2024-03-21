@@ -34,6 +34,11 @@ class ParseTest(unittest.TestCase):
                 ("Short Name", "metadata-test-valid"),
                 ("URL", "https://www.example.com/metadata,\n"
                  "     https://www.example.com/parser"),
+                ("Unknown Field",
+                 "Should be extracted into a field, because the preceding URL\n"
+                 "               field is structured, thus terminated by another field-like\n"
+                 "               line, even if the field name isn't well known to us."
+                 ),
                 ("Version", "1.0.12"),
                 ("Date", "2020-12-03"),
                 ("License", "Apache, 2.0 and MIT"),
