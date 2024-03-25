@@ -52,14 +52,6 @@ class OSXSDKApi(recipe_api.RecipeApi):
 
     if 'sdk_version' in self._sdk_properties:
       self._sdk_version = self._sdk_properties['sdk_version'].lower()
-    else:
-      cur_os = self.m.platform.mac_release
-      for target_os, xcode in reversed(_DEFAULT_VERSION_MAP):
-        if cur_os >= self.m.version.parse(target_os):
-          self._sdk_version = xcode
-          break
-      else:
-        self._sdk_version = _DEFAULT_VERSION_MAP[0][-1]
 
   @contextmanager
   def __call__(self, kind):
@@ -132,6 +124,21 @@ class OSXSDKApi(recipe_api.RecipeApi):
     ef = self.m.cipd.EnsureFile()
     ef.add_package(self._tool_pkg, self._tool_ver)
     self.m.cipd.ensure(cache_dir, ef)
+
+    if self._sdk_version is None:
+      find_os = self.m.step(
+          'find macOS version', ['sw_vers', '-productVersion'],
+          stdout=self.m.raw_io.output_text(),
+          step_test_data=(
+              lambda: self.m.raw_io.test_api.stream_output_text('14.4')))
+      cur_os = self.m.version.parse(find_os.stdout.strip())
+      find_os.presentation.step_text = f'Running on {str(cur_os)!r}.'
+      for target_os, xcode in reversed(_DEFAULT_VERSION_MAP):
+        if cur_os >= self.m.version.parse(target_os):
+          self._sdk_version = xcode
+          break
+      else:
+        self._sdk_version = _DEFAULT_VERSION_MAP[0][-1]
 
     sdk_app = cache_dir.join('XCode.app')
     self.m.step('install xcode', [

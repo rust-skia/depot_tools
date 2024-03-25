@@ -30,12 +30,23 @@
   },
   {
     "cmd": [
+      "sw_vers",
+      "-productVersion"
+    ],
+    "infra_step": true,
+    "name": "find macOS version",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Running on '14.4'.@@@"
+    ]
+  },
+  {
+    "cmd": [
       "[CACHE]/osx_sdk/mac_toolchain",
       "install",
       "-kind",
       "mac",
       "-xcode-version",
-      "9f2000",
+      "14c18",
       "-output-dir",
       "[CACHE]/osx_sdk/XCode.app"
     ],

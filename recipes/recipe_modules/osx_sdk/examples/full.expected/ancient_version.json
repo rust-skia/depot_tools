@@ -30,6 +30,17 @@
   },
   {
     "cmd": [
+      "sw_vers",
+      "-productVersion"
+    ],
+    "infra_step": true,
+    "name": "find macOS version",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Running on '10.1.0'.@@@"
+    ]
+  },
+  {
+    "cmd": [
       "[CACHE]/osx_sdk/mac_toolchain",
       "install",
       "-kind",
