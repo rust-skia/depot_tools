@@ -218,6 +218,25 @@ index ce013625..dd7e1c6f 100644
                                          "C:\\path\\to\\dst\\"),
         )
 
+    @mock.patch("platform.system", return_value="Linux")
+    def test_process_diff_without_chunk_header(self, sys_mock):
+        diff = """diff --git a/path/to/src/file.txt b/path/to/dst/file.txt
+old mode 100644
+new mode 100755
+"""
+        expected = """diff --git a/file.txt b/file.txt
+old mode 100644
+new mode 100755
+"""
+        self.assertEqual(
+            presubmit_diff._process_diff(
+                diff,
+                "/path/to/src",
+                "/path/to/dst",
+            ),
+            expected,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -71,7 +71,13 @@ def _process_diff(diff: str, src_root: str, dst_root: str) -> str:
     if not diff:
         return ""
 
-    header, body = diff.split(HEADER_DELIMITER, maxsplit=1)
+    has_chunk_header = HEADER_DELIMITER in diff
+    if has_chunk_header:
+        header, body = diff.split(HEADER_DELIMITER, maxsplit=1)
+    else:
+        # Only the file mode changed.
+        header = diff
+
     norm_src = src_root.rstrip(os.sep)
     norm_dst = dst_root.rstrip(os.sep)
 
@@ -88,7 +94,9 @@ def _process_diff(diff: str, src_root: str, dst_root: str) -> str:
         header = header.replace(norm_src, "")
         header = header.replace(norm_dst, "")
 
-    return header + HEADER_DELIMITER + body
+    if has_chunk_header:
+        return header + HEADER_DELIMITER + body
+    return header
 
 
 def _create_diff(host: str, repo: str, ref: str, root: str, file: str) -> str:
