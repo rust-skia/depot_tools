@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 import textwrap
-from typing import Dict, List, Union
+from typing import Dict, List, Optional
 
 _CHROMIUM_METADATA_PRESCRIPT = "Third party metadata issue:"
 _CHROMIUM_METADATA_POSTSCRIPT = ("Check //third_party/README.chromium.template "
@@ -77,7 +77,7 @@ class ValidationResult:
     def set_tag(self, tag: str, value: str) -> bool:
         self._tags[tag] = value
 
-    def get_tag(self, tag: str) -> Union[str, None]:
+    def get_tag(self, tag: str) -> Optional[str]:
         return self._tags.get(tag)
 
     def get_all_tags(self) -> Dict[str, str]:

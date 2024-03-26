@@ -6,7 +6,7 @@
 import os
 import re
 import sys
-from typing import Union
+from typing import Optional
 
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
@@ -63,12 +63,12 @@ def is_formatted_string_cpe(value: str) -> bool:
     return util.matches(_PATTERN_CPE_FORMATTED_STRING, value)
 
 
-class CPEPrefixField(field_types.MetadataField):
+class CPEPrefixField(field_types.SingleLineTextField):
     """Custom field for the package's CPE."""
     def __init__(self):
-        super().__init__(name="CPEPrefix", one_liner=True)
+        super().__init__(name="CPEPrefix")
 
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value is either 'unknown', or conforms to
         either the CPE 2.3 or 2.2 format.
         """

@@ -49,10 +49,17 @@ def parse_content(content: str) -> List[dm.DependencyMetadata]:
   """
     dependencies = []
     current_metadata = dm.DependencyMetadata()
+    current_field_spec = None
     current_field_name = None
     current_field_value = ""
-    current_field_is_structured = _DEFAULT_TO_STRUCTURED_TEXT
+
     for line in content.splitlines(keepends=True):
+        # Whether the current line should be part of a structured value.
+        if current_field_spec:
+            expect_structured_field_value = current_field_spec.is_structured()
+        else:
+            expect_structured_field_value = _DEFAULT_TO_STRUCTURED_TEXT
+
         # Check if a new dependency is being described.
         if DEPENDENCY_DIVIDER.match(line):
             if current_field_name:
@@ -62,16 +69,17 @@ def parse_content(content: str) -> List[dm.DependencyMetadata]:
             if current_metadata.has_entries():
                 # Add the previous dependency to the results.
                 dependencies.append(current_metadata)
+
             # Reset for the new dependency's metadata,
             # and reset the field state.
             current_metadata = dm.DependencyMetadata()
+            current_field_spec = None
             current_field_name = None
             current_field_value = ""
-            current_field_is_structured = False
 
-        elif (_PATTERN_KNOWN_FIELD_DECLARATION.match(line)
-              or (current_field_is_structured
-                  and _PATTERN_FIELD_NAME_HEURISTIC.match(line))):
+        elif _PATTERN_KNOWN_FIELD_DECLARATION.match(line) or (
+                expect_structured_field_value
+                and _PATTERN_FIELD_NAME_HEURISTIC.match(line)):
             # Save the field value to the current dependency's metadata.
             if current_field_name:
                 current_metadata.add_entry(current_field_name,
@@ -79,24 +87,21 @@ def parse_content(content: str) -> List[dm.DependencyMetadata]:
 
             current_field_name, current_field_value = line.split(
                 FIELD_DELIMITER, 1)
-            field = known_fields.get_field(current_field_name)
-
-            # Treats unknown fields as `_DEFAULT_TO_STRUCTURED_TEXT`.
-            current_field_is_structured = field.is_structured(
-            ) if field else _DEFAULT_TO_STRUCTURED_TEXT
-
-            if field and field.is_one_liner():
-                # The field should be on one line, so add it now.
-                current_metadata.add_entry(current_field_name,
-                                           current_field_value)
-                # Reset the field state.
-                current_field_name = None
-                current_field_value = ""
+            current_field_spec = known_fields.get_field(current_field_name)
 
         elif current_field_name:
             # The field is on multiple lines, so add this line to the
             # field value.
             current_field_value += line
+
+        # Check if current field value indicates end of the field.
+        if current_field_spec and current_field_spec.should_terminate_field(
+                current_field_value):
+            assert current_field_name
+            current_metadata.add_entry(current_field_name, current_field_value)
+            current_field_spec = None
+            current_field_name = None
+            current_field_value = ""
 
     # At this point, the end of the file has been reached.
     # Save any remaining field data and metadata.

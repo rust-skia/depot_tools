@@ -6,7 +6,7 @@
 import datetime
 import os
 import sys
-from typing import Union
+from typing import Optional
 
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
@@ -68,12 +68,12 @@ def format_matches(value: str, date_format: str):
     return True
 
 
-class DateField(field_types.MetadataField):
+class DateField(field_types.SingleLineTextField):
     """Custom field for the date when the package was updated."""
     def __init__(self):
-        super().__init__(name="Date", one_liner=True)
+        super().__init__(name="Date")
 
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value is a YYYY-MM-DD date."""
         value = value.strip()
         if not value:

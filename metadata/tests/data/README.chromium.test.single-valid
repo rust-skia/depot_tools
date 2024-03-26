@@ -18,6 +18,6 @@ A test metadata file, with a
  multi-line description.
 
 Local Modifications:
-None,
-EXCEPT:
-* nothing.
+None.
+
+Additional paragraphs describing the package.

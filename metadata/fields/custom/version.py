@@ -6,7 +6,7 @@
 import os
 import re
 import sys
-from typing import Union
+from typing import Optional
 
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
@@ -28,12 +28,12 @@ def is_unknown(value: str) -> bool:
             or util.is_unknown(value))
 
 
-class VersionField(field_types.MetadataField):
+class VersionField(field_types.SingleLineTextField):
     """Custom field for the package version."""
     def __init__(self):
-        super().__init__(name="Version", one_liner=True)
+        super().__init__(name="Version")
 
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value is acceptable - there must be at least
         one non-whitespace character, and "N/A" is preferred over "0" if
         the version is unknown.

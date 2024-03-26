@@ -6,7 +6,7 @@
 import os
 import re
 import sys
-from typing import Union
+from typing import Optional
 
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
@@ -27,9 +27,9 @@ _PATTERN_URL_CANONICAL_REPO = re.compile(
 class URLField(field_types.MetadataField):
     """Custom field for the package URL(s)."""
     def __init__(self):
-        super().__init__(name="URL", one_liner=False)
+        super().__init__(name="URL")
 
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value has acceptable URL values only.
 
         Note: this field supports multiple values.

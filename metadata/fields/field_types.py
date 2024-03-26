@@ -6,7 +6,7 @@
 import os
 import re
 import sys
-from typing import Union
+from typing import Optional
 
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
@@ -33,12 +33,8 @@ class MetadataField:
     # The delimiter used to separate multiple values.
     VALUE_DELIMITER = ","
 
-    def __init__(self,
-                 name: str,
-                 one_liner: bool = True,
-                 structured: bool = True):
+    def __init__(self, name: str, structured: bool = True):
         self._name = name
-        self._one_liner = one_liner
         self._structured = structured
 
     def __eq__(self, other):
@@ -53,8 +49,10 @@ class MetadataField:
     def get_name(self):
         return self._name
 
-    def is_one_liner(self):
-        return self._one_liner
+    def should_terminate_field(self, field_value) -> bool:
+        """Whether this field should be terminated based on the given `field_value`.
+        """
+        return False
 
     def is_structured(self):
         """Whether the field represents structured data, such as a list of
@@ -67,7 +65,7 @@ class MetadataField:
         """
         return self._structured
 
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value is acceptable for the field.
 
         Raises: NotImplementedError if called. This method must be
@@ -78,7 +76,8 @@ class MetadataField:
 
 class FreeformTextField(MetadataField):
     """Field where the value is freeform text."""
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value has at least one non-whitespace
         character.
         """
@@ -88,12 +87,27 @@ class FreeformTextField(MetadataField):
         return None
 
 
-class YesNoField(MetadataField):
+class SingleLineTextField(FreeformTextField):
+    """Field where the field as a whole is a single line of text."""
+
+    def __init__(self, name):
+        super().__init__(name=name)
+
+    def should_terminate_field(self, field_value) -> bool:
+        # Look for line breaks.
+        #
+        # We don't use `os.linesep`` here because Chromium uses line feed
+        # (`\n`) for git checkouts on all platforms (see README.* entries
+        # in chromium.src/.gitattributes).
+        return field_value.endswith("\n")
+
+
+class YesNoField(SingleLineTextField):
     """Field where the value must be yes or no."""
     def __init__(self, name: str):
-        super().__init__(name=name, one_liner=True)
+        super().__init__(name=name)
 
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value is either yes or no."""
         if util.matches(_PATTERN_YES_OR_NO, value):
             return None

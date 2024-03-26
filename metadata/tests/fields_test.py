@@ -42,8 +42,7 @@ class FieldValidationTest(unittest.TestCase):
         # Check validation of a freeform text field that should be on
         # one line.
         self._run_field_validation(
-            field=field_types.FreeformTextField("Freeform single",
-                                                one_liner=True),
+            field=field_types.SingleLineTextField("Text single line"),
             valid_values=["Text on single line", "a", "1"],
             error_values=["", "\n", " "],
         )
@@ -51,8 +50,7 @@ class FieldValidationTest(unittest.TestCase):
         # Check validation of a freeform text field that can span
         # multiple lines.
         self._run_field_validation(
-            field=field_types.FreeformTextField("Freeform multi",
-                                                one_liner=False),
+            field=field_types.FreeformTextField("Freeform multi"),
             valid_values=[
                 "This is text spanning multiple lines:\n"
                 "    * with this point\n"
@@ -203,6 +201,23 @@ class FieldValidationTest(unittest.TestCase):
             warning_values=["0", "unknown"],
         )
 
+    def test_local_modifications(self):
+        # Checks local modifications field early terminates when we can reasonably infer there's no modification.
+        _NO_MODIFICATION_VALUES = [
+            "None", "None.", "N/A.", "(none).", "No modification", "\nNone."
+        ]
+        for value in _NO_MODIFICATION_VALUES:
+            self.assertTrue(
+                known_fields.LOCAL_MODIFICATIONS.should_terminate_field(value))
+
+        # Checks ambiguous values won't early terminate the field.
+        _MAY_CONTAIN_MODIFICATION_VALUES = [
+            "None. Except doing something.",
+            "Modify file X to include ....",
+        ]
+        for value in _MAY_CONTAIN_MODIFICATION_VALUES:
+            self.assertFalse(
+                known_fields.LOCAL_MODIFICATIONS.should_terminate_field(value))
 
 if __name__ == "__main__":
     unittest.main()

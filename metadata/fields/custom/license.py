@@ -6,7 +6,7 @@
 import os
 import re
 import sys
-from typing import List, Union, Tuple
+from typing import List, Tuple, Optional
 
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
@@ -95,15 +95,15 @@ def is_license_allowlisted(value: str) -> bool:
     return util.matches(_PATTERN_LICENSE_ALLOWED, value)
 
 
-class LicenseField(field_types.MetadataField):
+class LicenseField(field_types.SingleLineTextField):
     """Custom field for the package's license type(s).
 
     e.g. Apache 2.0, MIT, BSD, Public Domain.
     """
     def __init__(self):
-        super().__init__(name="License", one_liner=False)
+        super().__init__(name="License")
 
-    def validate(self, value: str) -> Union[vr.ValidationResult, None]:
+    def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value consists of recognized license types.
 
         Note: this field supports multiple values.
