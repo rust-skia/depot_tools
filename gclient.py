@@ -114,6 +114,7 @@ import scm as scm_git
 import setup_color
 import subcommand
 import subprocess2
+import upload_to_google_storage_first_class
 from third_party.repo.progress import Progress
 
 # TODO: Should fix these warnings.
@@ -2574,18 +2575,6 @@ class GcsDependency(Dependency):
             return True
         return False
 
-    def GetSha256Sum(self, filename):
-        sha = hashlib.sha256()
-        with open(filename, 'rb') as f:
-            while True:
-                # Read in 1mb chunks, so it doesn't all have to be loaded into
-                # memory.
-                chunk = f.read(1024 * 1024)
-                if not chunk:
-                    break
-                sha.update(chunk)
-        return sha.hexdigest()
-
     def ValidateTarFile(self, tar, prefixes):
 
         def _validate(tarinfo):
@@ -2662,7 +2651,8 @@ class GcsDependency(Dependency):
             calculated_sha256sum = 'abcd123'
             calculated_size_bytes = 10000
         else:
-            calculated_sha256sum = self.GetSha256Sum(output_file)
+            calculated_sha256sum = (
+                upload_to_google_storage_first_class.get_sha256sum(output_file))
             calculated_size_bytes = os.path.getsize(output_file)
 
         if calculated_sha256sum != self.sha256sum:
