@@ -2586,6 +2586,28 @@ class GcsDependency(Dependency):
                 sha.update(chunk)
         return sha.hexdigest()
 
+    def ValidateTarFile(self, tar, prefixes):
+
+        def _validate(tarinfo):
+            """Returns false if the tarinfo is something we explicitly forbid."""
+            if tarinfo.issym() or tarinfo.islnk():
+                # For links, check if the destination is valid.
+                if os.path.isabs(tarinfo.linkname):
+                    return False
+                link_target = os.path.normpath(
+                    os.path.join(os.path.dirname(tarinfo.name),
+                                 tarinfo.linkname))
+                if not any(
+                        link_target.startswith(prefix) for prefix in prefixes):
+                    return False
+
+            if ('../' in tarinfo.name or '..\\' in tarinfo.name or not any(
+                    tarinfo.name.startswith(prefix) for prefix in prefixes)):
+                return False
+            return True
+
+        return all(map(_validate, tar.getmembers()))
+
     def DownloadGoogleStorage(self):
         """Calls GCS."""
         gcs_file_name = self.object_name.split('/')[-1]
@@ -2659,6 +2681,13 @@ class GcsDependency(Dependency):
 
         if tarfile.is_tarfile(output_file):
             with tarfile.open(output_file, 'r:*') as tar:
+                possible_top_level_dirs = [
+                    name for name in tar.getnames() if '/' not in name
+                ]
+                is_valid_tar = self.ValidateTarFile(tar,
+                                                    possible_top_level_dirs)
+                if not is_valid_tar:
+                    raise Exception('tarfile contains invalid entries')
                 tar.extractall(path=output_dir)
         self.WriteFilenameHash(calculated_sha256sum, hash_file)
         migration_toggle_file = os.path.join(
