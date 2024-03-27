@@ -96,6 +96,25 @@ def _gcloud_auth_account():
     return None
 
 
+def _luci_auth_account():
+    """Returns active account authenticated with `luci-auth login -scopes-context`."""
+    if shutil.which("luci-auth") is None:
+        return None
+
+    # First line returned should be "Logged in as account@domain.com."
+    # Extract the account@domain.com from that line.
+    try:
+        info = subprocess.check_output("luci-auth info -scopes-context",
+                                       shell=True,
+                                       stderr=subprocess.STDOUT,
+                                       text=True).split('\n')[0]
+        if info.startswith("Logged in as "):
+            return info[len("Logged in as "):-1]
+    except subprocess.CalledProcessError:
+        return None
+    return None
+
+
 def _is_google_corp_machine():
     """This assumes that corp machine has gcert binary in known location."""
     return shutil.which("gcert") is not None
@@ -121,6 +140,10 @@ def _is_google_corp_machine_using_external_account():
             return False
 
         account = _adc_account()
+        if account and not account.endswith("@google.com"):
+            return True
+
+        account = _luci_auth_account()
         if account and not account.endswith("@google.com"):
             return True
 

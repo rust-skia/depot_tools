@@ -156,15 +156,20 @@ class AutoninjaTest(trial_dir.TestCase):
         self.assertEqual(args[args.index('-C') + 1], out_dir)
 
     @parameterized.expand([
-        ("non corp machine", False, None, None, False),
-        ("non corp adc account", True, "foo@chromium.org", None, True),
-        ("corp adc account", True, "foo@google.com", None, False),
-        ("non corp gcloud auth account", True, None, "foo@chromium.org", True),
-        ("corp gcloud auth account", True, None, "foo@google.com", False),
+        ("non corp machine", False, None, None, None, False),
+        ("non corp adc account", True, "foo@chromium.org", None, None, True),
+        ("corp adc account", True, "foo@google.com", None, None, False),
+        ("non corp gcloud auth account", True, None, "foo@chromium.org", None,
+         True),
+        ("corp gcloud auth account", True, None, "foo@google.com", None, False),
+        ("non corp luci auth account", True, None, None, "foo@chromium.org",
+         True),
+        ("corp luci auth account", True, None, None, "foo@google.com", False),
     ])
     def test_is_corp_machine_using_external_account(self, _, is_corp,
                                                     adc_account,
                                                     gcloud_auth_account,
+                                                    luci_auth_account,
                                                     expected):
         for shelve_file in glob.glob(
                 os.path.join(autoninja.SCRIPT_DIR, ".autoninja*")):
@@ -176,7 +181,9 @@ class AutoninjaTest(trial_dir.TestCase):
                             'autoninja._adc_account',
                             return_value=adc_account), mock.patch(
                                 'autoninja._gcloud_auth_account',
-                                return_value=gcloud_auth_account):
+                                return_value=gcloud_auth_account), mock.patch(
+                                    'autoninja._luci_auth_account',
+                                    return_value=luci_auth_account):
             self.assertEqual(
                 bool(
                     # pylint: disable=line-too-long
