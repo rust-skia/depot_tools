@@ -6090,7 +6090,11 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
         except clang_format.NotFoundError as e:
             DieWithError(e)
 
-        cmd = ['vpython3', script, '-p0']
+        cmd = [
+            'vpython3', script, '-p0', '-iregex',
+            r'.*\.(cpp|cc|c\+\+|cxx|cppm|ccm|cxxm|c\+\+m|c|cl|h|hh|hpp|hxx|m'
+            r'|mm|nc|inc|js|ts|proto|protodevel|java|cs|json)'
+        ]
         if not opts.dry_run and not opts.diff:
             cmd.append('-i')
 
@@ -6421,7 +6425,7 @@ def MatchingFileType(file_name, extensions):
 @metrics.collector.collect_metrics('git cl format')
 def CMDformat(parser, args):
     """Runs auto-formatting tools (clang-format etc.) on the diff."""
-    clang_exts = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto']
+    clang_exts = ['.cc', '.cpp', '.h', '.nc', '.m', '.mm', '.proto']
     GN_EXTS = ['.gn', '.gni', '.typemap']
     parser.add_option('--full',
                       action='store_true',
