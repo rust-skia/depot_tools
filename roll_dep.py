@@ -132,19 +132,19 @@ def generate_commit_message(full_dir, dependency, head, roll_to, no_log,
     log_section = ''
     if log_url:
         log_section = log_url + '\n\n'
-    log_section += '$ %s ' % ' '.join(cmd)
-    log_section += '--format=\'%ad %ae %s\'\n'
-    log_section = log_section.replace(commit_range, commit_range_for_header)
     # It is important that --no-log continues to work, as it is used by
     # internal -> external rollers. Please do not remove or break it.
     if not no_log and should_show_log(upstream_url):
+        log_section += '$ %s ' % ' '.join(cmd)
+        log_section += '--format=\'%ad %ae %s\'\n'
+        log_section = log_section.replace(commit_range, commit_range_for_header)
         if len(cleaned_lines) > log_limit:
             # Keep the first N/2 log entries and last N/2 entries.
             lines = logs.splitlines(True)
             lines = lines[:log_limit // 2] + ['(...)\n'
                                               ] + lines[-log_limit // 2:]
             logs = ''.join(lines)
-        log_section += logs
+        log_section += logs + '\n'
     return header + log_section
 
 
@@ -190,7 +190,7 @@ def gen_commit_msg(logs, cmdline, reviewers, bug):
     if len(logs) > 1:
         commit_msg = 'Rolling %d dependencies\n\n' % len(logs)
     commit_msg += '\n\n'.join(logs)
-    commit_msg += '\nCreated with:\n  ' + cmdline + '\n'
+    commit_msg += 'Created with:\n  ' + cmdline + '\n'
     commit_msg += 'R=%s\n' % ','.join(reviewers) if reviewers else ''
     commit_msg += '\nBug: %s\n' % bug if bug else ''
     return commit_msg
