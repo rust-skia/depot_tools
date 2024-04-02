@@ -1682,13 +1682,9 @@ class Changelist(object):
         remote, remote_branch = self.GetRemoteBranch()
         target_ref = GetTargetRef(remote, remote_branch, None)
         if settings.GetIsGerrit():
-            gerrit_args = []
-            gerrit_args.extend(['--gerrit_url', self.GetCodereviewServer()])
-            gerrit_args.extend(['--gerrit_project', self.GetGerritProject()])
-            gerrit_args.extend(['--gerrit_branch', target_ref])
-            print(f'Extending presubmit args with gerrit args {gerrit_args}')
-            args.extend(gerrit_args)
-
+            args.extend(['--gerrit_url', self.GetCodereviewServer()])
+            args.extend(['--gerrit_project', self.GetGerritProject()])
+            args.extend(['--gerrit_branch', target_ref])
 
         author = self.GetAuthor()
         issue = self.GetIssue()
