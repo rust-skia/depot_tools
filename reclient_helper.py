@@ -274,13 +274,30 @@ def set_mac_defaults():
     os.environ.setdefault("RBE_deps_cache_max_mb", "1024")
 
 
+def is_win_ctop():
+    if not sys.platform.startswith("win"):
+        return False
+    import winreg
+    try:
+        bios = winreg.OpenKeyEx(winreg.HKEY_LOCAL_MACHINE,
+                                r"SOFTWARE\\GWindows")
+        model = winreg.QueryValueEx(bios, "Model")
+        val = len(model) > 0 and model[0] == 'Google Compute Engine'
+        if bios:
+            winreg.CloseKey(bios)
+        return val
+    except OSError:
+        return False
+
+
 def set_win_defaults():
     # Enable the deps cache on windows.  This makes a notable improvement
     # in performance at the cost of a ~200MB cache file.
     os.environ.setdefault("RBE_enable_deps_cache", "true")
-    # Reduce local resource fraction used to do local compile actions on
-    # windows, to try and prevent machine saturation.
-    os.environ.setdefault("RBE_local_resource_fraction", "0.05")
+    if is_win_ctop():
+        # Reduce local resource fraction used to do local compile actions on
+        # windows, to try and prevent machine saturation.
+        os.environ.setdefault("RBE_local_resource_fraction", "0.05")
 
 
 def workspace_is_cog():
