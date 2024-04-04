@@ -137,6 +137,7 @@ _GCLIENT_DEPS_SCHEMA = _NodeDictSchema({
             'object_name': str,
             'sha256sum': str,
             'size_bytes': int,
+            'generation': int,
             schema.Optional('output_file'): str,
             schema.Optional('condition'): str,
             schema.Optional('dep_type', default='gcs'): str,

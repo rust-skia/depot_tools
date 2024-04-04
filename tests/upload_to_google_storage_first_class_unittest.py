@@ -43,10 +43,14 @@ class UploadTests(unittest.TestCase):
         shutil.rmtree(self.temp_dir)
         sys.stdin = sys.__stdin__
 
-    def test_upload_single_file(self):
+    def test_upload_single_file_missing_generation(self):
         file = self.lorem_ipsum
         object_name = 'gs_object_name/version123'
-        upload_to_google_storage_first_class.upload_to_google_storage(
+
+        self.gsutil.add_expected(0, "", "")  # ls call
+        self.gsutil.add_expected(0, "", 'weird output')  # cp call
+
+        actual = upload_to_google_storage_first_class.upload_to_google_storage(
             file=file,
             base_url=self.base_url,
             object_name=object_name,
@@ -54,11 +58,44 @@ class UploadTests(unittest.TestCase):
             force=True,
             gzip=False,
             dry_run=False)
-        self.assertEqual(self.gsutil.history, [
-            ('check_call', ('ls', '%s/%s' % (self.base_url, object_name))),
-            ('check_call', ('-h', 'Cache-Control:public, max-age=31536000',
-                            'cp', file, '%s/%s' % (self.base_url, object_name)))
-        ])
+
+        self.assertEqual(
+            self.gsutil.history,
+            [('check_call', ('ls', '%s/%s' % (self.base_url, object_name))),
+             ('check_call',
+              ('-h', 'Cache-Control:public, max-age=31536000', 'cp', '-v', file,
+               '%s/%s' % (self.base_url, object_name)))])
+        self.assertEqual(
+            actual, upload_to_google_storage_first_class.MISSING_GENERATION_MSG)
+
+    def test_upload_single_file(self):
+        file = self.lorem_ipsum
+        object_name = 'gs_object_name/version123'
+
+        self.gsutil.add_expected(0, "", "")  # ls call
+        expected_generation = '1712070862651948'
+        expected_cp_status = (
+            f'Copying file://{file} [Content-Type=text/plain].\n'
+            f'Created: {self.base_url}/{object_name}#{expected_generation}\n'
+            'Operation completed over 1 objects/8.0 B.')
+        self.gsutil.add_expected(0, "", expected_cp_status)  # cp call
+
+        actual = upload_to_google_storage_first_class.upload_to_google_storage(
+            file=file,
+            base_url=self.base_url,
+            object_name=object_name,
+            gsutil=self.gsutil,
+            force=True,
+            gzip=False,
+            dry_run=False)
+
+        self.assertEqual(
+            self.gsutil.history,
+            [('check_call', ('ls', '%s/%s' % (self.base_url, object_name))),
+             ('check_call',
+              ('-h', 'Cache-Control:public, max-age=31536000', 'cp', '-v', file,
+               '%s/%s' % (self.base_url, object_name)))])
+        self.assertEqual(actual, expected_generation)
 
     def test_upload_single_file_remote_exists(self):
         file = self.lorem_ipsum

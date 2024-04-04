@@ -897,6 +897,7 @@ deps = {
             'dep_type': 'gcs',
             'sha256sum': 'abcd123',
             'size_bytes': 10000,
+            'generation': 1542380408102454,
           },
           'src/another_gcs_dep': {
             'bucket': '456bucket',
@@ -904,6 +905,7 @@ deps = {
             'dep_type': 'gcs',
             'sha256sum': 'abcd123',
             'size_bytes': 10000,
+            'generation': 1542380408102455,
           },
           'src/gcs_dep_with_output_file': {
             'bucket': '789bucket',
@@ -912,6 +914,7 @@ deps = {
             'sha256sum': 'abcd123',
             'output_file': 'clang-format-no-extract',
             'size_bytes': 10000,
+            'generation': 1542380408102456,
           },
         }"""),
                 'origin':
@@ -947,6 +950,7 @@ deps = {
     'dep_type': 'gcs',
     'sha256sum': 'abcd123',
     'size_bytes': 10000,
+    'generation': 1542380408102454,
   },
 }
 """,
