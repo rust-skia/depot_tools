@@ -6351,7 +6351,7 @@ def _RunMojomFormat(opts, paths, top_dir, upstream_commit):
         DieWithError('Could not find mojom formater at '
                      f'"{mojom_format_path}"')
 
-    cmd = [mojom_format_path]
+    cmd = ['vpython3', mojom_format_path]
     if opts.dry_run:
         cmd.append('--dry-run')
     cmd.extend(paths)
