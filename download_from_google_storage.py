@@ -39,7 +39,16 @@ PLATFORM_MAPPING = {
 }
 
 # (b/328065301): Remove when all GCS hooks are migrated to first class deps
-MIGRATION_TOGGLE_FILE_NAME = 'is_first_class_gcs'
+MIGRATION_TOGGLE_FILE_SUFFIX = '_is_first_class_gcs'
+
+
+def construct_migration_file_name(gcs_object_name):
+    # Remove any forward slashes
+    gcs_file_name = gcs_object_name.replace('/', '_')
+    # Remove any extensions
+    gcs_file_name = gcs_file_name.split('.')[0]
+
+    return gcs_file_name + MIGRATION_TOGGLE_FILE_SUFFIX
 
 
 class InvalidFileError(IOError):
@@ -262,8 +271,8 @@ def _downloader_worker_thread(thread_num,
         if not working_dir:
             raise Exception(
                 'Unable to construct a working_dir from the output_filename.')
-        migration_file_name = os.path.join(working_dir,
-                                           MIGRATION_TOGGLE_FILE_NAME)
+        migration_file_name = os.path.join(
+            working_dir, construct_migration_file_name(input_sha1_sum))
         extract_dir = None
         if extract:
             if not output_filename.endswith('.tar.gz'):
@@ -481,8 +490,15 @@ def download_from_google_storage(input_filename, base_url, gsutil, num_threads,
     # If the directory was created by a first class GCS
     # dep, remove the migration file and re-download using the
     # latest hook.
-    migration_file = os.path.join(working_dir, MIGRATION_TOGGLE_FILE_NAME)
-    is_first_class_gcs = os.path.exists(migration_file)
+    is_first_class_gcs = False
+    # Check all paths to see if they have an equivalent is_first_class_gcs file
+    # If directory is False, there will be only one item in input_data
+    for sha1, _ in input_data:
+        migration_file_name = os.path.join(working_dir,
+                                           construct_migration_file_name(sha1))
+        if os.path.exists(migration_file_name):
+            is_first_class_gcs = True
+
     if not force and not is_first_class_gcs and all(
             _data_exists(sha1, path, extract) for sha1, path in input_data):
         return 0
