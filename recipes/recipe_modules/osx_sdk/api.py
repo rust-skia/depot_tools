@@ -22,6 +22,10 @@ _PROPERTY_DEFAULTS = {
 #
 # Maps from OS version to the maximum supported version of Xcode for that OS.
 #
+# These correspond to package instance tags for:
+#
+#   https://chrome-infra-packages.appspot.com/p/infra_internal/ios/xcode/xcode_binaries/mac-amd64
+#
 # Keep this sorted by OS version.
 _DEFAULT_VERSION_MAP = [
     ('10.12.6', '9c40b'),
@@ -131,8 +135,8 @@ class OSXSDKApi(recipe_api.RecipeApi):
       find_os = self.m.step(
           'find macOS version', ['sw_vers', '-productVersion'],
           stdout=self.m.raw_io.output_text(),
-          step_test_data=(
-              lambda: self.m.raw_io.test_api.stream_output_text('14.4')))
+          step_test_data=(lambda: self.m.raw_io.test_api.stream_output_text(
+              self.test_api.DEFAULT_MACOS_VERSION)))
       cur_os = self.m.version.parse(find_os.stdout.strip())
       find_os.presentation.step_text = f'Running on {str(cur_os)!r}.'
       for target_os, xcode in reversed(_DEFAULT_VERSION_MAP):

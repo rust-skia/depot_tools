@@ -36,7 +36,7 @@
     "infra_step": true,
     "name": "find macOS version",
     "~followup_annotations": [
-      "@@@STEP_TEXT@Running on '10.1.0'.@@@"
+      "@@@STEP_TEXT@Running on '10.1'.@@@"
     ]
   },
   {
