@@ -274,10 +274,8 @@ def _createSummaryMarkdown(step_json):
   warning_count = len(step_json['warnings'])
   notif_count = len(step_json['notifications'])
   description = (
-    '#### There are %d error(s), %d warning(s),'
-    ' and %d notifications(s). Here are the errors:') % (
-      len(errors), warning_count, notif_count
-  )
+      f'#### There are {len(errors)} error(s), {warning_count} warning(s), '
+      f'and {notif_count} notifications(s).')
   error_messages = []
 
   for error in errors:
