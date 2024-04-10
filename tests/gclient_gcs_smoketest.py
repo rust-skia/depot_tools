@@ -35,27 +35,14 @@ class GClientSmokeGcs(gclient_smoketest_base.GClientSmokeBase):
 
         tree = self.mangle_git_tree(('repo_22@1', 'src'))
         tree.update({
-            'src/another_gcs_dep/Linux_llvmfile_hash':
-            'abcd123\n',
             'src/another_gcs_dep/llvmfile.tar.gz':
             'tarfile',
-            'src/another_gcs_dep/Linux_llvmfile_is_first_class_gcs':
-            '1\n',
             'src/another_gcs_dep/extracted_dir/extracted_file':
             'extracted text',
             'src/gcs_dep/deadbeef':
             'tarfile',
-            'src/gcs_dep/deadbeef_hash':
-            'abcd123\n',
-            'src/gcs_dep/deadbeef_is_first_class_gcs':
-            '1\n',
             'src/gcs_dep/extracted_dir/extracted_file':
             'extracted text',
-            'src/gcs_dep_with_output_file/clang-format-version123_hash':
-            'abcd123\n',
-            'src/gcs_dep_with_output_file/clang-format-version123_'
-            'is_first_class_gcs':
-            '1\n',
             'src/gcs_dep_with_output_file/clang-format-no-extract':
             'non-extractable file',
         })

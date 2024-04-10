@@ -48,7 +48,7 @@ def construct_migration_file_name(gcs_object_name):
     # Remove any extensions
     gcs_file_name = gcs_file_name.split('.')[0]
 
-    return gcs_file_name + MIGRATION_TOGGLE_FILE_SUFFIX
+    return f'.{gcs_file_name}{MIGRATION_TOGGLE_FILE_SUFFIX}'
 
 
 class InvalidFileError(IOError):

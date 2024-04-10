@@ -2647,7 +2647,7 @@ class GcsDependency(Dependency):
 
         # Remove any forward slashes and drop any extensions
         hash_name = self.object_name.replace('/', '_').split('.')[0]
-        hash_file = os.path.join(output_dir, hash_name + '_hash')
+        hash_file = os.path.join(output_dir, f'.{hash_name}_hash')
         migration_toggle_file = os.path.join(
             output_dir,
             download_from_google_storage.construct_migration_file_name(
