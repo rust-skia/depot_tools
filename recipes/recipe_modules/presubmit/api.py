@@ -95,7 +95,7 @@ class PresubmitApi(recipe_api.RecipeApi):
                    infra_step=False)
 
     if self._runhooks:
-      with self.m.context(cwd=self.m.path['checkout']):
+      with self.m.context(cwd=self.m.path.checkout_dir):
         self.m.gclient.runhooks()
 
     return bot_update_step

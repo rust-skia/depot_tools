@@ -72,7 +72,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
 
   def _get_bot_update_env(self):
     # TODO(gavinmak): Use mkdtemp when crbug.com/1457059 is fixed.
-    self._trace_dir = self.m.path['cleanup']
+    self._trace_dir = self.m.path.cleanup_dir
 
     # If a Git HTTP request is constantly below GIT_HTTP_LOW_SPEED_LIMIT
     # bytes/second for GIT_HTTP_LOW_SPEED_TIME seconds then such request will be
@@ -218,7 +218,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
         ['--patch_root', patch_root],
         ['--revision_mapping_file', self.m.json.input(reverse_rev_map)],
         ['--git-cache-dir', cfg.cache_dir],
-        ['--cleanup-dir', self.m.path['cleanup'].join('bot_update')],
+        ['--cleanup-dir', self.m.path.cleanup_dir.join('bot_update')],
 
         # Hookups to JSON output back into recipes.
         ['--output_json', self.m.json.output()],
@@ -488,8 +488,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
             and 'checkout' not in self.m.path
             and 'root' in result):
           co_root = result['root']
-          cwd = self.m.context.cwd or self.m.path['start_dir']
-          self.m.path['checkout'] = cwd.join(*co_root.split(self.m.path.sep))
+          cwd = self.m.context.cwd or self.m.path.start_dir
+          self.m.path.checkout_dir = cwd.join(*co_root.split(self.m.path.sep))
 
     return step_result
 

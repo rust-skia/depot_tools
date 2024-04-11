@@ -125,7 +125,7 @@ class OSXSDKApi(recipe_api.RecipeApi):
     """Ensures the mac_toolchain tool and OS X SDK packages are installed.
 
     Returns Path to the installed sdk app bundle."""
-    cache_dir = self.m.path['cache'].join('osx_sdk')
+    cache_dir = self.m.path.cache_dir.join('osx_sdk')
 
     ef = self.m.cipd.EnsureFile()
     ef.add_package(self._tool_pkg, self._tool_ver)
