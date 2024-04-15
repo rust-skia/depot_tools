@@ -411,7 +411,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
             step_result.presentation.status = 'FAILURE'
             # This is actual patch failure.
             self.m.tryserver.set_patch_failure_tryjob_result()
-            self.m.cq.set_do_not_retry_build()
+            self.m.cv.set_do_not_retry_build()
             self._upload_traces()
             raise self.m.step.StepFailure(
                 'Patch failure: See patch error log attached to bot_update. '

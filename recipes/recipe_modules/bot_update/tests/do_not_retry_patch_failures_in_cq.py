@@ -10,7 +10,7 @@ DEPS = [
     'bot_update',
     'gclient',
     'recipe_engine/buildbucket',
-    'recipe_engine/cq',
+    'recipe_engine/cv',
     'recipe_engine/properties',
     'recipe_engine/step',
 ]
@@ -27,7 +27,7 @@ def RunSteps(api):
   except api.step.StepFailure:
     api.step(
         name='cq will not retry this'
-        if api.cq.do_not_retry_build else 'will retry',
+        if api.cv.do_not_retry_build else 'will retry',
         cmd=None)
 
 

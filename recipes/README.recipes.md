@@ -51,7 +51,7 @@
 
 ### *recipe_modules* / [bot\_update](/recipes/recipe_modules/bot_update)
 
-[DEPS](/recipes/recipe_modules/bot_update/__init__.py#3): [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [gerrit](#recipe_modules-gerrit), [gitiles](#recipe_modules-gitiles), [gsutil](#recipe_modules-gsutil), [tryserver](#recipe_modules-tryserver), [recipe\_engine/archive][recipe_engine/recipe_modules/archive], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/led][recipe_engine/recipe_modules/led], [recipe\_engine/milo][recipe_engine/recipe_modules/milo], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/bot_update/__init__.py#3): [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [gerrit](#recipe_modules-gerrit), [gitiles](#recipe_modules-gitiles), [gsutil](#recipe_modules-gsutil), [tryserver](#recipe_modules-tryserver), [recipe\_engine/archive][recipe_engine/recipe_modules/archive], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/commit\_position][recipe_engine/recipe_modules/commit_position], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cv][recipe_engine/recipe_modules/cv], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/led][recipe_engine/recipe_modules/led], [recipe\_engine/milo][recipe_engine/recipe_modules/milo], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 
 Recipe module to ensure a checkout is consistent on a bot.
@@ -784,7 +784,7 @@ Raises:
 &mdash; **def [initialize](/recipes/recipe_modules/osx_sdk/api.py#55)(self):**
 ### *recipe_modules* / [presubmit](/recipes/recipe_modules/presubmit)
 
-[DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cv][recipe_engine/recipe_modules/cv], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 
 #### **class [PresubmitApi](/recipes/recipe_modules/presubmit/api.py#16)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
@@ -1037,7 +1037,7 @@ Raises:
 &mdash; **def [RunSteps](/recipes/recipe_modules/bot_update/examples/full.py#27)(api):**
 ### *recipes* / [bot\_update:tests/do\_not\_retry\_patch\_failures\_in\_cq](/recipes/recipe_modules/bot_update/tests/do_not_retry_patch_failures_in_cq.py)
 
-[DEPS](/recipes/recipe_modules/bot_update/tests/do_not_retry_patch_failures_in_cq.py#9): [bot\_update](#recipe_modules-bot_update), [gclient](#recipe_modules-gclient), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/bot_update/tests/do_not_retry_patch_failures_in_cq.py#9): [bot\_update](#recipe_modules-bot_update), [gclient](#recipe_modules-gclient), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/cv][recipe_engine/recipe_modules/cv], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/bot_update/tests/do_not_retry_patch_failures_in_cq.py#19)(api):**
@@ -1219,6 +1219,7 @@ Move things around in a loop!
 [recipe_engine/recipe_modules/commit_position]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/69f0cf6953cbbf0180122d5174d780217594b684/README.recipes.md#recipe_modules-commit_position
 [recipe_engine/recipe_modules/context]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/69f0cf6953cbbf0180122d5174d780217594b684/README.recipes.md#recipe_modules-context
 [recipe_engine/recipe_modules/cq]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/69f0cf6953cbbf0180122d5174d780217594b684/README.recipes.md#recipe_modules-cq
+[recipe_engine/recipe_modules/cv]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/69f0cf6953cbbf0180122d5174d780217594b684/README.recipes.md#recipe_modules-cv
 [recipe_engine/recipe_modules/file]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/69f0cf6953cbbf0180122d5174d780217594b684/README.recipes.md#recipe_modules-file
 [recipe_engine/recipe_modules/json]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/69f0cf6953cbbf0180122d5174d780217594b684/README.recipes.md#recipe_modules-json
 [recipe_engine/recipe_modules/led]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/69f0cf6953cbbf0180122d5174d780217594b684/README.recipes.md#recipe_modules-led

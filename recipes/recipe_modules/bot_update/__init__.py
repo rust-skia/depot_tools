@@ -10,7 +10,7 @@ DEPS = [
     'recipe_engine/buildbucket',
     'recipe_engine/context',
     'recipe_engine/commit_position',
-    'recipe_engine/cq',
+    'recipe_engine/cv',
     'recipe_engine/json',
     'recipe_engine/led',
     'recipe_engine/milo',

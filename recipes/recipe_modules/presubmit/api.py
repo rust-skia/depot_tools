@@ -141,7 +141,7 @@ class PresubmitApi(recipe_api.RecipeApi):
         '--verbose'
         ])
 
-    if self.m.cq.active and self.m.cq.run_mode == self.m.cq.DRY_RUN:
+    if self.m.cv.active and self.m.cv.run_mode == self.m.cv.DRY_RUN:
       presubmit_args.append('--dry_run')
 
     additionalArgs = ['--root', abs_root,'--commit']
