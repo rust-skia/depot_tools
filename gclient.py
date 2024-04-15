@@ -2582,9 +2582,9 @@ class GcsDependency(Dependency):
               self).run(revision_overrides, command, args, work_queue, options,
                         patch_refs, target_branches, skip_sync_revisions)
 
-    def WriteFilenameHash(self, sha1, hash_file):
-        with open(hash_file, 'w') as f:
-            f.write(sha1)
+    def WriteToFile(self, content, file):
+        with open(file, 'w') as f:
+            f.write(content)
             f.write('\n')
 
     def IsDownloadNeeded(self, output_dir, output_file, hash_file,
@@ -2646,8 +2646,8 @@ class GcsDependency(Dependency):
                                    or gcs_file_name)
 
         # Remove any forward slashes and drop any extensions
-        hash_name = self.object_name.replace('/', '_').split('.')[0]
-        hash_file = os.path.join(output_dir, f'.{hash_name}_hash')
+        file_prefix = self.object_name.replace('/', '_').split('.')[0]
+        hash_file = os.path.join(output_dir, f'.{file_prefix}_hash')
         migration_toggle_file = os.path.join(
             output_dir,
             download_from_google_storage.construct_migration_file_name(
@@ -2722,11 +2722,14 @@ class GcsDependency(Dependency):
                                                     possible_top_level_dirs)
                 if not is_valid_tar:
                     raise Exception('tarfile contains invalid entries')
+
+                tar_content_file = os.path.join(
+                    output_dir, f'.{file_prefix}_content_names')
+                self.WriteToFile(json.dumps(tar.getnames()), tar_content_file)
+
                 tar.extractall(path=output_dir)
-        self.WriteFilenameHash(calculated_sha256sum, hash_file)
-        with open(migration_toggle_file, 'w') as f:
-            f.write(str(1))
-            f.write('\n')
+        self.WriteToFile(calculated_sha256sum, hash_file)
+        self.WriteToFile(str(1), migration_toggle_file)
 
     #override
     def GetScmName(self):

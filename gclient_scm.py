@@ -6,6 +6,7 @@
 import collections
 import contextlib
 import errno
+import glob
 import json
 import logging
 import os
@@ -2004,13 +2005,45 @@ class GcsRoot(object):
                 full_path = os.path.join(self.root_dir, path)
                 if (len(resolved_objects) != len(parsed_objects)
                         and os.path.exists(full_path)):
-                    gclient_utils.rmtree(full_path)
+                    self.clobber_tar_content_names(full_path)
+                    self.clobber_hash_files(full_path)
+                    self.clobber_migration_files(full_path)
+
+    def clobber_tar_content_names(self, entry_directory):
+        """Delete paths written in .*_content_names files"""
+        content_names_files = glob.glob(
+            os.path.join(entry_directory, '.*_content_names'))
+        for file in content_names_files:
+            with open(file, 'r') as f:
+                names = json.loads(f.read().strip())
+                for name in names:
+                    name_path = os.path.join(entry_directory, name)
+                    if os.path.isdir(
+                            name_path) or not os.path.exists(name_path):
+                        continue
+                    os.remove(os.path.join(entry_directory, name))
+            os.remove(file)
+
+    def clobber_hash_files(self, entry_directory):
+        files = glob.glob(os.path.join(entry_directory, '.*_hash'))
+        for f in files:
+            os.remove(f)
+
+    def clobber_migration_files(self, entry_directory):
+        files = glob.glob(os.path.join(entry_directory,
+                                       '.*_is_first_class_gcs'))
+        for f in files:
+            os.remove(f)
 
     def clobber(self):
-        """Remove all dep path directories and clear .gcs_entries"""
+        """Remove all dep path gcs items and clear .gcs_entries"""
         for _, objects_dict in self._gcs_entries.items():
             for dep_path, _ in objects_dict.items():
-                gclient_utils.rmtree(os.path.join(self.root_dir, dep_path))
+                full_path = os.path.join(self.root_dir, dep_path)
+                self.clobber_tar_content_names(full_path)
+                self.clobber_hash_files(full_path)
+                self.clobber_migration_files(full_path)
+
         if os.path.exists(self._gcs_entries_file):
             os.remove(self._gcs_entries_file)
         with self._mutator_lock:
