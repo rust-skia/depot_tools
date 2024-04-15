@@ -2628,8 +2628,15 @@ class GcsDependency(Dependency):
                         link_target.startswith(prefix) for prefix in prefixes):
                     return False
 
-            if ('../' in tarinfo.name or '..\\' in tarinfo.name or not any(
-                    tarinfo.name.startswith(prefix) for prefix in prefixes)):
+            if tarinfo.name == '.':
+                return True
+
+            # tarfile for sysroot has paths that start with ./
+            cleaned_name = tarinfo.name
+            if tarinfo.name.startswith('./') and len(tarinfo.name) > 2:
+                cleaned_name = tarinfo.name[2:]
+            if ('../' in cleaned_name or '..\\' in cleaned_name or not any(
+                    cleaned_name.startswith(prefix) for prefix in prefixes)):
                 return False
             return True
 
@@ -2715,8 +2722,14 @@ class GcsDependency(Dependency):
 
         if tarfile.is_tarfile(output_file):
             with tarfile.open(output_file, 'r:*') as tar:
+                formatted_names = []
+                for name in tar.getnames():
+                    if name.startswith('./') and len(name) > 2:
+                        formatted_names.append(name[2:])
+                    else:
+                        formatted_names.append(name)
                 possible_top_level_dirs = [
-                    name for name in tar.getnames() if '/' not in name
+                    name for name in formatted_names if '/' not in name
                 ]
                 is_valid_tar = self.ValidateTarFile(tar,
                                                     possible_top_level_dirs)
