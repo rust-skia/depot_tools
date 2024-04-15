@@ -65,22 +65,6 @@ infra/chromeperf/pinpoint/windows-arm64
 	git_revision:bd3a982ae62b4820b71414b2340e86019a1fbd26
 	pJxQ0Hl-ATP8eyFijAa3xaYIms_8nfXxSX07XVxyKIwC
 
-infra/goma/client/linux-amd64
-	git_revision:603dfba63fe365a01879029588b48b6f122fe0b8
-	QZEdb4w286MM6sd9ALcXw36jDYQY9S1Vma5cfyQF8Y4C
-
-infra/goma/client/mac-amd64
-	git_revision:603dfba63fe365a01879029588b48b6f122fe0b8
-	t2mJ5uhpan9AXxG0D-h5C5IOfz4ZUNjGV5UzsZnj6JUC
-
-infra/goma/client/mac-arm64
-	git_revision:603dfba63fe365a01879029588b48b6f122fe0b8
-	sf__pdfvHmVZLaWZ9Px92vfrxu0Kc7z6YmwiiLe-wsYC
-
-infra/goma/client/windows-amd64
-	git_revision:603dfba63fe365a01879029588b48b6f122fe0b8
-	TsKkiGBqIo_4FByeFHO6k_8We2PKr4agbEcShhxHd6MC
-
 infra/rbe/client/linux-amd64
 	re_client_version:0.124.1.13f78cc-gomaip
 	LCOZhNACP54nV-xYsKIGGOzlFnVyacNwmv4YzqxxgOYC

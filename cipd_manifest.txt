@@ -16,11 +16,6 @@
 # For these, the git revision is the one of
 # https://chromium.googlesource.com/infra/infra.git.
 #
-# For goma client, generated via builders at
-# https://ci.chromium.org/p/infra-internal/g/goma-client/console
-# the git revision is the one of
-# https://chromium.googlesource.com/infra/goma/client.git
-#
 # To regenerate them (after modifying this file):
 #   cipd ensure-file-resolve -ensure-file cipd_manifest.txt
 $ResolvedVersions cipd_manifest.versions
@@ -61,10 +56,6 @@ infra/tools/rdb/${platform} git_revision:00128613d2f26cd8d9df7fe2a16e024bb644528
 
 # CHROMEOS Buildjobs CLI
 chromiumos/infra/crosjobs/${platform=linux-amd64} git_revision:ed616d595eb7241d39d34907050d2949121d6ae8
-
-# goma client
-infra/goma/client/${os=linux,windows}-${arch=amd64} git_revision:603dfba63fe365a01879029588b48b6f122fe0b8
-infra/goma/client/${os=mac}-${arch} git_revision:603dfba63fe365a01879029588b48b6f122fe0b8
 
 # dirmd, a tool to work with DIR_METADATA files
 infra/tools/dirmd/${platform} git_revision:9558e2c2dc002209753b8e61b83c4a2c81361fbc
