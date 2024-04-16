@@ -2650,7 +2650,7 @@ class GcsDependency(Dependency):
         # Directory of the extracted tarfile contents
         output_dir = os.path.join(root_dir, self.name.split(':')[0])
         output_file = os.path.join(output_dir, self.output_file
-                                   or gcs_file_name)
+                                   or f'.{gcs_file_name}')
 
         # Remove any forward slashes and drop any extensions
         file_prefix = self.object_name.replace('/', '_').split('.')[0]

@@ -35,12 +35,8 @@ class GClientSmokeGcs(gclient_smoketest_base.GClientSmokeBase):
 
         tree = self.mangle_git_tree(('repo_22@1', 'src'))
         tree.update({
-            'src/another_gcs_dep/llvmfile.tar.gz':
-            'tarfile',
             'src/another_gcs_dep/extracted_dir/extracted_file':
             'extracted text',
-            'src/gcs_dep/deadbeef':
-            'tarfile',
             'src/gcs_dep/extracted_dir/extracted_file':
             'extracted text',
             'src/gcs_dep_with_output_file/clang-format-no-extract':
