@@ -149,16 +149,18 @@ def upload_to_google_storage(file: str, base_url: str, object_name: str,
 def construct_deps_blob(bucket: str, object_name: str, file: str,
                         generation: str) -> dict:
     """Output a blob hint that would need be added to a DEPS file"""
-    sha256sum = get_sha256sum(file)
-    size_bytes = os.path.getsize(file)
     return {
         '<path>': {
-            'dep_type': 'gcs',
-            'bucket': bucket,
-            'object_name': object_name,
-            'sha256sum': sha256sum,
-            'size_bytes': size_bytes,
-            'generation': int(generation),
+            'dep_type':
+            'gcs',
+            'bucket':
+            bucket,
+            'objects': [{
+                'object_name': object_name,
+                'sha256sum': get_sha256sum(file),
+                'size_bytes': os.path.getsize(file),
+                'generation': int(generation),
+            }],
         }
     }
 
