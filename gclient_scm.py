@@ -1987,17 +1987,9 @@ class GcsRoot(object):
 
             # If any GCS deps are added or removed entirely, clobber that path
             intersected_paths = parsed_paths.intersection(resolved_paths)
-            # Added paths
-            for path in parsed_paths - intersected_paths:
-                full_path = os.path.join(self.root_dir, path)
-                gclient_utils.rmtree(full_path)
-            # Removed paths
-            for path in resolved_paths - intersected_paths:
-                full_path = os.path.join(self.root_dir, path)
-                gclient_utils.rmtree(full_path)
 
-            # If any objects within a GCS dep are added/removed, clobber that
-            # entire path
+            # If any objects within a GCS dep are added/removed, clobber its
+            # extracted contents and relevant gcs dotfiles
             for path in intersected_paths:
                 resolved_objects = resolved_object_dict[path]
                 parsed_objects = parsed_object_dict[path]
