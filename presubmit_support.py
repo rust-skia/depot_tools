@@ -1199,6 +1199,9 @@ class Change(object):
         self._description_without_tags = ''
         self.SetDescriptionText(description)
 
+        # List of submodule paths in the repo.
+        self._submodules = None
+
         assert all((isinstance(f, (list, tuple)) and len(f) == 2)
                    for f in files), files
 
@@ -1359,11 +1362,11 @@ class Change(object):
         return list(filter(lambda x: x.Action() != 'D', affected))
 
     def AffectedSubmodules(self):
-        """Returns a list of AffectedFile instances for submodules in the change.
-
-        There is no SCM and no submodules, so return an empty list.
-        """
-        return []
+        """Returns a list of AffectedFile instances for submodules in the change."""
+        return [
+            af for af in self._affected_files
+            if af.LocalPath() in self._repo_submodules()
+        ]
 
     def AffectedTestableFiles(self, include_deletes=None, **kwargs):
         """Return a list of the existing text files in a change."""
@@ -1423,11 +1426,10 @@ class Change(object):
         return {f.LocalPath(): f.OldContents() for f in files}
 
     def _repo_submodules(self):
-        """Returns submodule paths for current change's repo.
-
-        There is no SCM, so return an empty list.
-        """
-        return []
+        """Returns submodule paths for current change's repo."""
+        if not self._submodules:
+            self._submodules = scm.GIT.ListSubmodules(self.RepositoryRoot())
+        return self._submodules
 
 
 class GitChange(Change):
@@ -1438,17 +1440,8 @@ class GitChange(Change):
         self._upstream = upstream
         super(GitChange, self).__init__(*args)
 
-        # List of submodule paths in the repo.
-        self._submodules = None
-
     def _diff_cache(self):
         return self._AFFECTED_FILES.DIFF_CACHE(self._upstream)
-
-    def _repo_submodules(self):
-        """Returns submodule paths for current change's repo."""
-        if not self._submodules:
-            self._submodules = scm.GIT.ListSubmodules(self.RepositoryRoot())
-        return self._submodules
 
     def UpstreamBranch(self):
         """Returns the upstream branch for the change."""
@@ -1480,13 +1473,6 @@ class GitChange(Change):
         if include_deletes:
             return affected
         return list(filter(lambda x: x.Action() != 'D', affected))
-
-    def AffectedSubmodules(self):
-        """Returns a list of AffectedFile instances for submodules in the change."""
-        return [
-            af for af in self._affected_files
-            if af.LocalPath() in self._repo_submodules()
-        ]
 
 
 class ProvidedDiffChange(Change):
