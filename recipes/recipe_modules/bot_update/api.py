@@ -114,9 +114,9 @@ class BotUpdateApi(recipe_api.RecipeApi):
                or self.m.led.run_id.replace('/', '_'))
       dest = self.m.path.join(self._trace_dir, '%s.zip' % id)
       zip_path = self.m.archive.package(self._trace_dir) \
-                  .with_file(self._trace_dir.join('trace2-event')) \
-                  .with_file(self._trace_dir.join('trace-curl')) \
-                  .with_file(self._trace_dir.join('trace-packet')) \
+                  .with_file(self._trace_dir / 'trace2-event') \
+                  .with_file(self._trace_dir / 'trace-curl') \
+                  .with_file(self._trace_dir / 'trace-packet') \
                   .archive('compress traces', dest, 'zip')
       try:
         # Don't upload with a destination path, otherwise we have to grant bots
@@ -218,7 +218,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
         ['--patch_root', patch_root],
         ['--revision_mapping_file', self.m.json.input(reverse_rev_map)],
         ['--git-cache-dir', cfg.cache_dir],
-        ['--cleanup-dir', self.m.path.cleanup_dir.join('bot_update')],
+        ['--cleanup-dir', self.m.path.cleanup_dir / 'bot_update'],
 
         # Hookups to JSON output back into recipes.
         ['--output_json', self.m.json.output()],
@@ -489,7 +489,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
             and 'root' in result):
           co_root = result['root']
           cwd = self.m.context.cwd or self.m.path.start_dir
-          self.m.path.checkout_dir = cwd.join(*co_root.split(self.m.path.sep))
+          self.m.path.checkout_dir = cwd.join(co_root)
 
     return step_result
 

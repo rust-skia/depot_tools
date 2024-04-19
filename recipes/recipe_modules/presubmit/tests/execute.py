@@ -24,7 +24,7 @@ DEPS = [
 
 def RunSteps(api):
   api.gclient.set_config('infra')
-  with api.context(cwd=api.path.cache_dir.join('builder')):
+  with api.context(cwd=api.path.cache_dir / 'builder'):
     bot_update_step = api.presubmit.prepare()
     skip_owners = api.properties.get('skip_owners', False)
     run_all = api.properties.get('run_all', False)

@@ -125,7 +125,7 @@ class OSXSDKApi(recipe_api.RecipeApi):
     """Ensures the mac_toolchain tool and OS X SDK packages are installed.
 
     Returns Path to the installed sdk app bundle."""
-    cache_dir = self.m.path.cache_dir.join('osx_sdk')
+    cache_dir = self.m.path.cache_dir / 'osx_sdk'
 
     ef = self.m.cipd.EnsureFile()
     ef.add_package(self._tool_pkg, self._tool_ver)
@@ -146,9 +146,9 @@ class OSXSDKApi(recipe_api.RecipeApi):
       else:
         self._sdk_version = _DEFAULT_VERSION_MAP[0][-1]
 
-    sdk_app = cache_dir.join('XCode.app')
+    sdk_app = cache_dir / 'XCode.app'
     self.m.step('install xcode', [
-        cache_dir.join('mac_toolchain'), 'install',
+        cache_dir / 'mac_toolchain', 'install',
         '-kind', kind,
         '-xcode-version', self._sdk_version,
         '-output-dir', sdk_app,

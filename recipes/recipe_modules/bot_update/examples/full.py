@@ -28,7 +28,7 @@ def RunSteps(api):
   api.gclient.use_mirror = True
   commit = api.buildbucket.build.input.gitiles_commit
 
-  src_cfg = api.gclient.make_config(CACHE_DIR=api.path.cache_dir.join('git'))
+  src_cfg = api.gclient.make_config(CACHE_DIR=api.path.cache_dir / 'git')
   soln = src_cfg.solutions.add()
   soln.name = 'src'
   soln.url = 'https://chromium.googlesource.com/chromium/src.git'
