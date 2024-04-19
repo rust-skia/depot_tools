@@ -281,6 +281,9 @@ def set_win_defaults():
     # Reduce local resource fraction used to do local compile actions on
     # windows, to try and prevent machine saturation.
     os.environ.setdefault("RBE_local_resource_fraction", "0.05")
+    # Set execution strategy to remote_local_fallback while racing performance
+    # on windows is addressed.
+    os.environ.setdefault("RBE_exec_strategy", "remote_local_fallback")
 
 
 def workspace_is_cog():
