@@ -6,6 +6,7 @@
 import os
 import re
 import sys
+from typing import Optional, Union, Literal
 
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
@@ -39,13 +40,28 @@ class LocalModificationsField(field_types.FreeformTextField):
     def __init__(self):
         super().__init__(name="Local Modifications", structured=False)
 
-    def should_terminate_field(self, field_value) -> bool:
-        field_value = field_value.strip()
-
-        # If we can reasonably infer the field value means "No modification",
-        # terminate this field to avoid over extraction.
+    def _is_no_modification(self, value) -> bool:
         for pattern in _PATTERNS_NOT_MODIFIED:
-            if pattern.match(field_value):
+            if pattern.match(value):
                 return True
 
         return False
+
+    def should_terminate_field(self, value) -> bool:
+        value = value.strip()
+
+        # If we can reasonably infer the field value means "No modification",
+        # terminate this field to avoid over extraction.
+        if self._is_no_modification(value):
+            return True
+
+        return False
+
+    def narrow_type(self, value) -> Optional[Union[Literal[False], str]]:
+        if not value:
+            return False
+
+        if self._is_no_modification(value):
+            return False
+
+        return value

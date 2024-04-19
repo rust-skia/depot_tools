@@ -21,12 +21,12 @@ import metadata.fields.custom.license_file
 import metadata.fields.custom.local_modifications
 import metadata.fields.custom.url
 import metadata.fields.custom.version
+import metadata.fields.custom.revision
 import metadata.fields.field_types as field_types
 
 # Freeform text fields.
 NAME = field_types.SingleLineTextField("Name")
 SHORT_NAME = field_types.SingleLineTextField("Short Name")
-REVISION = field_types.SingleLineTextField("Revision")
 DESCRIPTION = field_types.FreeformTextField("Description", structured=False)
 
 # Yes/no fields.
@@ -43,6 +43,7 @@ LICENSE = metadata.fields.custom.license.LicenseField()
 LICENSE_FILE = metadata.fields.custom.license_file.LicenseFileField()
 URL = metadata.fields.custom.url.URLField()
 VERSION = metadata.fields.custom.version.VersionField()
+REVISION = metadata.fields.custom.revision.RevisionField()
 LOCAL_MODIFICATIONS = metadata.fields.custom.local_modifications.LocalModificationsField(
 )
 

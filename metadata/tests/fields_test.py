@@ -95,17 +95,18 @@ class FieldValidationTest(unittest.TestCase):
     def test_date_validation(self):
         self._run_field_validation(
             field=known_fields.DATE,
-            valid_values=[
-                "2012-03-04", "2012-03-04 UTC", "2012-03-04 UTC+10:00"
-            ],
+            valid_values=["2012-03-04"],
             error_values=[
                 "",
                 "\n",
                 "N/A",
+                "03-04-12",  # Ambiguous month and day.
+                "04/03/2012",  # Ambiguous month and day.
             ],
             warning_values=[
+                "2012-03-04 UTC", "2012-03-04 UTC+10:00",
                 "2012/03/04 UTC+10:00", "20120304", "April 3, 2012",
-                "3 Apr 2012", "03-04-12", "04/03/2012",
+                "3 Apr 2012", "30/12/2000", "20-03-2020",
                 "Tue Apr 3 05:06:07 2012 +0800"
             ],
         )
@@ -181,14 +182,18 @@ class FieldValidationTest(unittest.TestCase):
                 "https://www.example.com/a",
                 "http://www.example.com/b",
                 "ftp://www.example.com/c,git://www.example.com/d",
+                "https://www.example.com/a\n  https://example.com/b",
                 "This is the canonical public repository",
+            ],
+            warning_values=[
+                # Scheme is case-insensitive, but should be lower case.
+                "Https://www.example.com/g",
             ],
             error_values=[
                 "",
                 "\n",
                 "ghttps://www.example.com/e",
                 "https://www.example.com/ f",
-                "Https://www.example.com/g",
                 "This is an unrecognized message for the URL",
             ],
         )

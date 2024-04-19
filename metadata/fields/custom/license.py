@@ -49,6 +49,11 @@ _PATTERN_LICENSE_ALLOWED = re.compile(
 
 _PATTERN_VERBOSE_DELIMITER = re.compile(r" and | or | / ")
 
+# Split on the canonical delimiter, or any of the non-canonical delimiters.
+_PATTERN_SPLIT_LICENSE = re.compile("{}|{}".format(
+    _PATTERN_VERBOSE_DELIMITER.pattern,
+    field_types.MetadataField.VALUE_DELIMITER))
+
 
 def process_license_value(value: str,
                           atomic_delimiter: str) -> List[Tuple[str, bool]]:
@@ -134,3 +139,11 @@ class LicenseField(field_types.SingleLineTextField):
                 reason=f"Separate licenses using a '{self.VALUE_DELIMITER}'.")
 
         return None
+
+    def narrow_type(self, value: str) -> Optional[List[str]]:
+        if not value:
+            # Empty License field is equivalent to "not declared".
+            return None
+
+        parts = _PATTERN_SPLIT_LICENSE.split(value)
+        return list(filter(bool, map(lambda str: str.strip(), parts)))

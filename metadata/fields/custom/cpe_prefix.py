@@ -68,12 +68,15 @@ class CPEPrefixField(field_types.SingleLineTextField):
     def __init__(self):
         super().__init__(name="CPEPrefix")
 
+    def _is_valid(self, value: str) -> bool:
+        return (util.is_unknown(value) or is_formatted_string_cpe(value)
+                or is_uri_cpe(value))
+
     def validate(self, value: str) -> Optional[vr.ValidationResult]:
         """Checks the given value is either 'unknown', or conforms to
         either the CPE 2.3 or 2.2 format.
         """
-        if (util.is_unknown(value) or is_formatted_string_cpe(value)
-                or is_uri_cpe(value)):
+        if self._is_valid(value):
             return None
 
         return vr.ValidationError(
@@ -85,3 +88,13 @@ class CPEPrefixField(field_types.SingleLineTextField):
                 "https://nvd.nist.gov/products/cpe/search.",
                 f"Current value: '{value}'.",
             ])
+
+    def narrow_type(self, value: str) -> Optional[str]:
+        if not self._is_valid(value):
+            return None
+
+        # CPE names are case-insensitive, we normalize to lowercase.
+        # See https://cpe.mitre.org/specification/.
+        value = value.lower()
+
+        return value
