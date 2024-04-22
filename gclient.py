@@ -741,7 +741,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                 should_process = should_process and cached_conditions[condition]
 
             # The following option is only set by the 'revinfo' command.
-            if self._get_option('ignore_dep_type', None) == dep_type:
+            if dep_type in self._get_option('ignore_dep_type', []):
                 continue
 
             if dep_type == 'cipd':
@@ -3978,7 +3978,9 @@ def CMDrevinfo(parser, args):
                       'information about the revisions.')
     parser.add_option(
         '--ignore-dep-type',
-        choices=['git', 'cipd'],
+        choices=['git', 'cipd', 'gcs'],
+        action='append',
+        default=[],
         help='Specify to skip processing of a certain type of dep.')
     (options, args) = parser.parse_args(args)
     client = GClient.LoadCurrentConfig(options)
