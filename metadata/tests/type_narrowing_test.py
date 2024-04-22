@@ -141,7 +141,8 @@ class FieldValidationTest(unittest.TestCase):
 
     def test_cpe_prefix(self):
         expect = self._test_on_field(fields.CPE_PREFIX)
-        expect("unknown", "unknown", "understand unknown")
+        expect("unknown", None, "treat unknown as None")
+        expect("Unknown", None, "treat unknown as None")
         expect("bad_cpe_format", None, "rejects invalid value")
         expect("cpe:/a:d3", "cpe:/a:d3", "accept a valid cpe prefix")
         expect("cpe:/a:D3", "cpe:/a:d3", "normalize to lowercase")

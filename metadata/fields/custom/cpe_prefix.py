@@ -93,6 +93,9 @@ class CPEPrefixField(field_types.SingleLineTextField):
         if not self._is_valid(value):
             return None
 
+        if util.is_unknown(value):
+            return None
+
         # CPE names are case-insensitive, we normalize to lowercase.
         # See https://cpe.mitre.org/specification/.
         value = value.lower()
