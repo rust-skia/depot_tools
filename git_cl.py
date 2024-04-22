@@ -1320,7 +1320,8 @@ class Changelist(object):
 
         self.branchref = branchref
         if self.branchref:
-            assert branchref.startswith(('refs/heads/', 'refs/branch-heads/'))
+            assert (branchref.startswith(('refs/heads/', 'refs/branch-heads/'))
+                    or branchref == 'refs/meta/config')
             self.branch = scm.GIT.ShortBranchName(self.branchref)
         else:
             self.branch = None

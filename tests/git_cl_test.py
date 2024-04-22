@@ -260,6 +260,30 @@ class TestGitClBasic(unittest.TestCase):
         self.assertFalse(hasattr(options, 'force'))
         self.assertFalse(hasattr(options, 'edit_description'))
 
+    def test_upload_to_meta_config_branch_no_retry(self):
+        m = mock.patch('git_cl.Changelist._CMDUploadChange',
+                       side_effect=[git_cl.GitPushError(), None]).start()
+        mock.patch('git_cl.Changelist.GetRemoteBranch',
+                   return_value=('foo', 'bar')).start()
+        mock.patch('git_cl.Changelist.GetGerritProject',
+                   return_value='foo').start()
+        mock.patch('git_cl.gerrit_util.GetProjectHead',
+                   return_value='refs/heads/main').start()
+
+        cl = git_cl.Changelist()
+        options = optparse.Values()
+        options.target_branch = 'refs/meta/config'
+        with self.assertRaises(SystemExitMock):
+            cl.CMDUploadChange(options, [], 'foo',
+                               git_cl.ChangeDescription('bar'))
+
+        # ensure upload is called once
+        self.assertEqual(len(m.mock_calls), 1)
+        sys.exit.assert_called_once_with(1)
+        # option not set as retry didn't happen
+        self.assertFalse(hasattr(options, 'force'))
+        self.assertFalse(hasattr(options, 'edit_description'))
+
     def test_upload_to_old_default_still_active(self):
         m = mock.patch('git_cl.Changelist._CMDUploadChange',
                        side_effect=[git_cl.GitPushError(), None]).start()
