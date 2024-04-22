@@ -284,6 +284,9 @@ def set_win_defaults():
     # Set execution strategy to remote_local_fallback while racing performance
     # on windows is addressed.
     os.environ.setdefault("RBE_exec_strategy", "remote_local_fallback")
+    # Turn off creds caching for windows, as luci-auth as credshelper shouldn't
+    # use it.
+    os.environ.setdefault("RBE_enable_creds_cache", "false")
 
 
 def workspace_is_cog():
