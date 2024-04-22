@@ -3181,7 +3181,7 @@ def CMDgitmodules(parser, args):
         for path, dep in ls.get('deps').items():
             if path in options.skip_dep:
                 continue
-            if dep.get('dep_type') == 'cipd':
+            if dep.get('dep_type') != 'git':
                 continue
             try:
                 url, commit = dep['url'].split('@', maxsplit=1)
