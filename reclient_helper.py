@@ -287,6 +287,9 @@ def set_win_defaults():
     # Turn off creds caching for windows, as luci-auth as credshelper shouldn't
     # use it.
     os.environ.setdefault("RBE_enable_creds_cache", "false")
+    # Extend timeouts on windows
+    os.environ.setdefault("RBE_exec_timeout","4m")
+    os.environ.setdefault("RBE_reclient_timeout","8m")
 
 
 def workspace_is_cog():
