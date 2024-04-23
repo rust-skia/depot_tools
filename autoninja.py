@@ -362,7 +362,7 @@ def main(args):
     if use_remoteexec:
         ninja_path = os.path.join(SCRIPT_DIR, "ninja_reclient.py")
 
-    args = [sys.executable, ninja_path] + input_args[1:]
+    args = [sys.executable, ninja_path]
 
     num_cores = multiprocessing.cpu_count()
     if not j_specified and not t_specified:
@@ -404,6 +404,10 @@ def main(args):
     if summarize_build:
         # Enable statistics collection in Ninja.
         args += ["-d", "stats"]
+
+    args += input_args[1:]
+
+    if summarize_build:
         # Print the command-line to reassure the user that the right settings
         # are being used.
         _print_cmd(args)
