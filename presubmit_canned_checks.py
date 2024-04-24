@@ -2171,8 +2171,11 @@ def CheckChangedLUCIConfigs(input_api, output_api):
     LUCI_CONFIG_HOST_NAME = 'config.luci.app'
 
     cl = git_cl.Changelist()
-    if input_api.change.issue and input_api.gerrit:
-        remote_branch = input_api.gerrit.GetDestRef(input_api.change.issue)
+    if input_api.gerrit:
+        if input_api.change.issue:
+            remote_branch = input_api.gerrit.GetDestRef(input_api.change.issue)
+        else:
+            remote_branch = input_api.gerrit.branch
     else:
         remote, remote_branch = cl.GetRemoteBranch()
         if remote_branch.startswith('refs/remotes/%s/' % remote):
@@ -2182,7 +2185,14 @@ def CheckChangedLUCIConfigs(input_api, output_api):
             remote_branch = remote_branch.replace('refs/remotes/branch-heads/',
                                                   'refs/branch-heads/', 1)
 
-    remote_host_url = cl.GetRemoteUrl()
+    if input_api.gerrit:
+        host = input_api.gerrit.host
+        project = input_api.gerrit.project
+        gerrit_url = f'https://{host}/{project}'
+        remote_host_url = gerrit_url.replace('-review.googlesource',
+                                             '.googlesource')
+    else:
+        remote_host_url = cl.GetRemoteUrl()
     if not remote_host_url:
         return [
             output_api.PresubmitError(

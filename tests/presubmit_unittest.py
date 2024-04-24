@@ -1910,7 +1910,8 @@ class ChangeUnittest(PresubmitTestsBase):
 
 class CannedChecksUnittest(PresubmitTestsBase):
     """Tests presubmit_canned_checks.py."""
-    def MockInputApi(self, change, committing):
+
+    def MockInputApi(self, change, committing, gerrit=None):
         # pylint: disable=no-self-use
         input_api = mock.MagicMock(presubmit.InputApi)
         input_api.thread_pool = presubmit.ThreadPool()
@@ -1921,7 +1922,7 @@ class CannedChecksUnittest(PresubmitTestsBase):
         input_api.os_walk = mock.Mock()
         input_api.os_path = os.path
         input_api.re = presubmit.re
-        input_api.gerrit = mock.MagicMock(presubmit.GerritAccessor)
+        input_api.gerrit = gerrit
         input_api.urllib_request = mock.MagicMock(presubmit.urllib_request)
         input_api.urllib_error = mock.MagicMock(presubmit.urllib_error)
         input_api.unittest = unittest
@@ -2361,6 +2362,42 @@ class CannedChecksUnittest(PresubmitTestsBase):
                                                  cwd=self.fake_root_dir,
                                                  stderr=subprocess.PIPE,
                                                  shell=input_api.is_windows)
+
+    @mock.patch('git_cl.Changelist')
+    @mock.patch('auth.Authenticator')
+    def testCannedCheckChangedLUCIConfigsGerritInfo(self, mockGetAuth, mockCl):
+        affected_file = mock.MagicMock(presubmit.ProvidedDiffAffectedFile)
+        affected_file.LocalPath.return_value = 'foo.cfg'
+
+        mockGetAuth().get_id_token().token = 123
+
+        host = 'host.googlesource.com'
+        project = 'project/deadbeef'
+        branch = 'branch'
+        http_resp = b")]}'\n" + json.dumps({
+            'configSets':
+            [{
+                'name': 'project/deadbeef',
+                'url': f'https://{host}/{project}/+/{branch}/generated'
+                # no affected file in generated folder
+            }]
+        }).encode("utf-8")
+
+        gerrit_mock = mock.MagicMock(presubmit.GerritAccessor)
+        gerrit_mock.host = host
+        gerrit_mock.project = project
+        gerrit_mock.branch = branch
+
+        change1 = presubmit.Change('foo', 'foo1', self.fake_root_dir, None, 0,
+                                   0, None)
+        input_api = self.MockInputApi(change1, False, gerrit_mock)
+        input_api.urllib_request.urlopen().read.return_value = http_resp
+
+        input_api.AffectedFiles = lambda **_: (affected_file, )
+
+        results = presubmit_canned_checks.CheckChangedLUCIConfigs(
+            input_api, presubmit.OutputApi)
+        self.assertEqual(len(results), 0)
 
     def testCannedCheckChangeHasNoTabs(self):
         self.ContentTest(presubmit_canned_checks.CheckChangeHasNoTabs,
@@ -2966,7 +3003,9 @@ the current line as well!
 
     def GetInputApiWithOWNERS(self, owners_content):
         input_api = self.GetInputApiWithFiles({'OWNERS': ('M', owners_content)})
-        input_api.gerrit.IsCodeOwnersEnabledOnRepo = lambda: True
+        gerrit_mock = mock.MagicMock(presubmit.GerritAccessor)
+        gerrit_mock.IsCodeOwnersEnabledOnRepo = lambda: True
+        input_api.gerrit = gerrit_mock
 
         return input_api
 
