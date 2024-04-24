@@ -2694,7 +2694,9 @@ class GcsDependency(Dependency):
         else:
             gsutil = download_from_google_storage.Gsutil(
                 download_from_google_storage.GSUTIL_DEFAULT_PATH)
-            gsutil.check_call('cp', self.url, output_file)
+            code, _, err = gsutil.check_call('cp', self.url, output_file)
+            if code and err:
+                raise Exception(f'{code}: {err}')
             # Check that something actually downloaded into the path
             if not os.path.exists(output_file):
                 raise Exception(f'Nothing was downloaded into {output_file}')
