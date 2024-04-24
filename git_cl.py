@@ -5822,11 +5822,10 @@ def CMDupstream(parser, args):
         # One arg means set upstream branch.
         branch = cl.GetBranch()
         RunGit(['branch', '--set-upstream-to', args[0], branch])
-        cl = Changelist()
-        print('Upstream branch set to %s' % (cl.GetUpstreamBranch(), ))
-
         # Clear configured merge-base, if there is one.
         git_common.remove_merge_base(branch)
+        cl = Changelist()
+        print('Upstream branch set to %s' % (cl.GetUpstreamBranch(), ))
     else:
         print(cl.GetUpstreamBranch())
     return 0
