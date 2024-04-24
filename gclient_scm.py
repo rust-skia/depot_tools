@@ -638,6 +638,7 @@ class GitWrapper(SCMWrapper):
             raise gclient_utils.Error("Unsupported argument(s): %s" %
                                       ",".join(args))
 
+        current_revision = None
         url, deps_revision = gclient_utils.SplitUrlRevision(self.url)
         revision = deps_revision
         managed = True
@@ -713,11 +714,11 @@ class GitWrapper(SCMWrapper):
                 self._UpdateMirrorIfNotContains(mirror, options, rev_type,
                                                 revision)
             try:
-                self._Clone(revision, url, options)
+                current_revision = self._Clone(revision, url, options)
             except subprocess2.CalledProcessError as e:
                 logging.warning('Clone failed due to: %s', e)
                 self._DeleteOrMove(options.force)
-                self._Clone(revision, url, options)
+                current_revision = self._Clone(revision, url, options)
             if file_list is not None:
                 files = self._Capture(
                     ['-c', 'core.quotePath=false', 'ls-files']).splitlines()
@@ -790,15 +791,18 @@ class GitWrapper(SCMWrapper):
                             os.path.join(self.checkout_path, '.git', 'objects',
                                          'info', 'alternates'), 'a') as fh:
                         fh.write("\n" + os.path.join(url, 'objects'))
-            self._EnsureValidHeadObjectOrCheckout(revision, options, url)
+            current_revision = self._EnsureValidHeadObjectOrCheckout(
+                revision, options, url)
             self._FetchAndReset(revision, file_list, options)
 
             return_early = True
         else:
-            self._EnsureValidHeadObjectOrCheckout(revision, options, url)
+            current_revision = self._EnsureValidHeadObjectOrCheckout(
+                revision, options, url)
 
         if return_early:
-            return self._Capture(['rev-parse', '--verify', 'HEAD'])
+            return current_revision or self._Capture(
+                ['rev-parse', '--verify', 'HEAD'])
 
         cur_branch = self._GetCurrentBranch()
 
@@ -878,7 +882,11 @@ class GitWrapper(SCMWrapper):
             if not (options.force or options.reset):
                 self._CheckClean(revision)
             self._CheckDetachedHead(revision, options)
-            if self._Capture(['rev-list', '-n', '1', 'HEAD']) == revision:
+
+            if not current_revision:
+                current_revision = self._Capture(
+                    ['rev-list', '-n', '1', 'HEAD'])
+            if current_revision == revision:
                 self.Print('Up-to-date; skipping checkout.')
             else:
                 # 'git checkout' may need to overwrite existing untracked files.
@@ -1061,10 +1069,12 @@ class GitWrapper(SCMWrapper):
                     self.Print('_____ removing unversioned directory %s' % path)
                     gclient_utils.rmtree(full_path)
 
-        rev_hash = self._Capture(['rev-parse', '--verify', 'HEAD'])
+        if not current_revision:
+            current_revision = self._Capture(['rev-parse', '--verify', 'HEAD'])
         if verbose:
-            self.Print(f'Checked out revision {rev_hash}', timestamp=False)
-        return rev_hash
+            self.Print(f'Checked out revision {current_revision}',
+                       timestamp=False)
+        return current_revision
 
     def revert(self, options, _args, file_list):
         """Reverts local modifications.
@@ -1288,6 +1298,7 @@ class GitWrapper(SCMWrapper):
                 'in this repo, you should use \'git checkout <branch>\' to switch \n'
                 'to an existing branch or use \'git checkout %s -b <branch>\' to\n'
                 'create a new branch for your work.') % (revision, self.remote))
+        return revision
 
     def _AskForData(self, prompt, options):
         if options.jobs > 1:
@@ -1397,7 +1408,7 @@ class GitWrapper(SCMWrapper):
         # on most git operations. Since git cache is used, just deleted the .git
         # folder, and re-create it by cloning.
         try:
-            self._Capture(['rev-list', '-n', '1', 'HEAD'])
+            return self._Capture(['rev-list', '-n', '1', 'HEAD'])
         except subprocess2.CalledProcessError as e:
             if (b'fatal: bad object HEAD' in e.stderr and self.cache_dir
                     and self.cache_dir in url):
@@ -1406,9 +1417,8 @@ class GitWrapper(SCMWrapper):
                      'the current commit points to no longer existing object.\n'
                      '%s' % e))
                 self._DeleteOrMove(options.force)
-                self._Clone(revision, url, options)
-            else:
-                raise
+                return self._Clone(revision, url, options)
+            raise
 
     def _IsRebasing(self):
         # Check for any of REBASE-i/REBASE-m/REBASE/AM. Unfortunately git
