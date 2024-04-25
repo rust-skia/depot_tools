@@ -75,7 +75,7 @@ class PresubmitApi(recipe_api.RecipeApi):
         no_fetch_tags=True,
         root_solution_revision=root_solution_revision)
 
-    abs_root = self.m.context.cwd.join(self._relative_root)
+    abs_root = self.m.context.cwd / self._relative_root
     if self.m.tryserver.is_tryserver:
       with self.m.context(cwd=abs_root):
         # TODO(unowned): Consider either:
@@ -110,7 +110,7 @@ class PresubmitApi(recipe_api.RecipeApi):
     Returns:
       a RawResult object, suitable for being returned from RunSteps.
     """
-    abs_root = self.m.context.cwd.join(self._relative_root)
+    abs_root = self.m.context.cwd / self._relative_root
     got_revision_properties = self.m.bot_update.get_project_revision_properties(
         # Replace path.sep with '/', since most recipes are written assuming '/'
         # as the delimiter. This breaks on windows otherwise.

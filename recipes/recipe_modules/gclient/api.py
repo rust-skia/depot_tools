@@ -273,7 +273,7 @@ class GclientApi(recipe_api.RecipeApi):
     finally:
       cwd = self.m.context.cwd or self.m.path.start_dir
       if 'checkout' not in self.m.path:
-        self.m.path.checkout_dir = cwd.join(
+        self.m.path.checkout_dir = cwd.joinpath(
           *cfg.solutions[0].name.split(self.m.path.sep))
 
     return sync_step
