@@ -2676,6 +2676,8 @@ class GcsDependency(Dependency):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+        gsutil = download_from_google_storage.Gsutil(
+            download_from_google_storage.GSUTIL_DEFAULT_PATH)
         if os.getenv('GCLIENT_TEST') == '1':
             if 'no-extract' in output_file:
                 with open(output_file, 'w+') as f:
@@ -2692,8 +2694,6 @@ class GcsDependency(Dependency):
                 with tarfile.open(output_file, "w:gz") as tar:
                     tar.add(copy_dir, arcname=os.path.basename(copy_dir))
         else:
-            gsutil = download_from_google_storage.Gsutil(
-                download_from_google_storage.GSUTIL_DEFAULT_PATH)
             code, _, err = gsutil.check_call('cp', self.url, output_file)
             if code and err:
                 raise Exception(f'{code}: {err}')
@@ -2746,6 +2746,13 @@ class GcsDependency(Dependency):
                 self.WriteToFile(json.dumps(tar.getnames()), tar_content_file)
 
                 tar.extractall(path=output_dir)
+
+        if os.getenv('GCLIENT_TEST') != '1':
+            code, err = download_from_google_storage.set_executable_bit(
+                output_file, self.url, gsutil)
+            if code != 0:
+                raise Exception(f'{code}: {err}')
+
         self.WriteToFile(calculated_sha256sum, hash_file)
         self.WriteToFile(str(1), migration_toggle_file)
 
