@@ -102,13 +102,14 @@ class GitWrapperTestCase(unittest.TestCase):
     def testGetRemoteHeadRefRemote(self, mockCapture):
         mockCapture.side_effect = [
             subprocess2.CalledProcessError(1, '', '', '', ''),
+            subprocess2.CalledProcessError(1, '', '', '', ''),
             'ref: refs/heads/main\tHEAD\n' +
             '0000000000000000000000000000000000000000\tHEAD',
         ]
         self.assertEqual(
             'refs/remotes/origin/main',
             scm.GIT.GetRemoteHeadRef('foo', 'proto://url', 'origin'))
-        self.assertEqual(mockCapture.call_count, 2)
+        self.assertEqual(mockCapture.call_count, 3)
 
     @mock.patch('scm.GIT.Capture')
     def testIsVersioned(self, mockCapture):

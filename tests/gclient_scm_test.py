@@ -411,6 +411,9 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         options = self.Options()
         options.merge = True
         scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
+        # This sets correct remote HEAD
+        scm.update(options, (), [])
+
         scm._Run(['checkout', '-q', 'feature'], options)
         rev = scm.revinfo(options, (), None)
         file_list = []
@@ -432,12 +435,15 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
             return
         options = self.Options()
         scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
+        # This sets correct remote HEAD
+        scm.update(options, (), [])
+
         scm._Run(['checkout', '-q', 'feature'], options)
-        file_list = []
         # Fake a 'y' key press.
         scm._AskForData = self._GetAskForDataCallback(
             'Cannot fast-forward merge, attempt to rebase? '
             '(y)es / (q)uit / (s)kip : ', 'y')
+        file_list = []
         scm.update(options, (), file_list)
         self.assertEqual(file_list,
                          [join(self.base_path, x) for x in ['a', 'b', 'c']])

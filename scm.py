@@ -253,6 +253,10 @@ class GIT(object):
                 ref = GIT.Capture(['symbolic-ref', ref], cwd=cwd)
                 if not ref.endswith('master'):
                     return ref
+            except subprocess2.CalledProcessError:
+                pass
+
+            try:
                 # Check if there are changes in the default branch for this
                 # particular repository.
                 GIT.Capture(['remote', 'set-head', '-a', remote], cwd=cwd)
