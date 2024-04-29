@@ -31,7 +31,7 @@ import sys
 
 from git_common import current_branch, upstream, tags, get_branches_info
 from git_common import get_git_version, MIN_UPSTREAM_TRACK_GIT_VERSION, hash_one
-from git_common import run
+from git_common import get_config, run
 
 import setup_color
 
@@ -220,11 +220,7 @@ class BranchMapper(object):
         if '/' in branch:
             return False
 
-        is_dormant = run('config',
-                         '--get',
-                         'branch.{}.dormant'.format(branch),
-                         accepted_retcodes=[0, 1])
-        return is_dormant == 'true'
+        return get_config(f'branch.{branch}.dormant') == 'true'
 
     def __append_branch(self, branch, output, depth=0):
         """Recurses through the tree structure and appends an OutputLine to the
