@@ -153,18 +153,17 @@ class BranchMapper(object):
             if not branch_info:
                 continue
 
-            parent = branch_info.upstream
             if self.__check_cycle(branch):
                 continue
+            parent = branch_info.upstream
             if not self.__branches_info[parent]:
-                branch_upstream = upstream(branch)
-                # If git can't find the upstream, mark the upstream as gone.
-                if branch_upstream:
-                    parent = branch_upstream
-                else:
-                    self.__gone_branches.add(parent)
-                # A parent that isn't in the branches info is a root.
-                roots.add(parent)
+                # If the parent is not a known branch, it may be an upstream
+                # branch like origin/main or it may be gone. Determine which it
+                # is, but don't re-query the same parent multiple times.
+                if parent not in roots:
+                    if not upstream(branch):
+                        self.__gone_branches.add(parent)
+                    roots.add(parent)
 
             self.__parent_map[parent].append(branch)
 
