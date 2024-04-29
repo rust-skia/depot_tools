@@ -740,7 +740,7 @@ Sets up the XCode SDK environment.
 Is a no-op on non-mac platforms.
 
 This will deploy the helper tool and the XCode.app bundle at
-`[START_DIR]/cache/osx_sdk`.
+`api.path.cache_dir / 'osx_sdk'`.
 
 To avoid machines rebuilding these on every run, set up a named cache in
 your cr-buildbucket.cfg file like:
@@ -1012,7 +1012,7 @@ Sets up the SDK environment when enabled.
 
 Args:
   * path (path): Path to a directory where to install the SDK
-    (default is '[CACHE]/windows_sdk')
+    (default is api.path.cache_dir / 'windows_sdk')
   * version (str): CIPD version of the SDK
     (default is set via $infra/windows_sdk.version property)
   * enabled (bool): Whether the SDK should be used or not.

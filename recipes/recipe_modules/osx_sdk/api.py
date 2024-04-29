@@ -66,7 +66,7 @@ class OSXSDKApi(recipe_api.RecipeApi):
     Is a no-op on non-mac platforms.
 
     This will deploy the helper tool and the XCode.app bundle at
-    `[START_DIR]/cache/osx_sdk`.
+    `api.path.cache_dir / 'osx_sdk'`.
 
     To avoid machines rebuilding these on every run, set up a named cache in
     your cr-buildbucket.cfg file like:

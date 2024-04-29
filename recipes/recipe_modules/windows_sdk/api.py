@@ -35,7 +35,7 @@ class WindowsSDKApi(recipe_api.RecipeApi):
 
     Args:
       * path (path): Path to a directory where to install the SDK
-        (default is '[CACHE]/windows_sdk')
+        (default is api.path.cache_dir / 'windows_sdk')
       * version (str): CIPD version of the SDK
         (default is set via $infra/windows_sdk.version property)
       * enabled (bool): Whether the SDK should be used or not.
