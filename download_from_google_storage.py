@@ -45,8 +45,8 @@ MIGRATION_TOGGLE_FILE_SUFFIX = '_is_first_class_gcs'
 def construct_migration_file_name(gcs_object_name):
     # Remove any forward slashes
     gcs_file_name = gcs_object_name.replace('/', '_')
-    # Remove any extensions
-    gcs_file_name = gcs_file_name.split('.')[0]
+    # Remove any dots
+    gcs_file_name = gcs_file_name.replace('.', '_')
 
     return f'.{gcs_file_name}{MIGRATION_TOGGLE_FILE_SUFFIX}'
 

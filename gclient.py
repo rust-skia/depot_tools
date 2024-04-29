@@ -2653,7 +2653,7 @@ class GcsDependency(Dependency):
                                    or f'.{gcs_file_name}')
 
         # Remove any forward slashes and drop any extensions
-        file_prefix = self.object_name.replace('/', '_').split('.')[0]
+        file_prefix = self.object_name.replace('/', '_').replace('.', '_')
         hash_file = os.path.join(output_dir, f'.{file_prefix}_hash')
         migration_toggle_file = os.path.join(
             output_dir,
