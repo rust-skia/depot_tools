@@ -6096,7 +6096,11 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
         env = os.environ.copy()
         env['PATH'] = (str(os.path.dirname(clang_format_tool)) + os.pathsep +
                        env['PATH'])
+        # If `clang-format-diff.py` is run without `-i` and the diff is
+        # non-empty, it returns an error code of 1. This will cause `RunCommand`
+        # to die with an error if `error_ok` is not set.
         stdout = RunCommand(cmd,
+                            error_ok=True,
                             stdin=diff_output,
                             cwd=top_dir,
                             env=env,
