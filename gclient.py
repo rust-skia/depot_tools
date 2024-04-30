@@ -2733,9 +2733,8 @@ class GcsDependency(Dependency):
                         formatted_names.append(name[2:])
                     else:
                         formatted_names.append(name)
-                possible_top_level_dirs = [
-                    name for name in formatted_names if '/' not in name
-                ]
+                possible_top_level_dirs = set(
+                    name.split('/')[0] for name in formatted_names)
                 is_valid_tar = self.ValidateTarFile(tar,
                                                     possible_top_level_dirs)
                 if not is_valid_tar:
