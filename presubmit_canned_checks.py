@@ -1957,6 +1957,12 @@ def CheckForCommitObjects(input_api, output_api):
     Returns:
         A presubmit error if a commit object is not expected.
     """
+    if input_api.change.scm != 'git':
+        return [
+            output_api.PresubmitNotifyResult(
+                'Non-git workspace detected, skipping CheckForCommitObjects.')
+        ]
+
     # Get DEPS file.
     deps_file = input_api.os_path.join(input_api.PresubmitLocalPath(), 'DEPS')
     if not input_api.os_path.isfile(deps_file):
