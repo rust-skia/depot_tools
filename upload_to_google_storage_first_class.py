@@ -16,6 +16,7 @@ import tarfile
 
 from download_from_google_storage import Gsutil
 from download_from_google_storage import GSUTIL_DEFAULT_PATH
+from typing import List
 
 MISSING_GENERATION_MSG = (
     'missing generation number, please retrieve from Cloud Storage'
@@ -47,8 +48,8 @@ find . -name .svn -prune -o -size +1000k -type f -print0 |
 """
 
 
-def get_targets(args: list[str], parser: optparse.OptionParser,
-                use_null_terminator: bool) -> list[str]:
+def get_targets(args: List[str], parser: optparse.OptionParser,
+                use_null_terminator: bool) -> List[str]:
     """Get target(s) to upload to GCS"""
     if not args:
         parser.error('Missing target.')
@@ -63,7 +64,7 @@ def get_targets(args: list[str], parser: optparse.OptionParser,
     return args
 
 
-def create_archive(dirs: list[str]) -> str:
+def create_archive(dirs: List[str]) -> str:
     """Given a list of directories, compress them all into one tar file"""
     # tarfile name cannot have a forward slash or else an error will be
     # thrown
@@ -74,7 +75,7 @@ def create_archive(dirs: list[str]) -> str:
     return filename
 
 
-def validate_archive_dirs(dirs: list[str]) -> bool:
+def validate_archive_dirs(dirs: List[str]) -> bool:
     """Validate the list of directories"""
     for d in dirs:
         # We don't allow .. in paths in our archives.
