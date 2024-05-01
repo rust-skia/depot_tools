@@ -797,8 +797,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                         should_recurse=name in self.recursedeps,
                         relative=use_relative_paths,
                         condition=condition,
-                        protocol=self.protocol,
-                        git_dependencies_state=self.git_dependencies_state))
+                        protocol=self.protocol))
 
         # TODO(crbug.com/1341285): Understand why we need this and remove
         # it if we don't.
@@ -2243,8 +2242,7 @@ it or fix the checkout.
                             should_recurse=False,
                             relative=None,
                             condition=None,
-                            protocol=self.protocol,
-                            git_dependencies_state=self.git_dependencies_state))
+                            protocol=self.protocol))
                     if modified_files and self._options.delete_unversioned_trees:
                         print(
                             '\nWARNING: \'%s\' is no longer part of this client.\n'
