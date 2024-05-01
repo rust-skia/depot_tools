@@ -229,7 +229,6 @@ class GitWrapper(SCMWrapper):
             filter_kwargs['predicate'] = self.out_cb
         self.filter = gclient_utils.GitFilter(**filter_kwargs)
         self._running_under_rosetta = None
-        self.current_revision = None
 
     def GetCheckoutRoot(self):
         return scm.GIT.GetCheckoutRoot(self.checkout_path)
@@ -250,69 +249,6 @@ class GitWrapper(SCMWrapper):
                     bool,
                     ['-c', 'core.quotePath=false', 'diff', '--name-only', base])
             )).split()
-
-    def GetSubmoduleStateFromIndex(self):
-        """Returns a map where keys are submodule names and values are commit
-        hashes. It reads data from the Git index, so only committed values are
-        present."""
-        out = self._Capture(['ls-files', '-s'])
-        result = {}
-        for l in out.split('\n'):
-            if not l.startswith('160000'):
-                # Not a submodule
-                continue
-            (_, commit, _, filepath) = l.split(maxsplit=3)
-            result[filepath] = commit
-        return result
-
-    def GetSubmoduleDiff(self):
-        """Returns a map where keys are submodule names and values are tuples of
-        (old_commit_hash, new_commit_hash). old_commit_hash matches the Git
-        index, whereas new_commit_hash matches currently checked out commit
-        hash."""
-        out = self._Capture([
-            'diff', '--no-prefix', '--no-ext-diff', '--no-color',
-            '--ignore-submodules=dirty', '--submodule=short'
-        ])
-        NO_COMMIT = 40 * '0'
-        committed_submodule = None
-        checked_submodule = None
-        filepath = None
-        state = 0
-        diff = {}
-        # Parsing git diff uses simple state machine. States:
-        # 0 - start state
-        # 1 - diff file/line detected, ready to process content
-        # 2 - gitlink detected, ready to process gitlink past and current
-        # content.
-        # 3 - past gitlink content detected. It contains a commit hash that's in
-        # git index.
-        # 4 - new gitlink content detected. It contains currently checked
-        # commit. At this point, we have all information needed, and we can
-        # reset state to 0.
-        for l in out.split('\n'):
-            if l.startswith('diff --git'):
-                # New file detected, reset state.
-                state = 1
-            elif state == 1 and l.startswith('index') and l.endswith('160000'):
-                # We detected gitlink
-                state = 2
-            elif state == 2 and l.startswith('+++ '):
-                # This line contains filename
-                filepath = l[4:]
-                state = 3
-            elif state == 3 and l.startswith('-Subproject commit '):
-                # This line contains what commit hash Git index expects
-                # (ls-files).
-                committed_submodule = l.split(' ')[-1]
-                state = 4
-            elif state == 4 and l.startswith('+Subproject commit '):
-                # This line contains currently checked out commit for this submodule.
-                checked_submodule = l.split(' ')[-1]
-                if NO_COMMIT not in (committed_submodule, checked_submodule):
-                    diff[filepath] = (committed_submodule, checked_submodule)
-                state = 0
-        return diff
 
     def diff(self, options, _args, _file_list):
         _, revision = gclient_utils.SplitUrlRevision(self.url)
@@ -702,6 +638,7 @@ class GitWrapper(SCMWrapper):
             raise gclient_utils.Error("Unsupported argument(s): %s" %
                                       ",".join(args))
 
+        current_revision = None
         url, deps_revision = gclient_utils.SplitUrlRevision(self.url)
         revision = deps_revision
         managed = True
@@ -777,11 +714,11 @@ class GitWrapper(SCMWrapper):
                 self._UpdateMirrorIfNotContains(mirror, options, rev_type,
                                                 revision)
             try:
-                self.current_revision = self._Clone(revision, url, options)
+                current_revision = self._Clone(revision, url, options)
             except subprocess2.CalledProcessError as e:
                 logging.warning('Clone failed due to: %s', e)
                 self._DeleteOrMove(options.force)
-                self.current_revision = self._Clone(revision, url, options)
+                current_revision = self._Clone(revision, url, options)
             if file_list is not None:
                 files = self._Capture(
                     ['-c', 'core.quotePath=false', 'ls-files']).splitlines()
@@ -804,17 +741,6 @@ class GitWrapper(SCMWrapper):
             self.Print('________ unmanaged solution; skipping %s' %
                        self.relpath)
             return self._Capture(['rev-parse', '--verify', 'HEAD'])
-
-        # Special case for rev_type = hash. If we use submodules, we can check
-        # information already.
-        if rev_type == 'hash':
-            if self.current_revision == revision:
-                if verbose:
-                    self.Print('Using submodule information to skip check')
-                if options.reset or options.force:
-                    self._Scrub('HEAD', options)
-
-                return revision
 
         self._maybe_break_locks(options)
 

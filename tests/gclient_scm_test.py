@@ -139,7 +139,6 @@ Personalized
 from :3
 M 100644 :4 a
 M 100644 :5 b
-M 160000 1111111111111111111111111111111111111111 submodule
 
 blob
 mark :7
@@ -268,7 +267,7 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         scm.revert(options, self.args, file_list)
         self.assertEqual(file_list, [])
         self.assertEqual(scm.revinfo(options, self.args, None),
-                         '4091c7d010ca99d0f2dd416d4b70b758ae432187')
+                         'a7142dc9f0009350b96a11f372b6ea658592aa95')
         sys.stdout.close()
 
     def testRevertModified(self):
@@ -288,7 +287,7 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         scm.diff(options, self.args, file_list)
         self.assertEqual(file_list, [])
         self.assertEqual(scm.revinfo(options, self.args, None),
-                         '4091c7d010ca99d0f2dd416d4b70b758ae432187')
+                         'a7142dc9f0009350b96a11f372b6ea658592aa95')
         sys.stdout.close()
 
     def testRevertNew(self):
@@ -310,7 +309,7 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         scm.diff(options, self.args, file_list)
         self.assertEqual(file_list, [])
         self.assertEqual(scm.revinfo(options, self.args, None),
-                         '4091c7d010ca99d0f2dd416d4b70b758ae432187')
+                         'a7142dc9f0009350b96a11f372b6ea658592aa95')
         sys.stdout.close()
 
     def testStatusRef(self):
@@ -390,16 +389,14 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         if not self.enabled:
             return
         options = self.Options()
-        expected_file_list = [
-            join(self.base_path, x) for x in ['a', 'b', 'submodule']
-        ]
+        expected_file_list = [join(self.base_path, x) for x in ['a', 'b']]
         scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
         file_list = []
 
         scm.update(options, (), file_list)
         self.assertEqual(file_list, expected_file_list)
         self.assertEqual(scm.revinfo(options, (), None),
-                         '4091c7d010ca99d0f2dd416d4b70b758ae432187')
+                         'a7142dc9f0009350b96a11f372b6ea658592aa95')
         self.assertEqual(
             scm._Capture(['config', '--get', 'diff.ignoreSubmodules']), 'dirty')
         self.assertEqual(
@@ -421,13 +418,12 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         rev = scm.revinfo(options, (), None)
         file_list = []
         scm.update(options, (), file_list)
-        self.assertEqual(
-            file_list,
-            [join(self.base_path, x) for x in ['a', 'b', 'c', 'submodule']])
+        self.assertEqual(file_list,
+                         [join(self.base_path, x) for x in ['a', 'b', 'c']])
         # The actual commit that is created is unstable, so we verify its tree
         # and parents instead.
         self.assertEqual(scm._Capture(['rev-parse', 'HEAD:']),
-                         '3a3ba72731fa208d37b06598a129ba93970325df')
+                         'd2e35c10ac24d6c621e14a1fcadceb533155627d')
         parent = 'HEAD^' if sys.platform != 'win32' else 'HEAD^^'
         self.assertEqual(scm._Capture(['rev-parse', parent + '1']), rev)
         self.assertEqual(scm._Capture(['rev-parse', parent + '2']),
@@ -449,13 +445,12 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
             '(y)es / (q)uit / (s)kip : ', 'y')
         file_list = []
         scm.update(options, (), file_list)
-        self.assertEqual(
-            file_list,
-            [join(self.base_path, x) for x in ['a', 'b', 'c', 'submodule']])
+        self.assertEqual(file_list,
+                         [join(self.base_path, x) for x in ['a', 'b', 'c']])
         # The actual commit that is created is unstable, so we verify its tree
         # and parent instead.
         self.assertEqual(scm._Capture(['rev-parse', 'HEAD:']),
-                         '3a3ba72731fa208d37b06598a129ba93970325df')
+                         'd2e35c10ac24d6c621e14a1fcadceb533155627d')
         parent = 'HEAD^' if sys.platform != 'win32' else 'HEAD^^'
         self.assertEqual(scm._Capture(['rev-parse', parent + '1']),
                          scm._Capture(['rev-parse', 'origin/main']))
@@ -806,15 +801,14 @@ class UnmanagedGitWrapperTestCase(BaseGitWrapperTestCase):
         self.relpath = '.'
         self.base_path = join(self.root_dir, self.relpath)
         url_with_commit_ref = origin_root_dir +\
-                              '@4091c7d010ca99d0f2dd416d4b70b758ae432187'
+                              '@a7142dc9f0009350b96a11f372b6ea658592aa95'
 
         scm = gclient_scm.GitWrapper(url_with_commit_ref, self.root_dir,
                                      self.relpath)
 
         expected_file_list = [
             join(self.base_path, "a"),
-            join(self.base_path, "b"),
-            join(self.base_path, "submodule"),
+            join(self.base_path, "b")
         ]
         file_list = []
         options.revision = 'unmanaged'
@@ -822,11 +816,11 @@ class UnmanagedGitWrapperTestCase(BaseGitWrapperTestCase):
 
         self.assertEqual(file_list, expected_file_list)
         self.assertEqual(scm.revinfo(options, (), None),
-                         '4091c7d010ca99d0f2dd416d4b70b758ae432187')
+                         'a7142dc9f0009350b96a11f372b6ea658592aa95')
         # indicates detached HEAD
         self.assertEqual(self.getCurrentBranch(), None)
         self.checkInStdout(
-            'Checked out 4091c7d010ca99d0f2dd416d4b70b758ae432187 to a detached HEAD'
+            'Checked out a7142dc9f0009350b96a11f372b6ea658592aa95 to a detached HEAD'
         )
 
     def testUpdateCloneOnBranch(self):
@@ -1606,57 +1600,6 @@ class CheckDiffTest(fake_repos.FakeReposTestBase):
             scm.check_diff(self.githash('repo_1', 2),
                            files=['DEPS', 'doesnotmatter']))
         self.assertFalse(scm.check_diff(self.githash('repo_1', 2)))
-
-
-class Submodules(BaseGitWrapperTestCase):
-    submodule_hash = '1111111111111111111111111111111111111111'
-
-    def testGetSubmoduleClean(self):
-        scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
-        options = self.Options()
-        scm.update(options, None, [])
-        self.assertEqual(scm.GetSubmoduleStateFromIndex(),
-                         {'submodule': self.submodule_hash})
-        self.assertEqual(scm.GetSubmoduleDiff(), {})
-
-    def testGetSubmoduleModified(self):
-        scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
-        options = self.Options()
-        scm.update(options, None, [])
-
-        # Create submodule diff
-        submodule_dir = os.path.join(self.root_dir, 'submodule')
-        subprocess2.check_output(['git', '-C', submodule_dir, 'init'])
-        subprocess2.check_output([
-            'git', '-C', submodule_dir, 'commit', '-m', 'foo', '--allow-empty'
-        ])
-        new_rev = subprocess2.check_output(
-            ['git', '-C', submodule_dir, 'rev-parse',
-             'HEAD']).decode('utf-8').strip()
-
-        # And file diff
-        with open(os.path.join(self.root_dir, 'a'), 'w') as f:
-            f.write('foo')
-
-        self.assertEqual(scm.GetSubmoduleStateFromIndex(),
-                         {'submodule': self.submodule_hash})
-
-        self.assertEqual(scm.GetSubmoduleDiff(),
-                         {'submodule': (self.submodule_hash, new_rev)})
-
-    def testGetSubmoduleDeleted(self):
-        scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
-        options = self.Options()
-        scm.update(options, None, [])
-        subprocess2.check_output(
-            ['git', '-C', self.root_dir, 'rm', 'submodule'])
-
-        # When git removes submodule, it's autmatically staged and content is
-        # unavailable. Therefore, the index shouldn't have any entries and diff
-        # should be empty.
-        self.assertEqual(scm.GetSubmoduleStateFromIndex(), {})
-
-        self.assertEqual(scm.GetSubmoduleDiff(), {})
 
 
 if 'unittest.util' in __import__('sys').modules:
