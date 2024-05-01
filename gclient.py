@@ -4103,7 +4103,13 @@ def CMDsetdep(parser, args):
                       'reference (e.g. src/dep@deadbeef). If it is a CIPD '
                       'dependency, dep must be of the form path:package and '
                       'rev must be the package version '
-                      '(e.g. src/pkg:chromium/pkg@2.1-cr0).')
+                      '(e.g. src/pkg:chromium/pkg@2.1-cr0). '
+                      'If it is a GCS dependency, dep must be of the form '
+                      'path@object_name,sha256sum,size_bytes,generation?'
+                      'object_name2,sha256sum2,size_bytes2,generation2?... '
+                      'The number of revision objects for a given path must '
+                      'match the current number of revision objects for that '
+                      'path.')
     parser.add_option(
         '--deps-file',
         default='DEPS',
@@ -4171,6 +4177,23 @@ def CMDsetdep(parser, args):
                     'Wrong CIPD format: %s:%s should be of the form path:pkg@version.'
                     % (name, package))
             gclient_eval.SetCIPD(local_scope, name, package, value)
+        elif ',' in value:
+            objects = []
+            raw_objects = value.split('?')
+            for o in raw_objects:
+                object_info = o.split(',')
+                if len(object_info) != 4:
+                    parser.error(
+                        'All 4 values are required in the revision object: '
+                        'object_name, sha256sum, size_bytes, and generation.')
+                object_dict = {
+                    'object_name': object_info[0],
+                    'sha256sum': object_info[1],
+                    'size_bytes': object_info[2],
+                    'generation': object_info[3],
+                }
+                objects.append(object_dict)
+            gclient_eval.SetGCS(local_scope, name, objects)
         else:
             # Update DEPS only when `git_dependencies` == DEPS or SYNC.
             # git_dependencies is defaulted to DEPS when not set.
