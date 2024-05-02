@@ -958,4 +958,7 @@ def GetRevision(gclient_dict, dep_name):
         _, _, revision = dep['url'].partition('@')
         return revision or None
 
-    raise ValueError('%s is not a valid git dependency.' % dep_name)
+    if isinstance(gclient_dict, _NodeDict) and 'objects' in dep:
+        return dep['objects']
+
+    raise ValueError('%s is not a valid git or gcs dependency.' % dep_name)
