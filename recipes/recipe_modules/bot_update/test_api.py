@@ -8,14 +8,23 @@ from recipe_engine import recipe_test_api
 
 
 class BotUpdateTestApi(recipe_test_api.RecipeTestApi):
-  def output_json(self, root, first_sln, revision_mapping, fail_patch=False,
-                  fixed_revisions=None, commit_positions=True):
+
+  def output_json(
+      self,
+      first_sln,
+      revision_mapping,
+      *,
+      # TODO(gbeaty) Switch downstream to patch_root, remove this
+      root=None,
+      patch_root=None,
+      fail_patch=False,
+      fixed_revisions=None,
+      commit_positions=True):
     """Deterministically synthesize json.output test data for gclient's
     --output-json option.
     """
     output = {
         'did_run': True,
-        'patch_failure': False
     }
 
     revisions = {
@@ -53,7 +62,7 @@ class BotUpdateTestApi(recipe_test_api.RecipeTestApi):
       })
 
     output.update({
-        'patch_root': root or first_sln,
+        'patch_root': root or patch_root,
         'root': first_sln,
         'properties': properties,
         'step_text': 'Some step text'
@@ -87,7 +96,7 @@ class BotUpdateTestApi(recipe_test_api.RecipeTestApi):
     if fixed_revisions:
       output['fixed_revisions'] = fixed_revisions
 
-    if fail_patch:
+    if patch_root and fail_patch:
       output['patch_failure'] = True
       output['failed_patch_body'] = '\n'.join([
         'Downloading patch...',

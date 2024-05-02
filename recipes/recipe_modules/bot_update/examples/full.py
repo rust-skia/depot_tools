@@ -243,18 +243,19 @@ def GenTests(api):
   )
 
   yield (
-      api.test('revision_fallback_chain_set_output_commit') +
-      ci_build() +
+      api.test('revision_fallback_chain_set_output_commit') + ci_build() +
       api.properties(
           set_output_commit=True,
           revision_fallback_chain=True,
       ) +
       # Don't set commit position properties so that the set_output_commit code
       # attempts to do comparisons on the revision value
-      api.step_data('bot_update (without patch)', api.bot_update.output_json(
-          root='src', first_sln='src', revision_mapping={'got_revision': 'src'},
-          commit_positions=False))
-  )
+      api.step_data(
+          'bot_update (without patch)',
+          api.bot_update.output_json(patch_root='src',
+                                     first_sln='src',
+                                     revision_mapping={'got_revision': 'src'},
+                                     commit_positions=False)))
 
   yield (api.test('upload_traces', status="FAILURE") + try_build() +
          api.properties(fail_patch='apply') +
