@@ -2193,6 +2193,14 @@ class CogWrapper(SCMWrapper):
         return None
 
     #override
+    def GetSubmoduleDiff(self):
+        return None
+
+    #override
+    def GetSubmoduleStateFromIndex(self):
+        return None
+
+    #override
     def DoesRemoteURLMatch(self, options):
         del options
         return True
