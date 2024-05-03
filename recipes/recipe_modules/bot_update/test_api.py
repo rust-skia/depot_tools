@@ -9,17 +9,14 @@ from recipe_engine import recipe_test_api
 
 class BotUpdateTestApi(recipe_test_api.RecipeTestApi):
 
-  def output_json(
-      self,
-      first_sln,
-      revision_mapping,
-      *,
-      # TODO(gbeaty) Switch downstream to patch_root, remove this
-      root=None,
-      patch_root=None,
-      fail_patch=False,
-      fixed_revisions=None,
-      commit_positions=True):
+  def output_json(self,
+                  first_sln,
+                  revision_mapping,
+                  *,
+                  patch_root=None,
+                  fail_patch=False,
+                  fixed_revisions=None,
+                  commit_positions=True):
     """Deterministically synthesize json.output test data for gclient's
     --output-json option.
     """
@@ -62,7 +59,7 @@ class BotUpdateTestApi(recipe_test_api.RecipeTestApi):
       })
 
     output.update({
-        'patch_root': root or patch_root,
+        'patch_root': patch_root,
         'root': first_sln,
         'properties': properties,
         'step_text': 'Some step text'
