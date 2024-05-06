@@ -151,7 +151,7 @@ def construct_deps_blob(bucket: str, object_name: str, file: str,
                         generation: str) -> dict:
     """Output a blob hint that would need be added to a DEPS file"""
     return {
-        '<path>': {
+        'path': {
             'dep_type':
             'gcs',
             'bucket':
