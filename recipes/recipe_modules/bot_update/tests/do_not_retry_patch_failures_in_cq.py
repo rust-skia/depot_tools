@@ -33,12 +33,15 @@ def RunSteps(api):
 
 def GenTests(api):
 
-  yield (api.test('works as intended') + api.buildbucket.try_build(
-      'chromium/src',
-      'try',
-      'linux',
-      git_repo='https://chromium.googlesource.com/chromium/src') +
-         api.properties(fail_patch='apply') + api.step_data(
-             'bot_update', retcode=88) + api.post_check(
-                 lambda check, steps: check('cq will not retry this' in steps))
-         + api.post_process(post_process.DropExpectation))
+  yield api.test(
+      'works as intended',
+      api.buildbucket.try_build(
+          'chromium/src',
+          'try',
+          'linux',
+          git_repo='https://chromium.googlesource.com/chromium/src'),
+      api.bot_update.fail_patch(True),
+      api.post_check(
+          lambda check, steps: check('cq will not retry this' in steps)),
+      api.post_process(post_process.DropExpectation),
+  )

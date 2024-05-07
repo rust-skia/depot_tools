@@ -26,13 +26,13 @@ DEPS = [
 from recipe_engine.recipe_api import Property
 
 PROPERTIES = {
-  # Gerrit patches will have all properties about them prefixed with patch_.
-  'deps_revision_overrides': Property(default={}),
-  'fail_patch': Property(default=None, kind=str),
-
-  '$depot_tools/bot_update': Property(
-      help='Properties specific to bot_update module.',
-      param_name='properties',
-      default={},
-  ),
+    # Gerrit patches will have all properties about them prefixed with patch_.
+    'deps_revision_overrides':
+    Property(default={}),
+    '$depot_tools/bot_update':
+    Property(
+        help='Properties specific to bot_update module.',
+        param_name='properties',
+        default={},
+    ),
 }

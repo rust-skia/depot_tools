@@ -11,10 +11,8 @@ from PB.go.chromium.org.luci.buildbucket.proto import common as common_pb2
 
 class BotUpdateApi(recipe_api.RecipeApi):
 
-  def __init__(self, properties, deps_revision_overrides, fail_patch, *args,
-               **kwargs):
+  def __init__(self, properties, deps_revision_overrides, *args, **kwargs):
     self._deps_revision_overrides = deps_revision_overrides
-    self._fail_patch = fail_patch
 
     self._last_returned_properties = {}
     super(BotUpdateApi, self).__init__(*args, **kwargs)
@@ -350,12 +348,15 @@ class BotUpdateApi(recipe_api.RecipeApi):
 
     # Inject Json output for testing.
     first_sln = cfg.solutions[0].name
-    step_test_data = step_test_data or (
-        lambda: self.test_api.output_json(first_sln,
-                                          reverse_rev_map,
-                                          patch_root=patch_root,
-                                          fail_patch=self._fail_patch,
-                                          fixed_revisions=fixed_revisions))
+    step_test_data = step_test_data or (lambda: self.test_api.output_json(
+        first_sln,
+        reverse_rev_map,
+        patch_root=patch_root,
+        fixed_revisions=fixed_revisions,
+        fail_checkout=self._test_data.get('fail_checkout', False),
+        fail_patch=self._test_data.get('fail_patch', False),
+        commit_positions=self._test_data.get('commit_positions', True),
+    ))
 
     name = 'bot_update'
     if not patch:

@@ -67,10 +67,6 @@ def RunSteps(api):
   add_blamelists = api.properties.get('add_blamelists', False)
   set_output_commit = api.properties.get('set_output_commit', True)
 
-  step_test_data = None
-  bot_update_output = engine_types.thaw(api.properties.get('bot_update_output'))
-  if bot_update_output:
-    step_test_data = lambda: api.json.test_api.output(bot_update_output)
   rev_overrides = {'infra': 'HEAD'}
   bot_update_step = api.bot_update.ensure_checkout(
       patch=patch,
@@ -85,7 +81,6 @@ def RunSteps(api):
       patch_refs=patch_refs,
       add_blamelists=add_blamelists,
       set_output_commit=set_output_commit,
-      step_test_data=step_test_data,
       recipe_revision_overrides=rev_overrides,
   )
   if patch:
@@ -126,10 +121,12 @@ def GenTests(api):
   )
   yield (api.test('unrecognized_commit_repo', status="INFRA_FAILURE") +
          ci_build(git_repo='https://unrecognized/repo'))
-  yield (
-      api.test('bot_update_failure') +
-      ci_build() +
-      api.properties(bot_update_output={'did_run': True})
+
+  yield api.test(
+      'bot_update_failure',
+      ci_build(),
+      api.bot_update.fail_checkout(True),
+      api.expect_status('INFRA_FAILURE'),
   )
 
   yield (
@@ -167,12 +164,21 @@ def GenTests(api):
   )
   yield (api.test('tryjob_fail', status="INFRA_FAILURE") + try_build() +
          api.step_data('bot_update', api.json.invalid(None), retcode=1))
-  yield (api.test('tryjob_fail_patch', status="FAILURE") + try_build() +
-         api.properties(fail_patch='apply') +
-         api.step_data('bot_update', retcode=88))
-  yield (api.test('tryjob_fail_patch_download', status="INFRA_FAILURE") +
-         try_build() + api.properties(fail_patch='download') +
-         api.step_data('bot_update', retcode=87))
+
+  yield api.test(
+      'tryjob_fail_patch',
+      try_build(),
+      api.bot_update.fail_patch(True),
+      api.expect_status('FAILURE'),
+  )
+
+  yield api.test(
+      'tryjob_fail_patch_download',
+      try_build(),
+      api.bot_update.fail_patch('download'),
+      api.expect_status('INFRA_FAILURE'),
+  )
+
   yield (
       api.test('tryjob_fail_missing_bot_update_json', status="INFRA_FAILURE") +
       try_build() + api.override_step_data('bot_update', retcode=1) +
@@ -257,16 +263,23 @@ def GenTests(api):
                                      revision_mapping={'got_revision': 'src'},
                                      commit_positions=False)))
 
-  yield (api.test('upload_traces', status="FAILURE") + try_build() +
-         api.properties(fail_patch='apply') +
-         api.step_data('bot_update', retcode=88))
+  yield api.test(
+      'upload_traces',
+      try_build(),
+      api.bot_update.fail_patch(True),
+      api.expect_status('FAILURE'),
+  )
 
-  yield (api.test('upload_traces_fail', status="FAILURE") + try_build() +
-         api.properties(fail_patch='apply') +
-         api.step_data('bot_update', retcode=88) + api.step_data(
-             'upload git traces.gsutil upload',
-             retcode=1,
-         ))
+  yield api.test(
+      'upload_traces_fail',
+      try_build(),
+      api.bot_update.fail_patch(True),
+      api.step_data(
+          'upload git traces.gsutil upload',
+          retcode=1,
+      ),
+      api.expect_status('FAILURE'),
+  )
 
   yield (
       api.test('revision_specifying_ref') +
@@ -285,84 +298,37 @@ def GenTests(api):
       )
   )
 
-  yield (
-      api.test('add_blamelists_bot_update_failure') +
-      ci_build() +
+  yield api.test(
+      'add_blamelists_bot_update_failure',
+      ci_build(),
       api.properties(
           add_blamelists=True,
-          bot_update_output={'did_run': True},
           revisions={'src/v8': 'HEAD'},
-      )
+      ),
+      api.bot_update.fail_checkout(True),
+      api.expect_status('INFRA_FAILURE'),
   )
 
-  yield (
-      api.test('no_cp_checkout_a_specific_commit') +
-      ci_build(revision='a' * 40) +
-      api.properties(
-          bot_update_output={
-            'properties': {
-              'got_revision': 'a' * 40,
-            },
-            'manifest': {
-              'src': {
-                'revision': 'a' * 40,
-                'repository': 'https://chromium.googlesource.com/chromium/src',
-              }
-            }
-          }
-      )
+  yield api.test(
+      'no_cp_checkout_a_specific_commit',
+      ci_build(revision='a' * 40),
+      api.bot_update.commit_positions(False),
   )
 
-  yield (
-      api.test('no_cp_checkout_main') +
-      ci_build(revision='') +
-      api.properties(
-          bot_update_output={
-            'properties': {
-              'got_revision': 'a' * 40,
-            },
-            'manifest': {
-              'src': {
-                'revision': 'a' * 40,
-                'repository': 'https://chromium.googlesource.com/chromium/src',
-              }
-            }
-          }
-      )
+  yield api.test(
+      'no_cp_checkout_main',
+      ci_build(revision=''),
+      api.bot_update.commit_positions(False),
   )
 
-  yield (
-      api.test('no_cp_checkout_a_branch_head') +
-      ci_build(revision='', git_ref='refs/branch-heads/x') +
-      api.properties(
-          bot_update_output={
-            'properties': {
-              'got_revision': 'a' * 40,
-            },
-            'manifest': {
-              'src': {
-                'revision': 'a' * 40,
-                'repository': 'https://chromium.googlesource.com/chromium/src',
-              }
-            }
-          }
-      )
+  yield api.test(
+      'no_cp_checkout_a_branch_head',
+      ci_build(revision='', git_ref='refs/branch-heads/x'),
+      api.bot_update.commit_positions(False),
   )
 
-  yield (
-      api.test('no_cp_checkout_HEAD') +
-      ci_build(revision='HEAD') +
-      api.properties(
-          bot_update_output={
-            'properties': {
-              'got_revision': 'a' * 40,
-            },
-            'manifest': {
-              'src': {
-                'revision': 'a' * 40,
-                'repository': 'https://chromium.googlesource.com/chromium/src',
-              }
-            }
-          }
-      )
+  yield api.test(
+      'no_cp_checkout_HEAD',
+      ci_build(revision='HEAD'),
+      api.bot_update.commit_positions(False),
   )
