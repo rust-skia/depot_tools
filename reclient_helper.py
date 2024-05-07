@@ -359,7 +359,7 @@ def build_context(argv, tool):
     reproxy_ret_code = start_reproxy(reclient_cfg, reclient_bin_dir)
     if os.environ.get('NINJA_SUMMARIZE_BUILD') == '1':
         elapsed = time.time() - start
-        print('%1.3f s to start reproxy' % elapsed)
+        print('%1.3fs to start reproxy' % elapsed)
     if reproxy_ret_code != 0:
         print(f'''Failed to start reproxy!
 See above error message for details.
@@ -375,4 +375,4 @@ Ensure you have completed the reproxy setup instructions:
         stop_reproxy(reclient_cfg, reclient_bin_dir)
         if os.environ.get('NINJA_SUMMARIZE_BUILD') == '1':
             elapsed = time.time() - start
-            print('%1.3f s to stop reproxy' % elapsed)
+            print('%1.3fs to stop reproxy' % elapsed)
