@@ -1655,8 +1655,7 @@ class GitDependency(Dependency):
     def _IsCog():
         """Returns true if the env is cog"""
         if GitDependency._is_env_cog is None:
-            GitDependency._is_env_cog = os.getcwd().startswith(
-                '/google/cog/cloud')
+            GitDependency._is_env_cog = gclient_utils.IsEnvCog()
 
         return GitDependency._is_env_cog
 

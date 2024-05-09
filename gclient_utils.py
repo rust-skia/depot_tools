@@ -1201,6 +1201,11 @@ def RunEditor(content, git, git_editor=None):
         os.remove(filename)
 
 
+def IsEnvCog():
+    """Returns whether the command is running in a Cog environment."""
+    return os.getcwd().startswith('/google/cog/cloud')
+
+
 def UpgradeToHttps(url):
     """Upgrades random urls to https://.
 
