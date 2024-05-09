@@ -780,6 +780,9 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                                     'dependency.'.format(name))
                 gcs_root = self.GetGcsRoot()
                 for obj in dep_value['objects']:
+                    merged_condition = gclient_utils.merge_conditions(
+                        condition, obj.get('condition'))
+
                     deps_to_add.append(
                         GcsDependency(parent=self,
                                       name=name,
@@ -792,7 +795,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                                       custom_vars=self.custom_vars,
                                       should_process=should_process,
                                       relative=use_relative_paths,
-                                      condition=condition))
+                                      condition=merged_condition))
             else:
                 url = dep_value.get('url')
                 deps_to_add.append(

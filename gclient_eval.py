@@ -137,11 +137,20 @@ _GCLIENT_DEPS_SCHEMA = _NodeDictSchema({
             str,
             'objects': [
                 _NodeDictSchema({
-                    'object_name': str,
-                    'sha256sum': str,
-                    'size_bytes': int,
-                    'generation': int,
-                    schema.Optional('output_file'): str,
+                    'object_name':
+                    str,
+                    'sha256sum':
+                    str,
+                    'size_bytes':
+                    int,
+                    'generation':
+                    int,
+                    schema.Optional('output_file'):
+                    str,
+                    # The object will only be processed if the condition
+                    # evaluates to True. This is AND with the parent condition.
+                    schema.Optional('condition'):
+                    str,
                 })
             ],
             schema.Optional('condition'):
