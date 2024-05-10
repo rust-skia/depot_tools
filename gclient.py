@@ -4201,12 +4201,21 @@ def CMDsetdep(parser, args):
     if (not is_cog and 'git_dependencies' in local_scope
             and local_scope['git_dependencies']
             in (gclient_eval.SUBMODULES, gclient_eval.SYNC)):
-        try:
-            submodule_status = subprocess2.check_output(
-                ['git', 'submodule', 'status'], cwd=cwd).decode('utf-8')
-            git_modules = {l.split()[1] for l in submodule_status.splitlines()}
-        except subprocess2.CalledProcessError as e:
-            print('Warning: gitlinks won\'t be updated: ', e)
+        cmd = ['git', 'ls-files', '--format=%(objectmode) %(path)']
+        with subprocess2.Popen(
+                cmd,
+                cwd=cwd,
+                stdout=subprocess2.PIPE,
+                stderr=None if options.verbose else subprocess2.DEVNULL,
+                text=True) as p:
+            git_modules = {
+                line.split()[1].strip()
+                for line in p.stdout if line.startswith('160000')
+            }
+        if p.returncode != 0:
+            print('Warning: gitlinks won\'t be updated because computing '
+                  'submodules has failed.')
+            git_modules = None
 
     for var in options.vars:
         name, _, value = var.partition('=')
