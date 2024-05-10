@@ -4197,8 +4197,10 @@ def CMDsetdep(parser, args):
     # Create a set of all git submodules.
     cwd = os.path.dirname(options.deps_file) or os.getcwd()
     git_modules = None
-    if 'git_dependencies' in local_scope and local_scope[
-            'git_dependencies'] in (gclient_eval.SUBMODULES, gclient_eval.SYNC):
+    is_cog = gclient_utils.IsEnvCog()
+    if (not is_cog and 'git_dependencies' in local_scope
+            and local_scope['git_dependencies']
+            in (gclient_eval.SUBMODULES, gclient_eval.SYNC)):
         try:
             submodule_status = subprocess2.check_output(
                 ['git', 'submodule', 'status'], cwd=cwd).decode('utf-8')
@@ -4248,7 +4250,7 @@ def CMDsetdep(parser, args):
                     object_dict['output_file'] = object_info[4]
                 objects.append(object_dict)
             gclient_eval.SetGCS(local_scope, name, objects)
-        else:
+        else:  # git dependencies
             # Update DEPS only when `git_dependencies` == DEPS or SYNC.
             # git_dependencies is defaulted to DEPS when not set.
             if 'git_dependencies' not in local_scope or local_scope[
@@ -4261,6 +4263,10 @@ def CMDsetdep(parser, args):
             if git_modules and 'git_dependencies' in local_scope and local_scope[
                     'git_dependencies'] in (gclient_eval.SUBMODULES,
                                             gclient_eval.SYNC):
+                if is_cog:
+                    parser.error(
+                        f'Set git dependency "{name}" is currently not '
+                        'supported.')
                 git_module_name = name
                 if not 'use_relative_paths' in local_scope or \
                     local_scope['use_relative_paths'] != True:
