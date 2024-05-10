@@ -116,8 +116,7 @@ class PresubmitApi(recipe_api.RecipeApi):
         # as the delimiter. This breaks on windows otherwise.
         self._relative_root.replace(self.m.path.sep, '/'),
         self.m.gclient.c)
-    upstream = bot_update_step.json.output['properties'].get(
-        got_revision_properties[0])
+    upstream = bot_update_step.properties.get(got_revision_properties[0])
 
     presubmit_args = []
     if self.m.tryserver.is_tryserver:

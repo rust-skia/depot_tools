@@ -20,6 +20,7 @@ DEPS = [
     'recipe_engine/raw_io',
     'recipe_engine/runtime',
     'recipe_engine/step',
+    'recipe_engine/warning',
     'tryserver',
 ]
 
@@ -36,3 +37,6 @@ PROPERTIES = {
         default={},
     ),
 }
+
+# Forward these types so that they can be used without importing api
+from .api import RelativeRoot, Result
