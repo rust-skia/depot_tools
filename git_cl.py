@@ -46,6 +46,7 @@ import gerrit_util
 import git_common
 import git_footers
 import git_new_branch
+import google_java_format
 import metrics
 import metrics_utils
 import owners_client
@@ -6142,34 +6143,16 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
     return return_value
 
 
-def _FindGoogleJavaFormat():
-    # Allow non-chromium projects to use a custom location.
-    primary_solution_path = gclient_paths.GetPrimarySolutionPath()
-    if primary_solution_path:
-        override = os.environ.get('GOOGLE_JAVA_FORMAT_PATH')
-        if override:
-            # Make relative to solution root if not an absolute path.
-            return os.path.join(primary_solution_path, override)
-
-        path = os.path.join(primary_solution_path, 'third_party',
-                            'google-java-format', 'google-java-format')
-        # Check that the .jar exists, since it is conditionally downloaded via
-        # DEPS conditions.
-        if os.path.exists(path) and os.path.exists(path + '.jar'):
-            return path
-    return None
-
-
 def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
     """Runs google-java-format and sets a return value if necessary."""
-    google_java_format = _FindGoogleJavaFormat()
-    if google_java_format is None:
+    tool = google_java_format.FindGoogleJavaFormat()
+    if tool is None:
         # Fail silently. It could be we are on an old chromium revision, or that
         # it is a non-chromium project. https://crbug.com/1491627
         print('google-java-format not found, skipping java formatting.')
         return 0
 
-    base_cmd = [google_java_format, '--aosp']
+    base_cmd = [tool, '--aosp']
     if not opts.diff:
         if opts.dry_run:
             base_cmd += ['--dry-run']
