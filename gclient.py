@@ -3642,6 +3642,11 @@ def CMDpack(parser, args):
 @metrics.collector.collect_metrics('gclient status')
 def CMDstatus(parser, args):
     """Shows modification status for every dependencies."""
+    if gclient_utils.IsEnvCog():
+        raise gclient_utils.Error(
+            'gclient status command is not supported. Please navigate to '
+            'source control view in the activiy bar to view modification '
+            'status instead.')
     parser.add_option('--deps',
                       dest='deps_os',
                       metavar='OS_LIST',
