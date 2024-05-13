@@ -3194,6 +3194,10 @@ def CMDgitmodules(parser, args):
     It will create or update the .gitmodules file and include
     `gclient-condition` values. Commits in gitlinks will also be updated.
     """
+    if gclient_utils.IsEnvCog():
+        raise gclient_utils.Error(
+            'updating git submodules is not supported. Please upvote '
+            'b/340254045 if you require this functionality.')
     parser.add_option('--output-gitmodules',
                       help='name of the .gitmodules file to write to',
                       default='.gitmodules')
