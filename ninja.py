@@ -42,7 +42,7 @@ def checkOutdir(ninja_args):
             out_dir = ninja_args[i + 1]
         elif arg.startswith("-C"):
             out_dir = arg[2:]
-    if tool in ["list", "commands", "inputs"]:
+    if tool in ["list", "commands", "inputs", "targets"]:
         # These tools are just inspect ninja rules and not modify out dir.
         # TODO: b/339320220 - implement these in siso
         return
