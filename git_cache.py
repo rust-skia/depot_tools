@@ -890,13 +890,6 @@ def CMDfetch(parser, args):
     return 0
 
 
-@subcommand.usage('do not use - it is a noop.')
-@metrics.collector.collect_metrics('git cache unlock')
-def CMDunlock(parser, args):
-    """This command does nothing."""
-    print('This command does nothing and will be removed in the future.')
-
-
 class OptionParser(optparse.OptionParser):
     """Wrapper class for OptionParser to handle global options."""
     def __init__(self, *args, **kwargs):
