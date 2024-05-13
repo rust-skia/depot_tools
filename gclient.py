@@ -3935,7 +3935,7 @@ def CMDrevert(parser, args):
     if gclient_utils.IsEnvCog():
         raise gclient_utils.Error(
             'gclient revert command is not supported. Please navigate to '
-            'source control view in the activiy bar to discard changes '
+            'source control view in the activity bar to discard changes '
             'instead.')
     parser.add_option('--deps',
                       dest='deps_os',
