@@ -3923,8 +3923,13 @@ def CMDdiff(parser, args):
 def CMDrevert(parser, args):
     """Reverts all modifications in every dependencies.
 
-    That's the nuclear option to get back to a 'clean' state. It removes anything
-    that shows up in git status."""
+    That's the nuclear option to get back to a 'clean' state. It removes
+    anything that shows up in git status."""
+    if gclient_utils.IsEnvCog():
+        raise gclient_utils.Error(
+            'gclient revert command is not supported. Please navigate to '
+            'source control view in the activiy bar to discard changes '
+            'instead.')
     parser.add_option('--deps',
                       dest='deps_os',
                       metavar='OS_LIST',
