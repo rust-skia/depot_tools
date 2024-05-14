@@ -3022,6 +3022,9 @@ def CMDfetch(parser, args):
 
     Completely git-specific. Simply runs 'git fetch [args ...]' for each module.
     """
+    if gclient_utils.IsEnvCog():
+        raise gclient_utils.Error(
+            'gclient fetch command is not supported in non-git environment.')
     (options, args) = parser.parse_args(args)
     return CMDrecurse(
         OptionParser(),
