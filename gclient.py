@@ -4185,7 +4185,7 @@ def CMDsetdep(parser, args):
                       'object_name2,sha256sum2,size_bytes2,generation2?... '
                       'The number of revision objects for a given path must '
                       'match the current number of revision objects for that '
-                      'path.')
+                      'path, and objects order will be preserved.')
     parser.add_option(
         '--deps-file',
         default='DEPS',
@@ -4269,20 +4269,16 @@ def CMDsetdep(parser, args):
             raw_objects = value.split('?')
             for o in raw_objects:
                 object_info = o.split(',')
-                if len(object_info) != 4 and len(object_info) != 5:
+                if len(object_info) != 4:
                     parser.error(
                         'All values are required in the revision object: '
-                        'object_name, sha256sum, size_bytes, generation, '
-                        'and (optional) output_file.')
-                object_dict = {
+                        'object_name, sha256sum, size_bytes and generation.')
+                objects.append({
                     'object_name': object_info[0],
                     'sha256sum': object_info[1],
                     'size_bytes': object_info[2],
                     'generation': object_info[3],
-                }
-                if len(object_info) == 5:
-                    object_dict['output_file'] = object_info[4]
-                objects.append(object_dict)
+                })
             gclient_eval.SetGCS(local_scope, name, objects)
         else:  # git dependencies
             # Update DEPS only when `git_dependencies` == DEPS or SYNC.
