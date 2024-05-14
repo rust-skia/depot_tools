@@ -3887,6 +3887,11 @@ def CMDcreds_check(parser, args):
 @metrics.collector.collect_metrics('git cl baseurl')
 def CMDbaseurl(parser, args):
     """Gets or sets base-url for this branch."""
+    if gclient_utils.IsEnvCog():
+        print('baseurl command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     _, args = parser.parse_args(args)
     branchref = scm.GIT.GetBranchRef(settings.GetRoot())
     branch = scm.GIT.ShortBranchName(branchref)
@@ -4097,6 +4102,11 @@ def GetArchiveTagForBranch(issue_num, branch_name, existing_tags, pattern):
 @metrics.collector.collect_metrics('git cl archive')
 def CMDarchive(parser, args):
     """Archives and deletes branches associated with closed changelists."""
+    if gclient_utils.IsEnvCog():
+        print('archive command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     parser.add_option(
         '-j',
         '--maxjobs',
@@ -4210,6 +4220,13 @@ def CMDstatus(parser, args):
 
     Also see 'git cl comments'.
     """
+    if gclient_utils.IsEnvCog():
+        print(
+            'status command is not supported. Please go to the Gerrit CL '
+            'page to check the CL status directly.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('--no-branch-color',
                       action='store_true',
                       help='Disable colorized branch names')
@@ -4383,6 +4400,15 @@ def CMDissue(parser, args):
 
     Pass issue number 0 to clear the current issue.
     """
+    if gclient_utils.IsEnvCog():
+        print(
+            'issue command is not supported. CL number is available in the '
+            'primary side bar at the bottom of your editor. Setting the CL '
+            'number is not supported, you can open a new workspace from the '
+            'Gerrit CL directly.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('-r',
                       '--reverse',
                       action='store_true',
@@ -4454,6 +4480,14 @@ def CMDissue(parser, args):
 @metrics.collector.collect_metrics('git cl comments')
 def CMDcomments(parser, args):
     """Shows or posts review comments for any changelist."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'comments command is not supported in non-git environment. '
+            'Comments on the CL should show up inline in your editor. To '
+            'post comments, please visit Gerrit CL page.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('-a',
                       '--add-comment',
                       dest='comment',
@@ -4524,6 +4558,14 @@ def CMDcomments(parser, args):
 @metrics.collector.collect_metrics('git cl description')
 def CMDdescription(parser, args):
     """Brings up the editor for the current CL's description."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'description command is not supported. Please use "Gerrit: Edit '
+            'Change Information" functionality in the command palatte to edit '
+            'the CL description.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option(
         '-d',
         '--display',
@@ -4678,6 +4720,12 @@ def CMDlint(parser, args):
 @subcommand.usage('[base branch]')
 def CMDpresubmit(parser, args):
     """Runs presubmit tests on the current changelist."""
+    if gclient_utils.IsEnvCog():
+        # TODO - crbug/336555565: give user more instructions on how to
+        # trigger presubmit in Cog once the UX is finalized.
+        print('presubmit command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
     parser.add_option('-u',
                       '--upload',
                       action='store_true',
@@ -4875,6 +4923,13 @@ def CMDupload(parser, args):
         Foo bar: implement foo
     will be hashtagged with "git-cl" and "foo-bar" respectively.
     """
+    if gclient_utils.IsEnvCog():
+        print(
+            'upload command is not supported. Please navigate to source '
+            'control view in the activity bar to upload changes to Gerrit.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('--bypass-hooks',
                       action='store_true',
                       dest='bypass_hooks',
@@ -5390,6 +5445,11 @@ def CMDsplit(parser, args):
     comment, the string '$directory', is replaced with the directory containing
     the shared OWNERS file.
     """
+    if gclient_utils.IsEnvCog():
+        print('split command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     parser.add_option('-d',
                       '--description',
                       dest='description_file',
@@ -5477,6 +5537,13 @@ def CMDland(parser, args):
     In case of Gerrit, uses Gerrit REST api to "submit" the issue, which pushes
     upstream and closes the issue automatically and atomically.
     """
+    if gclient_utils.IsEnvCog():
+        print(
+            'land command is not supported. Please go to the Gerrit CL '
+            'directly to submit the CL',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('--bypass-hooks',
                       action='store_true',
                       dest='bypass_hooks',
@@ -5512,6 +5579,13 @@ def CMDland(parser, args):
 @metrics.collector.collect_metrics('git cl patch')
 def CMDpatch(parser, args):
     """Applies (cherry-picks) a Gerrit changelist locally."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'patch command is not supported. Please create a new workspace '
+            'from the Gerrit CL directly',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('-b',
                       '--branch',
                       dest='newbranch',
@@ -5627,6 +5701,13 @@ def GetTreeStatusReason():
 @metrics.collector.collect_metrics('git cl tree')
 def CMDtree(parser, args):
     """Shows the status of the tree."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'tree command is not supported. Please go to the tree '
+            'status UI to check the status of the tree directly.',
+            file=sys.stderr)
+        return 1
+
     _, args = parser.parse_args(args)
     status = GetTreeStatus()
     if 'unset' == status:
@@ -5646,6 +5727,13 @@ def CMDtree(parser, args):
 @metrics.collector.collect_metrics('git cl try')
 def CMDtry(parser, args):
     """Triggers tryjobs using either Buildbucket or CQ dry run."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'try command is not supported. Please go to the Gerrit CL '
+            'page to trigger individual builds or CQ dry run.',
+            file=sys.stderr)
+        return 1
+
     group = optparse.OptionGroup(parser, 'Tryjob options')
     group.add_option(
         '-b',
@@ -5784,6 +5872,13 @@ def CMDtry(parser, args):
 @metrics.collector.collect_metrics('git cl try-results')
 def CMDtry_results(parser, args):
     """Prints info about results for tryjobs associated with the current CL."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'try-results command is not supported. Please go to the Gerrit '
+            'CL page to see the tryjob results instead.',
+            file=sys.stderr)
+        return 1
+
     group = optparse.OptionGroup(parser, 'Tryjob results options')
     group.add_option('-p',
                      '--patchset',
@@ -5843,6 +5938,11 @@ def CMDtry_results(parser, args):
 @metrics.collector.collect_metrics('git cl upstream')
 def CMDupstream(parser, args):
     """Prints or sets the name of the upstream branch, if any."""
+    if gclient_utils.IsEnvCog():
+        print('upstream command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     _, args = parser.parse_args(args)
     if len(args) > 1:
         parser.error('Unrecognized args: %s' % ' '.join(args))
@@ -5864,6 +5964,14 @@ def CMDupstream(parser, args):
 @metrics.collector.collect_metrics('git cl web')
 def CMDweb(parser, args):
     """Opens the current CL in the web browser."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'web command is not supported. Please use "Gerrit: Open Changes '
+            'in Gerrit" functionality in the command palette in the Editor '
+            'instead.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('-p',
                       '--print-only',
                       action='store_true',
@@ -5902,6 +6010,13 @@ def CMDweb(parser, args):
 @metrics.collector.collect_metrics('git cl set-commit')
 def CMDset_commit(parser, args):
     """Sets the commit bit to trigger the CQ."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'set-commit command is not supported. Please go to the Gerrit CL '
+            'page directly to submit the CL.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('-d',
                       '--dry-run',
                       action='store_true',
@@ -5939,6 +6054,13 @@ def CMDset_commit(parser, args):
 @metrics.collector.collect_metrics('git cl set-close')
 def CMDset_close(parser, args):
     """Closes the issue."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'set-close command is not supported. Please go to the Gerrit CL '
+            'page to abandon the CL instead.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option(
         '-i',
         '--issue',
@@ -5959,6 +6081,13 @@ def CMDset_close(parser, args):
 @metrics.collector.collect_metrics('git cl diff')
 def CMDdiff(parser, args):
     """Shows differences between local tree and last upload."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'diff command is not supported. Please navigate to source '
+            'control view in the activity bar to check the diff.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('--stat',
                       action='store_true',
                       dest='stat',
@@ -5995,6 +6124,11 @@ def CMDdiff(parser, args):
 @metrics.collector.collect_metrics('git cl owners')
 def CMDowners(parser, args):
     """Finds potential owners for reviewing."""
+    if gclient_utils.IsEnvCog():
+        print('owners command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     parser.add_option(
         '--ignore-current',
         action='store_true',
@@ -6433,6 +6567,13 @@ def MatchingFileType(file_name, extensions):
 @metrics.collector.collect_metrics('git cl format')
 def CMDformat(parser, args):
     """Runs auto-formatting tools (clang-format etc.) on the diff."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'format command is not supported. Please use the "Format '
+            'Document" functionality in command palette in the Editor '
+            'instead.',
+            file=sys.stderr)
+        return 1
     clang_exts = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto']
     GN_EXTS = ['.gn', '.gni', '.typemap']
     parser.add_option('--full',
@@ -6587,6 +6728,11 @@ def GetMetricsDir(diff_xml):
 @metrics.collector.collect_metrics('git cl checkout')
 def CMDcheckout(parser, args):
     """Checks out a branch associated with a given Gerrit issue."""
+    if gclient_utils.IsEnvCog():
+        print('checkout command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     _, args = parser.parse_args(args)
 
     if len(args) != 1:
