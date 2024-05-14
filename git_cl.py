@@ -4638,6 +4638,9 @@ def FindFilesForLint(options, args):
             else:
                 print('%s is not a file' % fn)
                 return None, None
+    elif gclient_utils.IsEnvCog():
+        print('Error: missing files to lint')
+        return None, None
     else:
         # If file names are omitted, use the git APIs to find the files to lint.
         include_regex = re.compile(settings.GetLintRegex())
@@ -4666,8 +4669,10 @@ def CMDlint(parser, args):
     """Runs cpplint on the current changelist or given files.
 
     positional arguments:
-      files           Files to lint. If omitted, it will run cpplint against
-                      all the affected files in the current git checkout.
+      files           Files to lint. If omitted in the current git checkout, it
+                      will run cpplint against all the affected files. If it is
+                      not executed in git checkouts, files to lint must be
+                      provided.
     """
     parser.add_option(
         '--filter',
