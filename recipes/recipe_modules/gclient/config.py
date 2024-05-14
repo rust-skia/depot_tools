@@ -36,10 +36,6 @@ def BaseConfig(USE_MIRROR=True, CACHE_DIR=None,
     target_cpu_only = Single(bool, empty_val=False, required=False),
     cache_dir = Static(cache_dir, hidden=False),
 
-    # If supplied, use this as the source root (instead of the first solution's
-    # checkout).
-    src_root = Single(str, required=False, hidden=True),
-
     # Maps 'solution' -> build_property
     # TODO(machenbach): Deprecate this in favor of the one below.
     # http://crbug.com/713356
