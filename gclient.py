@@ -738,6 +738,15 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         """Convert a deps dict to a list of Dependency objects."""
         deps_to_add = []
         cached_conditions = {}
+
+        def _should_process(condition):
+            if not condition:
+                return True
+            if condition not in cached_conditions:
+                cached_conditions[condition] = gclient_eval.EvaluateCondition(
+                    condition, self.get_vars())
+            return cached_conditions[condition]
+
         for name, dep_value in deps.items():
             should_process = self.should_process
             if dep_value is None:
@@ -746,12 +755,8 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
             condition = dep_value.get('condition')
             dep_type = dep_value.get('dep_type')
 
-            if condition and not self._get_option('process_all_deps', False):
-                if condition not in cached_conditions:
-                    cached_conditions[
-                        condition] = gclient_eval.EvaluateCondition(
-                            condition, self.get_vars())
-                should_process = should_process and cached_conditions[condition]
+            if not self._get_option('process_all_deps', False):
+                should_process = should_process and _should_process(condition)
 
             # The following option is only set by the 'revinfo' command.
             if dep_type in self._get_option('ignore_dep_type', []):
@@ -782,6 +787,8 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                 for obj in dep_value['objects']:
                     merged_condition = gclient_utils.merge_conditions(
                         condition, obj.get('condition'))
+                    should_process_object = should_process and _should_process(
+                        merged_condition)
 
                     deps_to_add.append(
                         GcsDependency(parent=self,
@@ -793,7 +800,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                                       size_bytes=obj['size_bytes'],
                                       gcs_root=gcs_root,
                                       custom_vars=self.custom_vars,
-                                      should_process=should_process,
+                                      should_process=should_process_object,
                                       relative=use_relative_paths,
                                       condition=merged_condition))
             else:
