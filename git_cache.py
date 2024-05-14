@@ -732,6 +732,11 @@ def CMDupdate_bootstrap(parser, args):
               file=sys.stderr)
         return 1
 
+    if gclient_utils.IsEnvCog():
+        print('updating bootstrap is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     parser.add_option('--skip-populate',
                       action='store_true',
                       help='Skips "populate" step if mirror already exists.')
@@ -763,6 +768,11 @@ def CMDupdate_bootstrap(parser, args):
 @metrics.collector.collect_metrics('git cache populate')
 def CMDpopulate(parser, args):
     """Ensure that the cache has all up-to-date objects for the given repo."""
+    if gclient_utils.IsEnvCog():
+        print('populating cache is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
     parser.add_option('--depth',
                       type='int',
                       help='Only cache DEPTH commits of history')
@@ -826,6 +836,13 @@ def CMDpopulate(parser, args):
 @metrics.collector.collect_metrics('git cache fetch')
 def CMDfetch(parser, args):
     """Update mirror, and fetch in cwd."""
+    if gclient_utils.IsEnvCog():
+        print(
+            'fetching new commits into cache is not supported in non-git '
+            'environment.',
+            file=sys.stderr)
+        return 1
+
     parser.add_option('--all', action='store_true', help='Fetch all remotes')
     parser.add_option('--no_bootstrap',
                       '--no-bootstrap',
