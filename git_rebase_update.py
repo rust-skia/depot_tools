@@ -16,6 +16,7 @@ import os
 from fnmatch import fnmatch
 from pprint import pformat
 
+import gclient_utils
 import git_common as git
 
 STARTING_BRANCH_KEY = 'depot-tools.rebase-update.starting-branch'
@@ -232,6 +233,12 @@ def rebase_branch(branch, parent, start_hash):
 
 
 def main(args=None):
+    if gclient_utils.IsEnvCog():
+        print(
+            'rebase-update command is not supported. Please navigate to source '
+            'control view in the activity bar to rebase your changes.',
+            file=sys.stderr)
+        return 1
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--keep-going',
