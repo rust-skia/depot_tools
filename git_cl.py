@@ -6862,6 +6862,8 @@ def main(argv):
     dispatcher = subcommand.CommandDispatcher(__name__)
     try:
         return dispatcher.execute(OptionParser(), argv)
+    except gerrit_util.GerritError as e:
+        DieWithError(str(e))
     except auth.LoginRequiredError as e:
         DieWithError(str(e))
     except urllib.error.HTTPError as e:

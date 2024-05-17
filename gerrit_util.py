@@ -511,7 +511,7 @@ def ReadHttpJsonResponse(conn, accept_statuses=frozenset([200])):
     # The first line of the response should always be: )]}'
     s = fh.readline()
     if s and s.rstrip() != ")]}'":
-        raise GerritError(200, 'Unexpected json output: %s' % s)
+        raise GerritError(200, 'Unexpected json output: %s' % s[:100])
     s = fh.read()
     if not s:
         return None
