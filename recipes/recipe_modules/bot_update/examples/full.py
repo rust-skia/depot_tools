@@ -93,7 +93,7 @@ def RunSteps(api):
     api.bot_update.deapply_patch(bot_update_step)
 
   if api.properties.get('resolve_chromium_fixed_version'):
-    api.bot_update.resolve_fixed_revision(bot_update_step.json.output, 'src')
+    api.bot_update.resolve_fixed_revision(bot_update_step, 'src')
 
 def GenTests(api):
 
