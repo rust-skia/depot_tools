@@ -4,6 +4,7 @@
 """Generic presubmit checks that can be reused by other presubmit checks."""
 
 import datetime
+import functools
 import io as _io
 import os as _os
 import time
@@ -1771,6 +1772,9 @@ def PanProjectChecks(input_api,
             results.extend(
                 input_api.canned_checks.CheckForCommitObjects(
                     input_api, output_api))
+            results.extend(
+                input_api.canned_checks.CheckForRecursedeps(
+                    input_api, output_api))
 
     snapshot("done")
     return results
@@ -2101,6 +2105,39 @@ def CheckForCommitObjects(input_api, output_api):
     return []
 
 
+def CheckForRecursedeps(input_api, output_api):
+    """Checks that DEPS entries in recursedeps exist in deps."""
+    # Run only if DEPS has been modified.
+    if all(f.LocalPath() != 'DEPS' for f in input_api.AffectedFiles()):
+        return []
+    # Get DEPS file.
+    deps_file = input_api.os_path.join(input_api.PresubmitLocalPath(), 'DEPS')
+    if not input_api.os_path.isfile(deps_file):
+        # No DEPS file, carry on!
+        return []
+
+    with open(deps_file) as f:
+        deps_content = f.read()
+    deps = _ParseDeps(deps_content)
+
+    if 'recursedeps' not in deps:
+        # No recursedeps entry, carry on!
+        return []
+
+    existing_deps = deps.get('deps', {})
+
+    errors = []
+    for check_dep in deps['recursedeps']:
+        if check_dep not in existing_deps:
+            errors.append(
+                output_api.PresubmitError(
+                    f'Found recuredep entry {check_dep} but it is not found '
+                    'in\n deps itself. Remove it from recurcedeps or add '
+                    'deps entry.'))
+    return errors
+
+
+@functools.lru_cache(maxsize=None)
 def _ParseDeps(contents):
     """Simple helper for parsing DEPS files."""
 
