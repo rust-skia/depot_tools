@@ -82,11 +82,11 @@ class NinjalogUploaderTest(unittest.TestCase):
                         'default': {
                             'value': 'false'
                         },
-                        'name': 'use_goma'
+                        'name': 'use_remoteexec'
                     },
                 ])), {
                     'is_component_build': 'true',
-                    'use_goma': 'false'
+                    'use_remoteexec': 'false'
                 })
 
     def test_get_ninjalog(self):

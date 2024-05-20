@@ -46,7 +46,6 @@ analysis:
   * host\_os, host\_cpu
   * target\_os, target\_cpu
   * symbol\_level
-  * use\_goma
   * is\_debug
   * is\_component\_build
 
@@ -55,8 +54,8 @@ analysis:
 
 ## Why ninja log is collected? / How the collected logs are used?
 
-We (goma team) collect build logs to find slow build tasks that harm developer's
-productivity. Based on collected stats, we find the place/build tasks where we
-need to focus on. Also we use collected stats to track chrome build performance
-on developer's machine. We'll use this stats to measure how much we can/can't
-improve build performance on developer's machine.
+We (Chrome Browser Build team) collect build logs to find slow build tasks that
+harm developer's productivity. Based on collected stats, we find the
+place/build tasks where we need to focus on. Also we use collected stats to
+track chrome build performance on developer's machine. We'll use this stats to
+measure how much we can/can't improve build performance on developer's machine.

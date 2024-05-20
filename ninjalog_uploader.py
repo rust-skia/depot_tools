@@ -46,7 +46,6 @@ ALLOWLISTED_CONFIGS = (
     "target_os",
     "treat_warnings_as_errors",
     "use_errorprone_java_compiler",
-    "use_goma",
     "use_remoteexec",
     "use_siso",
 )
@@ -145,8 +144,6 @@ def GetMetadata(cmdline, ninjalog):
 
     Returned metadata has schema defined in
     https://cs.chromium.org?q="type+Metadata+struct+%7B"+file:%5Einfra/go/src/infra/appengine/chromium_build_stats/ninjalog/
-
-    TODO(tikuta): Collect GOMA_* env var.
     """
 
     build_dir = os.path.dirname(ninjalog)
