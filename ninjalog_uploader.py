@@ -31,24 +31,24 @@ import urllib.request
 
 # These build configs affect build performance.
 ALLOWLISTED_CONFIGS = (
+    "android_static_analysis",
+    "blink_symbol_level",
+    "disable_android_lint",
+    "enable_nacl",
+    "host_cpu",
+    "host_os",
+    "incremental_install",
+    "is_component_build",
+    "is_debug",
+    "is_java_debug",
     "symbol_level",
+    "target_cpu",
+    "target_os",
+    "treat_warnings_as_errors",
+    "use_errorprone_java_compiler",
     "use_goma",
     "use_remoteexec",
     "use_siso",
-    "is_debug",
-    "is_component_build",
-    "enable_nacl",
-    "host_os",
-    "host_cpu",
-    "target_os",
-    "target_cpu",
-    "blink_symbol_level",
-    "is_java_debug",
-    "treat_warnings_as_errors",
-    "disable_android_lint",
-    "use_errorprone_java_compiler",
-    "incremental_install",
-    "android_static_analysis",
 )
 
 
