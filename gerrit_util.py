@@ -218,9 +218,9 @@ class CookiesAuthenticator(Authenticator):
         if os.getenv('GIT_COOKIES_PATH'):
             return os.getenv('GIT_COOKIES_PATH')
 
-        return scm.GIT.GetConfig(
-            os.getcwd(), 'http.cookiefile',
-            os.path.expanduser(os.path.join('~', '.gitcookies')))
+        return os.path.expanduser(
+            scm.GIT.GetConfig(os.getcwd(), 'http.cookiefile',
+                              os.path.join('~', '.gitcookies')))
 
     @classmethod
     def _get_gitcookies(cls):
