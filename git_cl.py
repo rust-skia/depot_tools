@@ -2339,10 +2339,9 @@ class Changelist(object):
                    ([] if git_auth else [git_host]))
         DieWithError('Credentials for the following hosts are required:\n'
                      '  %s\n'
-                     'These are read from %s (or legacy %s)\n'
+                     'These are read from %s\n'
                      '%s' %
                      ('\n  '.join(missing), cookie_auth.get_gitcookies_path(),
-                      cookie_auth.get_netrc_path(),
                       cookie_auth.get_new_password_message(git_host)))
 
     def EnsureCanUploadPatchset(self, force):
@@ -3628,8 +3627,8 @@ def DownloadGerritHook(force):
 class _GitCookiesChecker(object):
     """Provides facilities for validating and suggesting fixes to .gitcookies."""
     def __init__(self):
-        # Cached list of [host, identity, source], where source is either
-        # .gitcookies or .netrc.
+        # Cached list of [host, identity, source], where source is
+        # .gitcookies
         self._all_hosts = None
 
     def ensure_configured_gitcookies(self):
@@ -3679,11 +3678,6 @@ class _GitCookiesChecker(object):
 
     @staticmethod
     def _configure_gitcookies_path(default_path):
-        netrc_path = gerrit_util.CookiesAuthenticator.get_netrc_path()
-        if os.path.exists(netrc_path):
-            print(
-                'You seem to be using outdated .netrc for git credentials: %s' %
-                netrc_path)
         print(
             'This tool will guide you through setting up recommended '
             '.gitcookies store for git credentials.\n'
@@ -3695,21 +3689,17 @@ class _GitCookiesChecker(object):
         RunGit(['config', '--global', 'http.cookiefile', default_path])
         print('Configured git to use .gitcookies from %s' % default_path)
 
-    def get_hosts_with_creds(self, include_netrc=False):
+    def get_hosts_with_creds(self):
         if self._all_hosts is None:
             a = gerrit_util.CookiesAuthenticator()
-            self._all_hosts = [(h, u, s) for h, u, s in itertools.chain((
-                (h, u, '.netrc') for h, (u, _, _) in a.netrc.hosts.items()), (
-                    (h, u, '.gitcookies')
-                    for h, (u, _) in a.gitcookies.items()))
+            self._all_hosts = [(h, u, '.gitcookies')
+                               for h, (u, _) in a.gitcookies.items()
                                if h.endswith(_GOOGLESOURCE)]
 
-        if include_netrc:
-            return self._all_hosts
-        return [(h, u, s) for h, u, s in self._all_hosts if s != '.netrc']
+        return self._all_hosts
 
-    def print_current_creds(self, include_netrc=False):
-        hosts = sorted(self.get_hosts_with_creds(include_netrc=include_netrc))
+    def print_current_creds(self):
+        hosts = sorted(self.get_hosts_with_creds())
         if not hosts:
             print('No Git/Gerrit credentials found')
             return
@@ -3737,7 +3727,7 @@ class _GitCookiesChecker(object):
 
         Chrome Infra recommends to use explicit ${host}.googlesource.com instead.
         """
-        for host, _, _ in self.get_hosts_with_creds(include_netrc=False):
+        for host, _, _ in self.get_hosts_with_creds():
             if host == '.' + _GOOGLESOURCE:
                 return True
         return False
@@ -3870,8 +3860,8 @@ def CMDcreds_check(parser, args):
     checker = _GitCookiesChecker()
     checker.ensure_configured_gitcookies()
 
-    print('Your .netrc and .gitcookies have credentials for these hosts:')
-    checker.print_current_creds(include_netrc=True)
+    print('Your .gitcookies have credentials for these hosts:')
+    checker.print_current_creds()
 
     if not checker.find_and_report_problems():
         print('\nNo problems detected in your .gitcookies file.')

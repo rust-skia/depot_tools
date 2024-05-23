@@ -41,9 +41,6 @@ import subprocess2
 # TODO: Should fix these warnings.
 # pylint: disable=line-too-long
 
-NETRC_FILENAME = '_netrc' if sys.platform == 'win32' else '.netrc'
-
-
 def callError(code=1, cmd='', cwd='', stdout=b'', stderr=b''):
     return subprocess2.CalledProcessError(code, cmd, cwd, stdout, stderr)
 
@@ -145,7 +142,7 @@ class AuthenticatorMock(object):
 
 
 def CookiesAuthenticatorMockFactory(hosts_with_creds=None, same_auth=False):
-    """Use to mock Gerrit/Git credentials from ~/.netrc or ~/.gitcookies.
+    """Use to mock Gerrit/Git credentials from ~/.gitcookies.
 
     Usage:
         >>> self.mock(git_cl.gerrit_util, "CookiesAuthenticator",
@@ -165,10 +162,6 @@ def CookiesAuthenticatorMockFactory(hosts_with_creds=None, same_auth=False):
         @classmethod
         def get_gitcookies_path(cls):
             return os.path.join('~', '.gitcookies')
-
-        @classmethod
-        def get_netrc_path(cls):
-            return os.path.join('~', NETRC_FILENAME)
 
         def _get_auth_for_host(self, host):
             if same_auth:
@@ -2538,12 +2531,10 @@ class TestGitCl(unittest.TestCase):
         self.assertEqual(
             'Credentials for the following hosts are required:\n'
             '  chromium-review.googlesource.com\n'
-            'These are read from ~%(sep)s.gitcookies '
-            '(or legacy ~%(sep)s%(netrc)s)\n'
+            'These are read from ~%(sep)s.gitcookies\n'
             'You can (re)generate your credentials by visiting '
             'https://chromium.googlesource.com/new-password\n' % {
                 'sep': os.sep,
-                'netrc': NETRC_FILENAME,
             }, sys.stderr.getvalue())
 
     def test_gerrit_ensure_authenticated_conflict(self):
@@ -3109,25 +3100,19 @@ class TestGitCl(unittest.TestCase):
                     'host.googlesource.com': ('user', 'pass'),
                     'host-review.googlesource.com': ('user', 'pass'),
                 }
-                self.netrc = self
-                self.netrc.hosts = {
-                    'github.com': ('user2', None, 'pass2'),
-                    'host2.googlesource.com': ('user3', None, 'pass'),
-                }
 
         mock.patch('git_cl.gerrit_util.CookiesAuthenticator',
                    CookiesAuthenticatorMock).start()
-        git_cl._GitCookiesChecker().print_current_creds(include_netrc=True)
+        git_cl._GitCookiesChecker().print_current_creds()
         self.assertEqual(list(sys.stdout.getvalue().splitlines()), [
-            '                        Host\t User\t Which file',
-            '============================\t=====\t===========',
-            'host-review.googlesource.com\t user\t.gitcookies',
-            '       host.googlesource.com\t user\t.gitcookies',
-            '      host2.googlesource.com\tuser3\t     .netrc',
+            '                        Host\tUser\t Which file',
+            '============================\t====\t===========',
+            'host-review.googlesource.com\tuser\t.gitcookies',
+            '       host.googlesource.com\tuser\t.gitcookies',
         ])
         sys.stdout.seek(0)
         sys.stdout.truncate(0)
-        git_cl._GitCookiesChecker().print_current_creds(include_netrc=False)
+        git_cl._GitCookiesChecker().print_current_creds()
         self.assertEqual(list(sys.stdout.getvalue().splitlines()), [
             '                        Host\tUser\t Which file',
             '============================\t====\t===========',
@@ -3141,7 +3126,7 @@ class TestGitCl(unittest.TestCase):
             if dirname == os.path.expanduser('~'):
                 dirname = '~'
             base = os.path.basename(path)
-            if base in (NETRC_FILENAME, '.gitcookies'):
+            if base == '.gitcookies':
                 return self._mocked_call('os.path.exists',
                                          os.path.join(dirname, base))
             # git cl also checks for existence other files not relevant to this
@@ -3156,10 +3141,9 @@ class TestGitCl(unittest.TestCase):
     def test_creds_check_gitcookies_not_configured(self):
         self._common_creds_check_mocks()
         mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
-                   lambda _, include_netrc=False: []).start()
+                   lambda _: []).start()
         self.calls = [
             ((['git', 'config', '--global', 'http.cookiefile'], ), CERR1),
-            (('os.path.exists', os.path.join('~', NETRC_FILENAME)), True),
             (('ask_for_data', 'Press Enter to setup .gitcookies, '
               'or Ctrl+C to abort'), ''),
             (([
@@ -3168,15 +3152,13 @@ class TestGitCl(unittest.TestCase):
             ], ), ''),
         ]
         self.assertEqual(0, git_cl.main(['creds-check']))
-        self.assertTrue(sys.stdout.getvalue().startswith(
-            'You seem to be using outdated .netrc for git credentials:'))
         self.assertIn('\nConfigured git to use .gitcookies from',
                       sys.stdout.getvalue())
 
     def test_creds_check_gitcookies_configured_custom_broken(self):
         self._common_creds_check_mocks()
         mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
-                   lambda _, include_netrc=False: []).start()
+                   lambda _: []).start()
         custom_cookie_path = ('C:\\.gitcookies' if sys.platform == 'win32' else
                               '/custom/.gitcookies')
         self.calls = [

@@ -12,7 +12,6 @@ import contextlib
 import httplib2
 import json
 import logging
-import netrc
 import os
 import random
 import re
@@ -118,7 +117,7 @@ class Authenticator(object):
 
 
 class CookiesAuthenticator(Authenticator):
-    """Authenticator implementation that uses ".netrc" or ".gitcookies" for token.
+    """Authenticator implementation that uses ".gitcookies" for token.
 
     Expected case for developer workstations.
     """
@@ -131,14 +130,7 @@ class CookiesAuthenticator(Authenticator):
         # something is broken. This allows 'creds-check' to proceed to actually
         # checking creds later, rigorously (instead of blowing up with a cryptic
         # error if they are wrong).
-        self._netrc = self._EMPTY
         self._gitcookies = self._EMPTY
-
-    @property
-    def netrc(self):
-        if self._netrc is self._EMPTY:
-            self._netrc = self._get_netrc()
-        return self._netrc
 
     @property
     def gitcookies(self):
@@ -166,52 +158,6 @@ class CookiesAuthenticator(Authenticator):
                     'that you are using a git server at *.googlesource.com.')
         url = cls.get_new_password_url(host)
         return 'You can (re)generate your credentials by visiting %s' % url
-
-    @classmethod
-    def get_netrc_path(cls):
-        path = '_netrc' if sys.platform.startswith('win') else '.netrc'
-        return os.path.expanduser(os.path.join('~', path))
-
-    @classmethod
-    def _get_netrc(cls):
-        # Buffer the '.netrc' path. Use an empty file if it doesn't exist.
-        path = cls.get_netrc_path()
-        if not os.path.exists(path):
-            return netrc.netrc(os.devnull)
-
-        st = os.stat(path)
-        if st.st_mode & (stat.S_IRWXG | stat.S_IRWXO):
-            print('WARNING: netrc file %s cannot be used because its file '
-                  'permissions are insecure.  netrc file permissions should be '
-                  '600.' % path,
-                  file=sys.stderr)
-        with open(path) as fd:
-            content = fd.read()
-
-        # Load the '.netrc' file. We strip comments from it because processing
-        # them can trigger a bug in Windows. See crbug.com/664664.
-        content = '\n'.join(l for l in content.splitlines()
-                            if l.strip() and not l.strip().startswith('#'))
-        with tempdir() as tdir:
-            netrc_path = os.path.join(tdir, 'netrc')
-            with open(netrc_path, 'w') as fd:
-                fd.write(content)
-            os.chmod(netrc_path, (stat.S_IRUSR | stat.S_IWUSR))
-            return cls._get_netrc_from_path(netrc_path)
-
-    @classmethod
-    def _get_netrc_from_path(cls, path):
-        try:
-            return netrc.netrc(path)
-        except IOError:
-            print('WARNING: Could not read netrc file %s' % path,
-                  file=sys.stderr)
-            return netrc.netrc(os.devnull)
-        except netrc.NetrcParseError as e:
-            print('ERROR: Cannot use netrc file %s due to a parsing error: %s' %
-                  (path, e),
-                  file=sys.stderr)
-            return netrc.netrc(os.devnull)
 
     @classmethod
     def get_gitcookies_path(cls):
@@ -255,7 +201,7 @@ class CookiesAuthenticator(Authenticator):
         for domain, creds in self.gitcookies.items():
             if http.cookiejar.domain_match(host, domain):
                 return (creds[0], None, creds[1])
-        return self.netrc.authenticators(host)
+        return None
 
     def get_auth_header(self, host):
         a = self._get_auth_for_host(host)
@@ -279,11 +225,6 @@ class CookiesAuthenticator(Authenticator):
             return None
         username, domain = login[len('git-'):].split('.', 1)
         return '%s@%s' % (username, domain)
-
-
-# Backwards compatibility just in case somebody imports this outside of
-# depot_tools.
-NetrcAuthenticator = CookiesAuthenticator
 
 
 class GceAuthenticator(Authenticator):
