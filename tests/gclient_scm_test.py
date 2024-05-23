@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import gclient_scm
 import gclient_utils
 import git_cache
+import git_common
 import subprocess2
 from testing_support import fake_repos
 from testing_support import test_case_utils
@@ -428,9 +429,8 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         # and parents instead.
         self.assertEqual(scm._Capture(['rev-parse', 'HEAD:']),
                          '3a3ba72731fa208d37b06598a129ba93970325df')
-        parent = 'HEAD^' if sys.platform != 'win32' else 'HEAD^^'
-        self.assertEqual(scm._Capture(['rev-parse', parent + '1']), rev)
-        self.assertEqual(scm._Capture(['rev-parse', parent + '2']),
+        self.assertEqual(scm._Capture(['rev-parse', 'HEAD^1']), rev)
+        self.assertEqual(scm._Capture(['rev-parse', 'HEAD^2']),
                          scm._Capture(['rev-parse', 'origin/main']))
         sys.stdout.close()
 
@@ -456,8 +456,7 @@ class ManagedGitWrapperTestCase(BaseGitWrapperTestCase):
         # and parent instead.
         self.assertEqual(scm._Capture(['rev-parse', 'HEAD:']),
                          '3a3ba72731fa208d37b06598a129ba93970325df')
-        parent = 'HEAD^' if sys.platform != 'win32' else 'HEAD^^'
-        self.assertEqual(scm._Capture(['rev-parse', parent + '1']),
+        self.assertEqual(scm._Capture(['rev-parse', 'HEAD^1']),
                          scm._Capture(['rev-parse', 'origin/main']))
         sys.stdout.close()
 
@@ -673,28 +672,32 @@ class ManagedGitWrapperTestCaseMock(unittest.TestCase):
     @mock.patch('gclient_scm.GitWrapper._Clone')
     @mock.patch('os.path.isdir')
     @mock.patch('os.path.exists')
-    @mock.patch('subprocess2.check_output')
-    def testUpdateNoDotGit(self, mockCheckOutput, mockExists, mockIsdir,
-                           mockClone):
+    @mock.patch('git_common.run')
+    def testUpdateNoDotGit(self, mockRun, mockExists, mockIsdir, mockClone):
         mockIsdir.side_effect = lambda path: path == self.base_path
         mockExists.side_effect = lambda path: path == self.base_path
-        mockCheckOutput.side_effect = [b'refs/remotes/origin/main', b'', b'']
+        mockRun.side_effect = ['refs/remotes/origin/main', '', '']
 
         options = self.Options()
         scm = gclient_scm.GitWrapper(self.url, self.root_dir, self.relpath)
         scm.update(options, None, [])
 
         env = gclient_scm.scm.GIT.ApplyEnvVars({})
-        self.assertEqual(mockCheckOutput.mock_calls, [
-            mock.call(['git', 'symbolic-ref', 'refs/remotes/origin/HEAD'],
+        self.assertEqual(mockRun.mock_calls, [
+            mock.call('symbolic-ref',
+                      'refs/remotes/origin/HEAD',
+                      autostrip=True,
+                      cwd=self.base_path,
+                      env=env),
+            mock.call('-c',
+                      'core.quotePath=false',
+                      'ls-files',
                       cwd=self.base_path,
                       env=env,
                       stderr=-1),
-            mock.call(['git', '-c', 'core.quotePath=false', 'ls-files'],
-                      cwd=self.base_path,
-                      env=env,
-                      stderr=-1),
-            mock.call(['git', 'rev-parse', '--verify', 'HEAD'],
+            mock.call('rev-parse',
+                      '--verify',
+                      'HEAD',
                       cwd=self.base_path,
                       env=env,
                       stderr=-1),
@@ -706,15 +709,14 @@ class ManagedGitWrapperTestCaseMock(unittest.TestCase):
     @mock.patch('gclient_scm.GitWrapper._Clone')
     @mock.patch('os.path.isdir')
     @mock.patch('os.path.exists')
-    @mock.patch('subprocess2.check_output')
-    def testUpdateConflict(self, mockCheckOutput, mockExists, mockIsdir,
-                           mockClone):
+    @mock.patch('git_common.run')
+    def testUpdateConflict(self, mockRun, mockExists, mockIsdir, mockClone):
         mockIsdir.side_effect = lambda path: path == self.base_path
         mockExists.side_effect = lambda path: path == self.base_path
-        mockCheckOutput.side_effect = [b'refs/remotes/origin/main', b'', b'']
+        mockRun.side_effect = ['refs/remotes/origin/main', '', '']
         mockClone.side_effect = [
-            gclient_scm.subprocess2.CalledProcessError(None, None, None, None,
-                                                       None),
+            git_common.subprocess2.CalledProcessError(None, None, None, None,
+                                                      None),
             None,
         ]
 
@@ -723,16 +725,21 @@ class ManagedGitWrapperTestCaseMock(unittest.TestCase):
         scm.update(options, None, [])
 
         env = gclient_scm.scm.GIT.ApplyEnvVars({})
-        self.assertEqual(mockCheckOutput.mock_calls, [
-            mock.call(['git', 'symbolic-ref', 'refs/remotes/origin/HEAD'],
+        self.assertEqual(mockRun.mock_calls, [
+            mock.call('symbolic-ref',
+                      'refs/remotes/origin/HEAD',
+                      autostrip=True,
+                      cwd=self.base_path,
+                      env=env),
+            mock.call('-c',
+                      'core.quotePath=false',
+                      'ls-files',
                       cwd=self.base_path,
                       env=env,
                       stderr=-1),
-            mock.call(['git', '-c', 'core.quotePath=false', 'ls-files'],
-                      cwd=self.base_path,
-                      env=env,
-                      stderr=-1),
-            mock.call(['git', 'rev-parse', '--verify', 'HEAD'],
+            mock.call('rev-parse',
+                      '--verify',
+                      'HEAD',
                       cwd=self.base_path,
                       env=env,
                       stderr=-1),
@@ -1502,7 +1509,7 @@ class GerritChangesTest(fake_repos.FakeReposTestBase):
         with self.assertRaises(subprocess2.CalledProcessError) as cm:
             scm.apply_patch_ref(self.url, 'refs/changes/36/1236/1',
                                 'refs/heads/main', self.options, file_list)
-        self.assertEqual(cm.exception.cmd[:2], ['git', 'cherry-pick'])
+        self.assertEqual(cm.exception.cmd[3], 'cherry-pick')
         self.assertIn(b'error: could not apply', cm.exception.stderr)
 
         # Try to apply 'refs/changes/35/1235/1', which doesn't have a merge

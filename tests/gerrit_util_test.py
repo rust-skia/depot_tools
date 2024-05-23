@@ -16,6 +16,7 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import gerrit_util
+import git_common
 import metrics
 import subprocess2
 
@@ -86,7 +87,7 @@ class CookiesAuthenticatorTest(unittest.TestCase):
         mock.patch('os.environ', {'HOME': '$HOME'}).start()
         mock.patch('os.path.exists', return_value=True).start()
         mock.patch(
-            'subprocess2.check_output',
+            'git_common.run',
             side_effect=[
                 subprocess2.CalledProcessError(1, ['cmd'], 'cwd', 'out', 'err')
             ],
@@ -117,17 +118,16 @@ class CookiesAuthenticatorTest(unittest.TestCase):
             os.path.expanduser(os.path.join('~', '.gitcookies')),
             gerrit_util.CookiesAuthenticator().get_gitcookies_path())
 
-        subprocess2.check_output.side_effect = [
-            b'http.cookiefile\nhttp.cookiefile\x00'
-        ]
+        git_common.run.side_effect = ['http.cookiefile\nhttp.cookiefile\x00']
         self.assertEqual(
             'http.cookiefile',
             gerrit_util.CookiesAuthenticator().get_gitcookies_path())
-        subprocess2.check_output.assert_called_with(
-            ['git', 'config', '--list', '-z'],
-            cwd=os.getcwd(),
-            env=mock.ANY,
-            stderr=mock.ANY)
+        git_common.run.assert_called_with('config',
+                                          '--list',
+                                          '-z',
+                                          autostrip=False,
+                                          cwd=os.getcwd(),
+                                          env=mock.ANY)
 
         os.getenv.return_value = 'git-cookies-path'
         self.assertEqual(
