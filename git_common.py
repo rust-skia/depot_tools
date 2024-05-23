@@ -53,6 +53,18 @@ def win_find_git():
         for candidate in ('git.exe', 'git.bat'):
             path = os.path.join(elem, candidate)
             if os.path.isfile(path):
+                # shell=True or invoking git.bat causes Windows to invoke
+                # cmd.exe to run git.bat. The extra processes add significant
+                # overhead (most visible in the "update" stage of gclient sync)
+                # so we want to avoid it whenever possible, by extracting the
+                # path to git.exe from git.bat in depot_tools.
+                if candidate == 'git.bat':
+                    git_bat = open(path).readlines()
+                    new_path = os.path.join(elem, git_bat[-1][6:-5])
+                    if (git_bat[-1].startswith('"%~dp0')
+                            and git_bat[-1].endswith('" %*\n')
+                            and new_path.endswith('.exe')):
+                        path = new_path
                 return path
     raise ValueError('Could not find Git on PATH.')
 
