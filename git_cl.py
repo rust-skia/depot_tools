@@ -6,6 +6,8 @@
 # Copyright (C) 2008 Evan Martin <martine@danga.com>
 """A git-command for integrating reviews on Gerrit."""
 
+from __future__ import annotations
+
 import base64
 import collections
 import datetime
@@ -139,9 +141,6 @@ LAST_UPLOAD_HASH_CONFIG_KEY = 'last-upload-hash'
 
 # Shortcut since it quickly becomes repetitive.
 Fore = colorama.Fore
-
-# Initialized in main()
-settings = None
 
 # Used by tests/git_cl_test.py to add extra logging.
 # Inside the weirdly failing test, add this:
@@ -942,6 +941,9 @@ class Settings(object):
         return scm.GIT.GetConfig(self.GetRoot(), key, default)
 
 
+settings = Settings()
+
+
 class _CQState(object):
     """Enum for states of CL with respect to CQ."""
     NONE = 'none'
@@ -1312,13 +1314,6 @@ class Changelist(object):
 
         **kwargs will be passed directly to Gerrit implementation.
         """
-        # Poke settings so we get the "configure your server" message if
-        # necessary.
-        global settings
-        if not settings:
-            # Happens when git_cl.py is used as a utility library.
-            settings = Settings()
-
         self.branchref = branchref
         if self.branchref:
             assert (branchref.startswith(('refs/heads/', 'refs/branch-heads/'))
@@ -3920,7 +3915,9 @@ def color_for_status(status):
     }.get(status, Fore.WHITE)
 
 
-def get_cl_statuses(changes, fine_grained, max_processes=None):
+def get_cl_statuses(changes: List[Changelist],
+                    fine_grained,
+                    max_processes=None):
     """Returns a blocking iterable of (cl, status) for given branches.
 
     If fine_grained is true, this will fetch CL statuses from the server.
@@ -6815,12 +6812,6 @@ class OptionParser(optparse.OptionParser):
         try:
             return self._parse_args(args)
         finally:
-            # Regardless of success or failure of args parsing, we want to
-            # report metrics, but only after logging has been initialized (if
-            # parsing succeeded).
-            global settings
-            settings = Settings()
-
             if metrics.collector.config.should_collect_metrics:
                 try:
                     # GetViewVCUrl ultimately calls logging method.

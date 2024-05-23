@@ -673,7 +673,7 @@ class TestGitCl(unittest.TestCase):
         mock.patch('scm.GIT.CaptureStatus',
                    return_value=[('M', 'foo.txt')]).start()
         # It's important to reset settings to not have inter-tests interference.
-        git_cl.settings = None
+        git_cl.settings = git_cl.Settings()
         self.addCleanup(mock.patch.stopall)
 
     def tearDown(self):
