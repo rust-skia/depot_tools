@@ -249,6 +249,7 @@ def main(args):
             print(file=sys.stderr)
 
     use_remoteexec = False
+    use_reclient = None
     use_siso = False
 
     # Attempt to auto-detect remote build acceleration. We support gn-based
@@ -274,6 +275,12 @@ def main(args):
                          line_without_comment):
                 use_siso = True
                 continue
+            if re.search(r"(^|\s)(use_reclient)\s*=\s*false($|\s)",
+                         line_without_comment):
+                use_reclient = False
+                continue
+        if use_reclient is None:
+            use_reclient = use_remoteexec
 
         if use_remoteexec:
             if _is_google_corp_machine_using_external_account():
@@ -302,17 +309,20 @@ def main(args):
                 )
                 return 1
             if use_remoteexec:
-                with reclient_helper.build_context(input_args,
-                                                   'autosiso') as ret_code:
-                    if ret_code:
-                        return ret_code
-                    return siso.main([
-                        'siso',
-                        'ninja',
-                        # Do not authenticate when using Reproxy.
-                        '-project=',
-                        '-reapi_instance=',
-                    ] + input_args[1:])
+                if use_reclient:
+                    with reclient_helper.build_context(input_args,
+                                                       'autosiso') as ret_code:
+                        if ret_code:
+                            return ret_code
+                        return siso.main([
+                            'siso',
+                            'ninja',
+                            # Do not authenticate when using Reproxy.
+                            '-project=',
+                            '-reapi_instance=',
+                        ] + input_args[1:])
+                else:
+                    return siso.main(["siso", "ninja"] + input_args[1:])
             return siso.main(["siso", "ninja", "--offline"] + input_args[1:])
 
         if os.path.exists(siso_marker):
