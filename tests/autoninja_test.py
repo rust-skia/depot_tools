@@ -113,20 +113,34 @@ class AutoninjaTest(trial_dir.TestCase):
     def test_autoninja_siso_reclient(self):
         """
         Test that when specifying use_siso=true and use_remoteexec=true,
-        autoninja delegates to autosiso.
+        autoninja starts reproxy using reclient_helper and calls 'siso ninja'.
         """
-        with mock.patch('autosiso.main', return_value=0) as autosiso_main:
-            out_dir = os.path.join('out', 'dir')
-            write(os.path.join(out_dir, 'args.gn'),
-                  'use_siso=true\nuse_remoteexec=true')
-            write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
-                  'RBE_v=2')
-            write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
-            autoninja.main(['autoninja.py', '-C', out_dir])
-            autosiso_main.assert_called_once()
-            args = autosiso_main.call_args.args[0]
-        self.assertIn('-C', args)
-        self.assertEqual(args[args.index('-C') + 1], out_dir)
+        reclient_helper_calls = []
+
+        @contextlib.contextmanager
+        def reclient_helper_mock(argv, tool):
+            reclient_helper_calls.append([argv, tool])
+            yield 0
+
+        with mock.patch('reclient_helper.build_context', reclient_helper_mock):
+            with mock.patch('siso.main', return_value=0) as siso_main:
+                out_dir = os.path.join('out', 'dir')
+                write(os.path.join(out_dir, 'args.gn'),
+                      'use_siso=true\nuse_remoteexec=true')
+                write(
+                    os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
+                    'RBE_v=2')
+                write(os.path.join('buildtools', 'reclient', 'version.txt'),
+                      '0.0')
+                autoninja.main(['autoninja.py', '-C', out_dir])
+                siso_main.assert_called_once_with([
+                    'siso', 'ninja', '-project=', '-reapi_instance=', '-C',
+                    out_dir
+                ])
+        self.assertEqual(len(reclient_helper_calls), 1)
+        self.assertEqual(reclient_helper_calls[0][0],
+                         ['autoninja.py', '-C', out_dir])
+        self.assertEqual(reclient_helper_calls[0][1], 'autosiso')
 
     @parameterized.expand([
         ("non corp machine", False, None, None, None, False),

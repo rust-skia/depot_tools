@@ -30,9 +30,9 @@ import warnings
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
-import autosiso
 import ninja
 import ninja_reclient
+import reclient_helper
 import siso
 
 if sys.platform in ["darwin", "linux"]:
@@ -289,7 +289,7 @@ def main(args):
 
         siso_marker = os.path.join(output_dir, ".siso_deps")
         if use_siso:
-            # autosiso generates a .ninja_log file so the mere existence of a
+            # siso generates a .ninja_log file so the mere existence of a
             # .ninja_log file doesn't imply that a ninja build was done. However
             # if there is a .ninja_log but no .siso_deps then that implies a
             # ninja build.
@@ -302,7 +302,17 @@ def main(args):
                 )
                 return 1
             if use_remoteexec:
-                return autosiso.main(["autosiso"] + input_args[1:])
+                with reclient_helper.build_context(input_args,
+                                                   'autosiso') as ret_code:
+                    if ret_code:
+                        return ret_code
+                    return siso.main([
+                        'siso',
+                        'ninja',
+                        # Do not authenticate when using Reproxy.
+                        '-project=',
+                        '-reapi_instance=',
+                    ] + input_args[1:])
             return siso.main(["siso", "ninja", "--offline"] + input_args[1:])
 
         if os.path.exists(siso_marker):
