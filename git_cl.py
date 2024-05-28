@@ -2276,7 +2276,7 @@ class Changelist(object):
         # Fall back on still unique, but less efficient change number.
         return str(self.GetIssue())
 
-    def EnsureAuthenticated(self, force):
+    def EnsureAuthenticated(self, force: bool) -> None | NoReturn:
         """Best effort check that user is authenticated with Gerrit server."""
         if settings.GetGerritSkipEnsureAuthenticated():
             # For projects with unusual authentication schemes.
@@ -2890,14 +2890,12 @@ class Changelist(object):
         gclient_utils.FileWrite(os.path.join(git_info_dir, 'git-config'),
                                 git_config)
 
-        cookie_auth = gerrit_util.Authenticator.get()
-        if isinstance(cookie_auth, gerrit_util.CookiesAuthenticator):
-            gitcookies_path = cookie_auth.get_gitcookies_path()
-            if os.path.isfile(gitcookies_path):
-                gitcookies = gclient_utils.FileRead(gitcookies_path)
-                gclient_utils.FileWrite(
-                    os.path.join(git_info_dir, 'gitcookies'),
-                    GITCOOKIES_REDACT_RE.sub('REDACTED', gitcookies))
+        authenticator = gerrit_util.Authenticator.get()
+        # Writes a file like CookiesAuthenticator.debug_summary_state
+        gclient_utils.FileWrite(
+            os.path.join(git_info_dir,
+                         f'{type(authenticator).__name__}.debug_summary_state'),
+            authenticator.debug_summary_state())
         shutil.make_archive(git_info_zip, 'zip', git_info_dir)
 
         gclient_utils.rmtree(git_info_dir)
@@ -5312,7 +5310,7 @@ def _UploadAllPrecheck(
         DieWithError('Can\'t upload from detached HEAD state. Get on a branch!')
 
     branch_ref = None
-    cls = []
+    cls: List[Changelist] = []
     must_upload_upstream = False
     first_pass = True
 

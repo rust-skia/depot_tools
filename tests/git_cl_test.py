@@ -645,9 +645,9 @@ class TestGitCl(unittest.TestCase):
                    lambda h, i, msg=None, labels=None, notify=None, ready=None:
                    (self._mocked_call('SetReview', h, i, msg, labels, notify,
                                       ready))).start()
-        mock.patch('git_cl.gerrit_util.LuciContextAuthenticator.is_luci',
+        mock.patch('git_cl.gerrit_util.LuciContextAuthenticator.is_applicable',
                    return_value=False).start()
-        mock.patch('git_cl.gerrit_util.GceAuthenticator.is_gce',
+        mock.patch('git_cl.gerrit_util.GceAuthenticator.is_applicable',
                    return_value=False).start()
         mock.patch('git_cl.gerrit_util.ValidAccounts',
                    lambda *a: self._mocked_call('ValidAccounts', *a)).start()
@@ -1115,8 +1115,22 @@ class TestGitCl(unittest.TestCase):
                 (
                     ([
                         'FileWrite',
-                        os.path.join('TEMP_DIR', 'gitcookies'),
+                        os.path.join(
+                            'TEMP_DIR',
+                            'CookiesAuthenticatorMock.debug_summary_state'),
                         'gitcookies REDACTED'
+                    ], ),
+                    None,
+                ),
+            ]
+        else:
+            calls += [
+                (
+                    ([
+                        'FileWrite',
+                        os.path.join(
+                            'TEMP_DIR',
+                            'CookiesAuthenticatorMock.debug_summary_state'), ''
                     ], ),
                     None,
                 ),

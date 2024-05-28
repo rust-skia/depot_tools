@@ -9,6 +9,7 @@ https://gerrit-review.googlesource.com/Documentation/rest-api.html
 
 import base64
 import contextlib
+from typing import List, Type
 import httplib2
 import json
 import logging
@@ -98,6 +99,21 @@ class Authenticator(object):
     def get_auth_header(self, host):
         raise NotImplementedError()
 
+    def debug_summary_state(self) -> str:
+        """If this Authenticator has any debugging information about its state,
+        _WriteGitPushTraces will call this to include in the git push traces.
+
+        Return value is any relevant debugging information with all PII/secrets
+        redacted.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def is_applicable(cls) -> bool:
+        """Must return True if this Authenticator is available in the current
+        environment."""
+        raise NotImplementedError()
+
     @staticmethod
     def get():
         """Returns: (Authenticator) The identified Authenticator to use.
@@ -105,15 +121,22 @@ class Authenticator(object):
         Probes the local system and its environment and identifies the
         Authenticator instance to use.
         """
-        # LUCI Context takes priority since it's normally present only on bots,
-        # which then must use it.
-        if LuciContextAuthenticator.is_luci():
-            return LuciContextAuthenticator()
-        # TODO(crbug.com/1059384): Automatically detect when running on
-        # cloudtop, and use CookiesAuthenticator instead.
-        if GceAuthenticator.is_gce():
-            return GceAuthenticator()
-        return CookiesAuthenticator()
+        authenticators: List[Type[Authenticator]] = [
+            # LUCI Context takes priority since it's normally present only on bots,
+            # which then must use it.
+            LuciContextAuthenticator,
+
+            # TODO(crbug.com/1059384): Automatically detect when running on
+            # cloudtop, and use CookiesAuthenticator instead.
+            GceAuthenticator,
+            CookiesAuthenticator,
+        ]
+        for candidate in authenticators:
+            if candidate.is_applicable():
+                return candidate()
+
+        raise ValueError(
+            f"Could not find suitable authenticator, tried: {authenticators}")
 
 
 class CookiesAuthenticator(Authenticator):
@@ -131,6 +154,11 @@ class CookiesAuthenticator(Authenticator):
         # checking creds later, rigorously (instead of blowing up with a cryptic
         # error if they are wrong).
         self._gitcookies = self._EMPTY
+
+    @classmethod
+    def is_applicable(cls) -> bool:
+        # We consider CookiesAuthenticator always applicable for now.
+        return True
 
     @property
     def gitcookies(self):
@@ -160,9 +188,9 @@ class CookiesAuthenticator(Authenticator):
         return 'You can (re)generate your credentials by visiting %s' % url
 
     @classmethod
-    def get_gitcookies_path(cls):
-        if os.getenv('GIT_COOKIES_PATH'):
-            return os.getenv('GIT_COOKIES_PATH')
+    def get_gitcookies_path(cls) -> str:
+        if envVal := os.getenv('GIT_COOKIES_PATH'):
+            return envVal
 
         return os.path.expanduser(
             scm.GIT.GetConfig(os.getcwd(), 'http.cookiefile',
@@ -214,6 +242,16 @@ class CookiesAuthenticator(Authenticator):
             return 'Bearer %s' % a[2]
         return None
 
+    # Used to redact the cookies from the gitcookies file.
+    GITCOOKIES_REDACT_RE = re.compile(r'1/.*')
+
+    def debug_summary_state(self) -> str:
+        gitcookies_path = self.get_gitcookies_path()
+        if os.path.isfile(gitcookies_path):
+            gitcookies = gclient_utils.FileRead(gitcookies_path)
+            return self.GITCOOKIES_REDACT_RE.sub('REDACTED', gitcookies)
+        return ''
+
     def get_auth_email(self, host):
         """Best effort parsing of email to be used for auth for the given host."""
         a = self._get_auth_for_host(host)
@@ -241,7 +279,7 @@ class GceAuthenticator(Authenticator):
     _token_expiration = None
 
     @classmethod
-    def is_gce(cls):
+    def is_applicable(cls):
         if os.getenv('SKIP_GCE_AUTH_FOR_GIT'):
             return False
         if cls._cache_is_gce is None:
@@ -301,12 +339,16 @@ class GceAuthenticator(Authenticator):
             return None
         return '%(token_type)s %(access_token)s' % token_dict
 
+    def debug_summary_state(self) -> str:
+        # TODO(b/343230702) - report ambient account name.
+        return ''
+
 
 class LuciContextAuthenticator(Authenticator):
     """Authenticator implementation that uses LUCI_CONTEXT ambient local auth.
     """
     @staticmethod
-    def is_luci():
+    def is_applicable():
         return auth.has_luci_context_local_auth()
 
     def __init__(self):
@@ -315,6 +357,10 @@ class LuciContextAuthenticator(Authenticator):
 
     def get_auth_header(self, _host):
         return 'Bearer %s' % self._authenticator.get_access_token().token
+
+    def debug_summary_state(self) -> str:
+        # TODO(b/343230702) - report ambient account name.
+        return ''
 
 
 def CreateHttpConn(host,
