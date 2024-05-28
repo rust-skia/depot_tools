@@ -213,6 +213,10 @@ def main():
     # Enumerate our inputs.
     input_filenames = get_targets(args, parser, options.use_null_terminator)
 
+    # Allow uploading the entire directory
+    if len(input_filenames) == 1 and input_filenames[0] in ('.', './'):
+        input_filenames = next(os.walk('.'))[1]
+
     if len(input_filenames) > 1 or (len(input_filenames) == 1
                                     and os.path.isdir(input_filenames[0])):
         if not validate_archive_dirs(input_filenames):
