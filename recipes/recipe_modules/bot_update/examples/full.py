@@ -185,12 +185,15 @@ def GenTests(api):
       api.expect_status('INFRA_FAILURE'),
   )
 
-  yield (
-      api.test('tryjob_fail_missing_bot_update_json', status="INFRA_FAILURE") +
-      try_build() + api.override_step_data('bot_update', retcode=1) +
-      api.post_process(post_process.ResultReasonRE, 'Infra Failure.*') +
-      api.post_process(post_process.StatusException) +
-      api.post_process(post_process.DropExpectation))
+  yield api.test(
+      'tryjob_fail_missing_bot_update_json',
+      try_build(),
+      api.override_step_data('bot_update', retcode=1),
+      api.post_process(post_process.SummaryMarkdownRE, 'Infra Failure.*'),
+      api.post_process(post_process.StatusException),
+      api.post_process(post_process.DropExpectation),
+      status='INFRA_FAILURE')
+
   yield (
       api.test('clobber') +
       api.properties(clobber=1)
