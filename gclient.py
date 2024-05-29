@@ -743,6 +743,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         # place content in directories with git content.
         gcs_cleanup_blocklist_name = set([
             'src/third_party/blink/renderer/core/css/perftest_data',
+            'src/third_party/instrumented_libs/binaries',
             'src/third_party/opus/tests/resources',
             'src/base/tracing/test/data',
             'src/third_party/js_code_coverage',
