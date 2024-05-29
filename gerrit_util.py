@@ -9,7 +9,7 @@ https://gerrit-review.googlesource.com/Documentation/rest-api.html
 
 import base64
 import contextlib
-from typing import List, Type
+from typing import List, Optional, Tuple, Type
 import httplib2
 import json
 import logging
@@ -96,7 +96,17 @@ def _QueryString(params, first_param=None):
 
 class Authenticator(object):
     """Base authenticator class for authenticator implementations to subclass."""
-    def get_auth_header(self, host):
+    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
+        """Returns the Authorization header value, plus an optional ProxyInfo.
+
+        TODO: Remove `host`. This is only needed for the deprecated
+        CookiesAuthenticator. If distinguishing between hosts is still needed
+        later, I would propose moving this parameter to
+        Authenticator.get/Authenticator.is_applicable/Authenticator.__init__
+        instead.
+
+        TODO: Make auth header non-optional.
+        """
         raise NotImplementedError()
 
     def debug_summary_state(self) -> str:
@@ -231,16 +241,16 @@ class CookiesAuthenticator(Authenticator):
                 return (creds[0], None, creds[1])
         return None
 
-    def get_auth_header(self, host):
+    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
         a = self._get_auth_for_host(host)
         if a:
             if a[0]:
                 secret = base64.b64encode(
                     ('%s:%s' % (a[0], a[2])).encode('utf-8'))
-                return 'Basic %s' % secret.decode('utf-8')
+                return 'Basic %s' % secret.decode('utf-8'), None
 
-            return 'Bearer %s' % a[2]
-        return None
+            return 'Bearer %s' % a[2], None
+        return None, None
 
     # Used to redact the cookies from the gitcookies file.
     GITCOOKIES_REDACT_RE = re.compile(r'1/.*')
@@ -333,11 +343,11 @@ class GceAuthenticator(Authenticator):
         cls._token_expiration = cls._token_cache['expires_in'] + time_time()
         return cls._token_cache
 
-    def get_auth_header(self, _host):
+    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
         token_dict = self._get_token_dict()
         if not token_dict:
-            return None
-        return '%(token_type)s %(access_token)s' % token_dict
+            return None, None
+        return '%(token_type)s %(access_token)s' % token_dict, None
 
     def debug_summary_state(self) -> str:
         # TODO(b/343230702) - report ambient account name.
@@ -355,8 +365,8 @@ class LuciContextAuthenticator(Authenticator):
         self._authenticator = auth.Authenticator(' '.join(
             [auth.OAUTH_SCOPE_EMAIL, auth.OAUTH_SCOPE_GERRIT]))
 
-    def get_auth_header(self, _host):
-        return 'Bearer %s' % self._authenticator.get_access_token().token
+    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
+        return 'Bearer %s' % self._authenticator.get_access_token().token, None
 
     def debug_summary_state(self) -> str:
         # TODO(b/343230702) - report ambient account name.
@@ -373,22 +383,22 @@ def CreateHttpConn(host,
     headers = headers or {}
     bare_host = host.partition(':')[0]
 
-    a = Authenticator.get()
+    authenticator = Authenticator.get()
     # TODO(crbug.com/1059384): Automatically detect when running on cloudtop.
-    if isinstance(a, GceAuthenticator):
+    if isinstance(authenticator, GceAuthenticator):
         print('If you\'re on a cloudtop instance, export '
               'SKIP_GCE_AUTH_FOR_GIT=1 in your env.')
 
-    a = a.get_auth_header(bare_host)
-    if a:
-        headers.setdefault('Authorization', a)
+    auth_header, proxy = authenticator.get_auth_info(bare_host)
+    if auth_header:
+        headers.setdefault('Authorization', auth_header)
     else:
         LOGGER.debug('No authorization found for %s.' % bare_host)
 
     url = path
     if not url.startswith('/'):
         url = '/' + url
-    if 'Authorization' in headers and not url.startswith('/a/'):
+    if auth_header and not url.startswith('/a/'):
         url = '/a%s' % url
 
     if body:
@@ -402,7 +412,7 @@ def CreateHttpConn(host,
             LOGGER.debug('%s: %s' % (key, val))
         if body:
             LOGGER.debug(body)
-    conn = httplib2.Http(timeout=timeout)
+    conn = httplib2.Http(timeout=timeout, proxy_info=proxy)
     # HACK: httplib2.Http has no such attribute; we store req_host here for
     # later use in ReadHttpResponse.
     conn.req_host = host

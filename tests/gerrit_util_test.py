@@ -151,13 +151,13 @@ class CookiesAuthenticatorTest(unittest.TestCase):
             'Basic Z2l0LXVzZXIuY2hyb21pdW0ub3JnOjEvY2hyb21pdW0tc2VjcmV0')
 
         auth = gerrit_util.CookiesAuthenticator()
-        self.assertEqual(expected_chromium_header,
-                         auth.get_auth_header('chromium.googlesource.com'))
+        self.assertEqual((expected_chromium_header, None),
+                         auth.get_auth_info('chromium.googlesource.com'))
         self.assertEqual(
-            expected_chromium_header,
-            auth.get_auth_header('chromium-review.googlesource.com'))
-        self.assertEqual('Bearer example-bearer-token',
-                         auth.get_auth_header('some-review.example.com'))
+            (expected_chromium_header, None),
+            auth.get_auth_info('chromium-review.googlesource.com'))
+        self.assertEqual(('Bearer example-bearer-token', None),
+                         auth.get_auth_info('some-review.example.com'))
 
     def testGetAuthEmail(self):
         auth = gerrit_util.CookiesAuthenticator()
@@ -226,15 +226,21 @@ class GceAuthenticatorTest(unittest.TestCase):
 
     def testGetAuthHeader_Error(self):
         httplib2.Http().request.side_effect = httplib2.HttpLib2Error
-        self.assertIsNone(self.GceAuthenticator().get_auth_header(''))
+        self.assertEqual(
+            (None, None),
+            self.GceAuthenticator().get_auth_info(''))
 
     def testGetAuthHeader_500(self):
         httplib2.Http().request.return_value = (mock.Mock(status=500), None)
-        self.assertIsNone(self.GceAuthenticator().get_auth_header(''))
+        self.assertEqual(
+            (None, None),
+            self.GceAuthenticator().get_auth_info(''))
 
     def testGetAuthHeader_Non200(self):
         httplib2.Http().request.return_value = (mock.Mock(status=403), None)
-        self.assertIsNone(self.GceAuthenticator().get_auth_header(''))
+        self.assertEqual(
+            (None, None),
+            self.GceAuthenticator().get_auth_info(''))
 
     def testGetAuthHeader_OK(self):
         httplib2.Http().request.return_value = (
@@ -242,8 +248,8 @@ class GceAuthenticatorTest(unittest.TestCase):
             '{"expires_in": 125, "token_type": "TYPE", "access_token": "TOKEN"}'
         )
         gerrit_util.time_time.return_value = 0
-        self.assertEqual('TYPE TOKEN',
-                         self.GceAuthenticator().get_auth_header(''))
+        self.assertEqual(('TYPE TOKEN', None),
+                         self.GceAuthenticator().get_auth_info(''))
 
     def testGetAuthHeader_Cache(self):
         httplib2.Http().request.return_value = (
@@ -251,10 +257,10 @@ class GceAuthenticatorTest(unittest.TestCase):
             '{"expires_in": 125, "token_type": "TYPE", "access_token": "TOKEN"}'
         )
         gerrit_util.time_time.return_value = 0
-        self.assertEqual('TYPE TOKEN',
-                         self.GceAuthenticator().get_auth_header(''))
-        self.assertEqual('TYPE TOKEN',
-                         self.GceAuthenticator().get_auth_header(''))
+        self.assertEqual(('TYPE TOKEN', None),
+                         self.GceAuthenticator().get_auth_info(''))
+        self.assertEqual(('TYPE TOKEN', None),
+                         self.GceAuthenticator().get_auth_info(''))
         httplib2.Http().request.assert_called_once()
 
     def testGetAuthHeader_CacheOld(self):
@@ -263,10 +269,10 @@ class GceAuthenticatorTest(unittest.TestCase):
             '{"expires_in": 125, "token_type": "TYPE", "access_token": "TOKEN"}'
         )
         gerrit_util.time_time.side_effect = [0, 100, 200]
-        self.assertEqual('TYPE TOKEN',
-                         self.GceAuthenticator().get_auth_header(''))
-        self.assertEqual('TYPE TOKEN',
-                         self.GceAuthenticator().get_auth_header(''))
+        self.assertEqual(('TYPE TOKEN', None),
+                         self.GceAuthenticator().get_auth_info(''))
+        self.assertEqual(('TYPE TOKEN', None),
+                         self.GceAuthenticator().get_auth_info(''))
         self.assertEqual(2, len(httplib2.Http().request.mock_calls))
 
 
@@ -294,7 +300,7 @@ class GerritUtilTest(unittest.TestCase):
 
     @mock.patch('gerrit_util.Authenticator')
     def testCreateHttpConn_Basic(self, mockAuth):
-        mockAuth.get().get_auth_header.return_value = None
+        mockAuth.get().get_auth_info.return_value = None, None
         conn = gerrit_util.CreateHttpConn('host.example.com', 'foo/bar')
         self.assertEqual('host.example.com', conn.req_host)
         self.assertEqual(
@@ -307,7 +313,7 @@ class GerritUtilTest(unittest.TestCase):
 
     @mock.patch('gerrit_util.Authenticator')
     def testCreateHttpConn_Authenticated(self, mockAuth):
-        mockAuth.get().get_auth_header.return_value = 'Bearer token'
+        mockAuth.get().get_auth_info.return_value = 'Bearer token', None
         conn = gerrit_util.CreateHttpConn('host.example.com',
                                           'foo/bar',
                                           headers={'header': 'value'})
@@ -325,7 +331,7 @@ class GerritUtilTest(unittest.TestCase):
 
     @mock.patch('gerrit_util.Authenticator')
     def testCreateHttpConn_Body(self, mockAuth):
-        mockAuth.get().get_auth_header.return_value = None
+        mockAuth.get().get_auth_info.return_value = None, None
         conn = gerrit_util.CreateHttpConn('host.example.com',
                                           'foo/bar',
                                           body={

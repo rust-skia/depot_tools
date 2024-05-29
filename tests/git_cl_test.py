@@ -2598,7 +2598,7 @@ class TestGitCl(unittest.TestCase):
                 'chromium-review.googlesource.com': ('', None, 'secret'),
             })
         self.assertIsNone(cl.EnsureAuthenticated(force=False))
-        header = gerrit_util.CookiesAuthenticator().get_auth_header(
+        header, _ = gerrit_util.CookiesAuthenticator().get_auth_info(
             'chromium.googlesource.com')
         self.assertTrue('Bearer' in header)
 

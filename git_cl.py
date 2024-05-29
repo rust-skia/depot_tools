@@ -2312,12 +2312,12 @@ class Changelist(object):
         git_host = self._GetGitHost()
         assert self._gerrit_server and self._gerrit_host and git_host
 
-        gerrit_auth = cookie_auth.get_auth_header(self._gerrit_host)
-        git_auth = cookie_auth.get_auth_header(git_host)
+        gerrit_auth, _ = cookie_auth.get_auth_info(self._gerrit_host)
+        git_auth, _ = cookie_auth.get_auth_info(git_host)
         if gerrit_auth and git_auth:
             if gerrit_auth == git_auth:
                 return
-            all_gsrc = cookie_auth.get_auth_header(
+            all_gsrc, _ = cookie_auth.get_auth_info(
                 'd0esN0tEx1st.googlesource.com')
             print(
                 'WARNING: You have different credentials for Gerrit and git hosts:\n'
