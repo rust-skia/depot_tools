@@ -740,13 +740,15 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         cached_conditions = {}
 
         # TODO(https://crbug.com/343199633): Remove once all packages no longer
-        # place content in directories with git content.
+        # place content in directories with git content, and all milestone
+        # branches have picked it up (m128+).
         gcs_cleanup_blocklist_name = set([
+            'src/base/tracing/test/data',
+            'src/clank/orderfiles',
             'src/third_party/blink/renderer/core/css/perftest_data',
             'src/third_party/instrumented_libs/binaries',
-            'src/third_party/opus/tests/resources',
-            'src/base/tracing/test/data',
             'src/third_party/js_code_coverage',
+            'src/third_party/opus/tests/resources',
             'src/third_party/test_fonts',
             'src/third_party/tfhub_models',
             'src/tools/perf/page_sets/maps_perf_test/',
