@@ -221,8 +221,7 @@ def main(args):
     # separated by spaces. When this case is detected we need to do argument
     # splitting ourselves. This means that arguments containing actual spaces
     # are not supported by autoninja, but that is not a real limitation.
-    if (sys.platform.startswith("win") and len(args) == 2
-            and input_args[1].count(" ") > 0):
+    if sys.platform.startswith("win") and len(args) == 2:
         input_args = args[:1] + args[1].split()
 
     # Ninja uses getopt_long, which allow to intermix non-option arguments.
