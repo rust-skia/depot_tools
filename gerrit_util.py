@@ -189,7 +189,7 @@ class CookiesAuthenticator(Authenticator):
         return 'https://%s/new-password' % ('.'.join(parts))
 
     @classmethod
-    def get_new_password_message(cls, host):
+    def _get_new_password_message(cls, host):
         if host is None:
             return ('Git host for Gerrit upload is unknown. Check your remote '
                     'and the branch your branch is tracking. This tool assumes '
@@ -251,6 +251,46 @@ class CookiesAuthenticator(Authenticator):
 
             return 'Bearer %s' % a[2], None
         return None, None
+
+
+    def ensure_authenticated(self, gerrit_host: str, git_host: str) -> Tuple[bool, str]:
+      """Returns (bypassable, error message).
+
+      If the error message is empty, there is no error to report.
+      If bypassable is true, the caller will allow the user to continue past the
+      error.
+      """
+      # Lazy-loader to identify Gerrit and Git hosts.
+      gerrit_auth = self._get_auth_for_host(gerrit_host)
+      git_auth = self._get_auth_for_host(git_host)
+      if gerrit_auth and git_auth:
+          if gerrit_auth == git_auth:
+              return True, ''
+          all_gsrc, _ = self.get_auth_info(
+              'd0esN0tEx1st.googlesource.com')
+          print(
+              'WARNING: You have different credentials for Gerrit and git hosts:\n'
+              '           %s\n'
+              '           %s\n'
+              '        Consider running the following command:\n'
+              '          git cl creds-check\n'
+              '        %s\n'
+              '        %s' %
+              (git_host, gerrit_host,
+               ('Hint: delete creds for .googlesource.com' if all_gsrc else
+                ''), self._get_new_password_message(git_host)))
+          return True, 'If you know what you are doing'
+
+      missing = (([] if gerrit_auth else [gerrit_host]) +
+                 ([] if git_auth else [git_host]))
+      return False, (
+        'Credentials for the following hosts are required:\n'
+        '  %s\n'
+        'These are read from %s\n'
+        '%s' %
+        ('\n  '.join(missing), self.get_gitcookies_path(),
+         self._get_new_password_message(git_host)))
+
 
     # Used to redact the cookies from the gitcookies file.
     GITCOOKIES_REDACT_RE = re.compile(r'1/.*')

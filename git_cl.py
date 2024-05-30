@@ -2312,37 +2312,14 @@ class Changelist(object):
         git_host = self._GetGitHost()
         assert self._gerrit_server and self._gerrit_host and git_host
 
-        gerrit_auth, _ = cookie_auth.get_auth_info(self._gerrit_host)
-        git_auth, _ = cookie_auth.get_auth_info(git_host)
-        if gerrit_auth and git_auth:
-            if gerrit_auth == git_auth:
-                return
-            all_gsrc, _ = cookie_auth.get_auth_info(
-                'd0esN0tEx1st.googlesource.com')
-            print(
-                'WARNING: You have different credentials for Gerrit and git hosts:\n'
-                '           %s\n'
-                '           %s\n'
-                '        Consider running the following command:\n'
-                '          git cl creds-check\n'
-                '        %s\n'
-                '        %s' %
-                (git_host, self._gerrit_host,
-                 ('Hint: delete creds for .googlesource.com' if all_gsrc else
-                  ''), cookie_auth.get_new_password_message(git_host)))
+        bypassable, msg = cookie_auth.ensure_authenticated(git_host, self._gerrit_host)
+        if not msg:
+            return  # OK
+        if bypassable:
             if not force:
-                confirm_or_exit('If you know what you are doing',
-                                action='continue')
-            return
-
-        missing = (([] if gerrit_auth else [self._gerrit_host]) +
-                   ([] if git_auth else [git_host]))
-        DieWithError('Credentials for the following hosts are required:\n'
-                     '  %s\n'
-                     'These are read from %s\n'
-                     '%s' %
-                     ('\n  '.join(missing), cookie_auth.get_gitcookies_path(),
-                      cookie_auth.get_new_password_message(git_host)))
+                confirm_or_exit(msg, action='continue')
+        else:
+          DieWithError(msg)
 
     def EnsureCanUploadPatchset(self, force):
         if not self.GetIssue():

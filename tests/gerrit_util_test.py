@@ -108,10 +108,10 @@ class CookiesAuthenticatorTest(unittest.TestCase):
         auth = gerrit_util.CookiesAuthenticator()
         self.assertIn(
             'https://chromium.googlesource.com/new-password',
-            auth.get_new_password_message('chromium-review.googlesource.com'))
+            auth._get_new_password_message('chromium-review.googlesource.com'))
         self.assertIn(
             'https://chrome-internal.googlesource.com/new-password',
-            auth.get_new_password_message('chrome-internal.googlesource.com'))
+            auth._get_new_password_message('chrome-internal.googlesource.com'))
 
     def testGetGitcookiesPath(self):
         self.assertEqual(
