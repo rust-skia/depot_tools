@@ -449,7 +449,7 @@ class GerritUtilTest(unittest.TestCase):
     @mock.patch('gerrit_util.ReadHttpResponse')
     def testReadHttpJsonResponse_EmptyValue(self, mockReadHttpResponse):
         mockReadHttpResponse.return_value = StringIO(')]}\'')
-        self.assertIsNone(gerrit_util.ReadHttpJsonResponse(None))
+        self.assertEqual(gerrit_util.ReadHttpJsonResponse(None), {})
 
     @mock.patch('gerrit_util.ReadHttpResponse')
     def testReadHttpJsonResponse_JSON(self, mockReadHttpResponse):
