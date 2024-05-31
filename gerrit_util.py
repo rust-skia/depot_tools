@@ -17,8 +17,6 @@ import os
 import random
 import re
 import socket
-import stat
-import sys
 import tempfile
 import time
 import urllib.parse
@@ -29,7 +27,6 @@ import gclient_utils
 import metrics
 import metrics_utils
 import scm
-import subprocess2
 
 import http.cookiejar
 from io import StringIO
