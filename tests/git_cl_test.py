@@ -146,12 +146,12 @@ def CookiesAuthenticatorMockFactory(hosts_with_creds=None, same_auth=False):
 
     Usage:
         >>> self.mock(git_cl.gerrit_util, "CookiesAuthenticator",
-                    CookiesAuthenticatorMockFactory({'host': ('user', _, 'pass')})
+                    CookiesAuthenticatorMockFactory({'host': ('user', 'pass')})
 
     OR
         >>> self.mock(git_cl.gerrit_util, "CookiesAuthenticator",
                     CookiesAuthenticatorMockFactory(
-                        same_auth=('user', '', 'pass'))
+                        same_auth=('user', 'pass'))
     """
     class CookiesAuthenticatorMock(git_cl.gerrit_util.CookiesAuthenticator):
         def __init__(self):  # pylint: disable=super-init-not-called
@@ -1196,7 +1196,7 @@ class TestGitCl(unittest.TestCase):
         mock.patch(
             'git_cl.gerrit_util.CookiesAuthenticator',
             CookiesAuthenticatorMockFactory(same_auth=('git-owner.example.com',
-                                                       '', 'pass'))).start()
+                                                       'pass'))).start()
         mock.patch('git_cl.Changelist._GerritCommitMsgHookCheck',
                    lambda offer_removal: None).start()
         mock.patch('git_cl.Changelist.GetMostRecentPatchset',
@@ -2535,11 +2535,9 @@ class TestGitCl(unittest.TestCase):
 
     @mock.patch('sys.stderr', io.StringIO())
     def test_gerrit_ensure_authenticated_missing(self):
-        cl = self._test_gerrit_ensure_authenticated_common(
-            auth={
-                'chromium.googlesource.com': ('git-is.ok', '',
-                                              'but gerrit is missing'),
-            })
+        cl = self._test_gerrit_ensure_authenticated_common(auth={
+            'chromium.googlesource.com': ('git-is.ok', 'but gerrit is missing'),
+        })
         with self.assertRaises(SystemExitMock):
             cl.EnsureAuthenticated(force=False)
         self.assertEqual(
@@ -2554,10 +2552,9 @@ class TestGitCl(unittest.TestCase):
     def test_gerrit_ensure_authenticated_conflict(self):
         cl = self._test_gerrit_ensure_authenticated_common(
             auth={
-                'chromium.googlesource.com': ('git-one.example.com', None,
-                                              'secret1'),
+                'chromium.googlesource.com': ('git-one.example.com', 'secret1'),
                 'chromium-review.googlesource.com': ('git-other.example.com',
-                                                     None, 'secret2'),
+                                                     'secret2'),
             })
         self.calls.append((('ask_for_data', 'If you know what you are doing '
                             'press Enter to continue, or Ctrl+C to abort'), ''))
@@ -2566,10 +2563,9 @@ class TestGitCl(unittest.TestCase):
     def test_gerrit_ensure_authenticated_ok(self):
         cl = self._test_gerrit_ensure_authenticated_common(
             auth={
-                'chromium.googlesource.com': ('git-same.example.com', None,
-                                              'secret'),
+                'chromium.googlesource.com': ('git-same.example.com', 'secret'),
                 'chromium-review.googlesource.com': ('git-same.example.com',
-                                                     None, 'secret'),
+                                                     'secret'),
             })
         self.assertIsNone(cl.EnsureAuthenticated(force=False))
 
@@ -2594,13 +2590,19 @@ class TestGitCl(unittest.TestCase):
     def test_gerrit_ensure_authenticated_bearer_token(self):
         cl = self._test_gerrit_ensure_authenticated_common(
             auth={
-                'chromium.googlesource.com': ('', None, 'secret'),
-                'chromium-review.googlesource.com': ('', None, 'secret'),
+                'chromium.googlesource.com': ('', 'secret'),
+                'chromium-review.googlesource.com': ('', 'secret'),
             })
         self.assertIsNone(cl.EnsureAuthenticated(force=False))
-        header, _ = gerrit_util.CookiesAuthenticator().get_auth_info(
-            'chromium.googlesource.com')
-        self.assertTrue('Bearer' in header)
+        conn = gerrit_util.HttpConn(
+            req_uri='???',
+            req_method='GET',
+            req_host='chromium.googlesource.com',
+            req_headers={},
+            req_body=None,
+        )
+        gerrit_util.CookiesAuthenticator().authenticate(conn)
+        self.assertTrue('Bearer' in conn.req_headers['Authorization'])
 
     def test_gerrit_ensure_authenticated_non_https_sso(self):
         self.mockGit.config['remote.origin.url'] = 'custom-scheme://repo'

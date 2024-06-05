@@ -7,6 +7,8 @@ Utilities for requesting information for a Gerrit server via HTTPS.
 https://gerrit-review.googlesource.com/Documentation/rest-api.html
 """
 
+from __future__ import annotations
+
 import base64
 import contextlib
 import http.cookiejar
@@ -95,17 +97,9 @@ def _QueryString(params, first_param=None):
 
 class Authenticator(object):
     """Base authenticator class for authenticator implementations to subclass."""
-    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
-        """Returns the Authorization header value, plus an optional ProxyInfo.
 
-        TODO: Remove `host`. This is only needed for the deprecated
-        CookiesAuthenticator. If distinguishing between hosts is still needed
-        later, I would propose moving this parameter to
-        Authenticator.get/Authenticator.is_applicable/Authenticator.__init__
-        instead.
-
-        TODO: Make auth header non-optional.
-        """
+    def authenticate(self, conn: HttpConn):
+        """Adds authentication information to the HttpConn."""
         raise NotImplementedError()
 
     def debug_summary_state(self) -> str:
@@ -237,19 +231,19 @@ class CookiesAuthenticator(Authenticator):
     def _get_auth_for_host(self, host):
         for domain, creds in self.gitcookies.items():
             if http.cookiejar.domain_match(host, domain):
-                return (creds[0], None, creds[1])
+                return (creds[0], creds[1])
         return None
 
-    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
-        a = self._get_auth_for_host(host)
+    def authenticate(self, conn: HttpConn):
+        a = self._get_auth_for_host(conn.req_host)
         if a:
-            if a[0]:
-                secret = base64.b64encode(
-                    ('%s:%s' % (a[0], a[2])).encode('utf-8'))
-                return 'Basic %s' % secret.decode('utf-8'), None
-
-            return 'Bearer %s' % a[2], None
-        return None, None
+            login, cred = a
+            if login:
+                secret = base64.b64encode(f'{login}:{cred}'.encode('utf-8'))
+                conn.req_headers[
+                    'Authorization'] = f'Basic {secret.decode("utf-8")}'
+            else:
+                conn.req_headers['Authorization'] = f'Bearer {cred}'
 
 
     def ensure_authenticated(self, gerrit_host: str, git_host: str) -> Tuple[bool, str]:
@@ -265,7 +259,7 @@ class CookiesAuthenticator(Authenticator):
         if gerrit_auth and git_auth:
             if gerrit_auth == git_auth:
                 return True, ''
-            all_gsrc, _ = self.get_auth_info('d0esN0tEx1st.googlesource.com')
+            all_gsrc = self._get_auth_for_host('d0esN0tEx1st.googlesource.com')
             print(
                 'WARNING: You have different credentials for Gerrit and git hosts:\n'
                 '           %s\n'
@@ -379,11 +373,12 @@ class GceAuthenticator(Authenticator):
         cls._token_expiration = cls._token_cache['expires_in'] + time_time()
         return cls._token_cache
 
-    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
+    def authenticate(self, conn: HttpConn):
         token_dict = self._get_token_dict()
         if not token_dict:
-            return None, None
-        return '%(token_type)s %(access_token)s' % token_dict, None
+            return
+        conn.req_headers[
+            'Authorization'] = '%(token_type)s %(access_token)s' % token_dict
 
     def debug_summary_state(self) -> str:
         # TODO(b/343230702) - report ambient account name.
@@ -401,8 +396,9 @@ class LuciContextAuthenticator(Authenticator):
         self._authenticator = auth.Authenticator(' '.join(
             [auth.OAUTH_SCOPE_EMAIL, auth.OAUTH_SCOPE_GERRIT]))
 
-    def get_auth_info(self, host: str) -> Tuple[Optional[str], Optional[httplib2.ProxyInfo]]:
-        return 'Bearer %s' % self._authenticator.get_access_token().token, None
+    def authenticate(self, conn: HttpConn):
+        conn.req_headers[
+            'Authorization'] = f'Bearer {self._authenticator.get_access_token().token}'
 
     def debug_summary_state(self) -> str:
         # TODO(b/343230702) - report ambient account name.
@@ -449,45 +445,46 @@ def CreateHttpConn(host,
     headers = headers or {}
     bare_host = host.partition(':')[0]
 
-    authenticator = Authenticator.get()
-    # TODO(crbug.com/1059384): Automatically detect when running on cloudtop.
-    if isinstance(authenticator, GceAuthenticator):
-        print('If you\'re on a cloudtop instance, export '
-              'SKIP_GCE_AUTH_FOR_GIT=1 in your env.')
-
-    auth_header, proxy = authenticator.get_auth_info(bare_host)
-    if auth_header:
-        headers.setdefault('Authorization', auth_header)
-    else:
-        LOGGER.debug('No authorization found for %s.' % bare_host)
-
     url = path
     if not url.startswith('/'):
         url = '/' + url
-    if auth_header and not url.startswith('/a/'):
+    if not url.startswith('/a/'):
         url = '/a%s' % url
 
     rendered_body: Optional[str] = None
     if body:
         rendered_body = json.dumps(body, sort_keys=True)
         headers.setdefault('Content-Type', 'application/json')
-    if LOGGER.isEnabledFor(logging.DEBUG):
-        LOGGER.debug('%s %s://%s%s' % (reqtype, GERRIT_PROTOCOL, host, url))
-        for key, val in headers.items():
-            if key == 'Authorization':
-                val = 'HIDDEN'
-            LOGGER.debug('%s: %s' % (key, val))
-        if rendered_body:
-            LOGGER.debug(rendered_body)
 
     uri = urllib.parse.urljoin(f'{GERRIT_PROTOCOL}://{host}', url)
-    return HttpConn(timeout=timeout,
-                    proxy_info=proxy,
+    conn = HttpConn(timeout=timeout,
                     req_host=host,
                     req_uri=uri,
                     req_method=reqtype,
                     req_headers=headers,
                     req_body=rendered_body)
+
+    authenticator = Authenticator.get()
+    # TODO(crbug.com/1059384): Automatically detect when running on cloudtop.
+    if isinstance(authenticator, GceAuthenticator):
+        print('If you\'re on a cloudtop instance, export '
+              'SKIP_GCE_AUTH_FOR_GIT=1 in your env.')
+
+    authenticator.authenticate(conn)
+
+    if 'Authorization' not in conn.req_headers:
+        LOGGER.debug('No authorization found for %s.' % bare_host)
+
+    if LOGGER.isEnabledFor(logging.DEBUG):
+        LOGGER.debug('%s %s', conn.req_method, conn.req_uri)
+        for key, val in conn.req_headers.items():
+            if key == 'Authorization':
+                val = 'HIDDEN'
+            LOGGER.debug('%s: %s', key, val)
+        if conn.req_body:
+            LOGGER.debug(conn.req_body)
+
+    return conn
 
 
 def ReadHttpResponse(conn: HttpConn,
