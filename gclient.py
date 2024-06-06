@@ -778,6 +778,10 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                 continue
 
             if dep_type == 'cipd':
+                # TODO(b/345321320): Remove when non_git_sources are properly supported.
+                if gclient_utils.IsEnvCog() and (
+                        not condition or "non_git_source" not in condition):
+                    continue
                 cipd_root = self.GetCipdRoot()
                 for package in dep_value.get('packages', []):
                     deps_to_add.append(
@@ -807,6 +811,12 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                 for obj in dep_value['objects']:
                     merged_condition = gclient_utils.merge_conditions(
                         condition, obj.get('condition'))
+                    # TODO(b/345321320): Remove when non_git_sources are properly supported.
+                    if gclient_utils.IsEnvCog() and (not merged_condition
+                                                     or "non_git_source"
+                                                     not in merged_condition):
+                        continue
+
                     should_process_object = should_process and _should_process(
                         merged_condition)
 
