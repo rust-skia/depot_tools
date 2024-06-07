@@ -28,7 +28,12 @@ def FindGoogleJavaFormat():
                             'google-java-format', 'google-java-format')
         # Check that the .jar exists, since it is conditionally downloaded via
         # DEPS conditions.
-        if os.path.exists(path) and os.path.exists(path + '.jar'):
+        # TODO(b/345761161): Remove old os.path.exists(path + '.jar') check,
+        # when third_party/google-java-format
+        #     -> third_party/google-java-format/cipd is fully rolled out.
+        if os.path.exists(path) and (
+                os.path.exists(path + '.jar')
+                or os.path.exists(os.path.join(path, 'cipd') + '.jar')):
             return path
     return None
 
