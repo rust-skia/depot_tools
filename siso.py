@@ -63,6 +63,12 @@ def main(args):
         os.environ.pop("LIBRARY_PATH", None)
         os.environ.pop("SDKROOT", None)
 
+    # if user doesn't set PYTHONPYCACHEPREFIX and PYTHONDONTWRITEBYTECODE
+    # set PYTHONDONTWRITEBYTECODE=1 not to create many *.pyc in workspace
+    # and keep workspace clean.
+    if not os.environ.get("PYTHONPYCACHEPREFIX"):
+        os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+
     environ = os.environ.copy()
 
     # Get gclient root + src.
