@@ -406,8 +406,6 @@ def _make_tryjob_schedule_requests(changelist, jobs, options, patchset):
     shared_properties = {
         'category': options.ensure_value('category', 'git_cl_try')
     }
-    if options.ensure_value('clobber', False):
-        shared_properties['clobber'] = True
     shared_properties.update(_get_properties_from_options(options) or {})
 
     shared_tags = [{'key': 'user_agent', 'value': 'git_cl_try'}]
@@ -2319,7 +2317,7 @@ class Changelist(object):
             if not force:
                 confirm_or_exit(msg, action='continue')
         else:
-          DieWithError(msg)
+            DieWithError(msg)
 
     def EnsureCanUploadPatchset(self, force):
         if not self.GetIssue():
@@ -5723,13 +5721,6 @@ def CMDtry(parser, args):
         help='Revision to use for the tryjob; default: the revision will '
         'be determined by the try recipe that builder runs, which usually '
         'defaults to HEAD of origin/master or origin/main')
-    group.add_option(
-        '-c',
-        '--clobber',
-        action='store_true',
-        default=False,
-        help='Force a clobber before building; that is don\'t do an '
-        'incremental build')
     group.add_option('--category',
                      default='git_cl_try',
                      help='Specify custom build category.')
