@@ -10,8 +10,10 @@ import os
 import subprocess
 import sys
 
+import utils
+
 THIS_DIR = os.path.dirname(__file__)
-CONFIG = os.path.join(THIS_DIR, 'reclient_metrics.cfg')
+CONFIG = utils.depot_tools_config_path('reclient_metrics.cfg')
 VERSION = 1
 
 

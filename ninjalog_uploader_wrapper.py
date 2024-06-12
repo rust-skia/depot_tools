@@ -11,10 +11,11 @@ import sys
 
 import ninjalog_uploader
 import subprocess2
+import utils
 
 THIS_DIR = os.path.dirname(__file__)
 UPLOADER = os.path.join(THIS_DIR, "ninjalog_uploader.py")
-CONFIG = os.path.join(THIS_DIR, "ninjalog.cfg")
+CONFIG = utils.depot_tools_config_path("ninjalog.cfg")
 VERSION = 3
 
 
