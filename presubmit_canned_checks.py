@@ -8,7 +8,6 @@ import functools
 import io as _io
 import os as _os
 import time
-import zoneinfo
 
 import metadata.discover
 import metadata.validate
@@ -907,7 +906,7 @@ def CheckChromiumDependencyMetadata(input_api, output_api, file_filter=None):
 
 _IGNORE_FREEZE_FOOTER = 'Ignore-Freeze'
 
-_FREEZE_TZ = zoneinfo.ZoneInfo("America/Los_Angeles")
+_FREEZE_TZ = datetime.timezone(-datetime.timedelta(hours=8), 'PST')
 _FREEZE_START = datetime.datetime(2023, 12, 15, 0, 0, tzinfo=_FREEZE_TZ)
 _FREEZE_END = datetime.datetime(2024, 1, 2, 0, 0, tzinfo=_FREEZE_TZ)
 
