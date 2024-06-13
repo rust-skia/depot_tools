@@ -103,11 +103,16 @@ def main(args):
             for line in f.readlines():
                 k, v = line.rstrip().split('=', 1)
                 env[k] = v
-        siso_path = siso_override_path or os.path.join(
-            base_path, 'third_party', 'siso',
-            'siso' + gclient_paths.GetExeSuffix())
-        if os.path.isfile(siso_path):
-            return subprocess.call([siso_path] + args[1:], env=env)
+        siso_paths = [
+            siso_override_path,
+            os.path.join(base_path, 'third_party', 'siso', 'cipd',
+                         'siso' + gclient_paths.GetExeSuffix()),
+            os.path.join(base_path, 'third_party', 'siso',
+                         'siso' + gclient_paths.GetExeSuffix()),
+        ]
+        for siso_path in siso_paths:
+            if siso_path and os.path.isfile(siso_path):
+                return subprocess.call([siso_path] + args[1:], env=env)
 
     print(
         'depot_tools/siso.py: Could not find .sisoenv under build/config/siso '
