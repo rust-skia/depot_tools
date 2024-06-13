@@ -177,24 +177,42 @@ class Authenticator(object):
         Probes the local system and its environment and identifies the
         Authenticator instance to use.
         """
-        authenticators: List[Type[Authenticator]] = [
-            SSOAuthenticator,
+        use_new_auth = scm.GIT.GetConfig(os.getcwd(),
+                                         'depot-tools.usenewauthstack') == '1'
 
-            # LUCI Context takes priority since it's normally present only on bots,
-            # which then must use it.
-            LuciContextAuthenticator,
+        # Allow skipping SSOAuthenticator for local testing purposes.
+        skip_sso = scm.GIT.GetConfig(os.getcwd(),
+                                     'depot-tools.newauthskipsso') == '1'
 
-            # TODO(crbug.com/1059384): Automatically detect when running on
-            # cloudtop, and use CookiesAuthenticator instead.
-            GceAuthenticator,
-            CookiesAuthenticator,
-        ]
+        authenticators: List[Type[Authenticator]]
+
+        if use_new_auth:
+            LOGGER.debug('Authenticator.get: using new auth stack.')
+            authenticators = [
+                SSOAuthenticator,
+                LuciContextAuthenticator,
+                GceAuthenticator,
+                LuciAuthAuthenticator,
+            ]
+            if skip_sso:
+                LOGGER.debug('Authenticator.get: skipping SSOAuthenticator.')
+                authenticators = authenticators[1:]
+        else:
+            authenticators = [
+                LuciContextAuthenticator,
+                GceAuthenticator,
+                CookiesAuthenticator,
+            ]
+
         for candidate in authenticators:
             if candidate.is_applicable():
+                LOGGER.debug('Authenticator.get: Selected %s.',
+                             candidate.__name__)
                 return candidate()
 
+        auth_names = ', '.join(a.__name__ for a in authenticators)
         raise ValueError(
-            f"Could not find suitable authenticator, tried: {authenticators}")
+            f"Could not find suitable authenticator, tried: [{auth_names}].")
 
 
 class SSOAuthenticator(Authenticator):
@@ -234,14 +252,7 @@ class SSOAuthenticator(Authenticator):
     def is_applicable(cls) -> bool:
         """If the git-remote-sso binary is in $PATH, we consider this
         authenticator to be applicable."""
-        if scm.GIT.GetConfig(os.getcwd(), 'depot-tools.usenewauthstack') != '1':
-            LOGGER.debug('SSOAuthenticator: skipping due to missing opt-in.')
-            return False
-
-        pth = cls._resolve_sso_binary_path()
-        if pth:
-            LOGGER.debug('SSOAuthenticator: enabled %r.', pth)
-        return bool(pth)
+        return bool(cls._resolve_sso_binary_path())
 
     @classmethod
     def _parse_config(cls, config: str) -> SSOInfo:
@@ -634,6 +645,18 @@ class LuciContextAuthenticator(Authenticator):
     def debug_summary_state(self) -> str:
         # TODO(b/343230702) - report ambient account name.
         return ''
+
+
+class LuciAuthAuthenticator(LuciContextAuthenticator):
+    """Authenticator implementation that uses `luci-auth` credentials.
+
+    This is the same as LuciContextAuthenticator, except that it is for local
+    non-google.com developer credentials.
+    """
+
+    @staticmethod
+    def is_applicable():
+        return True
 
 
 class ReqParams(TypedDict):
