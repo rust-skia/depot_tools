@@ -6171,7 +6171,11 @@ def _SplitArgsByCmdLineLimit(args):
         yield batch_args
 
 
-def RunGitDiffCmd(diff_type, upstream_commit, files, allow_prefix=False):
+def RunGitDiffCmd(diff_type,
+                  upstream_commit,
+                  files,
+                  allow_prefix=False,
+                  **kwargs):
     """Generates and runs diff command."""
     # Generate diff for the current branch's changes.
     diff_cmd = ['-c', 'core.quotePath=false', 'diff', '--no-ext-diff']
@@ -6187,7 +6191,7 @@ def RunGitDiffCmd(diff_type, upstream_commit, files, allow_prefix=False):
     diff_cmd += [upstream_commit, '--']
 
     if not files:
-        return RunGit(diff_cmd)
+        return RunGit(diff_cmd, **kwargs)
 
     for file in files:
         if file != '-' and not os.path.isdir(file) and not os.path.isfile(file):
@@ -6195,7 +6199,7 @@ def RunGitDiffCmd(diff_type, upstream_commit, files, allow_prefix=False):
 
     output = ''
     for files_batch in _SplitArgsByCmdLineLimit(files):
-        output += RunGit(diff_cmd + files_batch)
+        output += RunGit(diff_cmd + files_batch, **kwargs)
 
     return output
 
@@ -6304,7 +6308,10 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
         # If --diff is passed, google-java-format will output formatted content.
         # Diff it with the existing file in the checkout and output the result.
         if opts.diff:
-            stdout = RunGitDiffCmd(['-U3'], '--no-index', [path, '-'])
+            stdout = RunGitDiffCmd(['-U3'],
+                                   '--no-index', [path, '-'],
+                                   stdin=stdout.encode(),
+                                   **kwds)
         return stdout
 
     results = []
