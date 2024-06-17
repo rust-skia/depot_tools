@@ -325,6 +325,7 @@ class TestGitClBasic(unittest.TestCase):
         options.force = False
         options.preserve_tryjobs = False
         options.message_file = "message.txt"
+        options.commit_description = None
 
         with self.assertRaises(SystemExitMock):
             cl.CMDUploadChange(options, [], 'foo',
@@ -2103,6 +2104,7 @@ class TestGitCl(unittest.TestCase):
                                     mockGetBugPrefix=None,
                                     mockIsCodeOwnersEnabledOnHost=None,
                                     initial_description='desc',
+                                    commit_description=None,
                                     bug=None,
                                     fixed=None,
                                     branch='branch',
@@ -2133,7 +2135,8 @@ class TestGitCl(unittest.TestCase):
             fixed=fixed,
             reviewers=reviewers,
             add_owners_to=add_owners_to,
-            message=initial_description),
+            message=initial_description,
+            commit_description=commit_description),
                                              git_diff_args=None,
                                              files=list(owners_by_path))
         self.assertEqual(expected_description, actual.description)
@@ -2210,6 +2213,16 @@ class TestGitCl(unittest.TestCase):
                 '',
                 'R=a@example.com, b@example.com',
             ]))
+
+    def testGetDescriptionForUpload_NewDesc(self):
+        self.getDescriptionForUploadTest(
+            commit_description='this is a new desc',
+            expected_description='this is a new desc')
+
+    @mock.patch('sys.stdin', io.StringIO('this is a new desc'))
+    def testGetDescriptionForUpload_NewDescFromStdin(self):
+        self.getDescriptionForUploadTest(
+            commit_description='-', expected_description='this is a new desc')
 
     def test_description_append_footer(self):
         for init_desc, footer_line, expected_desc in [
@@ -4077,6 +4090,7 @@ class ChangelistTest(unittest.TestCase):
         options.private = False
         options.no_autocc = False
         options.message_file = None
+        options.commit_description = None
         options.cc = ['chicken@bok.farm']
         parent = '420parent'
         latest_tree = '420latest_tree'

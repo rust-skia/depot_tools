@@ -1777,7 +1777,13 @@ class Changelist(object):
                                  git_diff_args: Sequence[str],
                                  files: Sequence[str]) -> ChangeDescription:
         """Get description message for upload."""
-        if self.GetIssue():
+        if options.commit_description:
+            description = options.commit_description
+            if description == '-':
+                description = '\n'.join(l.rstrip() for l in sys.stdin)
+            elif description == '+':
+                description = _create_description_from_log(git_diff_args)
+        elif self.GetIssue():
             description = self.FetchDescription()
         elif options.message:
             description = options.message
@@ -2034,7 +2040,8 @@ class Changelist(object):
             change_desc.ensure_change_id(change_id)
 
         else:  # No change issue. First time uploading
-            if not options.force and not options.message_file:
+            if not options.force and not (options.message_file
+                                          or options.commit_description):
                 change_desc.prompt()
 
             # Check if user added a change_id in the descripiton.
@@ -3029,7 +3036,8 @@ class Changelist(object):
                 if last_uploaded_rev and current_rev != last_uploaded_rev:
                     external_parent = self._UpdateWithExternalChanges()
             else:  # if not self.GetIssue()
-                if not options.force and not options.message_file:
+                if not options.force and not (options.message_file
+                                              or options.commit_description):
                     change_desc.prompt()
                 change_ids = git_footers.get_footer_change_id(
                     change_desc.description)
@@ -4910,14 +4918,17 @@ def CMDupload(parser, args):
     parser.add_option('--message',
                       '-m',
                       dest='message',
-                      help='message for patchset')
+                      help='DEPRECATED: use --commit-description and/or '
+                      '--title instead. message for patchset')
     parser.add_option('-b',
                       '--bug',
                       help='pre-populate the bug number(s) for this issue. '
                       'If several, separate with commas')
     parser.add_option('--message-file',
                       dest='message_file',
-                      help='file which contains message for patchset')
+                      help='DEPRECATED: use `--commit-description -` and pipe '
+                      'the file to stdin instead. File which contains message '
+                      'for patchset')
     parser.add_option('--title', '-t', dest='title', help='title for patchset')
     parser.add_option('-T',
                       '--skip-title',
@@ -5029,8 +5040,14 @@ def CMDupload(parser, args):
                       action='store_true',
                       default=False,
                       help='Modify description before upload. Cannot be used '
-                      'with --force. It is a noop when --no-squash is set '
-                      'or a new commit is created.')
+                      'with --force or --commit-description. It is a noop when '
+                      '--no-squash is set or a new commit is created.')
+    parser.add_option('--commit-description',
+                      dest='commit_description',
+                      help='Description to set for this issue/CL (- for stdin'
+                      ', + to load from local commit HEAD). Can not be used '
+                      'with --edit-description, --message or --message-file.'
+                      'if `-` is provided, force will be implicitly enabled.')
     parser.add_option('--git-completion-helper',
                       action="store_true",
                       help=optparse.SUPPRESS_HELP)
@@ -5078,9 +5095,22 @@ def CMDupload(parser, args):
     if options.edit_description and options.force:
         parser.error('Only one of --force and --edit-description allowed')
 
+    if options.edit_description and options.commit_description:
+        parser.error('Only one of --commit-description and --edit-description '
+                     'allowed')
+
+    if options.message and options.commit_description:
+        parser.error('Only one of --commit-description and --message allowed')
+
+    if options.commit_description and options.commit_description == '-':
+        options.force = True
+
     if options.message_file:
         if options.message:
             parser.error('Only one of --message and --message-file allowed.')
+        if options.commit_description:
+            parser.error('Only one of --commit-description and --message-file '
+                         'allowed.')
         options.message = gclient_utils.FileRead(options.message_file)
 
     if ([options.cq_dry_run, options.use_commit_queue, options.retry_failed
