@@ -1766,6 +1766,9 @@ def PanProjectChecks(input_api,
                 input_api, output_api))
 
     if global_checks:
+        results.extend(
+            input_api.canned_checks.CheckNoNewGitFilesAddedInDependencies(
+                input_api, output_api))
         if input_api.change.scm == 'git':
             snapshot("checking for commit objects in tree")
             results.extend(
@@ -2133,6 +2136,46 @@ def CheckForRecursedeps(input_api, output_api):
                     f'Found recuredep entry {check_dep} but it is not found '
                     'in\n deps itself. Remove it from recurcedeps or add '
                     'deps entry.'))
+    return errors
+
+
+def _readDeps(input_api):
+    """Read DEPS file from the checkout disk. Extracted for testability."""
+    deps_file = input_api.os_path.join(input_api.PresubmitLocalPath(), 'DEPS')
+    with open(deps_file) as f:
+        return f.read()
+
+
+def CheckNoNewGitFilesAddedInDependencies(input_api, output_api):
+    """Check if there are Git files in any DEPS dependencies. Error is returned
+    if there are."""
+    try:
+        deps = _ParseDeps(_readDeps(input_api))
+    except FileNotFoundError:
+        # If there's no DEPS file, there is nothing to check.
+        return []
+
+    dependency_paths = set()
+    for path, dep in deps['deps'].items():
+        if 'condition' in dep and 'non_git_source' in dep['condition']:
+            # TODO(crbug.com/40738689): Remove src/ prefix
+            dependency_paths.add(path[4:])  # 4 == len('src/')
+
+    errors = []
+    for file in input_api.AffectedFiles(include_deletes=False):
+        path = file.LocalPath()
+        # We are checking path, and all paths below up to root. E.g. if path is
+        # a/b/c, we start with path == "a/b/c", followed by "a/b" and "a".
+        while path:
+            if path in dependency_paths:
+                errors.append(
+                    output_api.PresubmitError(
+                        'You cannot place files tracked by Git inside a '
+                        'first-party DEPS dependency (deps).\n'
+                        f'Dependency: {path}\n'
+                        f'File: {file.LocalPath()}'))
+            path = _os.path.dirname(path)
+
     return errors
 
 
