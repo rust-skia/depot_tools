@@ -216,12 +216,19 @@ class Authenticator(object):
 
 
 class SSOAuthenticator(Authenticator):
-    """SSOAuthenticator implements auth with an SSO helper.
+    """SSOAuthenticator implements a Google-internal authorization scheme which
+    uses a git remote helper `git-remote-sso` available to Googlers.
 
-    This helper has the same protocol as `git-remote-persistent-https`.
+    This helper is similar to the publically available `git-remote-persistent-https`.
+    Googler machines are configured so that all *.googlesource.com domains are
+    routed instead to *.git.corp.google.com via a secure tunnel which is
+    integrated with single-sign on authentication.
 
-    TEMPORARY configuration for Googlers (one `url` block for each
-    Gerrit host):
+    This class maintains a copy of the git-remote-sso process, parses it's
+    output configuration and authenticates HttpConns for git_cl using this as
+    a proxy.
+
+    TEMPORARY configuration for Googlers (one `url` block for each Gerrit host):
 
         [url "sso://chromium/"]
           insteadOf = https://chromium.googlesource.com/
@@ -230,10 +237,19 @@ class SSOAuthenticator(Authenticator):
           useNewAuthStack = 1
     """
 
-    # The running persistent sso proxy process.
+    # This is set to true in tests, allows _parse_config to consume expired
+    # cookies.
+    _testing_load_expired_cookies = False
+
+    # Tri-state cache for sso helper command:
+    #   * None - no lookup yet
+    #   * () - lookup was performed, but no binary was found.
+    #   * non-empty tuple - lookup was performed, and this is the command to
+    #     run.
     #
-    # Lazily spawned by `authenticate`.
-    _sso_info_lock = threading.Lock()
+    # NOTE: Tests directly assign to this to substitute a helper process that
+    # can exercise other aspects of SSOAuthenticator.
+    _sso_cmd: Optional[Tuple[str, ...]] = None
 
     @dataclass
     class SSOInfo:
@@ -241,18 +257,35 @@ class SSOAuthenticator(Authenticator):
         cookies: http.cookiejar.CookieJar
         headers: Dict[str, str]
 
+    # SSOInfo is a cached blob of information used by the `authenticate` method.
     _sso_info: Optional[SSOInfo] = None
+    _sso_info_lock = threading.Lock()
 
-    @staticmethod
-    @functools.lru_cache
-    def _resolve_sso_binary_path():
-        return shutil.which('git-remote-sso') or ''
+    @classmethod
+    def _resolve_sso_cmd(cls) -> Tuple[str, ...]:
+        """Returns the cached command-line to invoke git-remote-sso.
+
+        If git-remote-sso is not in $PATH, returns ().
+        """
+        cmd = cls._sso_cmd
+        if cmd is None:
+            pth = shutil.which('git-remote-sso')
+            if pth is None:
+                cmd = ()
+            else:
+                cmd = (
+                    pth,
+                    '-print_config',
+                    'sso://*.git.corp.google.com',
+                )
+            cls._sso_cmd = cmd
+        return cmd
 
     @classmethod
     def is_applicable(cls) -> bool:
         """If the git-remote-sso binary is in $PATH, we consider this
         authenticator to be applicable."""
-        return bool(cls._resolve_sso_binary_path())
+        return bool(cls._resolve_sso_cmd())
 
     @classmethod
     def _parse_config(cls, config: str) -> SSOInfo:
@@ -271,8 +304,22 @@ class SSOAuthenticator(Authenticator):
         headers = {headerKey.strip(): headerValue.strip()}
 
         proxy_host, proxy_port = parsed['http.proxy'].split(':', 1)
-        cj = http.cookiejar.MozillaCookieJar(parsed['http.cookiefile'])
-        cj.load()
+
+        cfpath = parsed['http.cookiefile']
+        cj = http.cookiejar.MozillaCookieJar(cfpath)
+        # NOTE: python3.8 doesn't support httponly cookie lines, so we parse
+        # this manually. Once we move to python3.10+, this hack can be removed.
+        with open(cfpath) as cf:
+            cookiedata = cf.read().replace('#HttpOnly_', '')
+        # _really_load is the way that MozillaCookieJar subclasses
+        # FileCookieJar. Calling this directly is better than reimplementing the
+        # entire _really_load function manually.
+        cj._really_load(
+            StringIO(cookiedata),
+            cfpath,
+            ignore_discard=False,
+            ignore_expires=cls._testing_load_expired_cookies,
+        )
 
         return cls.SSOInfo(proxy=httplib2.ProxyInfo(
             httplib2.socks.PROXY_TYPE_HTTP_NO_TUNNEL, proxy_host.encode(),
@@ -290,23 +337,12 @@ class SSOAuthenticator(Authenticator):
         tf = os.path.join(tdir, 'git-remote-sso.stderr')
 
         with tempdir() as tdir:
-            cmd = [
-                cls._resolve_sso_binary_path(),
-                '-print_config',
-                'sso://*.git.corp.google.com',
-            ]
+            cmd = cls._resolve_sso_cmd()
 
             stderr_file = open(tf, mode='w')
 
-            # NOTE: The git-remote-sso process does the following in order:
-            #
-            # 1. writes file to disk
-            # 2. writes config to stdout, and closes stdout
-            # 3. waits for stdin to be closed
-            # 4. deletes file on disk before exiting
-            #
-            # Thus, we must fully parse stdout AND consume the
-            # cookiefile BEFORE stopping the process.
+            # NOTE: we must fully parse stdout and consume the cookiefile before
+            # killing the process.
             with subprocess2.Popen(cmd,
                                    stdout=subprocess2.PIPE,
                                    stderr=stderr_file,
@@ -331,13 +367,14 @@ class SSOAuthenticator(Authenticator):
                         'SSOAuthenticator: Timeout: %r: reading config.', cmd)
                     raise subprocess.TimeoutExpired(cmd=cmd, timeout=5)
 
-                proc.stdin.close()
-                if proc.wait(timeout=2) is None:
-                    proc.kill()
-                    LOGGER.warning(
-                        'SSOAuthenticator: Helper did not exit properly after waiting; forcefully killed'
-                        ' (This is cleanup and likely not the root cause of any error)'
-                    )
+                proc.poll()
+                if (retcode := proc.returncode) is not None:
+                    # process failed - we should be able to read the tempfile.
+                    stderr_file.close()
+                    with open(tf, encoding='utf-8') as stderr:
+                        sys.exit(
+                            f'SSOAuthenticator: exit {retcode}: {stderr.read().strip()}'
+                        )
 
         return ret
 
@@ -373,12 +410,8 @@ class SSOAuthenticator(Authenticator):
 
         # Finally, add cookies
         sso_info.cookies.add_cookie_header(conn)
-        if 'Cookie' not in conn.req_headers:
-            LOGGER.debug("SSOAuthenticator: request headers missing 'Cookie'")
-            LOGGER.debug("SSO cookies: %r", sso_info.cookies._cookies)
-            LOGGER.debug("Request URI: %r", conn.req_uri)
-            LOGGER.debug("Request host: %r", conn.req_host)
-            LOGGER.debug("Request headers: %r", conn.req_headers)
+        assert 'Cookie' in conn.req_headers, (
+            'sso_info.cookies.add_cookie_header failed to add Cookie')
 
     def debug_summary_state(self) -> str:
         return ''
@@ -768,7 +801,7 @@ def CreateHttpConn(host,
 
     if LOGGER.isEnabledFor(logging.DEBUG):
         LOGGER.debug('%s %s', conn.req_method, conn.req_uri)
-        LOGGER.debug('conn.proxy_info%s', conn.proxy_info)
+        LOGGER.debug('conn.proxy_info=%r', conn.proxy_info)
         for key, val in conn.req_headers.items():
             if key in ('Authorization', 'Cookie'):
                 val = 'HIDDEN'
