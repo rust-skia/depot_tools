@@ -40,6 +40,7 @@ import auth
 import gclient_utils
 import metrics
 import metrics_utils
+import newauth
 import scm
 import subprocess2
 
@@ -177,12 +178,10 @@ class Authenticator(object):
         Probes the local system and its environment and identifies the
         Authenticator instance to use.
         """
-        use_new_auth = scm.GIT.GetConfig(os.getcwd(),
-                                         'depot-tools.usenewauthstack') == '1'
+        use_new_auth = newauth.Enabled()
 
         # Allow skipping SSOAuthenticator for local testing purposes.
-        skip_sso = scm.GIT.GetConfig(os.getcwd(),
-                                     'depot-tools.newauthskipsso') == '1'
+        skip_sso = newauth.SkipSSO()
 
         authenticators: List[Type[Authenticator]]
 
