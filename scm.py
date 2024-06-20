@@ -195,9 +195,10 @@ class GIT(object):
             cwd: path to fetch `git config` for.
             key: The specific config key to affect.
             value: The value to set. If this is None, `key` will be unset.
-            value_pattern: For use with `all=True`, allows further filtering of
-                the set or unset operation based on the currently configured
-                value. Ignored for `all=False`.
+            value_pattern: For use with `modify_all=True`, allows
+                further filtering of the set or unset operation based on
+                the currently configured value. Ignored for
+                `modify_all=False`.
             modify_all: If True, this will change a set operation to
                 `--replace-all`, and will change an unset operation to
                 `--unset-all`.
