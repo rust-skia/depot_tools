@@ -607,21 +607,20 @@ class SSOAuthenticatorTest(unittest.TestCase):
     def _input_dir(self) -> Path:
         return Path(__file__).with_suffix('.inputs') / self._testMethodName
 
-    def testCmdAssemblyFound(self):
-        mock.patch('shutil.which', return_value='/fake/git-remote-sso').start()
+    @mock.patch('shutil.which', return_value='/fake/git-remote-sso')
+    def testCmdAssemblyFound(self, _):
         self.assertEqual(self.sso._resolve_sso_cmd(),
                          ('/fake/git-remote-sso', '-print_config',
                           'sso://*.git.corp.google.com'))
         self.assertTrue(self.sso.is_applicable())
 
-    def testCmdAssemblyNotFound(self):
-        mock.patch('shutil.which', return_value=None).start()
+    @mock.patch('shutil.which', return_value=None)
+    def testCmdAssemblyNotFound(self, _):
         self.assertEqual(self.sso._resolve_sso_cmd(), ())
         self.assertFalse(self.sso.is_applicable())
 
-    def testCmdAssemblyCached(self):
-        which = mock.patch('shutil.which',
-                           return_value='/fake/git-remote-sso').start()
+    @mock.patch('shutil.which', return_value='/fake/git-remote-sso')
+    def testCmdAssemblyCached(self, which):
         self.sso._resolve_sso_cmd()
         self.sso._resolve_sso_cmd()
         self.assertEqual(which.called, 1)
