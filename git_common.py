@@ -2,9 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Monkeypatch IMapIterator so that Ctrl-C can kill everything properly.
-# Derived from https://gist.github.com/aljungberg/626518
-
 import multiprocessing.pool
 import sys
 import threading
@@ -21,6 +18,8 @@ def wrapper(func):
     return wrap
 
 
+# Monkeypatch IMapIterator so that Ctrl-C can kill everything properly.
+# Derived from https://gist.github.com/aljungberg/626518
 IMapIterator.next = wrapper(IMapIterator.next)
 IMapIterator.__next__ = IMapIterator.next
 # TODO(iannucci): Monkeypatch all other 'wait' methods too.
