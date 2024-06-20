@@ -12,9 +12,13 @@ import scm
 
 def Enabled() -> bool:
     """Returns True if new auth stack is enabled."""
-    return scm.GIT.GetConfig(os.getcwd(), 'depot-tools.usenewauthstack') == '1'
+    return scm.GIT.GetConfig(os.getcwd(),
+                             'depot-tools.usenewauthstack') in ('yes', 'on',
+                                                                'true', '1')
 
 
 def SkipSSO() -> bool:
     """Returns True if skip SSO is set."""
-    return scm.GIT.GetConfig(os.getcwd(), 'depot-tools.newauthskipsso') == '1'
+    return scm.GIT.GetConfig(os.getcwd(),
+                             'depot-tools.newauthskipsso') in ('yes', 'on',
+                                                               'true', '1')
