@@ -216,17 +216,7 @@ class Authenticator(object):
 
 
 class SSOAuthenticator(Authenticator):
-    """SSOAuthenticator implements a Google-internal authorization scheme which
-    uses a git remote helper `git-remote-sso` available to Googlers.
-
-    This helper is similar to the publically available `git-remote-persistent-https`.
-    Googler machines are configured so that all *.googlesource.com domains are
-    routed instead to *.git.corp.google.com via a secure tunnel which is
-    integrated with single-sign on authentication.
-
-    This class maintains a copy of the git-remote-sso process, parses it's
-    output configuration and authenticates HttpConns for git_cl using this as
-    a proxy.
+    """SSOAuthenticator implements a Google-internal authentication scheme.
 
     TEMPORARY configuration for Googlers (one `url` block for each Gerrit host):
 
@@ -341,8 +331,18 @@ class SSOAuthenticator(Authenticator):
 
             stderr_file = open(tf, mode='w')
 
-            # NOTE: we must fully parse stdout and consume the cookiefile before
-            # killing the process.
+            # NOTE: The git-remote-sso helper does the following:
+            #
+            # 1. writes files to disk.
+            # 2. writes config to stdout, referencing those files.
+            # 3. closes stdout (thus sending EOF to us, allowing
+            #    sys.stdout.read() to complete).
+            # 4. waits for stdin to close.
+            # 5. deletes files on disk (which is why we make sys.stdin a PIPE
+            #    instead of closing it outright).
+            #
+            # NOTE: the http.proxy value in the emitted config points to
+            # a socket which is owned by a system service, not `proc` itself.
             with subprocess2.Popen(cmd,
                                    stdout=subprocess2.PIPE,
                                    stderr=stderr_file,
