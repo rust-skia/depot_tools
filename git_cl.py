@@ -2202,7 +2202,7 @@ class Changelist(object):
             raise
 
     def GetGerritHost(self):
-        # Lazy load of configs.
+        # Populate self._gerrit_host
         self.GetCodereviewServer()
 
         if self._gerrit_host and '.' not in self._gerrit_host:
