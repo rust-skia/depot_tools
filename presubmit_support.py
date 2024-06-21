@@ -2191,10 +2191,18 @@ def _diffs_to_change_files(diffs):
         A list of change file tuples from the diffs.
 
     Raises:
-        PresubmitFailure: If a diff is empty or otherwise invalid.
+        PresubmitFailure: If a diff is invalid.
     """
     change_files = []
     for file, file_diff in diffs.items():
+        if not file_diff:
+            # If a file is modified such that its contents are the same as the
+            # upstream commit, it may not have a diff. For example, if you added
+            # a newline to a file in PS1, then deleted it in PS2, the diff will
+            # be empty. Add this to change_files as modified anyway.
+            change_files.append(('M', file))
+            continue
+
         header_line = file_diff.splitlines()[1]
         if not header_line:
             raise PresubmitFailure('diff header is empty')
