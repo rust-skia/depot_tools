@@ -197,6 +197,15 @@ class Authenticator(object):
         environment."""
         raise NotImplementedError()
 
+    def ensure_authenticated(self, gerrit_host: str, git_host: str) -> Tuple[bool, str]:
+        """Returns (bypassable, error message).
+
+        If the error message is empty, there is no error to report.
+        If bypassable is true, the caller will allow the user to continue past the
+        error.
+        """
+        return (True, '')
+
     @classmethod
     def get(cls):
         """Returns: (Authenticator) The identified Authenticator to use.
@@ -560,7 +569,6 @@ class CookiesAuthenticator(Authenticator):
                     'Authorization'] = f'Basic {secret.decode("utf-8")}'
             else:
                 conn.req_headers['Authorization'] = f'Bearer {cred}'
-
 
     def ensure_authenticated(self, gerrit_host: str, git_host: str) -> Tuple[bool, str]:
         """Returns (bypassable, error message).

@@ -2287,11 +2287,6 @@ class Changelist(object):
             # See http://crbug.com/603378.
             return
 
-        # Check presence of cookies only if using cookies-based auth method.
-        cookie_auth = gerrit_util.Authenticator.get()
-        if not isinstance(cookie_auth, gerrit_util.CookiesAuthenticator):
-            return
-
         remote_url = self.GetRemoteUrl()
         if remote_url is None:
             logging.warning('invalid remote')
@@ -2301,7 +2296,6 @@ class Changelist(object):
         if parsed_url.scheme == 'sso':
             # Skip checking authentication for projects with sso:// scheme.
             return
-
         if parsed_url.scheme != 'https':
             logging.warning(
                 'Ignoring branch %(branch)s with non-https remote '
@@ -2316,7 +2310,7 @@ class Changelist(object):
         git_host = self._GetGitHost()
         assert self._gerrit_server and self._gerrit_host and git_host
 
-        bypassable, msg = cookie_auth.ensure_authenticated(git_host, self._gerrit_host)
+        bypassable, msg = gerrit_util.Authenticator.get().ensure_authenticated(git_host, self._gerrit_host)
         if not msg:
             return  # OK
         if bypassable:
