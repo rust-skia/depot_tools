@@ -669,6 +669,7 @@ class TestGitCl(unittest.TestCase):
         # It's important to reset settings to not have inter-tests interference.
         git_cl.settings = git_cl.Settings()
         self.addCleanup(mock.patch.stopall)
+        gerrit_util.Authenticator._resolved = None
 
     def tearDown(self):
         try:
@@ -3623,6 +3624,7 @@ class ChangelistTest(unittest.TestCase):
         self.mockGit = GitMocks()
         mock.patch('scm.GIT.GetConfig', self.mockGit.GetConfig).start()
         mock.patch('scm.GIT.SetConfig', self.mockGit.SetConfig).start()
+        gerrit_util.Authenticator._resolved = None
 
     def testRunHook(self):
         expected_results = {
