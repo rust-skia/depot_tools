@@ -230,6 +230,10 @@ class SSOAuthenticator(Authenticator):
     # cookies.
     _testing_load_expired_cookies = False
 
+    # How long we should wait for the sso helper to write and close stdout.
+    # Overridden in tests.
+    _timeout_secs = 5
+
     # Tri-state cache for sso helper command:
     #   * None - no lookup yet
     #   * () - lookup was performed, but no binary was found.
@@ -322,60 +326,80 @@ class SSOAuthenticator(Authenticator):
 
         Raises an exception if something goes wrong.
         """
-        tdir = tempfile.mkdtemp(suffix='gerrit_util')
-        tf = os.path.join(tdir, 'git-remote-sso.stderr')
+        cmd = cls._resolve_sso_cmd()
 
         with tempdir() as tdir:
-            cmd = cls._resolve_sso_cmd()
+            tf = os.path.join(tdir, 'git-remote-sso.stderr')
 
-            stderr_file = open(tf, mode='w')
+            with open(tf, mode='w') as stderr_file:
+                # NOTE: The git-remote-sso helper does the following:
+                #
+                # 1. writes files to disk.
+                # 2. writes config to stdout, referencing those files.
+                # 3. closes stdout (thus sending EOF to us, allowing
+                #    sys.stdout.read() to complete).
+                # 4. waits for stdin to close.
+                # 5. deletes files on disk (which is why we make sys.stdin a PIPE
+                #    instead of closing it outright).
+                #
+                # NOTE: the http.proxy value in the emitted config points to
+                # a socket which is owned by a system service, not `proc` itself.
+                with subprocess2.Popen(cmd,
+                                       stdout=subprocess2.PIPE,
+                                       stderr=stderr_file,
+                                       stdin=subprocess2.PIPE,
+                                       encoding='utf-8') as proc:
+                    stderr_file.close()  # we can close after process starts.
+                    timedout = False
 
-            # NOTE: The git-remote-sso helper does the following:
-            #
-            # 1. writes files to disk.
-            # 2. writes config to stdout, referencing those files.
-            # 3. closes stdout (thus sending EOF to us, allowing
-            #    sys.stdout.read() to complete).
-            # 4. waits for stdin to close.
-            # 5. deletes files on disk (which is why we make sys.stdin a PIPE
-            #    instead of closing it outright).
-            #
-            # NOTE: the http.proxy value in the emitted config points to
-            # a socket which is owned by a system service, not `proc` itself.
-            with subprocess2.Popen(cmd,
-                                   stdout=subprocess2.PIPE,
-                                   stderr=stderr_file,
-                                   stdin=subprocess2.PIPE,
-                                   encoding='utf-8') as proc:
-                timedout = False
+                    def _fire_timeout():
+                        nonlocal timedout
+                        timedout = True
+                        proc.kill()
 
-                def _fire_timeout():
-                    nonlocal timedout
-                    timedout = True
-                    proc.kill()
+                    timer = threading.Timer(cls._timeout_secs, _fire_timeout)
+                    timer.start()
+                    try:
+                        stdout_data = proc.stdout.read()
+                    finally:
+                        timer.cancel()
 
-                timer = threading.Timer(5, _fire_timeout)
-                timer.start()
-                try:
-                    ret = cls._parse_config(proc.stdout.read())
-                finally:
-                    timer.cancel()
+                    if timedout:
+                        LOGGER.error(
+                            'SSOAuthenticator: Timeout: %r: reading config.',
+                            cmd)
+                        raise subprocess.TimeoutExpired(
+                            cmd=cmd, timeout=cls._timeout_secs)
 
-                if timedout:
-                    LOGGER.error(
-                        'SSOAuthenticator: Timeout: %r: reading config.', cmd)
-                    raise subprocess.TimeoutExpired(cmd=cmd, timeout=5)
+                    # if the process already ended, then something is wrong.
+                    retcode = proc.poll()
+                    # if stdout was closed without any data, we need to wait for
+                    # end-of-process here and hope for an error message - the
+                    # poll above is racy in this case (we could see stdout EOF
+                    # but the process may not have quit yet).
+                    if not retcode and not stdout_data:
+                        retcode = proc.wait(timeout=cls._timeout_secs)
+                        # We timed out while doing `wait` - we can't safely open
+                        # stderr on windows, so just emit a generic timeout
+                        # exception.
+                        if retcode is None:
+                            LOGGER.error(
+                                'SSOAuthenticator: Timeout: %r: waiting error output.',
+                                cmd)
+                            raise subprocess.TimeoutExpired(
+                                cmd=cmd, timeout=cls._timeout_secs)
 
-                proc.poll()
-                if (retcode := proc.returncode) is not None:
-                    # process failed - we should be able to read the tempfile.
-                    stderr_file.close()
-                    with open(tf, encoding='utf-8') as stderr:
-                        sys.exit(
-                            f'SSOAuthenticator: exit {retcode}: {stderr.read().strip()}'
-                        )
+                    # Finally, if the poll or wait ended up getting the retcode,
+                    # it means the process failed, so we can read the stderr
+                    # file and reflect it back to the user.
+                    if retcode is not None:
+                        # process failed - we should be able to read the tempfile.
+                        with open(tf, encoding='utf-8') as stderr:
+                            sys.exit(
+                                f'SSOAuthenticator: exit {retcode}: {stderr.read().strip()}'
+                            )
 
-        return ret
+                    return cls._parse_config(stdout_data)
 
     @classmethod
     def _get_sso_info(cls) -> SSOInfo:

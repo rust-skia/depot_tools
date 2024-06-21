@@ -7,6 +7,7 @@
 import json
 import os
 import socket
+import subprocess
 import sys
 import textwrap
 import unittest
@@ -24,6 +25,8 @@ import gerrit_util
 import git_common
 import metrics
 import subprocess2
+
+RUN_SUBPROC_TESTS = 'RUN_SUBPROC_TESTS' in os.environ
 
 
 def makeConn(host: str) -> gerrit_util.HttpConn:
@@ -590,10 +593,16 @@ class GerritUtilTest(unittest.TestCase):
 
 class SSOAuthenticatorTest(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._original_timeout_secs = gerrit_util.SSOAuthenticator._timeout_secs
+        return super().setUpClass()
+
     def setUp(self) -> None:
         gerrit_util.SSOAuthenticator._sso_cmd = None
         gerrit_util.SSOAuthenticator._sso_info = None
         gerrit_util.SSOAuthenticator._testing_load_expired_cookies = True
+        gerrit_util.SSOAuthenticator._timeout_secs = self._original_timeout_secs
         self.sso = gerrit_util.SSOAuthenticator()
         return super().setUp()
 
@@ -601,11 +610,14 @@ class SSOAuthenticatorTest(unittest.TestCase):
         gerrit_util.SSOAuthenticator._sso_cmd = None
         gerrit_util.SSOAuthenticator._sso_info = None
         gerrit_util.SSOAuthenticator._testing_load_expired_cookies = False
+        gerrit_util.SSOAuthenticator._timeout_secs = self._original_timeout_secs
         return super().tearDown()
 
     @property
     def _input_dir(self) -> Path:
-        return Path(__file__).with_suffix('.inputs') / self._testMethodName
+        base = Path(__file__).absolute().with_suffix('.inputs')
+        # Here _testMethodName would be a string like "testCmdAssemblyFound"
+        return base / self._testMethodName
 
     @mock.patch('shutil.which', return_value='/fake/git-remote-sso')
     def testCmdAssemblyFound(self, _):
@@ -631,8 +643,8 @@ class SSOAuthenticatorTest(unittest.TestCase):
         somekey=a value with = in it
         novalue=
         http.proxy=localhost:12345
-        http.cookiefile={(self._input_dir/'cookiefile.txt').absolute()}
-        include.path={(self._input_dir/'gitconfig').absolute()}
+        http.cookiefile={self._input_dir/'cookiefile.txt'}
+        include.path={self._input_dir/'gitconfig'}
         ''').strip())
         self.assertDictEqual(parsed.headers, {
             'Authorization': 'Basic REALLY_COOL_TOKEN',
@@ -645,6 +657,43 @@ class SSOAuthenticatorTest(unittest.TestCase):
                          'TUVFUE1PUlAK')
         self.assertEqual(c['.example.com']['/']['__CoolProxy'].value,
                          'QkxFRVBCTE9SUAo=')
+
+    @unittest.skipUnless(RUN_SUBPROC_TESTS, 'subprocess tests are flakey')
+    def testLaunchHelperOK(self):
+        gerrit_util.SSOAuthenticator._sso_cmd = ('python3',
+                                                 str(self._input_dir /
+                                                     'git-remote-sso.py'))
+
+        info = self.sso._get_sso_info()
+        self.assertDictEqual(info.headers, {
+            'Authorization': 'Basic REALLY_COOL_TOKEN',
+        })
+        self.assertEqual(info.proxy.proxy_host, b'localhost')
+        self.assertEqual(info.proxy.proxy_port, 12345)
+        c = info.cookies._cookies
+        self.assertEqual(c['login.example.com']['/']['SSO'].value,
+                         'TUVFUE1PUlAK')
+        self.assertEqual(c['.example.com']['/']['__CoolProxy'].value,
+                         'QkxFRVBCTE9SUAo=')
+
+    @unittest.skipUnless(RUN_SUBPROC_TESTS, 'subprocess tests are flakey')
+    def testLaunchHelperFailQuick(self):
+        gerrit_util.SSOAuthenticator._sso_cmd = ('python3',
+                                                 str(self._input_dir /
+                                                     'git-remote-sso.py'))
+
+        with self.assertRaisesRegex(SystemExit, "SSO Failure Message!!!"):
+            self.sso._get_sso_info()
+
+    @unittest.skipUnless(RUN_SUBPROC_TESTS, 'subprocess tests are flakey')
+    def testLaunchHelperFailSlow(self):
+        gerrit_util.SSOAuthenticator._timeout_secs = 0.2
+        gerrit_util.SSOAuthenticator._sso_cmd = ('python3',
+                                                 str(self._input_dir /
+                                                     'git-remote-sso.py'))
+
+        with self.assertRaises(subprocess.TimeoutExpired):
+            self.sso._get_sso_info()
 
 
 if __name__ == '__main__':
