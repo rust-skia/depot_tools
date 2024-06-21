@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import base64
 import contextlib
-import functools
 import http.cookiejar
 import json
 import logging
@@ -149,6 +148,29 @@ def _QueryString(params, first_param=None):
     return '+'.join(q)
 
 
+class SSOHelper(object):
+    """SSOHelper finds a Google-internal SSO helper."""
+
+    _sso_cmd: Optional[str] = None
+
+    def find_cmd(self) -> str:
+        """Returns the cached command-line to invoke git-remote-sso.
+
+        If git-remote-sso is not in $PATH, returns None.
+        """
+        if self._sso_cmd is not None:
+            return self._sso_cmd
+        cmd = shutil.which('git-remote-sso')
+        if cmd is None:
+            cmd = ''
+        self._sso_cmd = cmd
+        return cmd
+
+
+# Global instance
+ssoHelper = SSOHelper()
+
+
 class Authenticator(object):
     """Base authenticator class for authenticator implementations to subclass."""
 
@@ -234,16 +256,6 @@ class SSOAuthenticator(Authenticator):
     # Overridden in tests.
     _timeout_secs = 5
 
-    # Tri-state cache for sso helper command:
-    #   * None - no lookup yet
-    #   * () - lookup was performed, but no binary was found.
-    #   * non-empty tuple - lookup was performed, and this is the command to
-    #     run.
-    #
-    # NOTE: Tests directly assign to this to substitute a helper process that
-    # can exercise other aspects of SSOAuthenticator.
-    _sso_cmd: Optional[Tuple[str, ...]] = None
-
     @dataclass
     class SSOInfo:
         proxy: httplib2.ProxyInfo
@@ -260,19 +272,14 @@ class SSOAuthenticator(Authenticator):
 
         If git-remote-sso is not in $PATH, returns ().
         """
-        cmd = cls._sso_cmd
-        if cmd is None:
-            pth = shutil.which('git-remote-sso')
-            if pth is None:
-                cmd = ()
-            else:
-                cmd = (
-                    pth,
-                    '-print_config',
-                    'sso://*.git.corp.google.com',
-                )
-            cls._sso_cmd = cmd
-        return cmd
+        cmd = ssoHelper.find_cmd()
+        if not cmd:
+            return ()
+        return (
+            cmd,
+            '-print_config',
+            'sso://*.git.corp.google.com',
+        )
 
     @classmethod
     def is_applicable(cls) -> bool:

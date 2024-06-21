@@ -599,7 +599,6 @@ class SSOAuthenticatorTest(unittest.TestCase):
         return super().setUpClass()
 
     def setUp(self) -> None:
-        gerrit_util.SSOAuthenticator._sso_cmd = None
         gerrit_util.SSOAuthenticator._sso_info = None
         gerrit_util.SSOAuthenticator._testing_load_expired_cookies = True
         gerrit_util.SSOAuthenticator._timeout_secs = self._original_timeout_secs
@@ -607,7 +606,6 @@ class SSOAuthenticatorTest(unittest.TestCase):
         return super().setUp()
 
     def tearDown(self) -> None:
-        gerrit_util.SSOAuthenticator._sso_cmd = None
         gerrit_util.SSOAuthenticator._sso_info = None
         gerrit_util.SSOAuthenticator._testing_load_expired_cookies = False
         gerrit_util.SSOAuthenticator._timeout_secs = self._original_timeout_secs
@@ -619,23 +617,18 @@ class SSOAuthenticatorTest(unittest.TestCase):
         # Here _testMethodName would be a string like "testCmdAssemblyFound"
         return base / self._testMethodName
 
-    @mock.patch('shutil.which', return_value='/fake/git-remote-sso')
+    @mock.patch('gerrit_util.ssoHelper.find_cmd',
+                return_value='/fake/git-remote-sso')
     def testCmdAssemblyFound(self, _):
         self.assertEqual(self.sso._resolve_sso_cmd(),
                          ('/fake/git-remote-sso', '-print_config',
                           'sso://*.git.corp.google.com'))
         self.assertTrue(self.sso.is_applicable())
 
-    @mock.patch('shutil.which', return_value=None)
+    @mock.patch('gerrit_util.ssoHelper.find_cmd', return_value=None)
     def testCmdAssemblyNotFound(self, _):
         self.assertEqual(self.sso._resolve_sso_cmd(), ())
         self.assertFalse(self.sso.is_applicable())
-
-    @mock.patch('shutil.which', return_value='/fake/git-remote-sso')
-    def testCmdAssemblyCached(self, which):
-        self.sso._resolve_sso_cmd()
-        self.sso._resolve_sso_cmd()
-        self.assertEqual(which.called, 1)
 
     def testParseConfigOK(self):
         parsed = self.sso._parse_config(
@@ -694,6 +687,27 @@ class SSOAuthenticatorTest(unittest.TestCase):
 
         with self.assertRaises(subprocess.TimeoutExpired):
             self.sso._get_sso_info()
+
+
+class SSOHelperTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.sso = gerrit_util.SSOHelper()
+        return super().setUp()
+
+    @mock.patch('shutil.which', return_value='/fake/git-remote-sso')
+    def testFindCmd(self, _):
+        self.assertEqual(self.sso.find_cmd(), '/fake/git-remote-sso')
+
+    @mock.patch('shutil.which', return_value=None)
+    def testFindCmdMissing(self, _):
+        self.assertEqual(self.sso.find_cmd(), '')
+
+    @mock.patch('shutil.which', return_value='/fake/git-remote-sso')
+    def testFindCmdCached(self, which):
+        self.sso.find_cmd()
+        self.sso.find_cmd()
+        self.assertEqual(which.called, 1)
 
 
 if __name__ == '__main__':
