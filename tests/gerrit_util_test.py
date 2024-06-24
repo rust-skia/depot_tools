@@ -623,7 +623,9 @@ class SSOAuthenticatorTest(unittest.TestCase):
         self.assertEqual(self.sso._resolve_sso_cmd(),
                          ('/fake/git-remote-sso', '-print_config',
                           'sso://*.git.corp.google.com'))
-        self.assertTrue(self.sso.is_applicable())
+        with mock.patch('scm.GIT.GetConfig') as p:
+            p.side_effect = ['firefly@google.com']
+            self.assertTrue(self.sso.is_applicable())
 
     @mock.patch('gerrit_util.ssoHelper.find_cmd', return_value=None)
     def testCmdAssemblyNotFound(self, _):
