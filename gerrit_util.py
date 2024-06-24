@@ -826,7 +826,9 @@ def CreateHttpConn(host,
                    reqtype='GET',
                    headers: Optional[Dict[str, str]] = None,
                    body: Optional[Dict] = None,
-                   timeout=300) -> HttpConn:
+                   timeout=300,
+                   *,
+                   authenticator: Optional[Authenticator] = None) -> HttpConn:
     """Opens an HTTPS connection to a Gerrit service, and sends a request."""
     headers = headers or {}
     bare_host = host.partition(':')[0]
@@ -850,7 +852,8 @@ def CreateHttpConn(host,
                     req_headers=headers,
                     req_body=rendered_body)
 
-    authenticator = Authenticator.get()
+    if authenticator is None:
+        authenticator = Authenticator.get()
     # TODO(crbug.com/1059384): Automatically detect when running on cloudtop.
     if isinstance(authenticator, GceAuthenticator):
         print('If you\'re on a cloudtop instance, export '
@@ -1658,7 +1661,11 @@ class EmailRecord(TypedDict):
     preferred: bool  # This should be NotRequired[bool] in 3.11+
 
 
-def GetAccountEmails(host, account_id='self') -> Optional[List[EmailRecord]]:
+def GetAccountEmails(host,
+                     account_id='self',
+                     *,
+                     authenticatator: Optional[Authenticator] = None
+                     ) -> Optional[List[EmailRecord]]:
     """Returns all emails for this account, and an indication of which of these
     is preferred.
 
@@ -1672,7 +1679,9 @@ def GetAccountEmails(host, account_id='self') -> Optional[List[EmailRecord]]:
 
     Returns None if account is not found (i.e. Gerrit returned 404).
     """
-    conn = CreateHttpConn(host, '/accounts/%s/emails' % account_id)
+    conn = CreateHttpConn(host,
+                          '/accounts/%s/emails' % account_id,
+                          authenticator=authenticator)
     resp = ReadHttpJsonResponse(conn, accept_statuses=[200, 404])
     if resp is None:
         return None
