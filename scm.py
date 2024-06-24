@@ -160,7 +160,7 @@ class GIT(object):
         return values[-1]
 
     @staticmethod
-    def GetConfigBool(cwd, key):
+    def GetConfigBool(cwd, key) -> bool:
         return GIT.GetConfig(cwd, key) == 'true'
 
     @staticmethod
@@ -189,11 +189,12 @@ class GIT(object):
                   *,
                   value_pattern=None,
                   modify_all=False,
-                  scope='local'):
+                  scope='local',
+                  missing_ok=True):
         """Sets or unsets one or more config values.
 
         Args:
-            cwd: path to fetch `git config` for.
+            cwd: path to set `git config` for.
             key: The specific config key to affect.
             value: The value to set. If this is None, `key` will be unset.
             value_pattern: For use with `modify_all=True`, allows
@@ -206,6 +207,10 @@ class GIT(object):
             scope: By default this is the local scope, but could be `system`,
                 `global`, or `worktree`, depending on which config scope you
                 want to affect.
+            missing_ok: If `value` is None (i.e. this is an unset operation),
+                ignore retcode=5 from `git config` (meaning that the value is
+                not present). If `value` is not None, then this option has no
+                effect.
         """
         GIT._clear_config(cwd)
 
@@ -220,7 +225,12 @@ class GIT(object):
 
         if modify_all and value_pattern:
             args.append(value_pattern)
-        GIT.Capture(args, cwd=cwd)
+
+        accepted_retcodes = [0]
+        if value is None and missing_ok:
+            accepted_retcodes = [0, 5]
+
+        GIT.Capture(args, cwd=cwd, accepted_retcodes=accepted_retcodes)
 
     @staticmethod
     def SetBranchConfig(cwd, branch, key, value=None):
