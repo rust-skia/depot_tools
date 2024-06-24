@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from io import StringIO
 from multiprocessing.pool import ThreadPool
 from typing import Any, Container, Dict, List, Optional
-from typing import Tuple, Type, TypedDict, cast
+from typing import Tuple, TypedDict, cast
 
 import httplib2
 import httplib2.socks
@@ -1638,6 +1638,32 @@ def GetAccountDetails(host, account_id='self'):
     """
     conn = CreateHttpConn(host, '/accounts/%s' % account_id)
     return ReadHttpJsonResponse(conn, accept_statuses=[200, 404])
+
+
+class EmailRecord(TypedDict):
+    email: str
+    preferred: bool  # This should be NotRequired[bool] in 3.11+
+
+
+def GetAccountEmails(host, account_id='self') -> Optional[List[EmailRecord]]:
+    """Returns all emails for this account, and an indication of which of these
+    is preferred.
+
+    If account_id is not given, uses magic value 'self' which corresponds to
+    whichever account user is authenticating as.
+
+    Requires Modify Account permission to view emails other than 'self'.
+
+    Documentation:
+    https://gerrit-review.googlesource.com/Documentation/rest-api-accounts.html#list-account-emails
+
+    Returns None if account is not found (i.e. Gerrit returned 404).
+    """
+    conn = CreateHttpConn(host, '/accounts/%s/emails' % account_id)
+    resp = ReadHttpJsonResponse(conn, accept_statuses=[200, 404])
+    if resp is None:
+        return None
+    return cast(List[EmailRecord], resp)
 
 
 def ValidAccounts(host, accounts, max_threads=10):

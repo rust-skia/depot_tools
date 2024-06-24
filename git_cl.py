@@ -2320,7 +2320,8 @@ class Changelist(object):
             DieWithError(msg)
 
     def EnsureCanUploadPatchset(self, force):
-        if not self.GetIssue():
+        issue = self.GetIssue()
+        if not issue:
             return
 
         status = self._GetChangeDetail()['status']
@@ -2338,30 +2339,41 @@ class Changelist(object):
             self.SetIssue()
             return
 
-        # TODO(vadimsh): For some reason the chunk of code below was skipped if
-        # 'is_gce' is True. I'm just refactoring it to be 'skip if not cookies'.
-        # Apparently this check is not very important? Otherwise get_auth_email
-        # could have been added to other implementations of Authenticator.
-        cookies_auth = gerrit_util.Authenticator.get()
-        if not isinstance(cookies_auth, gerrit_util.CookiesAuthenticator):
+        # Check to see if the currently authenticated account is the issue
+        # owner.
+
+        # first, grab the issue owner email
+        owner = self.GetIssueOwner()
+
+        # do a quick check to see if this matches the local git config's
+        # configured email.
+        git_config_email = scm.GIT.GetConfig(settings.GetRoot(), 'user.email')
+        if git_config_email == owner:
+            # Good enough - Gerrit will reject this if the user is doing funny things
+            # with user.email.
             return
 
-        cookies_user = cookies_auth.get_auth_email(self.GetGerritHost())
-        if self.GetIssueOwner() == cookies_user:
+        # However, the user may have linked accounts in Gerrit, so pull up the
+        # list of all known emails for the currently authenticated account.
+        emails = gerrit_util.GetAccountEmails(self.GetGerritHost(), 'self')
+        if not emails:
+            print('WARNING: Gerrit does not have a record for your account.')
+            print('Please browse to https://{self.GetGerritHost()} and log in.')
             return
-        logging.debug('change %s owner is %s, cookies user is %s',
-                      self.GetIssue(), self.GetIssueOwner(), cookies_user)
-        # Maybe user has linked accounts or something like that,
-        # so ask what Gerrit thinks of this user.
-        details = gerrit_util.GetAccountDetails(self.GetGerritHost(), 'self')
-        if details['email'] == self.GetIssueOwner():
+
+        # If the issue owner is one of the emails for the currently
+        # authenticated account, Gerrit will accept the upload.
+        if any(owner == e['email'] for e in emails):
             return
+
         if not force:
             print(
-                'WARNING: Change %s is owned by %s, but you authenticate to Gerrit '
-                'as %s.\n'
-                'Uploading may fail due to lack of permissions.' %
-                (self.GetIssue(), self.GetIssueOwner(), details['email']))
+                f'WARNING: Change {issue} is owned by {owner}, but Gerrit knows you as:'
+            )
+            for email in emails:
+                tag = ' (preferred)' if email.get('preferred') else ''
+                print(f'  * {email["email"]}{tag}')
+            print('Uploading may fail due to lack of permissions.')
             confirm_or_exit(action='upload')
 
     def GetStatus(self):
