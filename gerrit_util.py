@@ -665,7 +665,7 @@ class GceAuthenticator(Authenticator):
             p = urllib.parse.urlparse(url)
             if p.scheme not in ('http', 'https'):
                 raise RuntimeError("Don't know how to work with protocol '%s'" %
-                                   protocol)
+                                   p.scheme)
             try:
                 resp, contents = httplib2.Http().request(url, 'GET', **kwargs)
             except (socket.error, httplib2.HttpLib2Error,
