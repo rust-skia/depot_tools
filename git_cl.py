@@ -51,6 +51,7 @@ import git_new_branch
 import google_java_format
 import metrics
 import metrics_utils
+import newauth
 import owners_client
 import owners_finder
 import presubmit_canned_checks
@@ -3610,6 +3611,32 @@ def DownloadGerritHook(force):
                          'chmod +x .git/hooks/commit-msg' % src)
 
 
+def ConfigureGitRepoAuth() -> None:
+    """Configure the current Git repo authentication."""
+    cl = Changelist()
+    gerrit_host = cl.GetGerritHost()
+
+    cwd = os.getcwd()
+    email = scm.GIT.GetConfig(cwd, 'user.email', default='')
+    # TODO(ayatane): enable logic not finished, for linked accounts
+    enable_sso = gerrit_util.ssoHelper.find_cmd() and email.endswith(
+        '@google.com')
+    if enable_sso:
+        scm.GIT.SetConfig(cwd,
+                          f'credential.{gerrit_host}.helper',
+                          None,
+                          modify_all=True)
+    else:
+        scm.GIT.SetConfig(cwd,
+                          f'credential.{gerrit_host}.helper',
+                          '',
+                          modify_all=True)
+        scm.GIT.SetConfig(cwd, f'credential.{gerrit_host}.helper', 'luci')
+
+    # Override potential global gitcookie config
+    scm.GIT.SetConfig(cwd, 'http.gitcookies', '', modify_all=True)
+
+
 class _GitCookiesChecker(object):
     """Provides facilities for validating and suggesting fixes to .gitcookies."""
     def __init__(self):
@@ -3843,16 +3870,19 @@ def CMDcreds_check(parser, args):
                 'export SKIP_GCE_AUTH_FOR_GIT=1 in your env.')
         DieWithError(message)
 
-    checker = _GitCookiesChecker()
-    checker.ensure_configured_gitcookies()
+    if newauth.Enabled():
+        ConfigureGitRepoAuth()
+    else:
+        checker = _GitCookiesChecker()
+        checker.ensure_configured_gitcookies()
 
-    print('Your .gitcookies have credentials for these hosts:')
-    checker.print_current_creds()
+        print('Your .gitcookies have credentials for these hosts:')
+        checker.print_current_creds()
 
-    if not checker.find_and_report_problems():
-        print('\nNo problems detected in your .gitcookies file.')
-        return 0
-    return 1
+        if not checker.find_and_report_problems():
+            print('\nNo problems detected in your .gitcookies file.')
+            return 0
+        return 1
 
 
 @metrics.collector.collect_metrics('git cl baseurl')
