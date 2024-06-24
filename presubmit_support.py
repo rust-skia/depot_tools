@@ -23,7 +23,6 @@ import logging
 import mimetypes
 import multiprocessing
 import os  # Somewhat exposed through the API.
-import pathlib
 import random
 import re  # Exposed through the API.
 import shutil
@@ -1486,12 +1485,9 @@ class ProvidedDiffChange(Change):
         return self._AFFECTED_FILES.DIFF_CACHE(self._diff)
 
     def AllFiles(self, root=None):
-        """List all files under source control in the repo.
-
-        There is no SCM, so return all files under the repo root.
-        """
+        """List all files under source control in the repo."""
         root = root or self.RepositoryRoot()
-        return [str(p) for p in pathlib.Path(root).rglob("*")]
+        return scm.DIFF.GetAllFiles(root)
 
 
 def ListRelevantPresubmitFiles(files, root):
@@ -2060,11 +2056,11 @@ def _parse_change(parser, options):
         parser.error(
             '<diff_file> cannot be specified when <generate_diff> is set.')
 
-    # TODO(b/323243527): Consider adding a SCM for provided diff.
     change_scm = scm.determine_scm(options.root)
-    if change_scm != 'git' and not options.files and not options.diff_file:
-        parser.error(
-            'unversioned directories must specify <files> or <diff_file>.')
+    if change_scm == 'diff' and not (options.files or options.all_files
+                                     or options.diff_file):
+        parser.error('unversioned directories must specify '
+                     '<files>, <all_files>, or <diff_file>.')
 
     diff = None
     if options.files:
@@ -2091,7 +2087,11 @@ def _parse_change(parser, options):
             # Get the filtered set of files from a directory scan.
             change_files = _parse_files(options.files, options.recursive)
     elif options.all_files:
-        change_files = [('M', f) for f in scm.GIT.GetAllFiles(options.root)]
+        if change_scm == 'git':
+            all_files = scm.GIT.GetAllFiles(options.root)
+        else:
+            all_files = scm.DIFF.GetAllFiles(options.root)
+        change_files = [('M', f) for f in all_files]
     elif options.diff_file:
         diff, change_files = _process_diff_file(options.diff_file)
     else:

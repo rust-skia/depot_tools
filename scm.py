@@ -5,6 +5,7 @@
 
 from collections import defaultdict
 import os
+import pathlib
 import platform
 import re
 from typing import Mapping, List
@@ -25,7 +26,7 @@ VERSIONED_SUBMODULE = 2
 def determine_scm(root):
     """Similar to upload.py's version but much simpler.
 
-    Returns 'git' or None.
+    Returns 'git' or 'diff'.
     """
     if os.path.isdir(os.path.join(root, '.git')):
         return 'git'
@@ -37,7 +38,7 @@ def determine_scm(root):
                                cwd=root)
         return 'git'
     except (OSError, subprocess2.CalledProcessError):
-        return None
+        return 'diff'
 
 
 class GIT(object):
@@ -529,3 +530,34 @@ class GIT(object):
         if sha_only:
             return sha == rev.lower()
         return True
+
+
+class DIFF(object):
+
+    @staticmethod
+    def GetAllFiles(cwd):
+        """Return all files under the repo at cwd.
+
+        If .gitmodules exists in cwd, use it to determine which folders are
+        submodules and don't recurse into them. Submodule paths are returned.
+        """
+        # `git config --file` works outside of a git workspace.
+        submodules = GIT.ListSubmodules(cwd)
+        if not submodules:
+            return [
+                str(p.relative_to(cwd)) for p in pathlib.Path(cwd).rglob("*")
+                if p.is_file()
+            ]
+
+        full_path_submodules = {os.path.join(cwd, s) for s in submodules}
+
+        def should_recurse(dirpath, dirname):
+            full_path = os.path.join(dirpath, dirname)
+            return full_path not in full_path_submodules
+
+        paths = list(full_path_submodules)
+        for dirpath, dirnames, filenames in os.walk(cwd):
+            paths.extend([os.path.join(dirpath, f) for f in filenames])
+            dirnames[:] = [d for d in dirnames if should_recurse(dirpath, d)]
+
+        return [os.path.relpath(p, cwd) for p in paths]
