@@ -3614,14 +3614,9 @@ def DownloadGerritHook(force):
 def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
     cl = Changelist()
-    gerrit_host = cl.GetGerritHost()
-
     cwd = os.getcwd()
-    email = scm.GIT.GetConfig(cwd, 'user.email', default='')
-    # TODO(ayatane): enable logic not finished, for linked accounts
-    enable_sso = gerrit_util.ssoHelper.find_cmd() and email.endswith(
-        '@google.com')
-    if enable_sso:
+    gerrit_host = cl.GetGerritHost()
+    if gerrit_util.ShouldUseSSO(email):
         scm.GIT.SetConfig(cwd,
                           f'credential.{gerrit_host}.helper',
                           None,

@@ -171,6 +171,18 @@ class SSOHelper(object):
 ssoHelper = SSOHelper()
 
 
+def ShouldUseSSO() -> bool:
+    """Return True if we should use SSO for the current user."""
+    if not newauth.Enabled():
+        return False
+    if not ssoHelper.find_cmd():
+        return False
+    cwd = os.getcwd()
+    email = scm.GIT.GetConfig(cwd, 'user.email', default='')
+    # TODO(ayatane): enable logic not finished, for linked accounts
+    return email.endswith('@google.com')
+
+
 class Authenticator(object):
     """Base authenticator class for authenticator implementations to subclass."""
 
