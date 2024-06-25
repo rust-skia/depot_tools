@@ -3851,6 +3851,10 @@ def CMDcreds_check(parser, args):
     """Checks credentials and suggests changes."""
     _, _ = parser.parse_args(args)
 
+    if newauth.Enabled():
+        ConfigureGitRepoAuth()
+        return 0
+
     # Code below checks .gitcookies. Abort if using something else.
     authn = gerrit_util.Authenticator.get()
     if not isinstance(authn, gerrit_util.CookiesAuthenticator):
@@ -3866,19 +3870,16 @@ def CMDcreds_check(parser, args):
                 'export SKIP_GCE_AUTH_FOR_GIT=1 in your env.')
         DieWithError(message)
 
-    if newauth.Enabled():
-        ConfigureGitRepoAuth()
-    else:
-        checker = _GitCookiesChecker()
-        checker.ensure_configured_gitcookies()
+    checker = _GitCookiesChecker()
+    checker.ensure_configured_gitcookies()
 
-        print('Your .gitcookies have credentials for these hosts:')
-        checker.print_current_creds()
+    print('Your .gitcookies have credentials for these hosts:')
+    checker.print_current_creds()
 
-        if not checker.find_and_report_problems():
-            print('\nNo problems detected in your .gitcookies file.')
-            return 0
-        return 1
+    if not checker.find_and_report_problems():
+        print('\nNo problems detected in your .gitcookies file.')
+        return 0
+    return 1
 
 
 @metrics.collector.collect_metrics('git cl baseurl')
