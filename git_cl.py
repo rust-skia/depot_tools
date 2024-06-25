@@ -3613,10 +3613,11 @@ def DownloadGerritHook(force):
 
 def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
+    logging.debug('Configuring current Git repo authentication...')
     cl = Changelist()
     cwd = os.getcwd()
     gerrit_host = cl.GetGerritHost()
-    if gerrit_util.ShouldUseSSO(email):
+    if gerrit_util.ShouldUseSSO():
         scm.GIT.SetConfig(cwd,
                           f'credential.{gerrit_host}.helper',
                           None,
