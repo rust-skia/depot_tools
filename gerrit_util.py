@@ -1664,7 +1664,7 @@ class EmailRecord(TypedDict):
 def GetAccountEmails(host,
                      account_id='self',
                      *,
-                     authenticatator: Optional[Authenticator] = None
+                     authenticator: Optional[Authenticator] = None
                      ) -> Optional[List[EmailRecord]]:
     """Returns all emails for this account, and an indication of which of these
     is preferred.
