@@ -171,16 +171,33 @@ class SSOHelper(object):
 ssoHelper = SSOHelper()
 
 
-def ShouldUseSSO() -> bool:
+def ShouldUseSSO(host: str) -> bool:
     """Return True if we should use SSO for the current user."""
+    LOGGER.debug("Determining whether we should use SSO...")
     if not newauth.Enabled():
+        LOGGER.debug("SSO=False: not opted in")
+        return False
+    if newauth.SkipSSO():
+        LOGGER.debug("SSO=False: set skip SSO config")
         return False
     if not ssoHelper.find_cmd():
+        LOGGER.debug("SSO=False: no SSO command")
         return False
     cwd = os.getcwd()
     email = scm.GIT.GetConfig(cwd, 'user.email', default='')
-    # TODO(ayatane): enable logic not finished, for linked accounts
-    return email.endswith('@google.com')
+    if email.endswith('@google.com'):
+        LOGGER.debug("SSO=True: email is google.com")
+        return True
+    if not email.endswith('@chromium.org'):
+        LOGGER.debug("SSO=False: not chromium.org")
+        return False
+    authenticator = SSOAuthenticator()
+    records = GetAccountEmails(host, 'self', authenticator=authenticator)
+    if any(email == r['email'] for r in records):
+        LOGGER.debug("SSO=True: email is linked to google.com")
+        return True
+    LOGGER.debug("SSO=False: unlinked chromium.org")
+    return False
 
 
 class Authenticator(object):

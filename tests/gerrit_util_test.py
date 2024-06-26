@@ -712,5 +712,55 @@ class SSOHelperTest(unittest.TestCase):
         self.assertEqual(which.called, 1)
 
 
+class ShouldUseSSOTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.newauth = mock.patch('newauth.Enabled', return_value=True)
+        self.newauth.start()
+        self.sso = mock.patch('gerrit_util.ssoHelper.find_cmd',
+                              return_value='/fake/git-remote-sso')
+        self.sso.start()
+        return super().setUp()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.sso.stop()
+        self.newauth.stop()
+
+    def testDisabled(self):
+        self.newauth.return_value = False
+        self.assertFalse(gerrit_util.ShouldUseSSO('fake-host'))
+
+    def testMissingCommand(self):
+        self.sso.return_value = 'fake-host'
+        self.assertFalse(gerrit_util.ShouldUseSSO('fake-host'))
+
+    @mock.patch('scm.GIT.GetConfig', return_value='firefly@google.com')
+    def testGoogle(self, _):
+        self.assertTrue(gerrit_util.ShouldUseSSO('fake-host'))
+
+    @mock.patch('scm.GIT.GetConfig', return_value='firefly@gmail.com')
+    def testGmail(self, _):
+        self.assertFalse(gerrit_util.ShouldUseSSO('fake-host'))
+
+    @mock.patch('gerrit_util.GetAccountEmails',
+                return_value=[{
+                    'email': 'firefly@chromium.org'
+                }])
+    @mock.patch('scm.GIT.GetConfig', return_value='firefly@chromium.org')
+    def testLinkedChromium(self, _cfg, email):
+        self.assertTrue(gerrit_util.ShouldUseSSO('fake-host'))
+        email.assert_called_with('fake-host', 'self', authenticator=mock.ANY)
+
+    @mock.patch('gerrit_util.GetAccountEmails',
+                return_value=[{
+                    'email': 'firefly@google.com'
+                }])
+    @mock.patch('scm.GIT.GetConfig', return_value='firefly@chromium.org')
+    def testUnlinkedChromium(self, _cfg, email):
+        self.assertFalse(gerrit_util.ShouldUseSSO('fake-host'))
+        email.assert_called_with('fake-host', 'self', authenticator=mock.ANY)
+
+
 if __name__ == '__main__':
     unittest.main()

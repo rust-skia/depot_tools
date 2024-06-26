@@ -2202,6 +2202,11 @@ class Changelist(object):
             # Still raise exception so that stack trace is printed.
             raise
 
+    def GetGerritHostShortName(self) -> str:
+        """Return the short name for the CL's Gerrit host."""
+        host = self.GetGerritHost()
+        return host.split('.')[0]
+
     def GetGerritHost(self):
         # Populate self._gerrit_host
         self.GetCodereviewServer()
@@ -3616,19 +3621,26 @@ def ConfigureGitRepoAuth() -> None:
     logging.debug('Configuring current Git repo authentication...')
     cl = Changelist()
     cwd = os.getcwd()
-    gerrit_host = cl.GetGerritHost()
-    if gerrit_util.ShouldUseSSO():
+    gerrit_url = cl.GetCodereviewServer()
+    if gerrit_util.ShouldUseSSO(cl.GetGerritHost()):
         scm.GIT.SetConfig(cwd,
-                          f'credential.{gerrit_host}.helper',
+                          f'credential.{gerrit_url}.helper',
                           None,
                           modify_all=True)
+        scm.GIT.SetConfig(cwd, 'protocol.sso.allow', 'always')
+        scm.GIT.SetConfig(
+            cwd, f'url.sso://{cl.GetGerritHostShortName()}/.insteadOf',
+            gerrit_url)
     else:
+        scm.GIT.SetConfig(cwd, 'protocol.sso.allow', None)
+        scm.GIT.SetConfig(
+            cwd, f'url.sso://{cl.GetGerritHostShortName()}/.insteadOf', None)
         scm.GIT.SetConfig(cwd,
-                          f'credential.{gerrit_host}.helper',
+                          f'credential.{gerrit_url}.helper',
                           '',
                           modify_all=True)
         scm.GIT.SetConfig(cwd,
-                          f'credential.{gerrit_host}.helper',
+                          f'credential.{gerrit_url}.helper',
                           'luci',
                           append=True)
 
