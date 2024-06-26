@@ -183,34 +183,36 @@ class GIT(object):
         return GIT.GetConfig(cwd, key, default)
 
     @staticmethod
-    def SetConfig(cwd,
-                  key,
-                  value=None,
-                  *,
-                  value_pattern=None,
-                  modify_all=False,
-                  scope='local',
-                  missing_ok=True):
+    def SetConfig(
+        cwd,
+        key,
+        value=None,
+        *,
+        missing_ok=True,
+        modify_all=False,
+        scope='local',
+        value_pattern=None,
+    ):
         """Sets or unsets one or more config values.
 
         Args:
             cwd: path to set `git config` for.
             key: The specific config key to affect.
             value: The value to set. If this is None, `key` will be unset.
-            value_pattern: For use with `modify_all=True`, allows
-                further filtering of the set or unset operation based on
-                the currently configured value. Ignored for
-                `modify_all=False`.
+            missing_ok: If `value` is None (i.e. this is an unset operation),
+                ignore retcode=5 from `git config` (meaning that the value is
+                not present). If `value` is not None, then this option has no
+                effect.
             modify_all: If True, this will change a set operation to
                 `--replace-all`, and will change an unset operation to
                 `--unset-all`.
             scope: By default this is the local scope, but could be `system`,
                 `global`, or `worktree`, depending on which config scope you
                 want to affect.
-            missing_ok: If `value` is None (i.e. this is an unset operation),
-                ignore retcode=5 from `git config` (meaning that the value is
-                not present). If `value` is not None, then this option has no
-                effect.
+            value_pattern: For use with `modify_all=True`, allows
+                further filtering of the set or unset operation based on
+                the currently configured value. Ignored for
+                `modify_all=False`.
         """
         GIT._clear_config(cwd)
 
