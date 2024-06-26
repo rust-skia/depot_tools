@@ -188,6 +188,7 @@ class GIT(object):
         key,
         value=None,
         *,
+        append=False,
         missing_ok=True,
         modify_all=False,
         scope='local',
@@ -199,6 +200,8 @@ class GIT(object):
             cwd: path to set `git config` for.
             key: The specific config key to affect.
             value: The value to set. If this is None, `key` will be unset.
+            append: If True and `value` is not None, this will append
+                the value instead of replacing an existing one.
             missing_ok: If `value` is None (i.e. this is an unset operation),
                 ignore retcode=5 from `git config` (meaning that the value is
                 not present). If `value` is not None, then this option has no
@@ -222,7 +225,8 @@ class GIT(object):
         else:
             if modify_all:
                 args.append('--replace-all')
-
+            if append:
+                args.append('--add')
             args.extend([key, value])
 
         if modify_all and value_pattern:
