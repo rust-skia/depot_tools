@@ -3627,7 +3627,10 @@ def ConfigureGitRepoAuth() -> None:
                           f'credential.{gerrit_host}.helper',
                           '',
                           modify_all=True)
-        scm.GIT.SetConfig(cwd, f'credential.{gerrit_host}.helper', 'luci')
+        scm.GIT.SetConfig(cwd,
+                          f'credential.{gerrit_host}.helper',
+                          'luci',
+                          append=True)
 
     # Override potential global gitcookie config
     scm.GIT.SetConfig(cwd, 'http.gitcookies', '', modify_all=True)
