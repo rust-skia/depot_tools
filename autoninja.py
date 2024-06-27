@@ -30,6 +30,7 @@ import warnings
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
+import gn_helper
 import ninja
 import ninja_reclient
 import reclient_helper
@@ -182,30 +183,6 @@ def _print_cmd(cmd):
     print(*[shell_quoter(arg) for arg in cmd], file=sys.stderr)
 
 
-def _gn_lines(output_dir, path):
-    """
-    Generator function that returns args.gn lines one at a time, following
-    import directives as needed.
-    """
-    import_re = re.compile(r'\s*import\("(.*)"\)')
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            match = import_re.match(line)
-            if match:
-                raw_import_path = match.groups()[0]
-                if raw_import_path[:2] == "//":
-                    import_path = os.path.normpath(
-                        os.path.join(output_dir, "..", "..",
-                                     raw_import_path[2:]))
-                else:
-                    import_path = os.path.normpath(
-                        os.path.join(os.path.dirname(path), raw_import_path))
-                for import_line in _gn_lines(output_dir, import_path):
-                    yield import_line
-            else:
-                yield line
-
-
 def main(args):
     # if user doesn't set PYTHONPYCACHEPREFIX and PYTHONDONTWRITEBYTECODE
     # set PYTHONDONTWRITEBYTECODE=1 not to create many *.pyc in workspace
@@ -259,8 +236,8 @@ def main(args):
     # Attempt to auto-detect remote build acceleration. We support gn-based
     # builds, where we look for args.gn in the build tree, and cmake-based
     # builds where we look for rules.ninja.
-    if os.path.exists(os.path.join(output_dir, "args.gn")):
-        for line in _gn_lines(output_dir, os.path.join(output_dir, "args.gn")):
+    if gn_helper.exists(output_dir):
+        for k, v in gn_helper.args(output_dir):
             # use_remoteexec will activate build acceleration.
             #
             # This test can match multi-argument lines. Examples of this
@@ -268,19 +245,13 @@ def main(args):
             # use_remoteexec=false# use_remoteexec=true This comment is ignored
             #
             # Anything after a comment is not consider a valid argument.
-            line_without_comment = line.split("#")[0]
-            if re.search(
-                    r"(^|\s)(use_remoteexec)\s*=\s*true($|\s)",
-                    line_without_comment,
-            ):
+            if k == "use_remoteexec" and v == "true":
                 use_remoteexec = True
                 continue
-            if re.search(r"(^|\s)(use_siso)\s*=\s*true($|\s)",
-                         line_without_comment):
+            if k == "use_siso" and v == "true":
                 use_siso = True
                 continue
-            if re.search(r"(^|\s)(use_reclient)\s*=\s*false($|\s)",
-                         line_without_comment):
+            if k == "use_reclient" and v == "false":
                 use_reclient = False
                 continue
         if use_reclient is None:

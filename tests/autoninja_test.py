@@ -177,23 +177,6 @@ class AutoninjaTest(trial_dir.TestCase):
                     autoninja._is_google_corp_machine_using_external_account()),
                 expected)
 
-    def test_gn_lines(self):
-        out_dir = os.path.join('out', 'dir')
-        # Make sure nested import directives work. This is based on the
-        # reclient test.
-        write(os.path.join(out_dir, 'args.gn'), 'import("//out/common.gni")')
-        write(os.path.join('out', 'common.gni'), 'import("common_2.gni")')
-        write(os.path.join('out', 'common_2.gni'), 'use_remoteexec=true')
-
-        lines = list(
-            autoninja._gn_lines(out_dir, os.path.join(out_dir, 'args.gn')))
-
-        # The test will only pass if both imports work and
-        # 'use_remoteexec=true' is seen.
-        self.assertListEqual(lines, [
-            'use_remoteexec=true',
-        ])
-
     @mock.patch('sys.platform', 'win32')
     def test_print_cmd_windows(self):
         args = [
