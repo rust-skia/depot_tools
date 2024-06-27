@@ -1211,7 +1211,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         # All known hooks are expected to run unconditionally regardless of
         # working copy state, so skip the SCM status check.
         run_scm = command not in ('flatten', 'runhooks', 'recurse', 'validate',
-                                  None)
+                                  'revinfo', None)
         file_list = [] if not options.nohooks else None
         revision_override = revision_overrides.pop(
             self.FuzzyMatchUrl(revision_overrides), None)
@@ -2521,7 +2521,7 @@ it or fix the checkout.
             if s.should_process:
                 work_queue.enqueue(s)
         work_queue.flush({},
-                         None, [],
+                         'revinfo', [],
                          options=self._options,
                          patch_refs=None,
                          target_branches=None,
@@ -2712,6 +2712,9 @@ class GcsDependency(Dependency):
             patch_refs, target_branches, skip_sync_revisions):
         """Downloads GCS package."""
         logging.info('GcsDependency(%s).run()' % self.name)
+        # GCS dependencies do not need to run during runhooks or revinfo.
+        if command in ['runhooks', 'revinfo']:
+            return
         if not self.should_process:
             return
         self.DownloadGoogleStorage()
@@ -2926,6 +2929,13 @@ class CipdDependency(Dependency):
             patch_refs, target_branches, skip_sync_revisions):
         """Runs |command| then parse the DEPS file."""
         logging.info('CipdDependency(%s).run()' % self.name)
+        # GCS dependencies do not need to run during runhooks.
+        # TODO(b/349643421): Note, for a GCSDependency we also return early
+        # for the `revinfo` command, however doing the same for cipd
+        # currently breaks testRevInfoActual() in gclient_cipd_smoketest.py.
+        # b/349699772 may be relevant.
+        if command == 'runhooks':
+            return
         if not self.should_process:
             return
         self._CreatePackageIfNecessary()
