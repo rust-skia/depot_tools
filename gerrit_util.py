@@ -344,6 +344,8 @@ class SSOAuthenticator(Authenticator):
     def is_applicable(cls, *, conn: Optional[HttpConn] = None) -> bool:
         if not cls._resolve_sso_cmd():
             return False
+        if conn is not None:
+            return ShouldUseSSO(conn.host)
         email = scm.GIT.GetConfig(os.getcwd(), 'user.email', default='')
         return email.endswith('@google.com')
 
