@@ -3742,10 +3742,11 @@ class _GitCookiesChecker(object):
     def print_current_creds(self):
         hosts = sorted(self.get_hosts_with_creds())
         if not hosts:
-            print('No Git/Gerrit credentials found')
+            print('No Git/Gerrit credentials found.')
             return
         lengths = [max(map(len, (row[i] for row in hosts))) for i in range(3)]
         header = [('Host', 'User', 'Which file'), ['=' * l for l in lengths]]
+        print('Your .gitcookies have credentials for these hosts:')
         for row in (header + hosts):
             print('\t'.join((('%%+%ds' % l) % s) for l, s in zip(lengths, row)))
 
@@ -3905,7 +3906,6 @@ def CMDcreds_check(parser, args):
     checker = _GitCookiesChecker()
     checker.ensure_configured_gitcookies()
 
-    print('Your .gitcookies have credentials for these hosts:')
     checker.print_current_creds()
 
     if not checker.find_and_report_problems():

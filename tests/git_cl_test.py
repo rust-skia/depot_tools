@@ -3135,6 +3135,7 @@ class TestGitCl(unittest.TestCase):
                    CookiesAuthenticatorMock).start()
         git_cl._GitCookiesChecker().print_current_creds()
         self.assertEqual(list(sys.stdout.getvalue().splitlines()), [
+            'Your .gitcookies have credentials for these hosts:',
             '                        Host\tUser\t Which file',
             '============================\t====\t===========',
             'host-review.googlesource.com\tuser\t.gitcookies',
@@ -3144,6 +3145,7 @@ class TestGitCl(unittest.TestCase):
         sys.stdout.truncate(0)
         git_cl._GitCookiesChecker().print_current_creds()
         self.assertEqual(list(sys.stdout.getvalue().splitlines()), [
+            'Your .gitcookies have credentials for these hosts:',
             '                        Host\tUser\t Which file',
             '============================\t====\t===========',
             'host-review.googlesource.com\tuser\t.gitcookies',
