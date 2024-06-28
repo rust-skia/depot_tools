@@ -2306,6 +2306,26 @@ class Changelist(object):
                 })
             return
 
+        if newauth.Enabled():
+            latestVer = 1
+            v: int = 0
+            try:
+                v = int(
+                    scm.GIT.GetConfig(settings.GetRoot(),
+                                      'depot-tools.gitauthautoconfigured',
+                                      default='0'))
+            except ValueError:
+                v = 0
+            if v < latestVer:
+                logging.debug(
+                    'Automatically configuring Git repo authentication (current version: %r, latest: %r)',
+                    v, latestVer)
+                ConfigureGitRepoAuth()
+                scm.GIT.SetConfig(settings.GetRoot(),
+                                  'depot-tools.gitAuthAutoConfigured',
+                                  str(latestVer))
+            return
+
         # Lazy-loader to identify Gerrit and Git hosts.
         self.GetCodereviewServer()
         git_host = self._GetGitHost()
