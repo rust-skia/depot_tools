@@ -994,7 +994,7 @@ def ReadHttpResponse(conn: HttpConn,
     # Help the type checker a bit here - it can't figure out the `except` logic
     # in the loop above.
     assert response, (
-        "Impossible: End of retry loop without response or exception.")
+        'Impossible: End of retry loop without response or exception.')
 
     if response.status in accept_statuses:
         return StringIO(contents)
@@ -1006,8 +1006,10 @@ def ReadHttpResponse(conn: HttpConn,
         else:
             auth_match = re.search('realm="([^"]+)"', www_authenticate, re.I)
             host = auth_match.group(1) if auth_match else conn.req_host
+            new_password_url = CookiesAuthenticator.get_new_password_url(host)
             print('Authentication failed. Please make sure your .gitcookies '
-                  'file has credentials for %s.' % host)
+                  f'file has credentials for {host}.')
+            print(f'(Re)generate credentials here: {new_password_url}')
         print('Try:\n  git cl creds-check')
 
     reason = '%s: %s' % (response.reason, contents)
