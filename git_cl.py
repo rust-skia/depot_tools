@@ -3647,7 +3647,7 @@ def ConfigureGitRepoAuth() -> None:
     remote_url: str = Changelist().GetRemoteUrl()
     parts: urllib.parse.SplitResult = urllib.parse.urlsplit(remote_url)
     # https://chromium.googlesource.com/
-    base_url: str = urllib.parse.urlunsplit((parts[0], parts[1], '/', '', ''))
+    base_url: str = parts._replace(path='/', query='', fragment='').geturl()
 
     should_use_sso: bool = gerrit_util.ShouldUseSSO(gerrit_host)
 
