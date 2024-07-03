@@ -223,7 +223,11 @@ class Authenticator(object):
     @classmethod
     def is_applicable(cls, *, conn: Optional[HttpConn] = None) -> bool:
         """Must return True if this Authenticator is available in the current
-        environment."""
+        environment.
+
+        If conn is not None, return True if this Authenticator is
+        applicable to the given conn in the current environment.
+        """
         raise NotImplementedError()
 
     def ensure_authenticated(self, gerrit_host: str, git_host: str) -> Tuple[bool, str]:
