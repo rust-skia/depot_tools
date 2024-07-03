@@ -67,6 +67,21 @@ class GnHelperTest(trial_dir.TestCase):
             ('use_remoteexec', 'true'),
         ])
 
+    def test_args_spaces(self):
+        out_dir = os.path.join('out', 'dir')
+        # Make sure nested import directives work. This is based on the
+        # reclient test.
+        write(os.path.join(out_dir, 'args.gn'), 'import("//out/common.gni")')
+        write(os.path.join('out', 'common.gni'), 'import("common_2.gni")')
+        write(os.path.join('out', 'common_2.gni'), '  use_remoteexec = true  ')
+
+        lines = list(gn_helper.args(out_dir))
+
+        # The test will only pass if both imports work and
+        # 'use_remoteexec=true' is seen.
+        self.assertListEqual(lines, [
+            ('use_remoteexec', 'true'),
+        ])
 
 if __name__ == '__main__':
     unittest.main()

@@ -48,7 +48,7 @@ def lines(output_dir):
         yield line_without_comment
 
 
-_gn_arg_pattern = re.compile(r"(^|\s)([^=\s]*)\s*=\s*(\S*)\s*$")
+_gn_arg_pattern = re.compile(r"(^|\s*)([^=\s]*)\s*=\s*(\S*)\s*$")
 
 
 def args(output_dir):
