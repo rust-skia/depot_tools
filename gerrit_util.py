@@ -275,7 +275,7 @@ class Authenticator(object):
                     if skip_sso:
                         LOGGER.debug(
                             'Authenticator.get: skipping SSOAuthenticator.')
-                        authenticators = authenticators[1:]
+                        a = a[1:]
                     ret = ChainedAuthenticator(a)
                 cls._resolved = ret
                 return ret
