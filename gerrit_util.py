@@ -507,7 +507,9 @@ class SSOAuthenticator(Authenticator):
         # Finally, add cookies
         sso_info.cookies.add_cookie_header(conn)
         assert 'Cookie' in conn.req_headers, (
-            'sso_info.cookies.add_cookie_header failed to add Cookie')
+            'sso_info.cookies.add_cookie_header failed to add Cookie'
+            ' (try running `git ls-remote sso://chromium/All-Projects` and retrying)'
+        )
 
     def debug_summary_state(self) -> str:
         return ''
