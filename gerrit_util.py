@@ -1209,10 +1209,11 @@ def GetChangeUrl(host, change):
     return '%s://%s/a/changes/%s' % (GERRIT_PROTOCOL, host, change)
 
 
-def GetChange(host, change):
+def GetChange(host, change, accept_statuses: Container[int] = frozenset([200])):
     """Queries a Gerrit server for information about a single change."""
     path = 'changes/%s' % change
-    return ReadHttpJsonResponse(CreateHttpConn(host, path))
+    return ReadHttpJsonResponse(CreateHttpConn(host, path),
+                                accept_statuses=accept_statuses)
 
 
 def GetChangeDetail(host, change, o_params=None):

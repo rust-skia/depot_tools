@@ -933,7 +933,7 @@ class TestGitCl(unittest.TestCase):
             metrics_arguments.append('wip')
 
         # If issue is given, then description is fetched from Gerrit instead.
-        if not title:
+        if not title and squash_mode != "override_nosquash":
             if issue is None:
                 if squash:
                     title = 'Initial upload'
@@ -1249,7 +1249,17 @@ class TestGitCl(unittest.TestCase):
                                                           if issue else None)
         self.mockGit.config['remote.origin.url'] = (
             'https://%s.googlesource.com/my/repo' % short_hostname)
-        self.mockGit.config['user.email'] = 'me@example.com'
+        self.mockGit.config['user.email'] = 'owner@example.com'
+
+        self.calls = []
+        if squash_mode == "override_nosquash":
+            if issue:
+                mock.patch('gerrit_util.GetChange',
+                           return_value={
+                               '_number': issue
+                           }).start()
+            else:
+                mock.patch('gerrit_util.GetChange', return_value={}).start()
 
         self.calls = self._gerrit_base_calls(
             issue=issue,
@@ -3587,6 +3597,16 @@ class TestGitCl(unittest.TestCase):
             'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n', [],
             squash=False,
             squash_mode='override_nosquash',
+            change_id='I123456789',
+            default_branch='main')
+
+    def test_gerrit_nosquash_with_issue(self):
+        self._run_gerrit_upload_test(
+            [],
+            'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n', [],
+            squash=False,
+            squash_mode='override_nosquash',
+            issue=123456,
             change_id='I123456789',
             default_branch='main')
 
