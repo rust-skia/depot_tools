@@ -370,11 +370,13 @@ Returns:
   A dict for the target revision as documented here:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
 
-&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#298)(self, host, project, from_branch, to_branch, step_test_data=None):**
+&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#318)(self, host, project, from_branch, to_branch, step_test_data=None):**
 
-&mdash; **def [set\_change\_label](/recipes/recipe_modules/gerrit/api.py#280)(self, host, change, label_name, label_value, name=None, step_test_data=None):**
+&mdash; **def [restore\_change](/recipes/recipe_modules/gerrit/api.py#280)(self, host, change, message=None, name=None, step_test_data=None):**
 
-&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#322)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), cc_list=frozenset([]), submit=False, submit_later=False, step_test_data_create_change=None, step_test_data_submit_change=None):**
+&mdash; **def [set\_change\_label](/recipes/recipe_modules/gerrit/api.py#300)(self, host, change, label_name, label_value, name=None, step_test_data=None):**
+
+&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#342)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), cc_list=frozenset([]), submit=False, submit_later=False, step_test_data_create_change=None, step_test_data_submit_change=None):**
 
 Update a set of files by creating and submitting a Gerrit CL.
 
