@@ -35,6 +35,9 @@ per-file siso*=file://BUILD_OWNERS
 per-file reclient*=file://BUILD_OWNERS
 per-file reclient*=file://RECLIENT_OWNERS
 
+# Build telemetry
+per-file build_telemetry*=file://BUILD_OWNERS
+
 # Bazel
 per-file bazel*=file://CROS_OWNERS
 per-file bazel*=file://BUILD_OWNERS
