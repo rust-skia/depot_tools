@@ -32,7 +32,6 @@ from google.auth.transport.requests import AuthorizedSession
 
 import gn_helper
 import ninja
-import ninja_reclient
 import reclient_helper
 import siso
 
@@ -285,19 +284,14 @@ def main(args):
                 return 1
             if use_remoteexec:
                 if use_reclient:
-                    with reclient_helper.build_context(input_args,
-                                                       'autosiso') as ret_code:
-                        if ret_code:
-                            return ret_code
-                        return siso.main([
-                            'siso',
-                            'ninja',
-                            # Do not authenticate when using Reproxy.
-                            '-project=',
-                            '-reapi_instance=',
-                        ] + input_args[1:])
-                else:
-                    return siso.main(["siso", "ninja"] + input_args[1:])
+                    return reclient_helper.run_siso([
+                        'siso',
+                        'ninja',
+                        # Do not authenticate when using Reproxy.
+                        '-project=',
+                        '-reapi_instance=',
+                    ] + input_args[1:])
+                return siso.main(["siso", "ninja"] + input_args[1:])
             return siso.main(["siso", "ninja", "--offline"] + input_args[1:])
 
         if os.path.exists(siso_marker):
@@ -349,16 +343,7 @@ def main(args):
             fileno_limit, hard_limit = resource.getrlimit(
                 resource.RLIMIT_NOFILE)
 
-    # Call ninja.py so that it can find ninja binary installed by DEPS or one in
-    # PATH.
-    ninja_path = os.path.join(SCRIPT_DIR, "ninja.py")
-    # If using remoteexec, use ninja_reclient.py which wraps ninja.py with
-    # starting and stopping reproxy.
-    if use_remoteexec:
-        ninja_path = os.path.join(SCRIPT_DIR, "ninja_reclient.py")
-
-    args = [sys.executable, ninja_path]
-
+    args = ['ninja']
     num_cores = multiprocessing.cpu_count()
     if not j_specified and not t_specified:
         if not offline and use_remoteexec:
@@ -407,9 +392,9 @@ def main(args):
         # are being used.
         _print_cmd(args)
 
-    if use_remoteexec:
-        return ninja_reclient.main(args[1:])
-    return ninja.main(args[1:])
+    if use_reclient:
+        return reclient_helper.run_ninja(args)
+    return ninja.main(args)
 
 
 if __name__ == "__main__":

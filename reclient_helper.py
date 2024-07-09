@@ -19,8 +19,9 @@ import time
 import uuid
 
 import gclient_paths
+import ninja
 import reclient_metrics
-
+import siso
 
 THIS_DIR = os.path.dirname(__file__)
 RECLIENT_LOG_CLEANUP = os.path.join(THIS_DIR, 'reclient_log_cleanup.py')
@@ -376,3 +377,29 @@ Ensure you have completed the reproxy setup instructions:
         if os.environ.get('NINJA_SUMMARIZE_BUILD') == '1':
             elapsed = time.time() - start
             print('%1.3fs to stop reproxy' % elapsed)
+
+
+def run_ninja(ninja_cmd):
+    """Runs Ninja in build_context()."""
+    # TODO: crbug.com/345113094 - rename the `tool` label to `ninja`.
+    with build_context(ninja_cmd, "ninja_reclient") as ret_code:
+        if ret_code:
+            return ret_code
+        try:
+            return ninja.main(ninja_cmd)
+        except KeyboardInterrupt:
+            print("Shutting down reproxy...", file=sys.stderr)
+            return 1
+
+
+def run_siso(siso_cmd):
+    """Runs Siso in build_context()."""
+    # TODO: crbug.com/345113094 - rename the `autosiso` label to `siso`.
+    with build_context(siso_cmd, "autosiso") as ret_code:
+        if ret_code:
+            return ret_code
+        try:
+            return siso.main(siso_cmd)
+        except KeyboardInterrupt:
+            print("Shutting down reproxy...", file=sys.stderr)
+            return 1

@@ -76,18 +76,18 @@ class AutoninjaTest(trial_dir.TestCase):
     def test_autoninja_reclient(self):
         """
         Test that when specifying use_remoteexec=true, autoninja delegates to
-        ninja_reclient.
+        reclient_helper.
         """
-        with mock.patch('ninja_reclient.main',
-                        return_value=0) as ninja_reclient_main:
+        with mock.patch('reclient_helper.run_ninja',
+                        return_value=0) as run_ninja:
             out_dir = os.path.join('out', 'dir')
             write(os.path.join(out_dir, 'args.gn'), 'use_remoteexec=true')
             write(os.path.join('buildtools', 'reclient_cfgs', 'reproxy.cfg'),
                   'RBE_v=2')
             write(os.path.join('buildtools', 'reclient', 'version.txt'), '0.0')
             autoninja.main(['autoninja.py', '-C', out_dir])
-            ninja_reclient_main.assert_called_once()
-            args = ninja_reclient_main.call_args.args[0]
+            run_ninja.assert_called_once()
+            args = run_ninja.call_args.args[0]
         self.assertIn('-C', args)
         self.assertEqual(args[args.index('-C') + 1], out_dir)
         # Check that autoninja correctly calculated the number of jobs to use
@@ -138,8 +138,9 @@ class AutoninjaTest(trial_dir.TestCase):
                     out_dir
                 ])
         self.assertEqual(len(reclient_helper_calls), 1)
-        self.assertEqual(reclient_helper_calls[0][0],
-                         ['autoninja.py', '-C', out_dir])
+        self.assertEqual(
+            reclient_helper_calls[0][0],
+            ['siso', 'ninja', '-project=', '-reapi_instance=', '-C', out_dir])
         self.assertEqual(reclient_helper_calls[0][1], 'autosiso')
 
     @parameterized.expand([
