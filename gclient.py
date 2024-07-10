@@ -2466,7 +2466,7 @@ it or fix the checkout.
         # Once all the dependencies have been processed, it's now safe to write
         # out the gn_args_file and run the hooks.
         removed_cipd_entries = []
-        if command == 'update':
+        if command == 'update' or (command == 'runhooks' and self._IsCog()):
             for dependency in self.dependencies:
                 gn_args_dep = dependency
                 if gn_args_dep._gn_args_from:
@@ -3958,7 +3958,21 @@ def CMDsync(parser, args):
 
     if options.verbose:
         client.PrintLocationAndContents()
-    ret = client.RunOnDeps('update', args)
+
+    # TODO(b/349643421): remove this check when non-git-sources is fully enabled.
+    def gn_exists():
+        cwd = os.getcwd()
+        split_cwd = cwd.split(
+            '/'
+        )  # ['/', 'google', 'cog', 'cloud', <user>, <workspace_name>, ...]
+        gn_path = os.path.join('/google/cog/cloud', *split_cwd[4:6],
+                               'src/buildtools/linux64/gn')
+        return os.path.exists(gn_path)
+
+    if gclient_utils.IsEnvCog() and gn_exists():
+        ret = client.RunOnDeps('runhooks', args)
+    else:
+        ret = client.RunOnDeps('update', args)
     if options.output_json:
         slns = {}
         for d in client.subtree(True):
