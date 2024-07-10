@@ -3694,9 +3694,16 @@ class GitAuthConfigChanger(object):
     def apply(self):
         """Apply config changes."""
         logging.debug('Configuring current Git repo authentication...')
-        cwd: str = os.getcwd()
 
-        # Credential helper
+        self._apply_cred_helper()
+        self._apply_sso()
+
+        # Override potential global gitcookie config
+        scm.GIT.SetConfig(cwd, 'http.gitcookies', '', modify_all=True)
+
+    def _apply_cred_helper(self):
+        """Apply config changes relating to credential helper."""
+        cwd: str = os.getcwd()
         if self._should_use_sso:
             scm.GIT.SetConfig(cwd,
                               f'credential.{self._base_url}.helper',
@@ -3712,6 +3719,9 @@ class GitAuthConfigChanger(object):
                               'luci',
                               append=True)
 
+    def _apply_sso(self):
+        """Apply config changes relating to SSO."""
+        cwd: str = os.getcwd()
         # SSO
         if self._should_use_sso:
             scm.GIT.SetConfig(cwd, 'protocol.sso.allow', 'always')
@@ -3725,9 +3735,6 @@ class GitAuthConfigChanger(object):
                               f'url.sso://{self._shortname}/.insteadOf',
                               None,
                               modify_all=True)
-
-        # Override potential global gitcookie config
-        scm.GIT.SetConfig(cwd, 'http.gitcookies', '', modify_all=True)
 
 
 class _GitCookiesChecker(object):
