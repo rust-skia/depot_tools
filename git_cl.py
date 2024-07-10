@@ -3678,6 +3678,7 @@ class GitAuthConfigChanger(object):
         *,
         host_shortname: str,
         remote_url: str,
+        use_sso: bool,
     ):
         """Create a new GitAuthConfigChanger.
 
@@ -3685,14 +3686,14 @@ class GitAuthConfigChanger(object):
             host_shortname: Gerrit host shortname, e.g., chromium
             remote_url: Git repository's remote URL, e.g.,
                 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+            use_sso: whether to configure auth for SSO
         """
         self._shortname: str = host_shortname
         parts: urllib.parse.SplitResult = urllib.parse.urlsplit(remote_url)
         # Base URL looks like https://chromium.googlesource.com/
         self._base_url: str = parts._replace(path='/', query='',
                                              fragment='').geturl()
-
-        self._should_use_sso: bool = gerrit_util.ShouldUseSSO(gerrit_host)
+        self._use_sso: bool = use_sso
 
     @classmethod
     def infer_and_create(cls) -> 'GitAuthConfigChanger':
@@ -3710,6 +3711,7 @@ class GitAuthConfigChanger(object):
         return cls(
             host_shortname=host_shortname,
             remote_url=remote_url,
+            use_sso=gerrit_util.ShouldUseSSO(gerrit_host),
         )
 
     def apply(self):
@@ -3725,7 +3727,7 @@ class GitAuthConfigChanger(object):
     def _apply_cred_helper(self):
         """Apply config changes relating to credential helper."""
         cwd: str = os.getcwd()
-        if self._should_use_sso:
+        if self._use_sso:
             scm.GIT.SetConfig(cwd,
                               f'credential.{self._base_url}.helper',
                               None,
@@ -3744,7 +3746,7 @@ class GitAuthConfigChanger(object):
         """Apply config changes relating to SSO."""
         cwd: str = os.getcwd()
         # SSO
-        if self._should_use_sso:
+        if self._use_sso:
             scm.GIT.SetConfig(cwd, 'protocol.sso.allow', 'always')
             scm.GIT.SetConfig(cwd,
                               f'url.sso://{self._shortname}/.insteadOf',
