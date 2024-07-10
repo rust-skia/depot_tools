@@ -3666,56 +3666,68 @@ def DownloadGerritHook(force):
 
 def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
-    logging.debug('Configuring current Git repo authentication...')
-    cwd: str = os.getcwd()
-    cl = Changelist()
+    c = GitAuthConfigChanger()
+    c.apply()
 
-    # chromium-review.googlesource.com
-    gerrit_host: str = cl.GetGerritHost()
-    # chromium
-    shortname: str = gerrit_host.split('.')[0][:-len('-review')]
 
-    # These depend on what the user set for their remote
-    # https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    remote_url: str = Changelist().GetRemoteUrl()
-    parts: urllib.parse.SplitResult = urllib.parse.urlsplit(remote_url)
-    # https://chromium.googlesource.com/
-    base_url: str = parts._replace(path='/', query='', fragment='').geturl()
+class GitAuthConfigChanger(object):
+    """Changes Git auth config as needed for Gerrit."""
 
-    should_use_sso: bool = gerrit_util.ShouldUseSSO(gerrit_host)
+    def __init__(self):
+        cl = Changelist()
 
-    # Credential helper
-    if should_use_sso:
-        scm.GIT.SetConfig(cwd,
-                          f'credential.{base_url}.helper',
-                          None,
-                          modify_all=True)
-    else:
-        scm.GIT.SetConfig(cwd,
-                          f'credential.{base_url}.helper',
-                          '',
-                          modify_all=True)
-        scm.GIT.SetConfig(cwd,
-                          f'credential.{base_url}.helper',
-                          'luci',
-                          append=True)
+        # chromium-review.googlesource.com
+        gerrit_host: str = cl.GetGerritHost()
+        # chromium
+        self._shortname: str = gerrit_host.split('.')[0][:-len('-review')]
 
-    # SSO
-    if should_use_sso:
-        scm.GIT.SetConfig(cwd, 'protocol.sso.allow', 'always')
-        scm.GIT.SetConfig(cwd,
-                          f'url.sso://{shortname}/.insteadOf',
-                          base_url,
-                          modify_all=True)
-    else:
-        scm.GIT.SetConfig(cwd, 'protocol.sso.allow', None)
-        scm.GIT.SetConfig(cwd,
-                          f'url.sso://{shortname}/.insteadOf',
-                          None,
-                          modify_all=True)
+        # These depend on what the user set for their remote
+        # https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        remote_url: str = cl.GetRemoteUrl()
+        parts: urllib.parse.SplitResult = urllib.parse.urlsplit(remote_url)
+        # https://chromium.googlesource.com/
+        self._base_url: str = parts._replace(path='/', query='',
+                                             fragment='').geturl()
 
-    # Override potential global gitcookie config
-    scm.GIT.SetConfig(cwd, 'http.gitcookies', '', modify_all=True)
+        self._should_use_sso: bool = gerrit_util.ShouldUseSSO(gerrit_host)
+
+    def apply(self):
+        """Apply config changes."""
+        logging.debug('Configuring current Git repo authentication...')
+        cwd: str = os.getcwd()
+
+        # Credential helper
+        if self._should_use_sso:
+            scm.GIT.SetConfig(cwd,
+                              f'credential.{self._base_url}.helper',
+                              None,
+                              modify_all=True)
+        else:
+            scm.GIT.SetConfig(cwd,
+                              f'credential.{self._base_url}.helper',
+                              '',
+                              modify_all=True)
+            scm.GIT.SetConfig(cwd,
+                              f'credential.{self._base_url}.helper',
+                              'luci',
+                              append=True)
+
+        # SSO
+        if self._should_use_sso:
+            scm.GIT.SetConfig(cwd, 'protocol.sso.allow', 'always')
+            scm.GIT.SetConfig(cwd,
+                              f'url.sso://{self._shortname}/.insteadOf',
+                              base_url,
+                              modify_all=True)
+        else:
+            scm.GIT.SetConfig(cwd, 'protocol.sso.allow', None)
+            scm.GIT.SetConfig(cwd,
+                              f'url.sso://{self._shortname}/.insteadOf',
+                              None,
+                              modify_all=True)
+
+        # Override potential global gitcookie config
+        scm.GIT.SetConfig(cwd, 'http.gitcookies', '', modify_all=True)
 
 
 class _GitCookiesChecker(object):
