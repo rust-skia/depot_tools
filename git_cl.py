@@ -3666,30 +3666,51 @@ def DownloadGerritHook(force):
 
 def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
-    c = GitAuthConfigChanger()
+    c = GitAuthConfigChanger.infer_and_create()
     c.apply()
 
 
 class GitAuthConfigChanger(object):
     """Changes Git auth config as needed for Gerrit."""
 
-    def __init__(self):
-        cl = Changelist()
+    def __init__(
+        self,
+        *,
+        host_shortname: str,
+        remote_url: str,
+    ):
+        """Create a new GitAuthConfigChanger.
 
-        # chromium-review.googlesource.com
-        gerrit_host: str = cl.GetGerritHost()
-        # chromium
-        self._shortname: str = gerrit_host.split('.')[0][:-len('-review')]
-
-        # These depend on what the user set for their remote
-        # https://chromium.googlesource.com/chromium/tools/depot_tools.git
-        remote_url: str = cl.GetRemoteUrl()
+        Args:
+            host_shortname: Gerrit host shortname, e.g., chromium
+            remote_url: Git repository's remote URL, e.g.,
+                https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        """
+        self._shortname: str = host_shortname
         parts: urllib.parse.SplitResult = urllib.parse.urlsplit(remote_url)
-        # https://chromium.googlesource.com/
+        # Base URL looks like https://chromium.googlesource.com/
         self._base_url: str = parts._replace(path='/', query='',
                                              fragment='').geturl()
 
         self._should_use_sso: bool = gerrit_util.ShouldUseSSO(gerrit_host)
+
+    @classmethod
+    def infer_and_create(cls) -> 'GitAuthConfigChanger':
+        """Create a GitAuthConfigChanger by inferring from env."""
+        cl = Changelist()
+        # chromium-review.googlesource.com
+        gerrit_host: str = cl.GetGerritHost()
+        # chromium
+        host_shortname: str = gerrit_host.split('.')[0][:-len('-review')]
+
+        # These depend on what the user set for their remote
+        # https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        remote_url: str = cl.GetRemoteUrl()
+
+        return cls(
+            host_shortname=host_shortname,
+            remote_url=remote_url,
+        )
 
     def apply(self):
         """Apply config changes."""
