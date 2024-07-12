@@ -3666,6 +3666,7 @@ def DownloadGerritHook(force):
 
 def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
+    logging.debug('Configuring current Git repo authentication...')
     c = GitAuthConfigChanger.infer_and_create()
     c.apply()
 
@@ -3720,7 +3721,6 @@ class GitAuthConfigChanger(object):
 
     def apply(self):
         """Apply config changes."""
-        logging.debug('Configuring current Git repo authentication...')
         self._apply_cred_helper()
         self._apply_sso()
         self._apply_gitcookies()
