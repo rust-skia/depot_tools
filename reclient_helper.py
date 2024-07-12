@@ -260,8 +260,13 @@ def set_reproxy_path_flags(out_dir, make_dirs=True):
 
 
 def set_racing_defaults():
-    os.environ.setdefault("RBE_local_resource_fraction", "0.2")
-    os.environ.setdefault("RBE_racing_bias", "0.95")
+    if sys.platform == 'linux':
+        os.environ.setdefault("RBE_local_resource_fraction", "0.4")
+        os.environ.setdefault("RBE_racing_bias", "0.7")
+    else:
+        # TODO(b/352463976): tune this on non-Linux platform too.
+        os.environ.setdefault("RBE_local_resource_fraction", "0.2")
+        os.environ.setdefault("RBE_racing_bias", "0.95")
 
 
 def set_mac_defaults():
