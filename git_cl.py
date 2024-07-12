@@ -3765,7 +3765,7 @@ class GitAuthConfigChanger(object):
             self._set_config(sso_key, None, modify_all=True)
         elif self._mode == GitConfigMode.NEW_AUTH_SSO:
             self._set_config('protocol.sso.allow', 'always')
-            self._set_config(sso_key, base_url, modify_all=True)
+            self._set_config(sso_key, self._base_url, modify_all=True)
         elif self._mode == GitConfigMode.OLD_AUTH:
             self._set_config('protocol.sso.allow', None)
             self._set_config(sso_key, None, modify_all=True)
