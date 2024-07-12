@@ -3738,13 +3738,13 @@ class GitAuthConfigChanger(object):
             remote_url=remote_url,
         )
 
-    def apply(self):
+    def apply(self) -> None:
         """Apply config changes."""
         self._apply_cred_helper()
         self._apply_sso()
         self._apply_gitcookies()
 
-    def _apply_cred_helper(self):
+    def _apply_cred_helper(self) -> None:
         """Apply config changes relating to credential helper."""
         cred_key: str = f'credential.{self._base_url}.helper'
         if self._mode == GitConfigMode.NEW_AUTH:
@@ -3757,7 +3757,7 @@ class GitAuthConfigChanger(object):
         else:
             raise TypeError(f'Invalid mode {self._mode!r}')
 
-    def _apply_sso(self):
+    def _apply_sso(self) -> None:
         """Apply config changes relating to SSO."""
         sso_key: str = f'url.sso://{self._shortname}/.insteadOf'
         if self._mode == GitConfigMode.NEW_AUTH:
@@ -3772,7 +3772,7 @@ class GitAuthConfigChanger(object):
         else:
             raise TypeError(f'Invalid mode {self._mode!r}')
 
-    def _apply_gitcookies(self):
+    def _apply_gitcookies(self) -> None:
         """Apply config changes relating to gitcookies."""
         if self._mode == GitConfigMode.NEW_AUTH:
             # Override potential global gitcookie config
@@ -3785,7 +3785,7 @@ class GitAuthConfigChanger(object):
         else:
             raise TypeError(f'Invalid mode {self._mode!r}')
 
-    def _set_config(self, *args, **kwargs):
+    def _set_config(self, *args, **kwargs) -> None:
         self._set_config_func(self._cwd, *args, **kwargs)
 
 
