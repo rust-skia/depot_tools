@@ -34,6 +34,7 @@ import webbrowser
 import zlib
 
 from typing import Any
+from typing import Callable
 from typing import List
 from typing import Mapping
 from typing import NoReturn
@@ -3691,6 +3692,7 @@ class GitAuthConfigChanger(object):
         host_shortname: str,
         mode: GitConfigMode,
         remote_url: str,
+        set_config_func: Callable[..., None] = scm.GIT.SetConfig,
     ):
         """Create a new GitAuthConfigChanger.
 
@@ -3700,6 +3702,8 @@ class GitAuthConfigChanger(object):
             mode: How to configure auth
             remote_url: Git repository's remote URL, e.g.,
                 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+            set_config_func: Function used to set configuration.  Used
+                for testing.
         """
         self._cwd: str = cwd
         self._shortname: str = host_shortname
@@ -3708,6 +3712,7 @@ class GitAuthConfigChanger(object):
         # Base URL looks like https://chromium.googlesource.com/
         self._base_url: str = parts._replace(path='/', query='',
                                              fragment='').geturl()
+        self._set_config_func: Callable[..., str] = set_config_func
 
     @classmethod
     def infer_and_create(cls) -> 'GitAuthConfigChanger':
@@ -3743,12 +3748,12 @@ class GitAuthConfigChanger(object):
         """Apply config changes relating to credential helper."""
         cred_key: str = f'credential.{self._base_url}.helper'
         if self._mode == GitConfigMode.NEW_AUTH:
-            scm.GIT.SetConfig(self._cwd, cred_key, '', modify_all=True)
-            scm.GIT.SetConfig(self._cwd, cred_key, 'luci', append=True)
+            self._set_config(cred_key, '', modify_all=True)
+            self._set_config(cred_key, 'luci', append=True)
         elif self._mode == GitConfigMode.NEW_AUTH_SSO:
-            scm.GIT.SetConfig(self._cwd, cred_key, None, modify_all=True)
+            self._set_config(cred_key, None, modify_all=True)
         elif self._mode == GitConfigMode.OLD_AUTH:
-            scm.GIT.SetConfig(self._cwd, cred_key, None, modify_all=True)
+            self._set_config(cred_key, None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self._mode!r}')
 
@@ -3756,14 +3761,14 @@ class GitAuthConfigChanger(object):
         """Apply config changes relating to SSO."""
         sso_key: str = f'url.sso://{self._shortname}/.insteadOf'
         if self._mode == GitConfigMode.NEW_AUTH:
-            scm.GIT.SetConfig(self._cwd, 'protocol.sso.allow', None)
-            scm.GIT.SetConfig(self._cwd, sso_key, None, modify_all=True)
+            self._set_config('protocol.sso.allow', None)
+            self._set_config(sso_key, None, modify_all=True)
         elif self._mode == GitConfigMode.NEW_AUTH_SSO:
-            scm.GIT.SetConfig(self._cwd, 'protocol.sso.allow', 'always')
-            scm.GIT.SetConfig(self._cwd, sso_key, base_url, modify_all=True)
+            self._set_config('protocol.sso.allow', 'always')
+            self._set_config(sso_key, base_url, modify_all=True)
         elif self._mode == GitConfigMode.OLD_AUTH:
-            scm.GIT.SetConfig(self._cwd, 'protocol.sso.allow', None)
-            scm.GIT.SetConfig(self._cwd, sso_key, None, modify_all=True)
+            self._set_config('protocol.sso.allow', None)
+            self._set_config(sso_key, None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self._mode!r}')
 
@@ -3771,17 +3776,17 @@ class GitAuthConfigChanger(object):
         """Apply config changes relating to gitcookies."""
         if self._mode == GitConfigMode.NEW_AUTH:
             # Override potential global gitcookie config
-            scm.GIT.SetConfig(self._cwd, 'http.gitcookies', '', modify_all=True)
+            self._set_config('http.gitcookies', '', modify_all=True)
         elif self._mode == GitConfigMode.NEW_AUTH_SSO:
             # Override potential global gitcookie config
-            scm.GIT.SetConfig(self._cwd, 'http.gitcookies', '', modify_all=True)
+            self._set_config('http.gitcookies', '', modify_all=True)
         elif self._mode == GitConfigMode.OLD_AUTH:
-            scm.GIT.SetConfig(self._cwd,
-                              'http.gitcookies',
-                              None,
-                              modify_all=True)
+            self._set_config('http.gitcookies', None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self._mode!r}')
+
+    def _set_config(self, *args, **kwargs):
+        self._set_config_func(self._cwd, *args, **kwargs)
 
 
 class _GitCookiesChecker(object):
