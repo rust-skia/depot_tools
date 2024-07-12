@@ -32,7 +32,6 @@ import uuid
 import webbrowser
 import zlib
 
-from third_party import colorama
 from typing import Any
 from typing import List
 from typing import Mapping
@@ -40,6 +39,7 @@ from typing import NoReturn
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+
 import auth
 import clang_format
 import gclient_paths
@@ -64,6 +64,8 @@ import subcommand
 import subprocess2
 import swift_format
 import watchlists
+
+from third_party import colorama
 
 
 __version__ = '2.0'
