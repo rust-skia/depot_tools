@@ -3727,16 +3727,19 @@ class GitAuthConfigChanger(object):
         # https://chromium.googlesource.com/chromium/tools/depot_tools.git
         remote_url: str = cl.GetRemoteUrl()
 
-        mode: GitConfigMode = GitConfigMode.NEW_AUTH
-        if gerrit_util.ShouldUseSSO(gerrit_host):
-            mode = GitConfigMode.NEW_AUTH_SSO
-
         return cls(
             cwd=os.getcwd(),
             host_shortname=host_shortname,
-            mode=mode,
+            mode=cls._infer_mode(),
             remote_url=remote_url,
         )
+
+    @staticmethod
+    def _infer_mode() -> GitConfigMode:
+        """Infer default mode to use."""
+        if gerrit_util.ShouldUseSSO(gerrit_host):
+            return GitConfigMode.NEW_AUTH_SSO
+        return GitConfigMode.NEW_AUTH
 
     def apply(self) -> None:
         """Apply config changes."""
