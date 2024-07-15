@@ -2368,7 +2368,8 @@ class Changelist(object):
         git_host = self._GetGitHost()
         assert self._gerrit_server and self._gerrit_host and git_host
 
-        bypassable, msg = gerrit_util.Authenticator.get().ensure_authenticated(git_host, self._gerrit_host)
+        bypassable, msg = gerrit_util.ensure_authenticated(
+            git_host, self._gerrit_host)
         if not msg:
             return  # OK
         if bypassable:
@@ -2935,12 +2936,11 @@ class Changelist(object):
         gclient_utils.FileWrite(os.path.join(git_info_dir, 'git-config'),
                                 git_config)
 
-        authenticator = gerrit_util.Authenticator.get()
+        auth_name, debug_state = gerrit_util.debug_auth()
         # Writes a file like CookiesAuthenticator.debug_summary_state
         gclient_utils.FileWrite(
-            os.path.join(git_info_dir,
-                         f'{type(authenticator).__name__}.debug_summary_state'),
-            authenticator.debug_summary_state())
+            os.path.join(git_info_dir, f'{auth_name}.debug_summary_state'),
+            debug_state)
         shutil.make_archive(git_info_zip, 'zip', git_info_dir)
 
         gclient_utils.rmtree(git_info_dir)
@@ -4013,14 +4013,14 @@ def CMDcreds_check(parser, args):
         return 0
 
     # Code below checks .gitcookies. Abort if using something else.
-    authn = gerrit_util.Authenticator.get()
-    if not isinstance(authn, gerrit_util.CookiesAuthenticator):
+    auth_name, _ = gerrit_util.debug_auth()
+    if auth_name != "CookiesAuthenticator":
         message = (
             'This command is not designed for bot environment. It checks '
             '~/.gitcookies file not generally used on bots.')
         # TODO(crbug.com/1059384): Automatically detect when running on
         # cloudtop.
-        if isinstance(authn, gerrit_util.GceAuthenticator):
+        if auth_name == "GceAuthenticator":
             message += (
                 '\n'
                 'If you need to run this on GCE or a cloudtop instance, '

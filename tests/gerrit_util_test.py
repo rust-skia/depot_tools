@@ -322,7 +322,7 @@ class GerritUtilTest(unittest.TestCase):
                                      'first param+'))
 
     @mock.patch('gerrit_util.CookiesAuthenticator._get_auth_for_host')
-    @mock.patch('gerrit_util.Authenticator.get')
+    @mock.patch('gerrit_util._Authenticator.get')
     def testCreateHttpConn_Basic(self, mockAuth, cookieAuth):
         mockAuth.return_value = gerrit_util.CookiesAuthenticator()
         cookieAuth.return_value = None
@@ -338,7 +338,7 @@ class GerritUtilTest(unittest.TestCase):
             }, conn.req_params)
 
     @mock.patch('gerrit_util.CookiesAuthenticator._get_auth_for_host')
-    @mock.patch('gerrit_util.Authenticator.get')
+    @mock.patch('gerrit_util._Authenticator.get')
     def testCreateHttpConn_Authenticated(self, mockAuth, cookieAuth):
         mockAuth.return_value = gerrit_util.CookiesAuthenticator()
         cookieAuth.return_value = (None, 'token')
@@ -359,7 +359,7 @@ class GerritUtilTest(unittest.TestCase):
             }, conn.req_params)
 
     @mock.patch('gerrit_util.CookiesAuthenticator._get_auth_for_host')
-    @mock.patch('gerrit_util.Authenticator')
+    @mock.patch('gerrit_util._Authenticator')
     def testCreateHttpConn_Body(self, mockAuth, cookieAuth):
         mockAuth.return_value = gerrit_util.CookiesAuthenticator()
         cookieAuth.return_value = None
