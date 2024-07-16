@@ -2344,7 +2344,7 @@ class Changelist(object):
             return
 
         if newauth.Enabled():
-            latestVer = 1
+            latestVer: int = GitAuthConfigChanger.VERSION
             v: int = 0
             try:
                 v = int(
@@ -3683,6 +3683,13 @@ class GitConfigMode(enum.Enum):
 
 class GitAuthConfigChanger(object):
     """Changes Git auth config as needed for Gerrit."""
+
+    # Can be used to determine whether this version of the config has
+    # been applied to a Git repo.
+    #
+    # Increment this when making changes to the config, so that reliant
+    # code can determine whether the config needs to be re-applied.
+    VERSION: int = 1
 
     def __init__(
         self,
