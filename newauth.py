@@ -17,6 +17,13 @@ def Enabled() -> bool:
                                                                 'true', '1')
 
 
+def ExplicitlyDisabled() -> bool:
+    """Returns True if new auth stack is explicitly disabled."""
+    return scm.GIT.GetConfig(os.getcwd(),
+                             'depot-tools.usenewauthstack') in ('no', 'off',
+                                                                'false', '0')
+
+
 def SkipSSO() -> bool:
     """Returns True if skip SSO is set."""
     return scm.GIT.GetConfig(os.getcwd(),

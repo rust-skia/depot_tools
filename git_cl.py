@@ -3674,6 +3674,14 @@ def ConfigureGitRepoAuth() -> None:
     GitAuthConfigChanger.new_from_env().apply(os.getcwd())
 
 
+def ClearGitRepoAuth() -> None:
+    """Clear the current Git repo authentication."""
+    logging.debug('Clearing current Git repo authentication...')
+    c = GitAuthConfigChanger.new_from_env()
+    c.mode = GitConfigMode.OLD_AUTH
+    c.apply(os.getcwd())
+
+
 class GitConfigMode(enum.Enum):
     """Modes to pass to GitAuthConfigChanger"""
     NEW_AUTH = 1
@@ -4019,6 +4027,8 @@ def CMDcreds_check(parser, args):
     if newauth.Enabled():
         ConfigureGitRepoAuth()
         return 0
+    if newauth.ExplicitlyDisabled():
+        ClearGitRepoAuth()
 
     # Code below checks .gitcookies. Abort if using something else.
     auth_name, _ = gerrit_util.debug_auth()
