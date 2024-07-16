@@ -3730,12 +3730,12 @@ class GitAuthConfigChanger(object):
         return cls(
             cwd=os.getcwd(),
             host_shortname=host_shortname,
-            mode=cls._infer_mode(),
+            mode=cls._infer_mode(gerrit_host),
             remote_url=remote_url,
         )
 
     @staticmethod
-    def _infer_mode() -> GitConfigMode:
+    def _infer_mode(gerrit_host: str) -> GitConfigMode:
         """Infer default mode to use."""
         if not newauth.Enabled():
             return GitConfigMode.OLD_AUTH
