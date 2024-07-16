@@ -3702,8 +3702,9 @@ class GitAuthConfigChanger(object):
             set_config_func: Function used to set configuration.  Used
                 for testing.
         """
+        self.mode: GitConfigMode = mode
+
         self._shortname: str = host_shortname
-        self._mode: GitConfigMode = mode
         parts: urllib.parse.SplitResult = urllib.parse.urlsplit(remote_url)
         # Base URL looks like https://chromium.googlesource.com/
         self._base_url: str = parts._replace(path='/', query='',
@@ -3747,43 +3748,43 @@ class GitAuthConfigChanger(object):
     def _apply_cred_helper(self, cwd: str) -> None:
         """Apply config changes relating to credential helper."""
         cred_key: str = f'credential.{self._base_url}.helper'
-        if self._mode == GitConfigMode.NEW_AUTH:
+        if self.mode == GitConfigMode.NEW_AUTH:
             self._set_config(cwd, cred_key, '', modify_all=True)
             self._set_config(cwd, cred_key, 'luci', append=True)
-        elif self._mode == GitConfigMode.NEW_AUTH_SSO:
+        elif self.mode == GitConfigMode.NEW_AUTH_SSO:
             self._set_config(cwd, cred_key, None, modify_all=True)
-        elif self._mode == GitConfigMode.OLD_AUTH:
+        elif self.mode == GitConfigMode.OLD_AUTH:
             self._set_config(cwd, cred_key, None, modify_all=True)
         else:
-            raise TypeError(f'Invalid mode {self._mode!r}')
+            raise TypeError(f'Invalid mode {self.mode!r}')
 
     def _apply_sso(self, cwd: str) -> None:
         """Apply config changes relating to SSO."""
         sso_key: str = f'url.sso://{self._shortname}/.insteadOf'
-        if self._mode == GitConfigMode.NEW_AUTH:
+        if self.mode == GitConfigMode.NEW_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
             self._set_config(cwd, sso_key, None, modify_all=True)
-        elif self._mode == GitConfigMode.NEW_AUTH_SSO:
+        elif self.mode == GitConfigMode.NEW_AUTH_SSO:
             self._set_config(cwd, 'protocol.sso.allow', 'always')
             self._set_config(cwd, sso_key, self._base_url, modify_all=True)
-        elif self._mode == GitConfigMode.OLD_AUTH:
+        elif self.mode == GitConfigMode.OLD_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
             self._set_config(cwd, sso_key, None, modify_all=True)
         else:
-            raise TypeError(f'Invalid mode {self._mode!r}')
+            raise TypeError(f'Invalid mode {self.mode!r}')
 
     def _apply_gitcookies(self, cwd: str) -> None:
         """Apply config changes relating to gitcookies."""
-        if self._mode == GitConfigMode.NEW_AUTH:
+        if self.mode == GitConfigMode.NEW_AUTH:
             # Override potential global gitcookie config
             self._set_config(cwd, 'http.gitcookies', '', modify_all=True)
-        elif self._mode == GitConfigMode.NEW_AUTH_SSO:
+        elif self.mode == GitConfigMode.NEW_AUTH_SSO:
             # Override potential global gitcookie config
             self._set_config(cwd, 'http.gitcookies', '', modify_all=True)
-        elif self._mode == GitConfigMode.OLD_AUTH:
+        elif self.mode == GitConfigMode.OLD_AUTH:
             self._set_config(cwd, 'http.gitcookies', None, modify_all=True)
         else:
-            raise TypeError(f'Invalid mode {self._mode!r}')
+            raise TypeError(f'Invalid mode {self.mode!r}')
 
     def _set_config(self, *args, **kwargs) -> None:
         self._set_config_func(*args, **kwargs)
