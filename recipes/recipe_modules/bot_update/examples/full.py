@@ -341,9 +341,3 @@ def GenTests(api):
       ci_build(revision='HEAD'),
       api.bot_update.commit_positions(False),
   )
-
-  yield (api.test('stale-process-duration-override') + api.properties(
-      **
-      {'$depot_tools/bot_update': {
-          'stale_process_duration_override': 3000,
-      }}) + ci_build())

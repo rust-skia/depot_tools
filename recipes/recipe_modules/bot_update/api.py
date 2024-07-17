@@ -75,7 +75,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
 
     self._last_returned_properties = {}
     super(BotUpdateApi, self).__init__(*args, **kwargs)
-    self._bot_update_properties = properties
 
   def __call__(self, name, cmd, **kwargs):
     """Wrapper for easy calling of bot_update."""
@@ -164,9 +163,6 @@ class BotUpdateApi(recipe_api.RecipeApi):
           self.m.buildbucket.build.builder.bucket,
           self.m.buildbucket.build.builder.builder, self.m.buildbucket.build.id)
 
-    if 'stale_process_duration_override' in self._bot_update_properties:
-      env['STALE_PROCESS_DURATION'] = self._bot_update_properties[
-          'stale_process_duration_override']
     return env
 
   def _upload_traces(self):
