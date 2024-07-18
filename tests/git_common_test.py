@@ -458,7 +458,7 @@ class GitMutableFunctionsTest(git_test_utils.GitRepoReadWriteTestBase,
                          [])
 
         self.repo.git('config', '--add', 'happy.derpies', 'cat')
-        self.gc.scm.GIT._clear_config(self.repo.repo_path)
+        self.gc.scm.GIT.drop_config_cache()
         self.assertEqual(
             self.repo.run(self.gc.get_config_list, 'happy.derpies'),
             ['food', 'cat'])
@@ -482,19 +482,19 @@ class GitMutableFunctionsTest(git_test_utils.GitRepoReadWriteTestBase,
 
         self.repo.git('config', 'depot-tools.upstream', 'catfood')
 
-        self.gc.scm.GIT._clear_config(self.repo.repo_path)
+        self.gc.scm.GIT.drop_config_cache()
         self.assertEqual('catfood', self.repo.run(self.gc.root))
 
         self.repo.git('config', '--add', 'core.fsmonitor', 'true')
-        self.gc.scm.GIT._clear_config(self.repo.repo_path)
+        self.gc.scm.GIT.drop_config_cache()
         self.assertEqual(True, self.repo.run(self.gc.is_fsmonitor_enabled))
 
         self.repo.git('config', '--add', 'core.fsmonitor', 't')
-        self.gc.scm.GIT._clear_config(self.repo.repo_path)
+        self.gc.scm.GIT.drop_config_cache()
         self.assertEqual(False, self.repo.run(self.gc.is_fsmonitor_enabled))
 
         self.repo.git('config', '--add', 'core.fsmonitor', 'false')
-        self.gc.scm.GIT._clear_config(self.repo.repo_path)
+        self.gc.scm.GIT.drop_config_cache()
         self.assertEqual(False, self.repo.run(self.gc.is_fsmonitor_enabled))
 
     def testRoot(self):
@@ -659,7 +659,7 @@ class GitMutableStructuredTest(git_test_utils.GitRepoReadWriteTestBase,
             self.repo.run(self.gc.get_or_create_merge_base, 'branch_L',
                           'branch_K'))
 
-        self.gc.scm.GIT._clear_config(self.repo.repo_path)
+        self.gc.scm.GIT.drop_config_cache()
         self.assertEqual(
             self.repo['B'],
             self.repo.run(self.gc.get_config, 'branch.branch_K.base'))
@@ -680,7 +680,7 @@ class GitMutableStructuredTest(git_test_utils.GitRepoReadWriteTestBase,
         self.repo.run(self.gc.manual_merge_base, 'branch_K', self.repo['I'],
                       'branch_G')
 
-        self.gc.scm.GIT._clear_config(self.repo.repo_path)
+        self.gc.scm.GIT.drop_config_cache()
         self.assertEqual(
             self.repo['I'],
             self.repo.run(self.gc.get_or_create_merge_base, 'branch_K',

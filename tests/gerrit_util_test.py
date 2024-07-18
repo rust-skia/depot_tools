@@ -21,9 +21,11 @@ import httplib2
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import scm_mock
+
 import gerrit_util
-import git_common
 import metrics
+import scm
 import subprocess2
 
 RUN_SUBPROC_TESTS = 'RUN_SUBPROC_TESTS' in os.environ
@@ -104,6 +106,7 @@ class CookiesAuthenticatorTest(unittest.TestCase):
                    return_value=self._GITCOOKIES).start()
         mock.patch('os.getenv', return_value={}).start()
         mock.patch('os.environ', {'HOME': '$HOME'}).start()
+        mock.patch('os.getcwd', return_value='/fame/cwd').start()
         mock.patch('os.path.exists', return_value=True).start()
         mock.patch(
             'git_common.run',
@@ -111,6 +114,8 @@ class CookiesAuthenticatorTest(unittest.TestCase):
                 subprocess2.CalledProcessError(1, ['cmd'], 'cwd', 'out', 'err')
             ],
         ).start()
+        scm_mock.GIT(self)
+
         self.addCleanup(mock.patch.stopall)
         self.maxDiff = None
 
@@ -144,16 +149,10 @@ class CookiesAuthenticatorTest(unittest.TestCase):
             os.path.expanduser(os.path.join('~', '.gitcookies')),
             gerrit_util.CookiesAuthenticator().get_gitcookies_path())
 
-        git_common.run.side_effect = ['http.cookiefile\nhttp.cookiefile\x00']
+        scm.GIT.SetConfig(os.getcwd(), 'http.cookiefile', '/some/path')
         self.assertEqual(
-            'http.cookiefile',
+            '/some/path',
             gerrit_util.CookiesAuthenticator().get_gitcookies_path())
-        git_common.run.assert_called_with('config',
-                                          '--list',
-                                          '-z',
-                                          autostrip=False,
-                                          cwd=os.getcwd(),
-                                          env=mock.ANY)
 
         os.getenv.return_value = 'git-cookies-path'
         self.assertEqual(
@@ -717,9 +716,17 @@ class ShouldUseSSOTest(unittest.TestCase):
     def setUp(self) -> None:
         self.newauth = mock.patch('newauth.Enabled', return_value=True)
         self.newauth.start()
+
+        self.cwd = mock.patch('os.getcwd', return_value='/fake/cwd')
+        self.cwd.start()
+
         self.sso = mock.patch('gerrit_util.ssoHelper.find_cmd',
                               return_value='/fake/git-remote-sso')
         self.sso.start()
+
+        scm_mock.GIT(self)
+
+        self.addCleanup(mock.patch.stopall)
         return super().setUp()
 
     def tearDown(self) -> None:
