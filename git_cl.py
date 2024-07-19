@@ -3698,7 +3698,7 @@ class GitAuthConfigChanger(object):
     #
     # Increment this when making changes to the config, so that reliant
     # code can determine whether the config needs to be re-applied.
-    VERSION: int = 1
+    VERSION: int = 2
 
     def __init__(
         self,
@@ -3797,14 +3797,16 @@ class GitAuthConfigChanger(object):
 
     def _apply_gitcookies(self, cwd: str) -> None:
         """Apply config changes relating to gitcookies."""
+        # TODO(ayatane): Clear invalid setting.  Remove line after a few weeks
+        self._set_config(cwd, 'http.gitcookies', None, modify_all=True)
         if self.mode == GitConfigMode.NEW_AUTH:
-            # Override potential global gitcookie config
-            self._set_config(cwd, 'http.gitcookies', '', modify_all=True)
+            # Override potential global setting
+            self._set_config(cwd, 'http.cookieFile', '', modify_all=True)
         elif self.mode == GitConfigMode.NEW_AUTH_SSO:
-            # Override potential global gitcookie config
-            self._set_config(cwd, 'http.gitcookies', '', modify_all=True)
+            # Override potential global setting
+            self._set_config(cwd, 'http.cookieFile', '', modify_all=True)
         elif self.mode == GitConfigMode.OLD_AUTH:
-            self._set_config(cwd, 'http.gitcookies', None, modify_all=True)
+            self._set_config(cwd, 'http.cookieFile', None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
 
