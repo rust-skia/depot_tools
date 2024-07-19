@@ -13,6 +13,7 @@ import collections
 import datetime
 import enum
 import fnmatch
+import functools
 import httplib2
 import itertools
 import json
@@ -3720,11 +3721,15 @@ class GitAuthConfigChanger(object):
         self.mode: GitConfigMode = mode
 
         self._shortname: str = host_shortname
-        parts: urllib.parse.SplitResult = urllib.parse.urlsplit(remote_url)
-        # Base URL looks like https://chromium.googlesource.com/
-        self._base_url: str = parts._replace(path='/', query='',
-                                             fragment='').geturl()
+        self._remote_url: str = remote_url
         self._set_config_func: Callable[..., str] = set_config_func
+
+    @functools.cached_property
+    def _base_url(self) -> str:
+        # Base URL looks like https://chromium.googlesource.com/
+        parts: urllib.parse.SplitResult = urllib.parse.urlsplit(
+            self._remote_url)
+        return parts._replace(path='/', query='', fragment='').geturl()
 
     @classmethod
     def new_from_env(cls) -> 'GitAuthConfigChanger':
