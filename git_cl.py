@@ -3703,7 +3703,6 @@ class GitAuthConfigChanger(object):
     def __init__(
         self,
         *,
-        host_shortname: str,
         mode: GitConfigMode,
         remote_url: str,
         set_config_func: Callable[..., None] = scm.GIT.SetConfig,
@@ -3711,7 +3710,6 @@ class GitAuthConfigChanger(object):
         """Create a new GitAuthConfigChanger.
 
         Args:
-            host_shortname: Gerrit host shortname, e.g., chromium
             mode: How to configure auth
             remote_url: Git repository's remote URL, e.g.,
                 https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -3720,9 +3718,17 @@ class GitAuthConfigChanger(object):
         """
         self.mode: GitConfigMode = mode
 
-        self._shortname: str = host_shortname
         self._remote_url: str = remote_url
         self._set_config_func: Callable[..., str] = set_config_func
+
+    @functools.cached_property
+    def _shortname(self) -> str:
+        parts: urllib.parse.SplitResult = urllib.parse.urlsplit(
+            self._remote_url)
+        name: str = parts.netloc.split('.')[0]
+        if name.endswith('-review'):
+            name = name[:-len('-review')]
+        return name
 
     @functools.cached_property
     def _base_url(self) -> str:
@@ -3737,15 +3743,11 @@ class GitAuthConfigChanger(object):
         cl = Changelist()
         # chromium-review.googlesource.com
         gerrit_host: str = cl.GetGerritHost()
-        # chromium
-        host_shortname: str = gerrit_host.split('.')[0][:-len('-review')]
-
         # These depend on what the user set for their remote
         # https://chromium.googlesource.com/chromium/tools/depot_tools.git
         remote_url: str = cl.GetRemoteUrl()
 
         return cls(
-            host_shortname=host_shortname,
             mode=cls._infer_mode(gerrit_host),
             remote_url=remote_url,
         )
