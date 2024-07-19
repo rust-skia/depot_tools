@@ -30,12 +30,14 @@ import contextlib
 import functools
 import logging
 import os
+import random
 import re
 import setup_color
 import shutil
 import signal
 import tempfile
 import textwrap
+import time
 
 import scm
 import subprocess2
@@ -856,8 +858,39 @@ def run_stream_with_retcode(*cmd, **kwargs):
             raise subprocess2.CalledProcessError(retcode, cmd, os.getcwd(), b'',
                                                  b'')
 
-
 def run_with_stderr(*cmd, **kwargs):
+    """Runs a git command.
+
+    Returns (stdout, stderr) as a pair of strings.
+    If the command is `config` and the execution fails due to a lock failure,
+    retry the execution at most 5 times with 0.2 interval.
+
+    kwargs
+        autostrip (bool) - Strip the output. Defaults to True.
+        indata (str) - Specifies stdin data for the process.
+        retry_lock (bool) - If true and the command is `config`,
+            retry on lock failures. Defaults to True.
+    """
+    retry_cnt = 0
+    if kwargs.pop('retry_lock', True) and len(cmd) > 0 and cmd[0] == 'config':
+        retry_cnt = 5
+
+    while True:
+        try:
+            return _run_with_stderr(*cmd, **kwargs)
+        except subprocess2.CalledProcessError as ex:
+            lock_err = 'could not lock config file .git/config: File exists'
+            if retry_cnt > 0 and lock_err in str(ex):
+                logging.error(ex)
+                jitter = random.uniform(0, 0.2)
+                time.sleep(0.1 + jitter)
+                retry_cnt -= 1
+                continue
+
+            raise ex
+
+
+def _run_with_stderr(*cmd, **kwargs):
     """Runs a git command.
 
     Returns (stdout, stderr) as a pair of strings.
