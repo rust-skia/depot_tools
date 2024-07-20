@@ -3767,6 +3767,14 @@ class GitAuthConfigChanger(object):
         self._apply_sso(cwd)
         self._apply_gitcookies(cwd)
 
+    def apply_global(self, cwd: str) -> None:
+        """Apply config changes to the global (user) Git config.
+
+        This uses the instance's mode as a default for the Gerrit host.
+        """
+        self._apply_global_cred_helper(cwd)
+        self._apply_global_sso(cwd)
+
     def _apply_cred_helper(self, cwd: str) -> None:
         """Apply config changes relating to credential helper."""
         cred_key: str = f'credential.{self._base_url}.helper'
@@ -3807,6 +3815,50 @@ class GitAuthConfigChanger(object):
             self._set_config(cwd, 'http.cookieFile', '', modify_all=True)
         elif self.mode == GitConfigMode.OLD_AUTH:
             self._set_config(cwd, 'http.cookieFile', None, modify_all=True)
+        else:
+            raise TypeError(f'Invalid mode {self.mode!r}')
+
+    def _apply_global_cred_helper(self, cwd: str) -> None:
+        """Apply config changes relating to credential helper."""
+        cred_key: str = f'credential.{self._base_url}.helper'
+        if self.mode == GitConfigMode.NEW_AUTH:
+            self._set_config(cwd, cred_key, '', scope='global', modify_all=True)
+            self._set_config(cwd, cred_key, 'luci', scope='global', append=True)
+        elif self.mode == GitConfigMode.NEW_AUTH_SSO:
+            # Avoid editing the user's config in case they manually
+            # configured something.
+            pass
+        elif self.mode == GitConfigMode.OLD_AUTH:
+            # Avoid editing the user's config in case they manually
+            # configured something.
+            pass
+        else:
+            raise TypeError(f'Invalid mode {self.mode!r}')
+
+    def _apply_global_sso(self, cwd: str) -> None:
+        """Apply config changes relating to SSO."""
+        sso_key: str = f'url.sso://{self._shortname}/.insteadOf'
+        if self.mode == GitConfigMode.NEW_AUTH:
+            # Do not unset protocol.sso.allow because it may be used by other hosts.
+            self._set_config(cwd,
+                             sso_key,
+                             None,
+                             scope='global',
+                             modify_all=True)
+        elif self.mode == GitConfigMode.NEW_AUTH_SSO:
+            self._set_config(cwd,
+                             'protocol.sso.allow',
+                             'always',
+                             scope='global')
+            self._set_config(cwd,
+                             sso_key,
+                             self._base_url,
+                             scope='global',
+                             modify_all=True)
+        elif self.mode == GitConfigMode.OLD_AUTH:
+            # Avoid editing the user's config in case they manually
+            # configured something.
+            pass
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
 
