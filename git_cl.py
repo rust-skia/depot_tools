@@ -3772,7 +3772,8 @@ class GitAuthConfigChanger(object):
     def apply_global(self, cwd: str) -> None:
         """Apply config changes to the global (user) Git config.
 
-        This uses the instance's mode as a default for the Gerrit host.
+        This will make the instance's mode (e.g., SSO or not) the global
+        default for the Gerrit host, if not overridden by a specific Git repo.
         """
         self._apply_global_cred_helper(cwd)
         self._apply_global_sso(cwd)
