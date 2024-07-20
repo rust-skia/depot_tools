@@ -171,8 +171,8 @@ class SSOHelper(object):
 ssoHelper = SSOHelper()
 
 
-def ShouldUseSSO(cwd: str, host: str) -> bool:
-    """Return True if we should use SSO for the current user."""
+def ShouldUseSSO(host: str, email: str) -> bool:
+    """Return True if we should use SSO for the given Gerrit host and user."""
     LOGGER.debug("Determining whether we should use SSO...")
     if not newauth.Enabled():
         LOGGER.debug("SSO=False: not opted in")
@@ -183,7 +183,6 @@ def ShouldUseSSO(cwd: str, host: str) -> bool:
     if not ssoHelper.find_cmd():
         LOGGER.debug("SSO=False: no SSO command")
         return False
-    email = scm.GIT.GetConfig(cwd, 'user.email', default='')
     if email.endswith('@google.com'):
         LOGGER.debug("SSO=True: email is google.com")
         return True
@@ -363,9 +362,9 @@ class SSOAuthenticator(_Authenticator):
     def is_applicable(cls, *, conn: Optional[HttpConn] = None) -> bool:
         if not cls._resolve_sso_cmd():
             return False
+        email: str = scm.GIT.GetConfig(os.getcwd(), 'user.email', default='')
         if conn is not None:
-            return ShouldUseSSO(os.getcwd(), conn.host)
-        email = scm.GIT.GetConfig(os.getcwd(), 'user.email', default='')
+            return ShouldUseSSO(conn.host, email)
         return email.endswith('@google.com')
 
     @classmethod

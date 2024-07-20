@@ -3759,7 +3759,8 @@ class GitAuthConfigChanger(object):
         """Infer default mode to use."""
         if not newauth.Enabled():
             return GitConfigMode.OLD_AUTH
-        if gerrit_util.ShouldUseSSO(cwd, gerrit_host):
+        email: str = scm.GIT.GetConfig(cwd, 'user.email', default='')
+        if gerrit_util.ShouldUseSSO(gerrit_host, email):
             return GitConfigMode.NEW_AUTH_SSO
         return GitConfigMode.NEW_AUTH
 
