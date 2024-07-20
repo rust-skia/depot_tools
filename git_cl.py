@@ -3741,12 +3741,21 @@ class GitAuthConfigChanger(object):
 
     @classmethod
     def new_from_env(cls, cwd: str) -> 'GitAuthConfigChanger':
-        """Create a GitAuthConfigChanger by inferring from env."""
+        """Create a GitAuthConfigChanger by inferring from env.
+
+        The Gerrit host is inferred from the current repo/branch.
+        The user, which is used to determine the mode, is inferred using
+        git-config(1) in the given `cwd`.
+        """
         cl = Changelist()
-        # chromium-review.googlesource.com
+        # This is determined either from the branch or repo config.
+        #
+        # Example: chromium-review.googlesource.com
         gerrit_host: str = cl.GetGerritHost()
-        # These depend on what the user set for their remote
-        # https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        # This depends on what the user set for their remote.
+        # There are a couple potential variations for the same host+repo.
+        #
+        # Example: https://chromium.googlesource.com/chromium/tools/depot_tools.git
         remote_url: str = cl.GetRemoteUrl()
 
         return cls(
