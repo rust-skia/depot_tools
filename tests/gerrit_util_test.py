@@ -744,7 +744,10 @@ class ShouldUseSSOTest(unittest.TestCase):
         self.assertFalse(
             gerrit_util.ShouldUseSSO('fake-host', 'firefly@google.com'))
 
-    def testGoogle(self):
+    def testEmptyEmail(self):
+        self.assertTrue(gerrit_util.ShouldUseSSO('fake-host', ''))
+
+    def testGoogleEmail(self):
         self.assertTrue(
             gerrit_util.ShouldUseSSO('fake-host', 'firefly@google.com'))
 

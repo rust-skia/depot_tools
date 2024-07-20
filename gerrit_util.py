@@ -183,6 +183,10 @@ def ShouldUseSSO(host: str, email: str) -> bool:
     if not ssoHelper.find_cmd():
         LOGGER.debug("SSO=False: no SSO command")
         return False
+    if not email:
+        LOGGER.debug(
+            "SSO=True: email is empty or missing (and SSO command available)")
+        return True
     if email.endswith('@google.com'):
         LOGGER.debug("SSO=True: email is google.com")
         return True
