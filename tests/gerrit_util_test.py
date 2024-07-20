@@ -734,13 +734,15 @@ class ShouldUseSSOTest(unittest.TestCase):
         self.sso.stop()
         self.newauth.stop()
 
-    def testDisabled(self):
-        self.newauth.return_value = False
-        self.assertFalse(gerrit_util.ShouldUseSSO('fake-host', ''))
+    @mock.patch('newauth.Enabled', return_value=False)
+    def testDisabled(self, _):
+        self.assertFalse(
+            gerrit_util.ShouldUseSSO('fake-host', 'firefly@google.com'))
 
-    def testMissingCommand(self):
-        self.sso.return_value = 'fake-host'
-        self.assertFalse(gerrit_util.ShouldUseSSO('fake-host', ''))
+    @mock.patch('gerrit_util.ssoHelper.find_cmd', return_value='')
+    def testMissingCommand(self, _):
+        self.assertFalse(
+            gerrit_util.ShouldUseSSO('fake-host', 'firefly@google.com'))
 
     def testGoogle(self):
         self.assertTrue(
