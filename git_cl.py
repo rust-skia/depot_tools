@@ -3672,15 +3672,17 @@ def DownloadGerritHook(force):
 def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
     logging.debug('Configuring current Git repo authentication...')
-    GitAuthConfigChanger.new_from_env().apply(os.getcwd())
+    cwd = os.getcwd()
+    c = GitAuthConfigChanger.new_from_env(cwd)
+    c.apply(cwd)
 
 
 def ClearGitRepoAuth() -> None:
     """Clear the current Git repo authentication."""
     logging.debug('Clearing current Git repo authentication...')
-    c = GitAuthConfigChanger.new_from_env()
+    c = GitAuthConfigChanger.new_from_env(cwd)
     c.mode = GitConfigMode.OLD_AUTH
-    c.apply(os.getcwd())
+    c.apply(cwd)
 
 
 class GitConfigMode(enum.Enum):
@@ -3738,7 +3740,7 @@ class GitAuthConfigChanger(object):
         return parts._replace(path='/', query='', fragment='').geturl()
 
     @classmethod
-    def new_from_env(cls) -> 'GitAuthConfigChanger':
+    def new_from_env(cls, cwd: str) -> 'GitAuthConfigChanger':
         """Create a GitAuthConfigChanger by inferring from env."""
         cl = Changelist()
         # chromium-review.googlesource.com
@@ -3748,7 +3750,7 @@ class GitAuthConfigChanger(object):
         remote_url: str = cl.GetRemoteUrl()
 
         return cls(
-            mode=cls._infer_mode(os.getcwd(), gerrit_host),
+            mode=cls._infer_mode(cwd, gerrit_host),
             remote_url=remote_url,
         )
 
