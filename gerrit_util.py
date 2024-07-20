@@ -171,7 +171,7 @@ class SSOHelper(object):
 ssoHelper = SSOHelper()
 
 
-def ShouldUseSSO(host: str) -> bool:
+def ShouldUseSSO(cwd: str, host: str) -> bool:
     """Return True if we should use SSO for the current user."""
     LOGGER.debug("Determining whether we should use SSO...")
     if not newauth.Enabled():
@@ -183,7 +183,6 @@ def ShouldUseSSO(host: str) -> bool:
     if not ssoHelper.find_cmd():
         LOGGER.debug("SSO=False: no SSO command")
         return False
-    cwd = os.getcwd()
     email = scm.GIT.GetConfig(cwd, 'user.email', default='')
     if email.endswith('@google.com'):
         LOGGER.debug("SSO=True: email is google.com")
@@ -365,7 +364,7 @@ class SSOAuthenticator(_Authenticator):
         if not cls._resolve_sso_cmd():
             return False
         if conn is not None:
-            return ShouldUseSSO(conn.host)
+            return ShouldUseSSO(os.getcwd(), conn.host)
         email = scm.GIT.GetConfig(os.getcwd(), 'user.email', default='')
         return email.endswith('@google.com')
 

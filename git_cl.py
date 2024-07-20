@@ -3748,16 +3748,16 @@ class GitAuthConfigChanger(object):
         remote_url: str = cl.GetRemoteUrl()
 
         return cls(
-            mode=cls._infer_mode(gerrit_host),
+            mode=cls._infer_mode(os.getcwd(), gerrit_host),
             remote_url=remote_url,
         )
 
     @staticmethod
-    def _infer_mode(gerrit_host: str) -> GitConfigMode:
+    def _infer_mode(cwd: str, gerrit_host: str) -> GitConfigMode:
         """Infer default mode to use."""
         if not newauth.Enabled():
             return GitConfigMode.OLD_AUTH
-        if gerrit_util.ShouldUseSSO(gerrit_host):
+        if gerrit_util.ShouldUseSSO(cwd, gerrit_host):
             return GitConfigMode.NEW_AUTH_SSO
         return GitConfigMode.NEW_AUTH
 
