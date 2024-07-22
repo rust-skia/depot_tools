@@ -48,7 +48,6 @@ class ReclientHelperTest(trial_dir.TestCase):
                                                         0))
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
-    @unittest.mock.patch('reclient_metrics.check_status', return_value=False)
     def test_ninja_reclient_sets_path_env_vars(self, *_):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
         reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
@@ -102,9 +101,8 @@ class ReclientHelperTest(trial_dir.TestCase):
 
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
-    @unittest.mock.patch('reclient_metrics.check_status', return_value=False)
-    def test_ninja_reclient_calls_reclient_binaries(self, mock_metrics_status,
-                                                    mock_ninja, mock_call):
+    def test_ninja_reclient_calls_reclient_binaries(self, mock_ninja,
+                                                    mock_call):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
         reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
                                     'reproxy.cfg')
@@ -116,7 +114,6 @@ class ReclientHelperTest(trial_dir.TestCase):
 
         self.assertEqual(0, reclient_helper.run_ninja(argv))
 
-        mock_metrics_status.assert_called_once_with("out/a")
         mock_ninja.assert_called_once_with(argv)
         mock_call.assert_has_calls([
             unittest.mock.call([
@@ -139,9 +136,7 @@ class ReclientHelperTest(trial_dir.TestCase):
                               {'AUTONINJA_BUILD_ID': "SOME_RANDOM_ID"})
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
-    @unittest.mock.patch('reclient_metrics.check_status', return_value=True)
-    def test_ninja_reclient_collect_metrics_cache_missing(
-            self, mock_metrics_status, *_):
+    def test_ninja_reclient_collect_metrics_cache_missing(self, *_):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
         reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
                                     'reproxy.cfg')
@@ -151,7 +146,8 @@ class ReclientHelperTest(trial_dir.TestCase):
         write(reclient_cfg, '0.0')
         argv = ["ninja", "-C", "out/a", "chrome"]
 
-        self.assertEqual(0, reclient_helper.run_ninja(argv))
+        self.assertEqual(
+            0, reclient_helper.run_ninja(argv, should_collect_logs=True))
 
         self.assertIn("/SOME_RANDOM_ID", os.environ["RBE_invocation_id"])
         self.assertEqual(os.environ.get('RBE_metrics_project'),
@@ -165,8 +161,6 @@ class ReclientHelperTest(trial_dir.TestCase):
         self.assertEqual(os.environ.get('RBE_metrics_prefix'),
                          "go.chromium.org")
 
-        mock_metrics_status.assert_called_once_with("out/a")
-
     @unittest.mock.patch.dict(os.environ,
                               {'AUTONINJA_BUILD_ID': "SOME_RANDOM_ID"},
                               clear=True)
@@ -175,10 +169,7 @@ class ReclientHelperTest(trial_dir.TestCase):
                                                         0))
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
-    @unittest.mock.patch('reclient_metrics.check_status', return_value=True)
-    def test_ninja_reclient_collect_metrics_cache_valid(self,
-                                                        mock_metrics_status,
-                                                        *_):
+    def test_ninja_reclient_collect_metrics_cache_valid(self, *_):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
         reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
                                     'reproxy.cfg')
@@ -200,7 +191,8 @@ expiry:  {
               """ % (int(time.time()) + 10 * 60))
         argv = ["ninja", "-C", "out/a", "chrome"]
 
-        self.assertEqual(0, reclient_helper.run_ninja(argv))
+        self.assertEqual(
+            0, reclient_helper.run_ninja(argv, should_collect_logs=True))
 
         self.assertIn("/SOME_RANDOM_ID", os.environ["RBE_invocation_id"])
         self.assertEqual(os.environ.get('RBE_metrics_project'),
@@ -214,16 +206,12 @@ expiry:  {
         self.assertEqual(os.environ.get('RBE_metrics_prefix'),
                          "go.chromium.org")
 
-        mock_metrics_status.assert_called_once_with("out/a")
-
     @unittest.mock.patch.dict(os.environ,
                               {'AUTONINJA_BUILD_ID': "SOME_RANDOM_ID"},
                               clear=True)
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
-    @unittest.mock.patch('reclient_metrics.check_status', return_value=True)
-    def test_ninja_reclient_collect_metrics_cache_expired(
-            self, mock_metrics_status, *_):
+    def test_ninja_reclient_collect_metrics_cache_expired(self, *_):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
         reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
                                     'reproxy.cfg')
@@ -245,7 +233,8 @@ expiry:  {
               """ % (int(time.time())))
         argv = ["ninja", "-C", "out/a", "chrome"]
 
-        self.assertEqual(0, reclient_helper.run_ninja(argv))
+        self.assertEqual(
+            0, reclient_helper.run_ninja(argv, should_collect_logs=True))
 
         self.assertIn("/SOME_RANDOM_ID", os.environ["RBE_invocation_id"])
         self.assertEqual(os.environ.get('RBE_metrics_project'),
@@ -259,14 +248,11 @@ expiry:  {
         self.assertEqual(os.environ.get('RBE_metrics_prefix'),
                          "go.chromium.org")
 
-        mock_metrics_status.assert_called_once_with("out/a")
 
     @unittest.mock.patch.dict(os.environ, {})
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
-    @unittest.mock.patch('reclient_metrics.check_status', return_value=False)
-    def test_ninja_reclient_do_not_collect_metrics(self, mock_metrics_status,
-                                                   *_):
+    def test_ninja_reclient_do_not_collect_metrics(self, *_):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')
         reclient_cfg = os.path.join('src', 'buildtools', 'reclient_cfgs',
                                     'reproxy.cfg')
@@ -283,11 +269,8 @@ expiry:  {
         self.assertEqual(os.environ.get('RBE_metrics_labels'), None)
         self.assertEqual(os.environ.get('RBE_metrics_prefix'), None)
 
-        mock_metrics_status.assert_called_once_with("out/a")
-
     @unittest.mock.patch('subprocess.call', return_value=0)
     @unittest.mock.patch('ninja.main', return_value=0)
-    @unittest.mock.patch('reclient_metrics.check_status', return_value=True)
     @unittest.mock.patch('reclient_helper.datetime_now')
     def test_ninja_reclient_clears_log_dir(self, mock_now, *_):
         reclient_bin_dir = os.path.join('src', 'buildtools', 'reclient')

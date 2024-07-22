@@ -118,7 +118,7 @@ class AutoninjaTest(trial_dir.TestCase):
         reclient_helper_calls = []
 
         @contextlib.contextmanager
-        def reclient_helper_mock(argv, tool):
+        def reclient_helper_mock(argv, tool, _should_collect_logs):
             reclient_helper_calls.append([argv, tool])
             yield 0
 
@@ -160,7 +160,7 @@ class AutoninjaTest(trial_dir.TestCase):
                                                     luci_auth_account,
                                                     expected):
         for shelve_file in glob.glob(
-                os.path.join(autoninja.SCRIPT_DIR, ".autoninja*")):
+                os.path.join(autoninja._SCRIPT_DIR, ".autoninja*")):
             # Clear cache.
             os.remove(shelve_file)
 

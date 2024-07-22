@@ -35,8 +35,6 @@ if "%NINJA_SUMMARIZE_BUILD%" == "1" set "NINJA_STATUS=[%%r processes, %%f/%%t @ 
 exit /b %ERRORLEVEL%
 :buildfailure
 
-@call %scriptdir%python-bin\python3.bat %scriptdir%ninjalog_uploader_wrapper.py --cmdline %*
-
 :: Return an error code of 1 so that if a developer types:
 :: "autoninja chrome && chrome" then chrome won't run if the build fails.
 cmd /c exit 1

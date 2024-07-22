@@ -20,7 +20,6 @@ import uuid
 
 import gclient_paths
 import ninja
-import reclient_metrics
 import siso
 
 THIS_DIR = os.path.dirname(__file__)
@@ -313,7 +312,7 @@ def reclient_setup_docs_url():
 
 
 @contextlib.contextmanager
-def build_context(argv, tool):
+def build_context(argv, tool, should_collect_logs):
     # If use_remoteexec is set, but the reclient binaries or configs don't
     # exist, display an error message and stop.  Otherwise, the build will
     # attempt to run with rewrapper wrapping actions, but will fail with
@@ -339,7 +338,7 @@ def build_context(argv, tool):
         yield 1
         return
 
-    if reclient_metrics.check_status(ninja_out):
+    if should_collect_logs:
         set_reproxy_metrics_flags(tool)
 
     if os.environ.get('RBE_instance', None):
@@ -384,10 +383,11 @@ Ensure you have completed the reproxy setup instructions:
             print('%1.3fs to stop reproxy' % elapsed)
 
 
-def run_ninja(ninja_cmd):
+def run_ninja(ninja_cmd, should_collect_logs=False):
     """Runs Ninja in build_context()."""
     # TODO: crbug.com/345113094 - rename the `tool` label to `ninja`.
-    with build_context(ninja_cmd, "ninja_reclient") as ret_code:
+    with build_context(ninja_cmd, "ninja_reclient",
+                       should_collect_logs) as ret_code:
         if ret_code:
             return ret_code
         try:
@@ -397,10 +397,10 @@ def run_ninja(ninja_cmd):
             return 1
 
 
-def run_siso(siso_cmd):
+def run_siso(siso_cmd, should_collect_logs=False):
     """Runs Siso in build_context()."""
     # TODO: crbug.com/345113094 - rename the `autosiso` label to `siso`.
-    with build_context(siso_cmd, "autosiso") as ret_code:
+    with build_context(siso_cmd, "autosiso", should_collect_logs) as ret_code:
         if ret_code:
             return ret_code
         try:

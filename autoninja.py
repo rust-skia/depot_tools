@@ -14,6 +14,7 @@ does handle import statements, but it can't handle conditional setting of build
 settings.
 """
 
+import logging
 import json
 import multiprocessing
 import os
@@ -30,15 +31,18 @@ import warnings
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
+import build_telemetry
 import gn_helper
 import ninja
+import ninjalog_uploader
 import reclient_helper
 import siso
 
 if sys.platform in ["darwin", "linux"]:
     import resource
 
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+_NINJALOG_UPLOADER = os.path.join(_SCRIPT_DIR, "ninjalog_uploader.py")
 
 # See [1] and [2] for the painful details of this next section, which handles
 # escaping command lines so that they can be copied and pasted into a cmd
@@ -132,7 +136,7 @@ def _is_google_corp_machine_using_external_account():
     if not _is_google_corp_machine():
         return False
 
-    with shelve.open(os.path.join(SCRIPT_DIR, ".autoninja")) as db:
+    with shelve.open(os.path.join(_SCRIPT_DIR, ".autoninja")) as db:
         last_false = db.get("last_false")
         now = time.time()
         if last_false is not None and now < last_false + 12 * 60 * 60:
@@ -182,7 +186,7 @@ def _print_cmd(cmd):
     print(*[shell_quoter(arg) for arg in cmd], file=sys.stderr)
 
 
-def main(args):
+def main(args, should_collect_logs=False):
     # if user doesn't set PYTHONPYCACHEPREFIX and PYTHONDONTWRITEBYTECODE
     # set PYTHONDONTWRITEBYTECODE=1 not to create many *.pyc in workspace
     # and keep workspace clean.
@@ -284,13 +288,15 @@ def main(args):
                 return 1
             if use_remoteexec:
                 if use_reclient:
-                    return reclient_helper.run_siso([
-                        'siso',
-                        'ninja',
-                        # Do not authenticate when using Reproxy.
-                        '-project=',
-                        '-reapi_instance=',
-                    ] + input_args[1:])
+                    return reclient_helper.run_siso(
+                        [
+                            'siso',
+                            'ninja',
+                            # Do not authenticate when using Reproxy.
+                            '-project=',
+                            '-reapi_instance=',
+                        ] + input_args[1:],
+                        should_collect_logs)
                 return siso.main(["siso", "ninja"] + input_args[1:])
             return siso.main(["siso", "ninja", "--offline"] + input_args[1:])
 
@@ -393,12 +399,31 @@ def main(args):
         _print_cmd(args)
 
     if use_reclient:
-        return reclient_helper.run_ninja(args)
+        return reclient_helper.run_ninja(args, should_collect_logs)
     return ninja.main(args)
 
 
+def _upload_ninjalog(args):
+    # Run upload script without wait.
+    creationflags = 0
+    if platform.system() == "Windows":
+        creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
+    subprocess.Popen(
+        [sys.executable, _NINJALOG_UPLOADER] + args[1:],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=creationflags,
+    )
+
+
 if __name__ == "__main__":
+    # Check the log collection opt-in/opt-out status, and display notice if necessary.
+    _should_collect_logs = build_telemetry.enabled()
     try:
-        sys.exit(main(sys.argv))
+        exit_code = main(sys.argv, _should_collect_logs)
     except KeyboardInterrupt:
-        sys.exit(1)
+        exit_code = 1
+    finally:
+        if _should_collect_logs:
+            _upload_ninjalog(sys.argv)
+    sys.exit(exit_code)

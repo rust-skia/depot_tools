@@ -16,25 +16,6 @@ import ninjalog_uploader
 
 
 class NinjalogUploaderTest(unittest.TestCase):
-    def test_IsGoogler(self):
-        with unittest.mock.patch('subprocess.run') as run_mock:
-            run_mock.return_value.returncode = 0
-            run_mock.return_value.stdout = 'Logged in as foo@google.com.\n'
-            self.assertTrue(ninjalog_uploader.IsGoogler())
-
-        with unittest.mock.patch('subprocess.run') as run_mock:
-            run_mock.return_value.returncode = 1
-            self.assertFalse(ninjalog_uploader.IsGoogler())
-
-        with unittest.mock.patch('subprocess.run') as run_mock:
-            run_mock.return_value.returncode = 0
-            run_mock.return_value.stdout = ''
-            self.assertFalse(ninjalog_uploader.IsGoogler())
-
-        with unittest.mock.patch('subprocess.run') as run_mock:
-            run_mock.return_value.returncode = 0
-            run_mock.return_value.stdout = 'Logged in as foo@example.com.\n'
-            self.assertFalse(ninjalog_uploader.IsGoogler())
 
     def test_parse_gn_args(self):
         self.assertEqual(ninjalog_uploader.ParseGNArgs(json.dumps([])), {})

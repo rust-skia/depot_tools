@@ -29,6 +29,8 @@ import sys
 import time
 import urllib.request
 
+import build_telemetry
+
 # These build configs affect build performance.
 ALLOWLISTED_CONFIGS = (
     "android_static_analysis",
@@ -49,26 +51,6 @@ ALLOWLISTED_CONFIGS = (
     "use_remoteexec",
     "use_siso",
 )
-
-
-def IsGoogler():
-    """Check whether this user is Googler or not."""
-    p = subprocess.run(
-        "cipd auth-info",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        shell=True,
-    )
-    if p.returncode != 0:
-        return False
-    lines = p.stdout.splitlines()
-    if len(lines) == 0:
-        return False
-    l = lines[0]
-    # |l| will be like 'Logged in as <user>@google.com.' for googler using
-    # reclient.
-    return l.startswith("Logged in as ") and l.endswith("@google.com.")
 
 
 def ParseGNArgs(gn_args):
@@ -226,8 +208,10 @@ def main():
         # Disable logging.
         logging.disable(logging.CRITICAL)
 
-    if not IsGoogler():
-        return 0
+    cfg = build_telemetry.load_config()
+    if not cfg.is_googler:
+        logging.warning("Not Googler. Only Googlers can upload ninjalog.")
+        return 1
 
     ninjalog = args.ninjalog or GetNinjalog(args.cmdline)
     if not os.path.isfile(ninjalog):
