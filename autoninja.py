@@ -409,7 +409,7 @@ def _upload_ninjalog(args):
     if platform.system() == "Windows":
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
     subprocess.Popen(
-        [sys.executable, _NINJALOG_UPLOADER] + args[1:],
+        [sys.executable, _NINJALOG_UPLOADER, "--cmdline"] + args[1:],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         creationflags=creationflags,
