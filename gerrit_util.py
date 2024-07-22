@@ -1386,6 +1386,15 @@ def CherryPick(host, change, destination, revision='current'):
     return ReadHttpJsonResponse(conn)
 
 
+def CherryPickCommit(host, project, commit, destination):
+    """Cherry-pick a commit from a project to a destination branch."""
+    project = urllib.parse.quote(project, '')
+    path = f'projects/{project}/commits/{commit}/cherrypick'
+    body = {'destination': destination}
+    conn = CreateHttpConn(host, path, reqtype='POST', body=body)
+    return ReadHttpJsonResponse(conn)
+
+
 def GetFileContents(host, change, path):
     """Get the contents of a file with the given path in the given revision.
 
