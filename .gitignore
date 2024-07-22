@@ -86,6 +86,7 @@ testing_support/google_appengine
 
 # Ignore win/mac monitoring config. It is unique for each depot_tools checkout.
 /metrics.cfg
+/build_telemetry.cfg
 
 # Ignore git traces produced by git push on git-cl upload.
 /traces
