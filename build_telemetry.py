@@ -127,6 +127,9 @@ class Config:
         self.save()
         print("build telemetry collection is opted out")
 
+    def status(self):
+        return self._config["status"]
+
 
 def load_config(cfg_path=_DEFAULT_CONFIG_PATH, countdown=_DEFAULT_COUNTDOWN):
     """Loads the config from the default location."""
@@ -161,9 +164,22 @@ def enabled():
     return cfg.enabled()
 
 
+def print_status(cfg):
+    status = cfg.status()
+    if status == "opt-in":
+        print("build telemetry collection is enabled. You have opted in.")
+    elif status == "opt-out":
+        print("build telemetry collection is disabled. You have opted out.")
+    else:
+        print("build telemetry collection is enabled.")
+    print("")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="build_telemetry")
-    parser.add_argument('status', choices=['opt-in', 'opt-out'])
+    parser.add_argument('status',
+                        nargs='?',
+                        choices=["opt-in", "opt-out", "status"])
     args = parser.parse_args()
 
     cfg = load_config()
@@ -178,6 +194,12 @@ def main():
     if args.status == "opt-out":
         cfg.opt_out()
         return
+    if args.status == "status":
+        print_status(cfg)
+        return
+
+    print_status(cfg)
+    parser.print_help()
 
 
 if __name__ == "__main__":
