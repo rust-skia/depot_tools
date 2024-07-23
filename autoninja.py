@@ -186,7 +186,7 @@ def _print_cmd(cmd):
     print(*[shell_quoter(arg) for arg in cmd], file=sys.stderr)
 
 
-def main(args, should_collect_logs=False):
+def _main_inner(input_args, should_collect_logs=False):
     # if user doesn't set PYTHONPYCACHEPREFIX and PYTHONDONTWRITEBYTECODE
     # set PYTHONDONTWRITEBYTECODE=1 not to create many *.pyc in workspace
     # and keep workspace clean.
@@ -197,17 +197,7 @@ def main(args, should_collect_logs=False):
     j_specified = False
     offline = False
     output_dir = "."
-    input_args = args
     summarize_build = os.environ.get("NINJA_SUMMARIZE_BUILD") == "1"
-    # On Windows the autoninja.bat script passes along the arguments enclosed in
-    # double quotes. This prevents multiple levels of parsing of the special '^'
-    # characters needed when compiling a single file but means that this script
-    # gets called with a single argument containing all of the actual arguments,
-    # separated by spaces. When this case is detected we need to do argument
-    # splitting ourselves. This means that arguments containing actual spaces
-    # are not supported by autoninja, but that is not a real limitation.
-    if sys.platform.startswith("win") and len(args) == 2:
-        input_args = args[:1] + args[1].split()
 
     # Ninja uses getopt_long, which allow to intermix non-option arguments.
     # To leave non supported parameters untouched, we do not use getopt.
@@ -349,11 +339,11 @@ def main(args, should_collect_logs=False):
             fileno_limit, hard_limit = resource.getrlimit(
                 resource.RLIMIT_NOFILE)
 
-    args = ['ninja']
+    ninja_args = ['ninja']
     num_cores = multiprocessing.cpu_count()
     if not j_specified and not t_specified:
         if not offline and use_remoteexec:
-            args.append("-j")
+            ninja_args.append("-j")
             default_core_multiplier = 80
             if platform.machine() in ("x86_64", "AMD64"):
                 # Assume simultaneous multithreading and therefore half as many
@@ -379,28 +369,28 @@ def main(args, should_collect_logs=False):
             if sys.platform in ["darwin", "linux"]:
                 j_value = min(j_value, int(fileno_limit * 0.8))
 
-            args.append("%d" % j_value)
+            ninja_args.append("%d" % j_value)
         else:
             j_value = num_cores
             # Ninja defaults to |num_cores + 2|
             j_value += int(os.environ.get("NINJA_CORE_ADDITION", "2"))
-            args.append("-j")
-            args.append("%d" % j_value)
+            ninja_args.append("-j")
+            ninja_args.append("%d" % j_value)
 
     if summarize_build:
         # Enable statistics collection in Ninja.
-        args += ["-d", "stats"]
+        ninja_args += ["-d", "stats"]
 
-    args += input_args[1:]
+    ninja_args += input_args[1:]
 
     if summarize_build:
         # Print the command-line to reassure the user that the right settings
         # are being used.
-        _print_cmd(args)
+        _print_cmd(ninja_args)
 
     if use_reclient:
-        return reclient_helper.run_ninja(args, should_collect_logs)
-    return ninja.main(args)
+        return reclient_helper.run_ninja(ninja_args, should_collect_logs)
+    return ninja.main(ninja_args)
 
 
 def _upload_ninjalog(args):
@@ -416,14 +406,28 @@ def _upload_ninjalog(args):
     )
 
 
-if __name__ == "__main__":
+def main(args):
     # Check the log collection opt-in/opt-out status, and display notice if necessary.
-    _should_collect_logs = build_telemetry.enabled()
+    should_collect_logs = build_telemetry.enabled()
+    # On Windows the autoninja.bat script passes along the arguments enclosed in
+    # double quotes. This prevents multiple levels of parsing of the special '^'
+    # characters needed when compiling a single file but means that this script
+    # gets called with a single argument containing all of the actual arguments,
+    # separated by spaces. When this case is detected we need to do argument
+    # splitting ourselves. This means that arguments containing actual spaces
+    # are not supported by autoninja, but that is not a real limitation.
+    input_args = args
+    if sys.platform.startswith("win") and len(args) == 2:
+        input_args = args[:1] + args[1].split()
     try:
-        exit_code = main(sys.argv, _should_collect_logs)
+        exit_code = _main_inner(input_args, should_collect_logs)
     except KeyboardInterrupt:
         exit_code = 1
     finally:
-        if _should_collect_logs:
-            _upload_ninjalog(sys.argv)
-    sys.exit(exit_code)
+        if should_collect_logs:
+            _upload_ninjalog(input_args)
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
