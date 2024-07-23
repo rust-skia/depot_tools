@@ -162,8 +162,8 @@ def enabled():
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="Build Telemetry util")
-    parser.add_argument('status', nargs=1, choices=['opt-in', 'opt-out'])
+    parser = argparse.ArgumentParser(prog="build_telemetry")
+    parser.add_argument('status', choices=['opt-in', 'opt-out'])
     args = parser.parse_args()
 
     cfg = load_config()
