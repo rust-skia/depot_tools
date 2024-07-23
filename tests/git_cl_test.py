@@ -583,6 +583,12 @@ class TestGitCl(unittest.TestCase):
         super(TestGitCl, self).setUp()
         self.calls = []
         self._calls_done = []
+
+        oldEnv = dict(os.environ)
+        def _resetEnv():
+            os.environ = oldEnv
+        self.addCleanup(_resetEnv)
+
         self.failed = False
         mock.patch('sys.stdout', io.StringIO()).start()
         mock.patch('git_cl.time_time',
@@ -709,24 +715,6 @@ class TestGitCl(unittest.TestCase):
     def test_LoadCodereviewSettingsFromFile_gerrit(self):
         codereview_file = io.StringIO('GERRIT_HOST: true')
         self.calls = [
-            ((['git', 'config', '--unset-all', 'rietveld.cc'], ), CERR1),
-            ((['git', 'config', '--unset-all',
-               'rietveld.tree-status-url'], ), CERR1),
-            ((['git', 'config', '--unset-all',
-               'rietveld.viewvc-url'], ), CERR1),
-            ((['git', 'config', '--unset-all',
-               'rietveld.bug-prefix'], ), CERR1),
-            ((['git', 'config', '--unset-all',
-               'rietveld.cpplint-regex'], ), CERR1),
-            ((['git', 'config', '--unset-all',
-               'rietveld.cpplint-ignore-regex'], ), CERR1),
-            ((['git', 'config', '--unset-all',
-               'rietveld.run-post-upload-hook'], ), CERR1),
-            (([
-                'git', 'config', '--unset-all',
-                'rietveld.format-full-by-default'
-            ], ), CERR1),
-            ((['git', 'config', 'gerrit.host', 'true'], ), ''),
         ]
         self.assertIsNone(
             git_cl.LoadCodereviewSettingsFromFile(codereview_file))
@@ -1063,14 +1051,13 @@ class TestGitCl(unittest.TestCase):
                 None,
             ),
             # Collect git config and gitcookies.
-            (
-                (['git', 'config', '-l'], ),
-                'git-config-output',
-            ),
+            #
+            # We accept ANY for the git-config file because it's just reflecting
+            # our mocked git config in scm.GIT anyway.
             (
                 ([
                     'FileWrite',
-                    os.path.join('TEMP_DIR', 'git-config'), 'git-config-output'
+                    os.path.join('TEMP_DIR', 'git-config'), mock.ANY,
                 ], ),
                 None,
             ),
@@ -1223,7 +1210,6 @@ class TestGitCl(unittest.TestCase):
                           f'https://{short_hostname}.googlesource.com/my/repo')
         scm.GIT.SetConfig('', 'user.email', 'owner@example.com')
 
-        self.calls = []
         if squash_mode == "override_nosquash":
             if issue:
                 mock.patch('gerrit_util.GetChange',
@@ -2485,34 +2471,23 @@ class TestGitCl(unittest.TestCase):
             'change 123456 at https://chromium-review.googlesource.com does not '
             'exist or you have no access to it\n', sys.stderr.getvalue())
 
-    def _checkout_calls(self):
-        return [
-            (([
-                'git', 'config', '--local', '--get-regexp',
-                'branch\\..*\\.gerritissue'
-            ], ), ('branch.ger-branch.gerritissue 123456\n'
-                   'branch.gbranch654.gerritissue 654321\n')),
-        ]
+    def _checkout_config(self):
+        scm.GIT.SetConfig('', 'branch.ger-branch.gerritissue', '123456')
+        scm.GIT.SetConfig('', 'branch.gbranch654.gerritissue', '654321')
 
     def test_checkout_gerrit(self):
         """Tests git cl checkout <issue>."""
-        self.calls = self._checkout_calls()
+        self._checkout_config()
         self.calls += [((['git', 'checkout', 'ger-branch'], ), '')]
         self.assertEqual(0, git_cl.main(['checkout', '123456']))
 
     def test_checkout_not_found(self):
         """Tests git cl checkout <issue>."""
-        self.calls = self._checkout_calls()
+        self._checkout_config()
         self.assertEqual(1, git_cl.main(['checkout', '99999']))
 
     def test_checkout_no_branch_issues(self):
         """Tests git cl checkout <issue>."""
-        self.calls = [
-            (([
-                'git', 'config', '--local', '--get-regexp',
-                'branch\\..*\\.gerritissue'
-            ], ), CERR1),
-        ]
         self.assertEqual(1, git_cl.main(['checkout', '99999']))
 
     def _test_gerrit_ensure_authenticated_common(self, auth):
@@ -3157,13 +3132,8 @@ class TestGitCl(unittest.TestCase):
         mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
                    lambda _: []).start()
         self.calls = [
-            ((['git', 'config', '--global', 'http.cookiefile'], ), CERR1),
             (('ask_for_data', 'Press Enter to setup .gitcookies, '
               'or Ctrl+C to abort'), ''),
-            (([
-                'git', 'config', '--global', 'http.cookiefile',
-                os.path.expanduser(os.path.join('~', '.gitcookies'))
-            ], ), ''),
         ]
         self.assertEqual(0, git_cl.main(['creds-check']))
         self.assertIn('\nConfigured git to use .gitcookies from',
@@ -3171,20 +3141,18 @@ class TestGitCl(unittest.TestCase):
 
     def test_creds_check_gitcookies_configured_custom_broken(self):
         self._common_creds_check_mocks()
-        mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
-                   lambda _: []).start()
+
         custom_cookie_path = ('C:\\.gitcookies' if sys.platform == 'win32' else
                               '/custom/.gitcookies')
+        scm.GIT.SetConfig('', 'http.cookiefile', custom_cookie_path)
+        os.environ['GIT_COOKIES_PATH'] = '/official/.gitcookies'
+
+        mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
+                   lambda _: []).start()
         self.calls = [
-            ((['git', 'config', '--global',
-               'http.cookiefile'], ), custom_cookie_path),
             (('os.path.exists', custom_cookie_path), False),
             (('ask_for_data', 'Reconfigure git to use default .gitcookies? '
               'Press Enter to reconfigure, or Ctrl+C to abort'), ''),
-            (([
-                'git', 'config', '--global', 'http.cookiefile',
-                os.path.expanduser(os.path.join('~', '.gitcookies'))
-            ], ), ''),
         ]
         self.assertEqual(0, git_cl.main(['creds-check']))
         self.assertIn(

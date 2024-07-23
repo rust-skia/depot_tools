@@ -172,14 +172,19 @@ class CachedGitConfigState(object):
         """Returns all values of `key` as a list of strings."""
         return self._maybe_load_config().get(key, [])
 
-    def YieldConfigRegexp(self, pattern: str) -> Iterable[Tuple[str, str]]:
+    def YieldConfigRegexp(self, pattern: Optional[str]) -> Iterable[Tuple[str, str]]:
         """Yields (key, value) pairs for any config keys matching `pattern`.
 
         This use re.match, so `pattern` needs to be for the entire config key.
+
+        If pattern is None, this returns all config items.
         """
-        p = re.compile(pattern)
+        if pattern is None:
+          pred = lambda _: True
+        else:
+          pred = re.compile(pattern).match
         for name, values in sorted(self._maybe_load_config().items()):
-            if p.match(name):
+            if pred(name):
                 for value in values:
                     yield name, value
 
@@ -515,8 +520,13 @@ class GIT(object):
         return GIT._get_config_state(cwd).GetConfigList(key)
 
     @staticmethod
-    def YieldConfigRegexp(cwd: str, pattern: str) -> Iterable[Tuple[str, str]]:
-        """Yields (key, value) pairs for any config keys matching `pattern`."""
+    def YieldConfigRegexp(cwd: str, pattern: Optional[str] = None) -> Iterable[Tuple[str, str]]:
+        """Yields (key, value) pairs for any config keys matching `pattern`.
+
+        This use re.match, so `pattern` needs to be for the entire config key.
+
+        If pattern is None, this returns all config items.
+        """
         yield from GIT._get_config_state(cwd).YieldConfigRegexp(pattern)
 
     @staticmethod

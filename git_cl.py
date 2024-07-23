@@ -925,23 +925,23 @@ class Settings(object):
 
     def GetFormatFullByDefault(self):
         if self.format_full_by_default is None:
-            self._LazyUpdateIfNeeded()
-            result = (RunGit(
-                ['config', '--bool', 'rietveld.format-full-by-default'],
-                error_ok=True).strip())
-            self.format_full_by_default = (result == 'true')
+            self.format_full_by_default = self._GetConfigBool(
+                'rietveld.format-full-by-default')
         return self.format_full_by_default
 
     def IsStatusCommitOrderByDate(self):
         if self.is_status_commit_order_by_date is None:
-            result = (RunGit(['config', '--bool', 'cl.date-order'],
-                             error_ok=True).strip())
-            self.is_status_commit_order_by_date = (result == 'true')
+            self.is_status_commit_order_by_date = self._GetConfigBool(
+                'cl.date-order')
         return self.is_status_commit_order_by_date
 
     def _GetConfig(self, key, default=''):
         self._LazyUpdateIfNeeded()
         return scm.GIT.GetConfig(self.GetRoot(), key, default)
+
+    def _GetConfigBool(self, key) -> bool:
+        self._LazyUpdateIfNeeded()
+        return scm.GIT.GetConfigBool(self.GetRoot(), key)
 
 
 settings = Settings()
@@ -2933,7 +2933,8 @@ class Changelist(object):
         shutil.make_archive(traces_zip, 'zip', traces_dir)
 
         # Collect and compress the git config and gitcookies.
-        git_config = RunGit(['config', '-l'])
+        git_config = '\n'.join(
+            f'{k}={v}' for k, v in scm.GIT.YieldConfigRegexp(settings.GetRoot()))
         gclient_utils.FileWrite(os.path.join(git_info_dir, 'git-config'),
                                 git_config)
 
@@ -3575,54 +3576,45 @@ def FindCodereviewSettingsFile(filename='codereview.settings'):
 def LoadCodereviewSettingsFromFile(fileobj):
     """Parses a codereview.settings file and updates hooks."""
     keyvals = gclient_utils.ParseCodereviewSettingsContent(fileobj.read())
+    root = settings.GetRoot()
 
-    def SetProperty(name, setting, unset_error_ok=False):
+    def SetProperty(name, setting):
         fullname = 'rietveld.' + name
         if setting in keyvals:
-            RunGit(['config', fullname, keyvals[setting]])
+            scm.GIT.SetConfig(root, fullname, keyvals[setting])
         else:
-            RunGit(['config', '--unset-all', fullname], error_ok=unset_error_ok)
+            scm.GIT.SetConfig(root, fullname, None, modify_all=True)
 
     if not keyvals.get('GERRIT_HOST', False):
         SetProperty('server', 'CODE_REVIEW_SERVER')
     # Only server setting is required. Other settings can be absent.
     # In that case, we ignore errors raised during option deletion attempt.
-    SetProperty('cc', 'CC_LIST', unset_error_ok=True)
-    SetProperty('tree-status-url', 'STATUS', unset_error_ok=True)
-    SetProperty('viewvc-url', 'VIEW_VC', unset_error_ok=True)
-    SetProperty('bug-prefix', 'BUG_PREFIX', unset_error_ok=True)
-    SetProperty('cpplint-regex', 'LINT_REGEX', unset_error_ok=True)
-    SetProperty('cpplint-ignore-regex',
-                'LINT_IGNORE_REGEX',
-                unset_error_ok=True)
-    SetProperty('run-post-upload-hook',
-                'RUN_POST_UPLOAD_HOOK',
-                unset_error_ok=True)
-    SetProperty('format-full-by-default',
-                'FORMAT_FULL_BY_DEFAULT',
-                unset_error_ok=True)
+    SetProperty('cc', 'CC_LIST')
+    SetProperty('tree-status-url', 'STATUS')
+    SetProperty('viewvc-url', 'VIEW_VC')
+    SetProperty('bug-prefix', 'BUG_PREFIX')
+    SetProperty('cpplint-regex', 'LINT_REGEX')
+    SetProperty('cpplint-ignore-regex', 'LINT_IGNORE_REGEX')
+    SetProperty('run-post-upload-hook', 'RUN_POST_UPLOAD_HOOK')
+    SetProperty('format-full-by-default', 'FORMAT_FULL_BY_DEFAULT')
 
     if 'GERRIT_HOST' in keyvals:
-        RunGit(['config', 'gerrit.host', keyvals['GERRIT_HOST']])
+        scm.GIT.SetConfig(root, 'gerrit.host', keyvals['GERRIT_HOST'])
 
     if 'GERRIT_SQUASH_UPLOADS' in keyvals:
-        RunGit([
-            'config', 'gerrit.squash-uploads', keyvals['GERRIT_SQUASH_UPLOADS']
-        ])
+        scm.GIT.SetConfig(root, 'gerrit.squash-uploads',
+                          keyvals['GERRIT_SQUASH_UPLOADS'])
 
     if 'GERRIT_SKIP_ENSURE_AUTHENTICATED' in keyvals:
-        RunGit([
-            'config', 'gerrit.skip-ensure-authenticated',
-            keyvals['GERRIT_SKIP_ENSURE_AUTHENTICATED']
-        ])
+        scm.GIT.SetConfig('gerrit.skip-ensure-authenticated',
+                          keyvals['GERRIT_SKIP_ENSURE_AUTHENTICATED'])
 
     if 'PUSH_URL_CONFIG' in keyvals and 'ORIGIN_URL_CONFIG' in keyvals:
         # should be of the form
         # PUSH_URL_CONFIG: url.ssh://gitrw.chromium.org.pushinsteadof
         # ORIGIN_URL_CONFIG: http://src.chromium.org/git
-        RunGit([
-            'config', keyvals['PUSH_URL_CONFIG'], keyvals['ORIGIN_URL_CONFIG']
-        ])
+        scm.GIT.SetConfig(keyvals['PUSH_URL_CONFIG'],
+                          keyvals['ORIGIN_URL_CONFIG'])
 
 
 def urlretrieve(source, destination):
@@ -3890,8 +3882,8 @@ class _GitCookiesChecker(object):
         """Runs checks and suggests fixes to make git use .gitcookies from default
         path."""
         default = gerrit_util.CookiesAuthenticator.get_gitcookies_path()
-        configured_path = RunGitSilent(
-            ['config', '--global', 'http.cookiefile']).strip()
+        configured_path = scm.GIT.GetConfig(settings.GetRoot(),
+                                            'http.cookiefile', '')
         configured_path = os.path.expanduser(configured_path)
         if configured_path:
             self._ensure_default_gitcookies_path(configured_path, default)
@@ -3914,7 +3906,10 @@ class _GitCookiesChecker(object):
             print('However, your configured .gitcookies file is missing.')
             confirm_or_exit('Reconfigure git to use default .gitcookies?',
                             action='reconfigure')
-            RunGit(['config', '--global', 'http.cookiefile', default_path])
+            scm.GIT.SetConfig(settings.GetRoot(),
+                              'http.cookiefile',
+                              default_path,
+                              scope='global')
             return
 
         if os.path.exists(default_path):
@@ -3927,7 +3922,10 @@ class _GitCookiesChecker(object):
         confirm_or_exit('Move existing .gitcookies to default location?',
                         action='move')
         shutil.move(configured_path, default_path)
-        RunGit(['config', '--global', 'http.cookiefile', default_path])
+        scm.GIT.SetConfig(settings.GetRoot(),
+                          'http.cookiefile',
+                          default_path,
+                          scope='global')
         print('Moved and reconfigured git to use .gitcookies from %s' %
               default_path)
 
@@ -3941,7 +3939,10 @@ class _GitCookiesChecker(object):
             '  git config --global --unset http.cookiefile\n'
             '  mv %s %s.backup\n\n' % (default_path, default_path))
         confirm_or_exit(action='setup .gitcookies')
-        RunGit(['config', '--global', 'http.cookiefile', default_path])
+        scm.GIT.SetConfig(settings.GetRoot(),
+                          'http.cookiefile',
+                          default_path,
+                          scope='global')
         print('Configured git to use .gitcookies from %s' % default_path)
 
     def get_hosts_with_creds(self):
@@ -4143,12 +4144,14 @@ def CMDbaseurl(parser, args):
     branch = scm.GIT.ShortBranchName(branchref)
     if not args:
         print('Current base-url:')
-        return RunGit(['config', 'branch.%s.base-url' % branch],
-                      error_ok=False).strip()
+        url = scm.GIT.GetConfig(settings.GetRoot(), f'branch.{branch}.base-url')
+        if url is None:
+            raise ValueError('Missing base URL.')
+        return url
 
     print('Setting base-url to %s' % args[0])
-    return RunGit(['config', 'branch.%s.base-url' % branch, args[0]],
-                  error_ok=False).strip()
+    scm.GIT.SetConfig(settings.GetRoot(), f'branch.{branch}.base-url', args[0])
+    return 0
 
 
 def color_for_status(status):
@@ -4674,9 +4677,8 @@ def CMDissue(parser, args):
         issue_branch_map = {}
 
         git_config = {}
-        for config in RunGit(['config', '--get-regexp',
-                              r'branch\..*issue']).splitlines():
-            name, _space, val = config.partition(' ')
+        for name, val in scm.GIT.YieldConfigRegexp(
+                settings.GetRoot(), re.compile(r'branch\..*issue')):
             git_config[name] = val
 
         for branch in branches:
@@ -7047,13 +7049,11 @@ def CMDcheckout(parser, args):
 
     target_issue = str(issue_arg.issue)
 
-    output = RunGit([
-        'config', '--local', '--get-regexp', r'branch\..*\.' + ISSUE_CONFIG_KEY
-    ],
-                    error_ok=True)
+    output = scm.GIT.YieldConfigRegexp(
+        settings.GetRoot(), re.compile(r'branch\..*\.' + ISSUE_CONFIG_KEY))
 
     branches = []
-    for key, issue in [x.split() for x in output.splitlines()]:
+    for key, issue in output:
         if issue == target_issue:
             branches.append(
                 re.sub(r'branch\.(.*)\.' + ISSUE_CONFIG_KEY, r'\1', key))
