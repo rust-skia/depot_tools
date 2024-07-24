@@ -14,6 +14,7 @@ does handle import statements, but it can't handle conditional setting of build
 settings.
 """
 
+import uuid
 import logging
 import json
 import multiprocessing
@@ -407,6 +408,13 @@ def _upload_ninjalog(args):
 
 
 def main(args):
+    # Generate Build ID randomly.
+    # This ID is expected to be used consistently in all build tools.
+    build_id = os.environ.get("AUTONINJA_BUILD_ID")
+    if not build_id:
+        build_id = str(uuid.uuid4())
+        os.environ.setdefault("AUTONINJA_BUILD_ID", build_id)
+
     # Check the log collection opt-in/opt-out status, and display notice if necessary.
     should_collect_logs = build_telemetry.enabled()
     # On Windows the autoninja.bat script passes along the arguments enclosed in
