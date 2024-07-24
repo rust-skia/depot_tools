@@ -3679,9 +3679,10 @@ def ClearGitRepoAuth() -> None:
 
 class GitAuthMode(enum.Enum):
     """Modes to pass to GitAuthConfigChanger"""
-    NEW_AUTH = 1
-    NEW_AUTH_SSO = 2
-    OLD_AUTH = 3
+    NO_AUTH = 1
+    OLD_AUTH = 1  # TODO(ayatane): remove later
+    NEW_AUTH = 2
+    NEW_AUTH_SSO = 3
 
 
 class GitAuthConfigChanger(object):
