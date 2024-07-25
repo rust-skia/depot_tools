@@ -14,13 +14,13 @@ import scm
 
 
 class ConfigMode(enum.Enum):
-    """Modes to pass to GitAuthConfigChanger"""
+    """Modes to pass to ConfigChanger"""
     NO_AUTH = 1
     NEW_AUTH = 2
     NEW_AUTH_SSO = 3
 
 
-class GitAuthConfigChanger(object):
+class ConfigChanger(object):
     """Changes Git auth config as needed for Gerrit."""
 
     # Can be used to determine whether this version of the config has
@@ -37,7 +37,7 @@ class GitAuthConfigChanger(object):
         remote_url: str,
         set_config_func: Callable[..., None] = scm.GIT.SetConfig,
     ):
-        """Create a new GitAuthConfigChanger.
+        """Create a new ConfigChanger.
 
         Args:
             mode: How to configure auth
@@ -68,8 +68,8 @@ class GitAuthConfigChanger(object):
         return parts._replace(path='/', query='', fragment='').geturl()
 
     @classmethod
-    def new_from_env(cls, cwd: str) -> 'GitAuthConfigChanger':
-        """Create a GitAuthConfigChanger by inferring from env.
+    def new_from_env(cls, cwd: str) -> 'ConfigChanger':
+        """Create a ConfigChanger by inferring from env.
 
         The Gerrit host is inferred from the current repo/branch.
         The user, which is used to determine the mode, is inferred using
