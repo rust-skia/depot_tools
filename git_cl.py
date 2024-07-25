@@ -3661,6 +3661,36 @@ def DownloadGerritHook(force):
                          'chmod +x .git/hooks/commit-msg' % src)
 
 
+def ConfigureGitAuth() -> None:
+    """Configure Git authentication.
+
+    This may modify the global Git config and the local repo config as
+    needed.
+    """
+    logging.debug('Configuring Git authentication...')
+
+    logging.debug('Configuring global Git authentication...')
+    # We want the user's global config.
+    # We can probably assume the root directory doesn't have any local
+    # Git configuration.
+    c = GitAuthConfigChanger.new_from_env('/')
+    c.apply_global(os.path.expanduser('~'))
+
+    cwd = os.getcwd()
+    c2 = GitAuthConfigChanger.new_from_env(cwd)
+    if c2.mode == c.mode:
+        logging.debug(
+            'Local user wants same mode %s as global; clearing local repo auth config',
+            c2.mode)
+        c2.mode = GitAuthMode.NO_AUTH
+        c2.apply(cwd)
+        return
+    logging.debug('Local user wants mode %s while global user wants mode %s',
+                  c2.mode, c.mode)
+    logging.debug('Configuring current Git repo authentication...')
+    c2.apply(cwd)
+
+
 def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
     logging.debug('Configuring current Git repo authentication...')
@@ -4100,7 +4130,7 @@ def CMDcreds_check(parser, args):
     _, _ = parser.parse_args(args)
 
     if newauth.Enabled():
-        ConfigureGitRepoAuth()
+        ConfigureGitAuth()
         return 0
     if newauth.ExplicitlyDisabled():
         ClearGitRepoAuth()
