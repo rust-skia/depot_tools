@@ -13,7 +13,7 @@ import urllib.parse
 import scm
 
 
-class GitAuthMode(enum.Enum):
+class ConfigMode(enum.Enum):
     """Modes to pass to GitAuthConfigChanger"""
     NO_AUTH = 1
     NEW_AUTH = 2
@@ -33,7 +33,7 @@ class GitAuthConfigChanger(object):
     def __init__(
         self,
         *,
-        mode: GitAuthMode,
+        mode: ConfigMode,
         remote_url: str,
         set_config_func: Callable[..., None] = scm.GIT.SetConfig,
     ):
@@ -46,7 +46,7 @@ class GitAuthConfigChanger(object):
             set_config_func: Function used to set configuration.  Used
                 for testing.
         """
-        self.mode: GitAuthMode = mode
+        self.mode: ConfigMode = mode
 
         self._remote_url: str = remote_url
         self._set_config_func: Callable[..., str] = set_config_func
@@ -93,14 +93,14 @@ class GitAuthConfigChanger(object):
         )
 
     @staticmethod
-    def _infer_mode(cwd: str, gerrit_host: str) -> GitAuthMode:
+    def _infer_mode(cwd: str, gerrit_host: str) -> ConfigMode:
         """Infer default mode to use."""
         if not newauth.Enabled():
-            return GitAuthMode.NO_AUTH
+            return ConfigMode.NO_AUTH
         email: str = scm.GIT.GetConfig(cwd, 'user.email', default='')
         if gerrit_util.ShouldUseSSO(gerrit_host, email):
-            return GitAuthMode.NEW_AUTH_SSO
-        return GitAuthMode.NEW_AUTH
+            return ConfigMode.NEW_AUTH_SSO
+        return ConfigMode.NEW_AUTH
 
     def apply(self, cwd: str) -> None:
         """Apply config changes to the Git repo directory."""
@@ -120,12 +120,12 @@ class GitAuthConfigChanger(object):
     def _apply_cred_helper(self, cwd: str) -> None:
         """Apply config changes relating to credential helper."""
         cred_key: str = f'credential.{self._base_url}.helper'
-        if self.mode == GitAuthMode.NEW_AUTH:
+        if self.mode == ConfigMode.NEW_AUTH:
             self._set_config(cwd, cred_key, '', modify_all=True)
             self._set_config(cwd, cred_key, 'luci', append=True)
-        elif self.mode == GitAuthMode.NEW_AUTH_SSO:
+        elif self.mode == ConfigMode.NEW_AUTH_SSO:
             self._set_config(cwd, cred_key, None, modify_all=True)
-        elif self.mode == GitAuthMode.NO_AUTH:
+        elif self.mode == ConfigMode.NO_AUTH:
             self._set_config(cwd, cred_key, None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
@@ -133,13 +133,13 @@ class GitAuthConfigChanger(object):
     def _apply_sso(self, cwd: str) -> None:
         """Apply config changes relating to SSO."""
         sso_key: str = f'url.sso://{self._shortname}/.insteadOf'
-        if self.mode == GitAuthMode.NEW_AUTH:
+        if self.mode == ConfigMode.NEW_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
             self._set_config(cwd, sso_key, None, modify_all=True)
-        elif self.mode == GitAuthMode.NEW_AUTH_SSO:
+        elif self.mode == ConfigMode.NEW_AUTH_SSO:
             self._set_config(cwd, 'protocol.sso.allow', 'always')
             self._set_config(cwd, sso_key, self._base_url, modify_all=True)
-        elif self.mode == GitAuthMode.NO_AUTH:
+        elif self.mode == ConfigMode.NO_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
             self._set_config(cwd, sso_key, None, modify_all=True)
         else:
@@ -149,13 +149,13 @@ class GitAuthConfigChanger(object):
         """Apply config changes relating to gitcookies."""
         # TODO(ayatane): Clear invalid setting.  Remove line after a few weeks
         self._set_config(cwd, 'http.gitcookies', None, modify_all=True)
-        if self.mode == GitAuthMode.NEW_AUTH:
+        if self.mode == ConfigMode.NEW_AUTH:
             # Override potential global setting
             self._set_config(cwd, 'http.cookieFile', '', modify_all=True)
-        elif self.mode == GitAuthMode.NEW_AUTH_SSO:
+        elif self.mode == ConfigMode.NEW_AUTH_SSO:
             # Override potential global setting
             self._set_config(cwd, 'http.cookieFile', '', modify_all=True)
-        elif self.mode == GitAuthMode.NO_AUTH:
+        elif self.mode == ConfigMode.NO_AUTH:
             self._set_config(cwd, 'http.cookieFile', None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
@@ -163,14 +163,14 @@ class GitAuthConfigChanger(object):
     def _apply_global_cred_helper(self, cwd: str) -> None:
         """Apply config changes relating to credential helper."""
         cred_key: str = f'credential.{self._base_url}.helper'
-        if self.mode == GitAuthMode.NEW_AUTH:
+        if self.mode == ConfigMode.NEW_AUTH:
             self._set_config(cwd, cred_key, '', scope='global', modify_all=True)
             self._set_config(cwd, cred_key, 'luci', scope='global', append=True)
-        elif self.mode == GitAuthMode.NEW_AUTH_SSO:
+        elif self.mode == ConfigMode.NEW_AUTH_SSO:
             # Avoid editing the user's config in case they manually
             # configured something.
             pass
-        elif self.mode == GitAuthMode.NO_AUTH:
+        elif self.mode == ConfigMode.NO_AUTH:
             # Avoid editing the user's config in case they manually
             # configured something.
             pass
@@ -180,7 +180,7 @@ class GitAuthConfigChanger(object):
     def _apply_global_sso(self, cwd: str) -> None:
         """Apply config changes relating to SSO."""
         sso_key: str = f'url.sso://{self._shortname}/.insteadOf'
-        if self.mode == GitAuthMode.NEW_AUTH:
+        if self.mode == ConfigMode.NEW_AUTH:
             # Do not unset protocol.sso.allow because it may be used by
             # other hosts.
             self._set_config(cwd,
@@ -188,7 +188,7 @@ class GitAuthConfigChanger(object):
                              None,
                              scope='global',
                              modify_all=True)
-        elif self.mode == GitAuthMode.NEW_AUTH_SSO:
+        elif self.mode == ConfigMode.NEW_AUTH_SSO:
             self._set_config(cwd,
                              'protocol.sso.allow',
                              'always',
@@ -198,7 +198,7 @@ class GitAuthConfigChanger(object):
                              self._base_url,
                              scope='global',
                              modify_all=True)
-        elif self.mode == GitAuthMode.NO_AUTH:
+        elif self.mode == ConfigMode.NO_AUTH:
             # Avoid editing the user's config in case they manually
             # configured something.
             pass

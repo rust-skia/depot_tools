@@ -3683,7 +3683,7 @@ def ConfigureGitAuth() -> None:
         logging.debug(
             'Local user wants same mode %s as global; clearing local repo auth config',
             c2.mode)
-        c2.mode = git_auth.GitAuthMode.NO_AUTH
+        c2.mode = git_auth.ConfigMode.NO_AUTH
         c2.apply(cwd)
         return
     logging.debug('Local user wants mode %s while global user wants mode %s',
@@ -3704,7 +3704,7 @@ def ClearGitRepoAuth() -> None:
     """Clear the current Git repo authentication."""
     logging.debug('Clearing current Git repo authentication...')
     c = git_auth.GitAuthConfigChanger.new_from_env(cwd)
-    c.mode = git_auth.GitAuthMode.NO_AUTH
+    c.mode = git_auth.ConfigMode.NO_AUTH
     c.apply(cwd)
 
 
