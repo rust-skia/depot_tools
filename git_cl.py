@@ -3673,14 +3673,13 @@ def ClearGitRepoAuth() -> None:
     """Clear the current Git repo authentication."""
     logging.debug('Clearing current Git repo authentication...')
     c = GitAuthConfigChanger.new_from_env(cwd)
-    c.mode = GitAuthMode.OLD_AUTH
+    c.mode = GitAuthMode.NO_AUTH
     c.apply(cwd)
 
 
 class GitAuthMode(enum.Enum):
     """Modes to pass to GitAuthConfigChanger"""
     NO_AUTH = 1
-    OLD_AUTH = 1  # TODO(ayatane): remove later
     NEW_AUTH = 2
     NEW_AUTH_SSO = 3
 
@@ -3760,7 +3759,7 @@ class GitAuthConfigChanger(object):
     def _infer_mode(cwd: str, gerrit_host: str) -> GitAuthMode:
         """Infer default mode to use."""
         if not newauth.Enabled():
-            return GitAuthMode.OLD_AUTH
+            return GitAuthMode.NO_AUTH
         email: str = scm.GIT.GetConfig(cwd, 'user.email', default='')
         if gerrit_util.ShouldUseSSO(gerrit_host, email):
             return GitAuthMode.NEW_AUTH_SSO
@@ -3789,7 +3788,7 @@ class GitAuthConfigChanger(object):
             self._set_config(cwd, cred_key, 'luci', append=True)
         elif self.mode == GitAuthMode.NEW_AUTH_SSO:
             self._set_config(cwd, cred_key, None, modify_all=True)
-        elif self.mode == GitAuthMode.OLD_AUTH:
+        elif self.mode == GitAuthMode.NO_AUTH:
             self._set_config(cwd, cred_key, None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
@@ -3803,7 +3802,7 @@ class GitAuthConfigChanger(object):
         elif self.mode == GitAuthMode.NEW_AUTH_SSO:
             self._set_config(cwd, 'protocol.sso.allow', 'always')
             self._set_config(cwd, sso_key, self._base_url, modify_all=True)
-        elif self.mode == GitAuthMode.OLD_AUTH:
+        elif self.mode == GitAuthMode.NO_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
             self._set_config(cwd, sso_key, None, modify_all=True)
         else:
@@ -3819,7 +3818,7 @@ class GitAuthConfigChanger(object):
         elif self.mode == GitAuthMode.NEW_AUTH_SSO:
             # Override potential global setting
             self._set_config(cwd, 'http.cookieFile', '', modify_all=True)
-        elif self.mode == GitAuthMode.OLD_AUTH:
+        elif self.mode == GitAuthMode.NO_AUTH:
             self._set_config(cwd, 'http.cookieFile', None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
@@ -3834,7 +3833,7 @@ class GitAuthConfigChanger(object):
             # Avoid editing the user's config in case they manually
             # configured something.
             pass
-        elif self.mode == GitAuthMode.OLD_AUTH:
+        elif self.mode == GitAuthMode.NO_AUTH:
             # Avoid editing the user's config in case they manually
             # configured something.
             pass
@@ -3861,7 +3860,7 @@ class GitAuthConfigChanger(object):
                              self._base_url,
                              scope='global',
                              modify_all=True)
-        elif self.mode == GitAuthMode.OLD_AUTH:
+        elif self.mode == GitAuthMode.NO_AUTH:
             # Avoid editing the user's config in case they manually
             # configured something.
             pass
