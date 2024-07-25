@@ -495,9 +495,22 @@ class SSOAuthenticator(_Authenticator):
     @classmethod
     def _get_sso_info(cls) -> SSOInfo:
         with cls._sso_info_lock:
+
             info = cls._sso_info
             if not info:
                 info = cls._launch_sso_helper()
+                # HACK: `git-remote-sso` doesn't always properly warm up the
+                # cookies - in this case, run a canned git operation against
+                # a public repo to cause `git-remote-sso` to warm the cookies
+                # up, and then try pulling config again.
+                #
+                # BUG: b/342644760
+                if not any(c.domain == '.google.com' for c in info.cookies):
+                    LOGGER.debug('SSO: Refreshing .google.com cookies.')
+                    scm.GIT.Capture(['ls-remote', 'sso://chromium/All-Projects'])
+                    info = cls._launch_sso_helper()
+                    if not any(c.domain == '.google.com' for c in info.cookies):
+                        raise ValueError('Unable to extract .google.com cookie.')
                 cls._sso_info = info
             return info
 
@@ -525,9 +538,7 @@ class SSOAuthenticator(_Authenticator):
         # Finally, add cookies
         sso_info.cookies.add_cookie_header(conn)
         assert 'Cookie' in conn.req_headers, (
-            'sso_info.cookies.add_cookie_header failed to add Cookie'
-            ' (try running `git ls-remote sso://chromium/All-Projects` and retrying)'
-        )
+            'sso_info.cookies.add_cookie_header failed to add Cookie.')
 
     def debug_summary_state(self) -> str:
         return ''
