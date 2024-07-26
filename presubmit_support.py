@@ -1076,16 +1076,18 @@ class AffectedFile(object):
         return self._diff_cache.GetOldContents(self.LocalPath(),
                                                self._local_root).splitlines()
 
-    def NewContents(self):
+    def NewContents(self, flush_cache=False):
         """Returns an iterator over the lines in the new version of file.
 
         The new version is the file in the user's workspace, i.e. the 'right hand
         side'.
 
+        If flush_cache is True, read from disk and replace any cached contents.
+
         Contents will be empty if the file is a directory or does not exist.
         Note: The carriage returns (LF or CR) are stripped off.
         """
-        if self._cached_new_contents is None:
+        if self._cached_new_contents is None or flush_cache:
             self._cached_new_contents = []
             try:
                 self._cached_new_contents = gclient_utils.FileRead(
