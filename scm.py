@@ -180,9 +180,9 @@ class CachedGitConfigState(object):
         If pattern is None, this returns all config items.
         """
         if pattern is None:
-          pred = lambda _: True
+            pred = lambda _: True
         else:
-          pred = re.compile(pattern).match
+            pred = re.compile(pattern).match
         for name, values in sorted(self._maybe_load_config().items()):
             if pred(name):
                 for value in values:
@@ -430,6 +430,19 @@ class GIT(object):
             ret = CachedGitConfigState(cls._new_config_state(key))
             cls._CONFIG_CACHE[key] = ret
             return ret
+
+    @classmethod
+    def _dump_config_state(cls) -> Dict[str, GitFlatConfigData]:
+        """Dump internal config state.
+
+        Used for testing.  This will NOT work properly in non-test
+        contexts as it relies on internal caches.
+        """
+        with cls._CONFIG_CACHE_LOCK:
+            state = {}
+            for key, val in cls._CONFIG_CACHE.items():
+                state[str(key)] = val._maybe_load_config()
+        return state
 
     @staticmethod
     def ApplyEnvVars(kwargs):
