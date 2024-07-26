@@ -7,10 +7,15 @@ from __future__ import annotations
 
 import enum
 import functools
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 import urllib.parse
 
+import gerrit_util
+import newauth
 import scm
+
+if TYPE_CHECKING:
+  import git_cl
 
 
 class ConfigMode(enum.Enum):
@@ -68,14 +73,13 @@ class ConfigChanger(object):
         return parts._replace(path='/', query='', fragment='').geturl()
 
     @classmethod
-    def new_from_env(cls, cwd: str) -> 'ConfigChanger':
+    def new_from_env(cls, cwd: str, cl: git_cl.Changelist) -> 'ConfigChanger':
         """Create a ConfigChanger by inferring from env.
 
         The Gerrit host is inferred from the current repo/branch.
         The user, which is used to determine the mode, is inferred using
         git-config(1) in the given `cwd`.
         """
-        cl = Changelist()
         # This is determined either from the branch or repo config.
         #
         # Example: chromium-review.googlesource.com

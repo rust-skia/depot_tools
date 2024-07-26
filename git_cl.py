@@ -3671,14 +3671,16 @@ def ConfigureGitAuth() -> None:
     logging.debug('Configuring Git authentication...')
 
     logging.debug('Configuring global Git authentication...')
+    cl = Changelist()
+
     # We want the user's global config.
     # We can probably assume the root directory doesn't have any local
     # Git configuration.
-    c = git_auth.ConfigChanger.new_from_env('/')
+    c = git_auth.ConfigChanger.new_from_env('/', cl)
     c.apply_global(os.path.expanduser('~'))
 
     cwd = os.getcwd()
-    c2 = git_auth.ConfigChanger.new_from_env(cwd)
+    c2 = git_auth.ConfigChanger.new_from_env(cwd, cl)
     if c2.mode == c.mode:
         logging.debug(
             'Local user wants same mode %s as global; clearing local repo auth config',
@@ -3696,14 +3698,15 @@ def ConfigureGitRepoAuth() -> None:
     """Configure the current Git repo authentication."""
     logging.debug('Configuring current Git repo authentication...')
     cwd = os.getcwd()
-    c = git_auth.ConfigChanger.new_from_env(cwd)
+    c = git_auth.ConfigChanger.new_from_env(cwd, Changelist())
     c.apply(cwd)
 
 
 def ClearGitRepoAuth() -> None:
     """Clear the current Git repo authentication."""
     logging.debug('Clearing current Git repo authentication...')
-    c = git_auth.ConfigChanger.new_from_env(cwd)
+    cwd = os.getcwd()
+    c = git_auth.ConfigChanger.new_from_env(cwd, Changelist())
     c.mode = git_auth.ConfigMode.NO_AUTH
     c.apply(cwd)
 
