@@ -15,7 +15,8 @@ import newauth
 import scm
 
 if TYPE_CHECKING:
-  import git_cl
+    # Causes import cycle if imported normally
+    import git_cl
 
 
 class ConfigMode(enum.Enum):
