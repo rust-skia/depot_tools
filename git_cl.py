@@ -28,6 +28,7 @@ import sys
 import tempfile
 import textwrap
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
@@ -856,7 +857,7 @@ class Settings(object):
                     '"git cl config".')
         return self.tree_status_url
 
-    def GetViewVCUrl(self):
+    def GetViewVCUrl(self) -> str:
         if not self.viewvc_url:
             self.viewvc_url = self._GetConfig('rietveld.viewvc-url')
         return self.viewvc_url
@@ -2238,7 +2239,7 @@ class Changelist(object):
             # Still raise exception so that stack trace is printed.
             raise
 
-    def GetGerritHost(self):
+    def GetGerritHost(self) -> Optional[str]:
         # Populate self._gerrit_host
         self.GetCodereviewServer()
 
@@ -2259,7 +2260,7 @@ class Changelist(object):
             return None
         return urllib.parse.urlparse(remote_url).netloc
 
-    def _GetGerritHostFromRemoteUrl(self):
+    def _GetGerritHostFromRemoteUrl(self) -> str:
         url = urllib.parse.urlparse(self.GetRemoteUrl())
         parts = url.netloc.split('.')
 
@@ -2275,7 +2276,7 @@ class Changelist(object):
 
         return '.'.join(parts)
 
-    def GetCodereviewServer(self):
+    def GetCodereviewServer(self) -> str:
         if not self._gerrit_server:
             # If we're on a branch then get the server potentially associated
             # with that branch.

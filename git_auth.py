@@ -55,7 +55,7 @@ class ConfigChanger(object):
         self.mode: ConfigMode = mode
 
         self._remote_url: str = remote_url
-        self._set_config_func: Callable[..., str] = set_config_func
+        self._set_config_func: Callable[..., None] = set_config_func
 
     @functools.cached_property
     def _shortname(self) -> str:
@@ -84,13 +84,20 @@ class ConfigChanger(object):
         # This is determined either from the branch or repo config.
         #
         # Example: chromium-review.googlesource.com
-        gerrit_host: str = cl.GetGerritHost()
+        gerrit_host = cl.GetGerritHost()
         # This depends on what the user set for their remote.
         # There are a couple potential variations for the same host+repo.
         #
         # Example:
         # https://chromium.googlesource.com/chromium/tools/depot_tools.git
-        remote_url: str = cl.GetRemoteUrl()
+        remote_url = cl.GetRemoteUrl()
+
+        if gerrit_host is None or remote_url is None:
+            raise Exception(
+                'Error Git auth settings inferring from environment:'
+                f' {gerrit_host=} {remote_url=}')
+        assert gerrit_host is not None
+        assert remote_url is not None
 
         return cls(
             mode=cls._infer_mode(cwd, gerrit_host),
@@ -102,7 +109,7 @@ class ConfigChanger(object):
         """Infer default mode to use."""
         if not newauth.Enabled():
             return ConfigMode.NO_AUTH
-        email: str = scm.GIT.GetConfig(cwd, 'user.email', default='')
+        email: str = scm.GIT.GetConfig(cwd, 'user.email') or ''
         if gerrit_util.ShouldUseSSO(gerrit_host, email):
             return ConfigMode.NEW_AUTH_SSO
         return ConfigMode.NEW_AUTH
