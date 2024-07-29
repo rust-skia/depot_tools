@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import annotations
+
 import multiprocessing.pool
 import sys
 import threading
@@ -38,6 +40,7 @@ import signal
 import tempfile
 import textwrap
 import time
+from typing import Tuple
 
 import scm
 import subprocess2
@@ -808,7 +811,7 @@ def less():  # pragma: no cover
         proc.wait()
 
 
-def run(*cmd, **kwargs):
+def run(*cmd, **kwargs) -> str | bytes:
     """The same as run_with_stderr, except it only returns stdout."""
     return run_with_stderr(*cmd, **kwargs)[0]
 
@@ -858,7 +861,8 @@ def run_stream_with_retcode(*cmd, **kwargs):
             raise subprocess2.CalledProcessError(retcode, cmd, os.getcwd(), b'',
                                                  b'')
 
-def run_with_stderr(*cmd, **kwargs):
+
+def run_with_stderr(*cmd, **kwargs) -> Tuple[str, str] | Tuple[bytes, bytes]:
     """Runs a git command.
 
     Returns (stdout, stderr) as a pair of strings.
@@ -890,13 +894,14 @@ def run_with_stderr(*cmd, **kwargs):
             raise ex
 
 
-def _run_with_stderr(*cmd, **kwargs):
+def _run_with_stderr(*cmd, **kwargs) -> Tuple[str, str] | Tuple[bytes, bytes]:
     """Runs a git command.
 
-    Returns (stdout, stderr) as a pair of strings.
+    Returns (stdout, stderr) as a pair of bytes or strings.
 
     kwargs
         autostrip (bool) - Strip the output. Defaults to True.
+        decode (bool) - Whether to return strings. Defaults to True.
         indata (str) - Specifies stdin data for the process.
     """
     kwargs.setdefault('stdin', subprocess2.PIPE)
