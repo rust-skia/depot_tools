@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 """SCM-specific utility classes."""
 
+from __future__ import annotations
+
 import abc
 import os
 import pathlib
@@ -462,7 +464,7 @@ class GIT(object):
         return env
 
     @staticmethod
-    def Capture(args, cwd=None, strip_out=True, **kwargs):
+    def Capture(args, cwd=None, strip_out=True, **kwargs) -> str | bytes:
         kwargs.setdefault('env', GIT.ApplyEnvVars(kwargs))
         kwargs.setdefault('cwd', cwd)
         kwargs.setdefault('autostrip', strip_out)
@@ -813,10 +815,11 @@ class GIT(object):
         return commit_hashes
 
     @staticmethod
-    def GetCheckoutRoot(cwd):
+    def GetCheckoutRoot(cwd) -> str:
         """Returns the top level directory of a git checkout as an absolute path.
         """
-        root = GIT.Capture(['rev-parse', '--show-cdup'], cwd=cwd)
+        root: str = GIT.Capture(['rev-parse', '--show-cdup'], cwd=cwd)
+        assert isinstance(root, str)
         return os.path.abspath(os.path.join(cwd, root))
 
     @staticmethod
