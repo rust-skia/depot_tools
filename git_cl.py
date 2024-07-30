@@ -2360,7 +2360,7 @@ class Changelist(object):
                 logging.debug(
                     'Automatically configuring Git repo authentication (current version: %r, latest: %r)',
                     v, latestVer)
-                ConfigureGitRepoAuth(os.getcwd(), Changelist())
+                git_auth.ConfigureGitRepoAuth(os.getcwd(), Changelist())
                 scm.GIT.SetConfig(settings.GetRoot(),
                                   'depot-tools.gitAuthAutoConfigured',
                                   str(latestVer))
@@ -3663,51 +3663,6 @@ def DownloadGerritHook(force):
                          'chmod +x .git/hooks/commit-msg' % src)
 
 
-def ConfigureGitAuth(cwd: str, cl: Changelist) -> None:
-    """Configure Git authentication.
-
-    This may modify the global Git config and the local repo config as
-    needed.
-    """
-    logging.debug('Configuring Git authentication...')
-
-    logging.debug('Configuring global Git authentication...')
-
-    # We want the user's global config.
-    # We can probably assume the root directory doesn't have any local
-    # Git configuration.
-    c = git_auth.ConfigChanger.new_from_env('/', cl)
-    c.apply_global(os.path.expanduser('~'))
-
-    c2 = git_auth.ConfigChanger.new_from_env(cwd, cl)
-    if c2.mode == c.mode:
-        logging.debug(
-            'Local user wants same mode %s as global; clearing local repo auth config',
-            c2.mode)
-        c2.mode = git_auth.ConfigMode.NO_AUTH
-        c2.apply(cwd)
-        return
-    logging.debug('Local user wants mode %s while global user wants mode %s',
-                  c2.mode, c.mode)
-    logging.debug('Configuring current Git repo authentication...')
-    c2.apply(cwd)
-
-
-def ConfigureGitRepoAuth(cwd: str, cl: Changelist) -> None:
-    """Configure the current Git repo authentication."""
-    logging.debug('Configuring current Git repo authentication...')
-    c = git_auth.ConfigChanger.new_from_env(cwd, cl)
-    c.apply(cwd)
-
-
-def ClearGitRepoAuth(cwd: str, cl: Changelist) -> None:
-    """Clear the current Git repo authentication."""
-    logging.debug('Clearing current Git repo authentication...')
-    c = git_auth.ConfigChanger.new_from_env(cwd, cl)
-    c.mode = git_auth.ConfigMode.NO_AUTH
-    c.apply(cwd)
-
-
 class _GitCookiesChecker(object):
     """Provides facilities for validating and suggesting fixes to .gitcookies."""
     def __init__(self):
@@ -3937,10 +3892,10 @@ def CMDcreds_check(parser, args):
     _, _ = parser.parse_args(args)
 
     if newauth.Enabled():
-        ConfigureGitAuth(os.getcwd(), Changelist())
+        git_auth.ConfigureGitAuth(os.getcwd(), Changelist())
         return 0
     if newauth.ExplicitlyDisabled():
-        ClearGitRepoAuth(os.getcwd(), Changelist())
+        git_auth.ClearGitRepoAuth(os.getcwd(), Changelist())
 
     # Code below checks .gitcookies. Abort if using something else.
     auth_name, _ = gerrit_util.debug_auth()
