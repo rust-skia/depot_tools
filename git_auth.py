@@ -223,6 +223,31 @@ class ConfigChanger(object):
         self._set_config_func(*args, **kwargs)
 
 
+def AutoConfigure(cwd: str, cl: git_cl.Changelist) -> None:
+    """Configure Git authentication automatically.
+
+    This tracks when the config that has already been applied and skips
+    doing anything if so.
+
+    This may modify the global Git config and the local repo config as
+    needed.
+    """
+    latestVer: int = ConfigChanger.VERSION
+    v: int = 0
+    try:
+        v = int(
+            scm.GIT.GetConfig(cwd, 'depot-tools.gitauthautoconfigured') or '0')
+    except ValueError:
+        v = 0
+    if v < latestVer:
+        logging.debug(
+            'Automatically configuring Git repo authentication'
+            ' (current version: %r, latest: %r)', v, latestVer)
+        ConfigureRepo(cwd, cl)
+        scm.GIT.SetConfig(cwd, 'depot-tools.gitAuthAutoConfigured',
+                          str(latestVer))
+
+
 def Configure(cwd: str, cl: git_cl.Changelist) -> None:
     """Configure Git authentication.
 

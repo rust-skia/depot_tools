@@ -2347,23 +2347,7 @@ class Changelist(object):
             return
 
         if newauth.Enabled():
-            latestVer: int = git_auth.ConfigChanger.VERSION
-            v: int = 0
-            try:
-                v = int(
-                    scm.GIT.GetConfig(settings.GetRoot(),
-                                      'depot-tools.gitauthautoconfigured',
-                                      default='0'))
-            except ValueError:
-                v = 0
-            if v < latestVer:
-                logging.debug(
-                    'Automatically configuring Git repo authentication (current version: %r, latest: %r)',
-                    v, latestVer)
-                git_auth.ConfigureRepo(os.getcwd(), Changelist())
-                scm.GIT.SetConfig(settings.GetRoot(),
-                                  'depot-tools.gitAuthAutoConfigured',
-                                  str(latestVer))
+            git_auth.AutoConfigure(os.getcwd(), Changelist())
             return
 
         # Lazy-loader to identify Gerrit and Git hosts.
