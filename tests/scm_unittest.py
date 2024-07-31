@@ -221,6 +221,27 @@ class RealGitTest(fake_repos.FakeReposTestBase):
         self.assertEqual('default-value',
                          scm.GIT.GetConfig(self.cwd, key, 'default-value'))
 
+        # Test missing_ok
+        key = 'scm.missing-key'
+        with self.assertRaises(scm.GitConfigUnsetMissingValue):
+            scm.GIT.SetConfig(self.cwd, key, None, missing_ok=False)
+        with self.assertRaises(scm.GitConfigUnsetMissingValue):
+            scm.GIT.SetConfig(self.cwd,
+                              key,
+                              None,
+                              modify_all=True,
+                              missing_ok=False)
+        with self.assertRaises(scm.GitConfigUnsetMissingValue):
+            scm.GIT.SetConfig(self.cwd,
+                              key,
+                              None,
+                              value_pattern='some_value',
+                              missing_ok=False)
+
+        scm.GIT.SetConfig(self.cwd, key, None)
+        scm.GIT.SetConfig(self.cwd, key, None, modify_all=True)
+        scm.GIT.SetConfig(self.cwd, key, None, value_pattern='some_value')
+
     def testGetSetConfigBool(self):
         key = 'scm.test-key'
         self.assertFalse(scm.GIT.GetConfigBool(self.cwd, key))

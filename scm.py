@@ -97,21 +97,36 @@ class GitConfigStateBase(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def unset_config(self, key: str, *, scope: GitConfigScope):
+    def unset_config(self, key: str, *, scope: GitConfigScope,
+                     missing_ok: bool):
         """When invoked, remove a singlar value from `key` in this state's underlying data.
+
+        If missing_ok is False and `key` is not present in the given scope, this
+        must raise GitConfigUnsetMissingValue with `key`.
         """
 
     @abc.abstractmethod
     def unset_config_multi(self, key: str, *, value_pattern: Optional[str],
-                           scope: GitConfigScope):
+                           scope: GitConfigScope, missing_ok: bool):
         """When invoked, remove all values from `key` in this state's underlying data.
 
         If `value_pattern` is supplied, only values matching this pattern will
         be removed.
 
+        If missing_ok is False and `key` is not present in the given scope, this
+        must raise GitConfigUnsetMissingValue with `key`.
+
         TODO: Make value_pattern an re.Pattern. This wasn't done at the time of
         this refactor to keep the refactor small.
         """
+
+
+class GitConfigUnsetMissingValue(ValueError):
+
+    def __init__(self, key: str, scope: str) -> None:
+        super().__init__(
+            f'Cannot unset missing key {key!r} in scope {scope!r} with missing_ok=False.'
+        )
 
 
 class CachedGitConfigState(object):
@@ -210,7 +225,8 @@ class CachedGitConfigState(object):
             missing_ok: If `value` is None (i.e. this is an unset operation),
                 ignore retcode=5 from `git config` (meaning that the value is
                 not present). If `value` is not None, then this option has no
-                effect.
+                effect. If this is false and the key is missing, this will raise
+                GitConfigUnsetMissingValue.
             modify_all: If True, this will change a set operation to
                 `--replace-all`, and will change an unset operation to
                 `--unset-all`.
@@ -223,25 +239,13 @@ class CachedGitConfigState(object):
                 `modify_all=False`.
         """
         if value is None:
-            if key not in self._maybe_load_config():
-                if missing_ok:
-                    # Implements early return - underlying state doesn't need to
-                    # be told to remove already-missing keys.
-                    #
-                    # For GitConfigStateReal this avoids lots of unnecessary
-                    # subprocess invocations to unset keys which don't exist.
-                    return
-
-                raise ValueError(
-                    f'CachedGitConfigState: Cannot unset missing key {key!r}'
-                    ' with missing_ok=False.')
-
             if modify_all:
                 self._impl.unset_config_multi(key,
                                               value_pattern=value_pattern,
-                                              scope=scope)
+                                              scope=scope,
+                                              missing_ok=missing_ok)
             else:
-                self._impl.unset_config(key, scope=scope)
+                self._impl.unset_config(key, scope=scope, missing_ok=missing_ok)
         else:
             if modify_all:
                 self._impl.set_config_multi(key,
@@ -299,15 +303,32 @@ class GitConfigStateReal(GitConfigStateBase):
             args.append('--add')
         GIT.Capture(args, cwd=self.root)
 
-    def unset_config(self, key: str, *, scope: GitConfigScope):
-        GIT.Capture(['config', f'--{scope}', '--unset', key], cwd=self.root)
+    def unset_config(self, key: str, *, scope: GitConfigScope,
+                     missing_ok: bool):
+        accepted_retcodes = (0, 5) if missing_ok else (0, )
+        try:
+            GIT.Capture(['config', f'--{scope}', '--unset', key],
+                        cwd=self.root,
+                        accepted_retcodes=accepted_retcodes)
+        except subprocess2.CalledProcessError as cpe:
+            if cpe.returncode == 5:
+                raise GitConfigUnsetMissingValue(key, scope)
+            raise
 
     def unset_config_multi(self, key: str, *, value_pattern: Optional[str],
-                           scope: GitConfigScope):
+                           scope: GitConfigScope, missing_ok: bool):
+        accepted_retcodes = (0, 5) if missing_ok else (0, )
         args = ['config', f'--{scope}', '--unset-all', key]
         if value_pattern is not None:
             args.append(value_pattern)
-        GIT.Capture(args, cwd=self.root)
+        try:
+            GIT.Capture(args,
+                        cwd=self.root,
+                        accepted_retcodes=accepted_retcodes)
+        except subprocess2.CalledProcessError as cpe:
+            if cpe.returncode == 5:
+                raise GitConfigUnsetMissingValue(key, scope)
+            raise
 
 
 class GitConfigStateTest(GitConfigStateBase):
@@ -370,23 +391,33 @@ class GitConfigStateTest(GitConfigStateBase):
         newval.append(value)
         cfg[key] = newval
 
-    def unset_config(self, key: str, *, scope: GitConfigScope):
+    def unset_config(self, key: str, *, scope: GitConfigScope,
+                     missing_ok: bool):
         cfg = self._get_scope(scope)
         cur = cfg.get(key)
-        if cur is None or len(cur) == 1:
+        if cur is None:
+            if missing_ok:
+                return
+            raise GitConfigUnsetMissingValue(key, scope)
+        if len(cur) == 1:
             del cfg[key]
             return
         raise ValueError(f'GitConfigStateTest: Cannot unset key {key} '
                          f'- current value {cur!r} is multiple.')
 
     def unset_config_multi(self, key: str, *, value_pattern: Optional[str],
-                           scope: GitConfigScope):
+                           scope: GitConfigScope, missing_ok: bool):
         cfg = self._get_scope(scope)
+        cur = cfg.get(key)
+        if cur is None:
+            if not missing_ok:
+                raise GitConfigUnsetMissingValue(key, scope)
+            return
+
         if value_pattern is None:
             del cfg[key]
             return
 
-        cur = cfg.get(key)
         if cur is None:
             del cfg[key]
             return
