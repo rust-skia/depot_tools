@@ -243,7 +243,7 @@ def AutoConfigure(cwd: str, cl: git_cl.Changelist) -> None:
         logging.debug(
             'Automatically configuring Git repo authentication'
             ' (current version: %r, latest: %r)', v, latestVer)
-        ConfigureRepo(cwd, cl)
+        Configure(cwd, cl)
         scm.GIT.SetConfig(cwd, 'depot-tools.gitAuthAutoConfigured',
                           str(latestVer))
 
@@ -276,13 +276,6 @@ def Configure(cwd: str, cl: git_cl.Changelist) -> None:
                   c2.mode, c.mode)
     logging.debug('Configuring current Git repo authentication...')
     c2.apply(cwd)
-
-
-def ConfigureRepo(cwd: str, cl: git_cl.Changelist) -> None:
-    """Configure the current Git repo authentication."""
-    logging.debug('Configuring current Git repo authentication...')
-    c = ConfigChanger.new_from_env(cwd, cl)
-    c.apply(cwd)
 
 
 def ClearRepoConfig(cwd: str, cl: git_cl.Changelist) -> None:
