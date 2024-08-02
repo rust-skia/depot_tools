@@ -911,8 +911,8 @@ class HttpConn(httplib2.Http):
         return self.req_host
 
 
-def CreateHttpConn(host,
-                   path,
+def CreateHttpConn(host: str,
+                   path: str,
                    reqtype='GET',
                    headers: Optional[Dict[str, str]] = None,
                    body: Optional[Dict] = None,
@@ -1054,7 +1054,7 @@ def ReadHttpResponse(conn: HttpConn,
 
 
 def ReadHttpJsonResponse(
-    conn, accept_statuses: Container[int] = frozenset([200])) -> Dict:
+    conn, accept_statuses: Container[int] = frozenset([200])) -> dict:
     """Parses an https response as json."""
     fh = ReadHttpResponse(conn, accept_statuses)
     # The first line of the response should always be: )]}'
@@ -1253,7 +1253,7 @@ def GetChangeDetail(host, change, o_params=None):
     return ReadHttpJsonResponse(CreateHttpConn(host, path))
 
 
-def GetChangeCommit(host, change, revision='current'):
+def GetChangeCommit(host: str, change: str, revision: str = 'current') -> dict:
     """Query a Gerrit server for a revision associated with a change."""
     path = 'changes/%s/revisions/%s/commit?links' % (change, revision)
     return ReadHttpJsonResponse(CreateHttpConn(host, path))
