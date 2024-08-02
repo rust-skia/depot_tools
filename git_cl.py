@@ -28,6 +28,7 @@ import sys
 import tempfile
 import textwrap
 import time
+import typing
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -36,6 +37,7 @@ import webbrowser
 import zlib
 
 from typing import Any
+from typing import AnyStr
 from typing import Callable
 from typing import List
 from typing import Mapping
@@ -6884,7 +6886,23 @@ class OptionParser(optparse.OptionParser):
                         default=0,
                         help='Use 2 times for more debugging info')
 
-    def parse_args(self, args=None, _values=None):
+    @typing.overload
+    def parse_args(
+        self,
+        args: None = None,
+        values: Optional[optparse.Values] = None
+    ) -> tuple[optparse.Values, list[str]]:
+        ...
+
+    @typing.overload
+    def parse_args(  # pylint: disable=signature-differs
+        self,
+        args: Sequence[AnyStr],
+        values: Optional[optparse.Values] = None
+    ) -> tuple[optparse.Values, list[AnyStr]]:
+        ...
+
+    def parse_args(self, args: Sequence[AnyStr] | None = None, values=None):
         try:
             return self._parse_args(args)
         finally:
@@ -6900,11 +6918,22 @@ class OptionParser(optparse.OptionParser):
                     # executed in a repo, it will be raised later.
                     pass
 
-    def _parse_args(self, args=None):
+    @typing.overload
+    def _parse_args(self, args: None) -> tuple[optparse.Values, list[str]]:
+        ...
+
+    @typing.overload
+    def _parse_args(
+            self,
+            args: Sequence[AnyStr]) -> tuple[optparse.Values, list[AnyStr]]:
+        ...
+
+    def _parse_args(self, args: Sequence[AnyStr] | None):
         # Create an optparse.Values object that will store only the actual
         # passed options, without the defaults.
         actual_options = optparse.Values()
-        _, args = optparse.OptionParser.parse_args(self, args, actual_options)
+        _, argslist = optparse.OptionParser.parse_args(self, args,
+                                                       actual_options)
         # Create an optparse.Values object with the default options.
         options = optparse.Values(self.get_default_values().__dict__)
         # Update it with the options passed by the user.
@@ -6921,7 +6950,7 @@ class OptionParser(optparse.OptionParser):
             format='[%(levelname).1s%(asctime)s %(process)d %(thread)d '
             '%(filename)s] %(message)s')
 
-        return options, args
+        return options, argslist
 
 
 def main(argv):
