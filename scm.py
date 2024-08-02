@@ -583,7 +583,10 @@ class GIT(object):
         yield from GIT._get_config_state(cwd).YieldConfigRegexp(pattern)
 
     @staticmethod
-    def GetBranchConfig(cwd, branch, key, default=None):
+    def GetBranchConfig(cwd: str,
+                        branch: str,
+                        key: str,
+                        default: Optional[str] = None) -> Optional[str]:
         assert branch, 'A branch must be given'
         key = 'branch.%s.%s' % (branch, key)
         return GIT.GetConfig(cwd, key, default)
