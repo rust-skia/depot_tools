@@ -358,7 +358,9 @@ def blame(filename, revision=None, porcelain=False, abbrev=None, *_args):
     return run(*command)
 
 
-def branch_config(branch, option, default=None):
+def branch_config(branch: str,
+                  option: str,
+                  default: Optional[str] = None) -> Optional[str]:
     return get_config('branch.%s.%s' % (branch, option), default=default)
 
 
@@ -402,7 +404,7 @@ def branches(use_limit=True, *args):
         yield line.split()[-1]
 
 
-def get_config(option, default=None):
+def get_config(option: str, default: Optional[str] = None) -> Optional[str]:
     return scm.GIT.GetConfig(os.getcwd(), option, default)
 
 def get_config_int(option, default=0):
@@ -581,17 +583,17 @@ def get_branch_tree(use_limit=False):
     return skipped, branch_tree
 
 
-def get_or_create_merge_base(branch, parent=None):
+def get_or_create_merge_base(branch, parent=None) -> str:
     """Finds the configured merge base for branch.
 
     If parent is supplied, it's used instead of calling upstream(branch).
     """
-    base = branch_config(branch, 'base')
+    base: Optional[str] = branch_config(branch, 'base')
     base_upstream = branch_config(branch, 'base-upstream')
     parent = parent or upstream(branch)
     if parent is None or branch is None:
         return None
-    actual_merge_base = run('merge-base', parent, branch)
+    actual_merge_base: str = run('merge-base', parent, branch)
 
     if base_upstream != parent:
         base = None
@@ -616,6 +618,7 @@ def get_or_create_merge_base(branch, parent=None):
         base = actual_merge_base
         manual_merge_base(branch, base, parent)
 
+    assert isinstance(base, str)
     return base
 
 
