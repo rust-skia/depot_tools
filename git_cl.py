@@ -2697,12 +2697,11 @@ class Changelist(object):
         self._detail_cache.setdefault(cache_key, []).append((options_set, data))
         return data
 
-    def _GetChangeCommit(self, revision='current'):
+    def _GetChangeCommit(self, revision: str = 'current') -> dict:
         assert self.GetIssue(), 'issue must be set to query Gerrit'
         try:
-            data = gerrit_util.GetChangeCommit(self.GetGerritHost(),
-                                               self._GerritChangeIdentifier(),
-                                               revision)
+            data: dict = gerrit_util.GetChangeCommit(
+                self.GetGerritHost(), self._GerritChangeIdentifier(), revision)
         except gerrit_util.GerritError as e:
             if e.http_status == 404:
                 raise GerritChangeNotExists(self.GetIssue(),
@@ -3310,7 +3309,7 @@ class Changelist(object):
                 upstream_branch_name, change_desc)
         return parent
 
-    def _UpdateWithExternalChanges(self):
+    def _UpdateWithExternalChanges(self) -> Optional[str]:
         """Updates workspace with external changes.
 
         Returns the commit hash that should be used as the merge base on upload.
@@ -3355,9 +3354,9 @@ class Changelist(object):
 
         # Get latest Gerrit merge base. Use the first parent even if multiple
         # exist.
-        external_parent = self._GetChangeCommit(
+        external_parent: dict = self._GetChangeCommit(
             revision=external_ps)['parents'][0]
-        external_base = external_parent['commit']
+        external_base: str = external_parent['commit']
 
         branch = git_common.current_branch()
         local_base = self.GetCommonAncestorWithUpstream()
@@ -5264,9 +5263,9 @@ def UploadAllSquashed(options: optparse.Values,
         cl = ordered_cls[0]
         # We can only support external changes when we're only uploading one
         # branch.
-        parent = cl._UpdateWithExternalChanges() if len(
+        parent: Optional[str] = cl._UpdateWithExternalChanges() if len(
             ordered_cls) == 1 else None
-        orig_parent = None
+        orig_parent: Optional[str] = None
         if parent is None:
             origin = '.'
             branch = cl.GetBranch()
