@@ -154,7 +154,7 @@ class BadCommitRefException(Exception):
         super(BadCommitRefException, self).__init__(msg)
 
 
-def memoize_one(**kwargs):
+def memoize_one(*, threadsafe: bool):
     """Memoizes a single-argument pure function.
 
     Values of None are not cached.
@@ -172,9 +172,6 @@ def memoize_one(**kwargs):
             unittests.
         * update(other) - Updates the contents of the cache from another dict.
     """
-    assert 'threadsafe' in kwargs, 'Must specify threadsafe={True,False}'
-    threadsafe = kwargs['threadsafe']
-
     if threadsafe:
 
         def withlock(lock, f):
