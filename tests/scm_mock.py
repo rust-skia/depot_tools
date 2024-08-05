@@ -4,6 +4,7 @@
 
 import os
 import sys
+import threading
 
 from typing import Dict, List, Optional
 from unittest import mock
@@ -29,21 +30,24 @@ def GIT(test: unittest.TestCase,
     NOTE: The dependency on git_new_branch.create_new_branch seems pretty
     circular - this functionality should probably move to scm.GIT?
     """
+    # TODO - remove `config` - have callers just directly call SetConfig with
+    # whatever config state they need.
+    # TODO - add `system_config` - this will be configuration which exists at
+    # the 'system installation' level and is immutable.
+
     _branchref = [branchref or 'refs/heads/main']
 
-    initial_state = {}
-    if config is not None:
-        initial_state['local'] = config
+    global_lock = threading.Lock()
+    global_state = {}
 
     def _newBranch(branchref):
         _branchref[0] = branchref
 
     patches: List[mock._patch] = [
-        mock.patch(
-            'scm.GIT._new_config_state',
-            side_effect=lambda root: scm.GitConfigStateTest(initial_state)),
-        mock.patch('scm.GIT.GetBranchRef',
-                   side_effect=lambda _root: _branchref[0]),
+        mock.patch('scm.GIT._new_config_state',
+                   side_effect=lambda _: scm.GitConfigStateTest(
+                       global_lock, global_state, local_state=config)),
+        mock.patch('scm.GIT.GetBranchRef', side_effect=lambda _: _branchref[0]),
         mock.patch('git_new_branch.create_new_branch', side_effect=_newBranch)
     ]
 

@@ -4,10 +4,13 @@
 # found in the LICENSE file.
 """Unit tests for scm.py."""
 
+from __future__ import annotations
+
 import logging
 import os
 import sys
 import tempfile
+import threading
 import unittest
 from unittest import mock
 
@@ -418,9 +421,256 @@ class DiffTestCase(unittest.TestCase):
                 files, ["foo/file.txt", "foo/dir/file.txt", "baz_repo"])
 
 
+class GitConfigStateTestTest(unittest.TestCase):
+
+    @staticmethod
+    def _make(*,
+              global_state: dict[str, list[str]] | None = None,
+              system_state: dict[str, list[str]] | None = None,
+              local_state: dict[str, list[str]] | None = None,
+              worktree_state: dict[str, list[str]] | None = None):
+        """_make constructs a GitConfigStateTest with an internal Lock.
+
+        If global_state is None, an empty dictionary will be constructed and
+        returned, otherwise the caller's provided global_state is returned,
+        unmodified.
+
+        Returns (GitConfigStateTest, global_state) - access to global_state must
+        be manually synchronized with access to GitConfigStateTest, or at least
+        with GitConfigStateTest.global_state_lock.
+        """
+        global_state = global_state or {}
+        m = scm.GitConfigStateTest(threading.Lock(),
+                                   global_state,
+                                   system_state=system_state,
+                                   local_state=local_state,
+                                   worktree_state=worktree_state)
+        return m, global_state
+
+    def test_construction_empty(self):
+        m, gs = self._make()
+        self.assertDictEqual(gs, {})
+        self.assertDictEqual(m.load_config(), {})
+
+        gs['key'] = ['override']
+        self.assertDictEqual(m.load_config(), {'key': ['override']})
+
+    def test_construction_global(self):
+        m, gs = self._make(global_state={'key': ['global']})
+        self.assertDictEqual(gs, {'key': ['global']})
+        self.assertDictEqual(m.load_config(), {'key': ['global']})
+
+        gs['key'] = ['override']
+        self.assertDictEqual(m.load_config(), {'key': ['override']})
+
+    def test_construction_system(self):
+        m, gs = self._make(
+            global_state={'key': ['global']},
+            system_state={'key': ['system']},
+        )
+        self.assertDictEqual(gs, {'key': ['global']})
+        self.assertDictEqual(m.load_config(), {'key': ['system', 'global']})
+
+        gs['key'] = ['override']
+        self.assertDictEqual(m.load_config(), {'key': ['system', 'override']})
+
+    def test_construction_local(self):
+        m, gs = self._make(
+            global_state={'key': ['global']},
+            system_state={'key': ['system']},
+            local_state={'key': ['local']},
+        )
+        self.assertDictEqual(gs, {'key': ['global']})
+        self.assertDictEqual(m.load_config(), {
+            'key': ['system', 'global', 'local'],
+        })
+
+        gs['key'] = ['override']
+        self.assertDictEqual(m.load_config(), {
+            'key': ['system', 'override', 'local'],
+        })
+
+    def test_construction_worktree(self):
+        m, gs = self._make(
+            global_state={'key': ['global']},
+            system_state={'key': ['system']},
+            local_state={'key': ['local']},
+            worktree_state={'key': ['worktree']},
+        )
+        self.assertDictEqual(gs, {'key': ['global']})
+        self.assertDictEqual(m.load_config(), {
+            'key': ['system', 'global', 'local', 'worktree'],
+        })
+
+        gs['key'] = ['override']
+        self.assertDictEqual(m.load_config(), {
+            'key': ['system', 'override', 'local', 'worktree'],
+        })
+
+    def test_set_config_system(self):
+        m, _ = self._make()
+
+        with self.assertRaises(scm.GitConfigUneditableScope):
+            m.set_config('key', 'new_global', append=False, scope='system')
+
+    def test_set_config_unkown(self):
+        m, _ = self._make()
+
+        with self.assertRaises(scm.GitConfigUnknownScope):
+            m.set_config('key', 'new_global', append=False, scope='meepmorp')
+
+    def test_set_config_global(self):
+        m, gs = self._make()
+        self.assertDictEqual(gs, {})
+        self.assertDictEqual(m.load_config(), {})
+
+        m.set_config('key', 'new_global', append=False, scope='global')
+        self.assertDictEqual(m.load_config(), {
+            'key': ['new_global'],
+        })
+
+        m.set_config('key', 'new_global2', append=True, scope='global')
+        self.assertDictEqual(m.load_config(), {
+            'key': ['new_global', 'new_global2'],
+        })
+
+        self.assertDictEqual(gs, {
+            'key': ['new_global', 'new_global2'],
+        })
+
+    def test_set_config_multi_global(self):
+        m, gs = self._make(global_state={
+            'key': ['1', '2'],
+        })
+
+        m.set_config_multi('key',
+                           'new_global',
+                           value_pattern=None,
+                           scope='global')
+        self.assertDictEqual(m.load_config(), {
+            'key': ['new_global'],
+        })
+
+        self.assertDictEqual(gs, {
+            'key': ['new_global'],
+        })
+
+        m.set_config_multi('other',
+                           'newval',
+                           value_pattern=None,
+                           scope='global')
+        self.assertDictEqual(m.load_config(), {
+            'key': ['new_global'],
+            'other': ['newval'],
+        })
+
+        self.assertDictEqual(gs, {
+            'key': ['new_global'],
+            'other': ['newval'],
+        })
+
+    def test_set_config_multi_global_pattern(self):
+        m, _ = self._make(global_state={
+            'key': ['1', '1', '2', '2', '2', '3'],
+        })
+
+        m.set_config_multi('key',
+                           'new_global',
+                           value_pattern='2',
+                           scope='global')
+        self.assertDictEqual(m.load_config(), {
+            'key': ['1', '1', 'new_global', '3'],
+        })
+
+        m.set_config_multi('key',
+                           'additional',
+                           value_pattern='narp',
+                           scope='global')
+        self.assertDictEqual(m.load_config(), {
+            'key': ['1', '1', 'new_global', '3', 'additional'],
+        })
+
+    def test_unset_config_global(self):
+        m, _ = self._make(global_state={
+            'key': ['someval'],
+        })
+
+        m.unset_config('key', scope='global', missing_ok=False)
+        self.assertDictEqual(m.load_config(), {})
+
+        with self.assertRaises(scm.GitConfigUnsetMissingValue):
+            m.unset_config('key', scope='global', missing_ok=False)
+
+        self.assertDictEqual(m.load_config(), {})
+
+        m.unset_config('key', scope='global', missing_ok=True)
+        self.assertDictEqual(m.load_config(), {})
+
+    def test_unset_config_global_extra(self):
+        m, _ = self._make(global_state={
+            'key': ['someval'],
+            'extra': ['another'],
+        })
+
+        m.unset_config('key', scope='global', missing_ok=False)
+        self.assertDictEqual(m.load_config(), {
+            'extra': ['another'],
+        })
+
+        with self.assertRaises(scm.GitConfigUnsetMissingValue):
+            m.unset_config('key', scope='global', missing_ok=False)
+
+        self.assertDictEqual(m.load_config(), {
+            'extra': ['another'],
+        })
+
+        m.unset_config('key', scope='global', missing_ok=True)
+        self.assertDictEqual(m.load_config(), {
+            'extra': ['another'],
+        })
+
+    def test_unset_config_global_multi(self):
+        m, _ = self._make(global_state={
+            'key': ['1', '2'],
+        })
+
+        with self.assertRaises(scm.GitConfigUnsetMultipleValues):
+            m.unset_config('key', scope='global', missing_ok=True)
+
+    def test_unset_config_multi_global(self):
+        m, _ = self._make(global_state={
+            'key': ['1', '2'],
+        })
+
+        m.unset_config_multi('key',
+                             value_pattern=None,
+                             scope='global',
+                             missing_ok=False)
+        self.assertDictEqual(m.load_config(), {})
+
+        with self.assertRaises(scm.GitConfigUnsetMissingValue):
+            m.unset_config_multi('key',
+                                 value_pattern=None,
+                                 scope='global',
+                                 missing_ok=False)
+
+    def test_unset_config_multi_global_pattern(self):
+        m, _ = self._make(global_state={
+            'key': ['1', '2', '3', '1', '2'],
+        })
+
+        m.unset_config_multi('key',
+                             value_pattern='2',
+                             scope='global',
+                             missing_ok=False)
+        self.assertDictEqual(m.load_config(), {
+            'key': ['1', '3', '1'],
+        })
+
+
 if __name__ == '__main__':
     if '-v' in sys.argv:
         logging.basicConfig(level=logging.DEBUG)
     unittest.main()
 
-# vim: ts=2:sw=2:tw=80:et:
+# vim: ts=4:sw=4:tw=80:et:
