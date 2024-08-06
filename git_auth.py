@@ -76,7 +76,7 @@ class ConfigChanger(object):
         return parts._replace(path='/', query='', fragment='').geturl()
 
     @classmethod
-    def new_from_env(cls, cwd: str, cl: git_cl.Changelist) -> 'ConfigChanger':
+    def new_from_env(cls, cwd: str, cl: git_cl.Changelist) -> ConfigChanger:
         """Create a ConfigChanger by inferring from env.
 
         The Gerrit host is inferred from the current repo/branch.
