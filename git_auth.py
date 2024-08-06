@@ -61,6 +61,7 @@ class ConfigChanger(object):
 
     @functools.cached_property
     def _shortname(self) -> str:
+        # Example: chromium
         parts: urllib.parse.SplitResult = urllib.parse.urlsplit(
             self._remote_url)
         name: str = parts.netloc.split('.')[0]
@@ -70,7 +71,8 @@ class ConfigChanger(object):
 
     @functools.cached_property
     def _base_url(self) -> str:
-        # Base URL looks like https://chromium.googlesource.com/
+        # Example: https://chromium.googlesource.com/
+        # Example: https://chromium-review.googlesource.com/
         parts: urllib.parse.SplitResult = urllib.parse.urlsplit(
             self._remote_url)
         return parts._replace(path='/', query='', fragment='').geturl()
