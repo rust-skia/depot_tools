@@ -21,8 +21,10 @@ import traceback
 
 import gclient_utils
 import gerrit_util
+import git_auth
 import git_cache
 import git_common
+import newauth
 import scm
 import subprocess2
 
@@ -1320,6 +1322,10 @@ class GitWrapper(SCMWrapper):
         # create it, so we need to do it manually.
         parent_dir = os.path.dirname(self.checkout_path)
         gclient_utils.safe_makedirs(parent_dir)
+
+        # Set up Git authentication configuration that is needed to clone/fetch the repo.
+        if newauth.Enabled():
+            git_auth.ConfigureGlobal('/', url)
 
         if hasattr(options, 'no_history') and options.no_history:
             self._Run(['init', self.checkout_path], options, cwd=self._root_dir)

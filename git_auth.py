@@ -108,6 +108,20 @@ class ConfigChanger(object):
             remote_url=remote_url,
         )
 
+    @classmethod
+    def new_for_remote(cls, cwd: str, remote_url: str) -> ConfigChanger:
+        """Create a ConfigChanger for the given Gerrit host.
+
+        The user, which is used to determine the mode, is inferred using
+        git-config(1) in the given `cwd`.
+        """
+        c = cls(
+            mode=ConfigMode.NEW_AUTH,
+            remote_url=remote_url,
+        )
+        c.mode = cls._infer_mode(cwd, c._shortname + '-review.googlesource.com')
+        return c
+
     @staticmethod
     def _infer_mode(cwd: str, gerrit_host: str) -> ConfigMode:
         """Infer default mode to use."""
@@ -278,6 +292,12 @@ def Configure(cwd: str, cl: git_cl.Changelist) -> None:
                   c2.mode, c.mode)
     logging.debug('Configuring current Git repo authentication...')
     c2.apply(cwd)
+
+
+def ConfigureGlobal(cwd: str, remote_url: str) -> None:
+    """Configure global/user Git authentication."""
+    logging.debug('Configuring global Git authentication for %s', remote_url)
+    ConfigChanger.new_for_remote(cwd, remote_url).apply_global(cwd)
 
 
 def ClearRepoConfig(cwd: str, cl: git_cl.Changelist) -> None:
