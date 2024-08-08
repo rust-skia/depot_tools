@@ -2,11 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+from __future__ import annotations
+
 import os
 import sys
 import threading
 
-from typing import Dict, List, Optional
 from unittest import mock
 import unittest
 
@@ -17,8 +18,8 @@ import scm
 
 
 def GIT(test: unittest.TestCase,
-        config: Optional[Dict[str, List[str]]] = None,
-        branchref: Optional[str] = None):
+        config: dict[str, list[str]] | None = None,
+        branchref: str | None = None):
     """Installs fakes/mocks for scm.GIT so that:
 
       * Initial git config (local scope) is set to `config`.
@@ -43,7 +44,7 @@ def GIT(test: unittest.TestCase,
     def _newBranch(branchref):
         _branchref[0] = branchref
 
-    patches: List[mock._patch] = [
+    patches: list[mock._patch] = [
         mock.patch('scm.GIT._new_config_state',
                    side_effect=lambda _: scm.GitConfigStateTest(
                        global_lock, global_state, local_state=config)),
