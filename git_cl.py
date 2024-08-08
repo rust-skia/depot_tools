@@ -4504,6 +4504,107 @@ def CMDissue(parser, args):
     return 0
 
 
+def _create_commit_message(orig_message, bug=None):
+    """Returns a commit message for the cherry picked CL."""
+    orig_message_lines = orig_message.splitlines()
+    subj_line = orig_message_lines[0]
+    new_message = (f'Cherry pick "{subj_line}"\n\n'
+                   "Original change's description:\n")
+    for line in orig_message_lines:
+        new_message += f'> {line}\n'
+    if bug:
+        new_message += f'\nBug: {bug}\n'
+    return new_message
+
+
+# TODO(b/341792235): Add metrics.
+@subcommand.usage('[revisions ...]')
+def CMDcherry_pick(parser, args):
+    """Upload a chain of cherry picks to Gerrit.
+
+    This must be run inside the git repo you're trying to make changes to.
+    """
+    if gclient_utils.IsEnvCog():
+        print('cherry-pick command is not supported in non-git environment',
+              file=sys.stderr)
+        return 1
+
+    parser.add_option('--branch', help='Gerrit branch, e.g. refs/heads/main')
+    parser.add_option('--bug',
+                      help='Bug to add to the description of each change.')
+    parser.add_option('--parent-change-num',
+                      type='int',
+                      help='The parent change of the first cherry-pick CL, '
+                      'i.e. the start of the CL chain.')
+    options, args = parser.parse_args(args)
+
+    if not options.branch:
+        parser.error('Branch is required.')
+    if not args:
+        parser.error('No revisions to cherry pick.')
+
+    # Gerrit needs a change ID for each commit we cherry pick.
+    change_ids_to_message = {}
+    change_ids_to_commit = {}
+    for commit in args:
+        message = git_common.run('show', '-s', '--format=%B', commit).strip()
+        if change_id := git_footers.get_footer_change_id(message):
+            change_ids_to_message[change_id[0]] = message
+            change_ids_to_commit[change_id[0]] = commit
+            continue
+        raise RuntimeError(f'Change ID not found for {commit}')
+
+    print(f'Creating chain of {len(change_ids_to_message)} cherry pick(s)...')
+
+    # Gerrit only supports cherry picking one commit per change, so we have
+    # to cherry pick each commit individually and create a chain of CLs.
+    host = Changelist().GetGerritHost()
+    parent_change_num = options.parent_change_num
+    for change_id, orig_message in change_ids_to_message.items():
+        change_ids_to_commit.pop(change_id)
+        message = _create_commit_message(orig_message, options.bug)
+
+        # Create a cherry pick first, then rebase. If we create a chained CL
+        # then cherry pick, the change will lose its relation to the parent.
+        new_change_info = gerrit_util.CherryPick(host,
+                                                 change_id,
+                                                 options.branch,
+                                                 message=message)
+        new_change_id = new_change_info['change_id']
+        new_change_num = new_change_info['_number']
+        new_change_url = gerrit_util.GetChangePageUrl(host, new_change_num)
+
+        orig_subj_line = orig_message.splitlines()[0]
+        print(f'Created cherry pick of "{orig_subj_line}": {new_change_url}')
+
+        if parent_change_num:
+            try:
+                # TODO(b/341792235): gerrit_util will always retry failed Gerrit
+                # requests 5 times. This doesn't make sense if a rebase fails
+                # due to a merge conflict since the result won't change. Make
+                # RebaseChange retry at most once.
+                gerrit_util.RebaseChange(host, new_change_id, parent_change_num)
+            except gerrit_util.GerritError as e:
+                parent_change_url = gerrit_util.GetChangePageUrl(
+                    host, parent_change_num)
+                print(f'Failed to rebase {new_change_url} on '
+                      f'{parent_change_url}: {e}. Please resolve any merge '
+                      'conflicts.')
+                print('Once resolved, you can continue the CL chain with '
+                      f'`--parent-change-num={new_change_num}` to specify '
+                      'which change the chain should start with.\n')
+
+                if change_ids_to_message:
+                    print('Remaining commit(s) to cherry pick:')
+                    for commit in change_ids_to_commit.values():
+                        print(f'  {commit}')
+
+                return 1
+        parent_change_num = new_change_num
+
+    return 0
+
+
 @metrics.collector.collect_metrics('git cl comments')
 def CMDcomments(parser, args):
     """Shows or posts review comments for any changelist."""

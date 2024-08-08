@@ -1326,6 +1326,14 @@ def RestoreChange(host, change, msg=''):
     return ReadHttpJsonResponse(conn)
 
 
+def RebaseChange(host, change, base=None):
+    """Rebases a change."""
+    path = f'changes/{change}/rebase'
+    body = {'base': base} if base else {}
+    conn = CreateHttpConn(host, path, reqtype='POST', body=body)
+    return ReadHttpJsonResponse(conn)
+
+
 def SubmitChange(host, change):
     """Submits a Gerrit change via Gerrit."""
     path = 'changes/%s/submit' % change
@@ -1387,12 +1395,14 @@ def DeletePendingChangeEdit(host, change):
     ReadHttpResponse(conn, accept_statuses=[204, 404])
 
 
-def CherryPick(host, change, destination, revision='current'):
+def CherryPick(host, change, destination, revision='current', message=None):
     """Create a cherry-pick commit from the given change, onto the given
     destination.
     """
     path = 'changes/%s/revisions/%s/cherrypick' % (change, revision)
     body = {'destination': destination}
+    if message:
+        body['message'] = message
     conn = CreateHttpConn(host, path, reqtype='POST', body=body)
     return ReadHttpJsonResponse(conn)
 
