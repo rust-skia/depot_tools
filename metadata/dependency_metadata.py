@@ -218,16 +218,11 @@ class DependencyMetadata:
                     reason=f"Required field '{field_name}' is missing.")
                 results.append(error)
 
-        # At least one of the fields Version, Date or Revision must be
-        # provided.
-        version_value = self._metadata.get(known_fields.VERSION)
-        date_value = self._metadata.get(known_fields.DATE)
-        revision_value = self._metadata.get(known_fields.REVISION)
-        if ((not version_value
-             or version_util.version_is_unknown(version_value)) and
-            (not date_value or version_util.version_is_unknown(date_value))
-                and (not revision_value
-                     or version_util.version_is_unknown(revision_value))):
+        # If the repository is hosted somewhere (i.e. Chromium isn't the
+        # canonical repositroy of the dependency), at least one of the fields
+        # Version, Date or Revision must be provided.
+        if (not (self.is_canonical or self.version or self.date
+                 or self.revision)):
             versioning_fields = [
                 known_fields.VERSION, known_fields.DATE, known_fields.REVISION
             ]
