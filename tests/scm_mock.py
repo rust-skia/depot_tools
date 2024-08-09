@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import sys
 import threading
+from typing import Iterable
 
 from unittest import mock
 import unittest
@@ -19,7 +20,7 @@ import scm
 
 def GIT(test: unittest.TestCase,
         *,
-        branchref: str | None = None):
+        branchref: str | None = None) -> Iterable[tuple[str, list[str]]]:
     """Installs fakes/mocks for scm.GIT so that:
 
       * GetBranch will just return a fake branchname starting with the value of
@@ -54,3 +55,5 @@ def GIT(test: unittest.TestCase,
         test.addCleanup(p.stop)
 
     test.addCleanup(scm.GIT.drop_config_cache)
+
+    return global_state.items()
