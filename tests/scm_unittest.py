@@ -426,9 +426,7 @@ class GitConfigStateTestTest(unittest.TestCase):
     @staticmethod
     def _make(*,
               global_state: dict[str, list[str]] | None = None,
-              system_state: dict[str, list[str]] | None = None,
-              local_state: dict[str, list[str]] | None = None,
-              worktree_state: dict[str, list[str]] | None = None):
+              system_state: dict[str, list[str]] | None = None):
         """_make constructs a GitConfigStateTest with an internal Lock.
 
         If global_state is None, an empty dictionary will be constructed and
@@ -442,9 +440,7 @@ class GitConfigStateTestTest(unittest.TestCase):
         global_state = global_state or {}
         m = scm.GitConfigStateTest(threading.Lock(),
                                    global_state,
-                                   system_state=system_state,
-                                   local_state=local_state,
-                                   worktree_state=worktree_state)
+                                   system_state=system_state)
         return m, global_state
 
     def test_construction_empty(self):
@@ -475,39 +471,6 @@ class GitConfigStateTestTest(unittest.TestCase):
         gs['section.key'] = ['override']
         self.assertDictEqual(m.load_config(),
                              {'section.key': ['system', 'override']})
-
-    def test_construction_local(self):
-        m, gs = self._make(
-            global_state={'section.key': ['global']},
-            system_state={'section.key': ['system']},
-            local_state={'section.key': ['local']},
-        )
-        self.assertDictEqual(gs, {'section.key': ['global']})
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['system', 'global', 'local'],
-        })
-
-        gs['section.key'] = ['override']
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['system', 'override', 'local'],
-        })
-
-    def test_construction_worktree(self):
-        m, gs = self._make(
-            global_state={'section.key': ['global']},
-            system_state={'section.key': ['system']},
-            local_state={'section.key': ['local']},
-            worktree_state={'section.key': ['worktree']},
-        )
-        self.assertDictEqual(gs, {'section.key': ['global']})
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['system', 'global', 'local', 'worktree'],
-        })
-
-        gs['section.key'] = ['override']
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['system', 'override', 'local', 'worktree'],
-        })
 
     def test_set_config_system(self):
         m, _ = self._make()
