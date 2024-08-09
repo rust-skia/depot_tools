@@ -242,8 +242,17 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             if k == "use_remoteexec" and v == "true":
                 use_remoteexec = True
                 continue
+            if k == "use_remoteexec" and v == "false":
+                use_remoteexec = False
+                continue
             if k == "use_siso" and v == "true":
                 use_siso = True
+                continue
+            if k == "use_siso" and v == "false":
+                use_siso = False
+                continue
+            if k == "use_reclient" and v == "true":
+                use_reclient = True
                 continue
             if k == "use_reclient" and v == "false":
                 use_reclient = False
