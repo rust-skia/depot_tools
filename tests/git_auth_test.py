@@ -32,7 +32,7 @@ class TestConfigChanger(unittest.TestCase):
             '/some/fake/dir': {
                 'credential.https://chromium.googlesource.com/.helper':
                 ['', 'luci'],
-                'http.cookieFile': [''],
+                'http.cookiefile': [''],
             },
         }
         self.assertEqual(scm.GIT._dump_config_state(), want)
@@ -46,9 +46,9 @@ class TestConfigChanger(unittest.TestCase):
         want = {
             '/some/fake/dir': {
                 'protocol.sso.allow': ['always'],
-                'url.sso://chromium/.insteadOf':
+                'url.sso://chromium/.insteadof':
                 ['https://chromium.googlesource.com/'],
-                'http.cookieFile': [''],
+                'http.cookiefile': [''],
             },
         }
         self.assertEqual(scm.GIT._dump_config_state(), want)
@@ -79,7 +79,7 @@ class TestConfigChanger(unittest.TestCase):
             '/some/fake/dir': {
                 'credential.https://chromium.googlesource.com/.helper':
                 ['', 'luci'],
-                'http.cookieFile': [''],
+                'http.cookiefile': [''],
             },
         }
         self.assertEqual(scm.GIT._dump_config_state(), want)
@@ -98,9 +98,9 @@ class TestConfigChanger(unittest.TestCase):
         want = {
             '/some/fake/dir': {
                 'protocol.sso.allow': ['always'],
-                'url.sso://chromium/.insteadOf':
+                'url.sso://chromium/.insteadof':
                 ['https://chromium.googlesource.com/'],
-                'http.cookieFile': [''],
+                'http.cookiefile': [''],
             },
         }
         self.assertEqual(scm.GIT._dump_config_state(), want)

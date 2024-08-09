@@ -36,6 +36,12 @@ def GIT(test: unittest.TestCase,
     # TODO - add `system_config` - this will be configuration which exists at
     # the 'system installation' level and is immutable.
 
+    if config:
+        config = {
+            scm.canonicalize_git_config_key(k): v
+            for k, v in config.items()
+        }
+
     _branchref = [branchref or 'refs/heads/main']
 
     global_lock = threading.Lock()
