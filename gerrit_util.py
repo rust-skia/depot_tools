@@ -120,9 +120,9 @@ def time_time():
     return time.time()
 
 
-def log_retry_and_sleep(seconds, attempt):
+def log_retry_and_sleep(seconds, attempt, try_limit):
     LOGGER.info('Will retry in %d seconds (%d more times)...', seconds,
-                TRY_LIMIT - attempt - 1)
+                try_limit - attempt - 1)
     time_sleep(seconds)
     return seconds * random.uniform(MIN_BACKOFF, MAX_BACKOFF)
 
@@ -757,7 +757,8 @@ class GceAuthenticator(_Authenticator):
             # Retry server error status codes.
             LOGGER.warning('Encountered server error')
             if TRY_LIMIT - i > 1:
-                next_delay_sec = log_retry_and_sleep(next_delay_sec, i)
+                next_delay_sec = log_retry_and_sleep(next_delay_sec, i,
+                                                     TRY_LIMIT)
         return None, None
 
     @classmethod
@@ -968,25 +969,27 @@ def CreateHttpConn(host: str,
 
 
 def ReadHttpResponse(conn: HttpConn,
-                     accept_statuses: Container[int] = frozenset([200])):
+                     accept_statuses: Container[int] = frozenset([200]),
+                     max_tries=TRY_LIMIT):
     """Reads an HTTP response from a connection into a string buffer.
 
     Args:
         conn: An Http object created by CreateHttpConn above.
         accept_statuses: Treat any of these statuses as success. Default: [200]
             Common additions include 204, 400, and 404.
+        max_tries: The maximum number of times the request should be attempted.
     Returns:
         A string buffer containing the connection's reply.
     """
     response = contents = None
     sleep_time = SLEEP_TIME
-    for idx in range(TRY_LIMIT):
+    for idx in range(max_tries):
         before_response = time.time()
         try:
             response, contents = conn.request(**conn.req_params)
         except socket.timeout:
-            if idx < TRY_LIMIT - 1:
-                sleep_time = log_retry_and_sleep(sleep_time, idx)
+            if idx < max_tries - 1:
+                sleep_time = log_retry_and_sleep(sleep_time, idx, max_tries)
                 continue
             raise
         contents = contents.decode('utf-8', 'replace')
@@ -1024,8 +1027,8 @@ def ReadHttpResponse(conn: HttpConn,
             conn.req_params['uri'], http_version, http_version, response.status,
             response.reason, contents)
 
-        if idx < TRY_LIMIT - 1:
-            sleep_time = log_retry_and_sleep(sleep_time, idx)
+        if idx < max_tries - 1:
+            sleep_time = log_retry_and_sleep(sleep_time, idx, max_tries)
     # end of retries loop
 
     # Help the type checker a bit here - it can't figure out the `except` logic
@@ -1053,10 +1056,11 @@ def ReadHttpResponse(conn: HttpConn,
     raise GerritError(response.status, reason)
 
 
-def ReadHttpJsonResponse(
-    conn, accept_statuses: Container[int] = frozenset([200])) -> dict:
+def ReadHttpJsonResponse(conn,
+                         accept_statuses: Container[int] = frozenset([200]),
+                         max_tries=TRY_LIMIT) -> dict:
     """Parses an https response as json."""
-    fh = ReadHttpResponse(conn, accept_statuses)
+    fh = ReadHttpResponse(conn, accept_statuses, max_tries)
     # The first line of the response should always be: )]}'
     s = fh.readline()
     if s and s.rstrip() != ")]}'":
@@ -1331,7 +1335,10 @@ def RebaseChange(host, change, base=None):
     path = f'changes/{change}/rebase'
     body = {'base': base} if base else {}
     conn = CreateHttpConn(host, path, reqtype='POST', body=body)
-    return ReadHttpJsonResponse(conn)
+    # If a rebase fails due to a merge conflict, Gerrit returns 409. Retrying
+    # more than once probably won't help since the merge conflict will still
+    # exist.
+    return ReadHttpJsonResponse(conn, max_tries=2)
 
 
 def SubmitChange(host, change):

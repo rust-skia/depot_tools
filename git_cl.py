@@ -4579,10 +4579,6 @@ def CMDcherry_pick(parser, args):
 
         if parent_change_num:
             try:
-                # TODO(b/341792235): gerrit_util will always retry failed Gerrit
-                # requests 5 times. This doesn't make sense if a rebase fails
-                # due to a merge conflict since the result won't change. Make
-                # RebaseChange retry at most once.
                 gerrit_util.RebaseChange(host, new_change_id, parent_change_num)
             except gerrit_util.GerritError as e:
                 parent_change_url = gerrit_util.GetChangePageUrl(

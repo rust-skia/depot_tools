@@ -459,6 +459,21 @@ class GerritUtilTest(unittest.TestCase):
         self.assertEqual(2, len(conn.request.mock_calls))
         gerrit_util.time_sleep.assert_called_once_with(12.0)
 
+    def testReadHttpResponse_SetMaxTries(self):
+        conn = mock.Mock(req_params={'uri': 'uri', 'method': 'method'})
+        conn.request.side_effect = [
+            (mock.Mock(status=409), b'error!'),
+            (mock.Mock(status=409), b'error!'),
+            (mock.Mock(status=409), b'error!'),
+        ]
+
+        self.assertRaises(gerrit_util.GerritError,
+                          gerrit_util.ReadHttpResponse,
+                          conn,
+                          max_tries=2)
+        self.assertEqual(2, len(conn.request.mock_calls))
+        gerrit_util.time_sleep.assert_called_once_with(12.0)
+
     def testReadHttpResponse_Expected404(self):
         conn = mock.Mock()
         conn.req_params = {'uri': 'uri', 'method': 'method'}
