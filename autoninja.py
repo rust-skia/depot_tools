@@ -406,6 +406,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
 
 
 def _upload_ninjalog(args):
+    warnings.simplefilter("ignore", ResourceWarning)
     # Run upload script without wait.
     creationflags = 0
     if platform.system() == "Windows":
