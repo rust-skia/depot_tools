@@ -15,6 +15,7 @@ import threading
 
 from collections import defaultdict
 from itertools import chain
+from typing import Any
 from typing import Collection, Iterable, Iterator, Literal, Dict
 from typing import Optional, Sequence, Mapping
 
@@ -363,6 +364,8 @@ class GitConfigStateReal(GitConfigStateBase):
     the git configuration files on disk via GIT.Capture.
     """
 
+    _GLOBAL_LOCK = threading.Lock()
+
     def __init__(self, root: pathlib.Path):
         super().__init__()
         self.root = root
@@ -392,7 +395,8 @@ class GitConfigStateReal(GitConfigStateBase):
         args = ['config', f'--{scope}', key, value]
         if append:
             args.append('--add')
-        GIT.Capture(args, cwd=self.root)
+        with self._scope_lock(scope):
+            GIT.Capture(args, cwd=self.root)
 
     def set_config_multi(self, key: str, value: str, *,
                          value_pattern: Optional[str], scope: GitConfigScope):
@@ -432,6 +436,15 @@ class GitConfigStateReal(GitConfigStateBase):
             if cpe.returncode == 5:
                 raise GitConfigUnsetMissingValue(key, scope)
             raise
+
+    def _scope_lock(
+            self,
+            scope: GitConfigScope) -> contextlib.AbstractContextManager[Any]:
+        if scope == 'global':
+            return self._GLOBAL_LOCK
+        # TODO(ayatane): We should lock per local repo scope as well
+        # from a correctness perspective.
+        return contextlib.nullcontext()
 
 
 class GitConfigStateTest(GitConfigStateBase):
