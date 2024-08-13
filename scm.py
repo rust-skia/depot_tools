@@ -404,16 +404,18 @@ class GitConfigStateReal(GitConfigStateBase):
         args = ['config', f'--{scope}', '--replace-all', key, value]
         if value_pattern is not None:
             args.append(value_pattern)
-        GIT.Capture(args, cwd=self.root)
+        with self._scope_lock(scope):
+            GIT.Capture(args, cwd=self.root)
 
     def unset_config(self, key: str, *, scope: GitConfigScope,
                      missing_ok: bool):
         # NOTE: `git config` already canonicalizes key.
         accepted_retcodes = (0, 5) if missing_ok else (0, )
         try:
-            GIT.Capture(['config', f'--{scope}', '--unset', key],
-                        cwd=self.root,
-                        accepted_retcodes=accepted_retcodes)
+            with self._scope_lock(scope):
+                GIT.Capture(['config', f'--{scope}', '--unset', key],
+                            cwd=self.root,
+                            accepted_retcodes=accepted_retcodes)
         except subprocess2.CalledProcessError as cpe:
             if cpe.returncode == 5:
                 if b'multiple values' in cpe.stderr:
@@ -429,9 +431,10 @@ class GitConfigStateReal(GitConfigStateBase):
         if value_pattern is not None:
             args.append(value_pattern)
         try:
-            GIT.Capture(args,
-                        cwd=self.root,
-                        accepted_retcodes=accepted_retcodes)
+            with self._scope_lock(scope):
+                GIT.Capture(args,
+                            cwd=self.root,
+                            accepted_retcodes=accepted_retcodes)
         except subprocess2.CalledProcessError as cpe:
             if cpe.returncode == 5:
                 raise GitConfigUnsetMissingValue(key, scope)
