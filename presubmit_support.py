@@ -2020,11 +2020,18 @@ def DoPresubmitChecks(change,
         global _ASKED_FOR_FEEDBACK
         # Ask for feedback one time out of 5.
         if (results and random.randint(0, 4) == 0 and not _ASKED_FOR_FEEDBACK):
-            sys.stdout.write(
-                'Was the presubmit check useful? If not, run "git cl presubmit -v"\n'
-                'to figure out which PRESUBMIT.py was run, then run git blame\n'
-                'on the file to figure out who to ask for help.\n')
             _ASKED_FOR_FEEDBACK = True
+            if gclient_utils.IsEnvCog():
+                sys.stdout.write(
+                    'Was the presubmit check useful? If not, view the file\'s\n'
+                    'blame on Code Search to figure out who to ask for help.\n')
+            else:
+                sys.stdout.write(
+                    'Was the presubmit check useful? If not, run '
+                    '"git cl presubmit -v"\n'
+                    'to figure out which PRESUBMIT.py was run, then run '
+                    '"git blame"\n'
+                    'on the file to figure out who to ask for help.\n')
 
         return 1 if presubmits_failed else 0
 
