@@ -405,14 +405,23 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
     return ninja.main(ninja_args)
 
 
-def _upload_ninjalog(args):
+def _upload_ninjalog(args, exit_code, build_duration):
     warnings.simplefilter("ignore", ResourceWarning)
     # Run upload script without wait.
     creationflags = 0
     if platform.system() == "Windows":
         creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
+    cmd = [
+        sys.executable,
+        _NINJALOG_UPLOADER,
+        "--exit_code",
+        str(exit_code),
+        "--build_duration",
+        str(int(build_duration)),
+        "--cmdline",
+    ] + args[1:]
     subprocess.Popen(
-        [sys.executable, _NINJALOG_UPLOADER, "--cmdline"] + args[1:],
+        cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         creationflags=creationflags,
@@ -420,6 +429,7 @@ def _upload_ninjalog(args):
 
 
 def main(args):
+    start = time.time()
     # Generate Build ID randomly.
     # This ID is expected to be used consistently in all build tools.
     build_id = os.environ.get("AUTONINJA_BUILD_ID")
@@ -445,7 +455,8 @@ def main(args):
         exit_code = 1
     finally:
         if should_collect_logs:
-            _upload_ninjalog(input_args)
+            elapsed = time.time() - start
+            _upload_ninjalog(input_args, exit_code, elapsed)
     return exit_code
 
 
