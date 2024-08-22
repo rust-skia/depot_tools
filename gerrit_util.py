@@ -58,7 +58,8 @@ import subprocess2
 #
 # Changes:
 #   * all string literals changed to bytes literals.
-#   * all __symbols changed to _socksocket__symbols.
+#   * added more http methods to recognize.
+#   * all __symbols changed to _socksocket__symbols (Python __ munging).
 #   * Type annotations added to function signature.
 def __fixed_rewrite_proxy(self: httplib2.socks.socksocket, header: bytes):
     """ rewrite HTTP request headers to support non-tunneling proxies
@@ -70,7 +71,8 @@ def __fixed_rewrite_proxy(self: httplib2.socks.socksocket, header: bytes):
     for hdr in hdrs:
         if hdr.lower().startswith(b"host:"):
             host = hdr
-        elif hdr.lower().startswith(b"get") or hdr.lower().startswith(b"post"):
+        elif hdr.lower().split(b" ")[0] in (b"get", b"head", b"post", b"put",
+                                            b"patch"):
             endpt = hdr
     if host and endpt:
         hdrs.remove(host)
