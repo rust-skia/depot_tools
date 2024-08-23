@@ -112,6 +112,7 @@ def main(args):
         ]
         for siso_path in siso_paths:
             if siso_path and os.path.isfile(siso_path):
+                checkOutdir(args[1:])
                 return subprocess.call([siso_path] + args[1:], env=env)
     if siso_override_path:
         return subprocess.call([siso_override_path] + args[1:])
