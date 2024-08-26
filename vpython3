@@ -37,6 +37,11 @@ fi
 export DEPOT_TOOLS_DIR="${DEPOT_TOOLS_DIR:-$(dirname "$0")}"
 export DEPOT_TOOLS_UNAME_S="${DEPOT_TOOLS_UNAME_S:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
 
+# Don't write pyc files if running from a Cog workspace.
+if [[ "$(pwd)" == "/google/cog/"* ]]; then
+  export PYTHONDONTWRITEBYTECODE=1
+fi
+
 source "${DEPOT_TOOLS_DIR}/cipd_bin_setup.sh"
 CIPD_ROOT=$(cipd_bin_setup) &> /dev/null
 
