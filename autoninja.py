@@ -33,6 +33,7 @@ import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
 import build_telemetry
+import gclient_utils
 import gn_helper
 import ninja
 import ninjalog_uploader
@@ -271,6 +272,19 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                     file=sys.stderr,
                 )
                 return 1
+
+        if gclient_utils.IsEnvCog():
+            if not use_remoteexec or use_reclient or not use_siso:
+                print(
+                    "WARNING: You're not using Siso's built-in remote "
+                    "execution. The build will be slow.\n"
+                    "You should set the following in args.gn to get better "
+                    "performance:\n"
+                    "  use_remoteexec=true\n"
+                    "  use_reclient=false\n"
+                    "  use_siso=true\n",
+                    file=sys.stderr,
+                )
 
         siso_marker = os.path.join(output_dir, ".siso_deps")
         if use_siso:
