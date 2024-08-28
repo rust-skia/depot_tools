@@ -4543,22 +4543,34 @@ def CMDcherry_pick(parser, args):
     if not args:
         parser.error('No revisions to cherry pick.')
 
-    # Gerrit needs a change ID for each commit we cherry pick.
+    # TODO(b/341792235): Consider using GetCommitMessage after b/362567930 is
+    # fixed so this command can be run outside of a git workspace.
+    host = Changelist().GetGerritHost()
     change_ids_to_message = {}
     change_ids_to_commit = {}
+
+    # Gerrit needs a change ID for each commit we cherry pick.
     for commit in args:
+        # Don't use the ChangeId in the commit message since it may not be
+        # unique. Gerrit will error with "Multiple changes found" if we use a
+        # non-unique ID. Instead, query Gerrit with the hash and verify it
+        # corresponds to a unique CL.
+        changes = gerrit_util.QueryChanges(host, [('commit', commit)])
+        if not changes:
+            raise RuntimeError(f'No changes found for {commit}.')
+        if len(changes) > 1:
+            raise RuntimeError(f'Multiple changes found for {commit}.')
+
+        change_id = changes[0]['id']
+        change_ids_to_commit[change_id] = commit
+
         message = git_common.run('show', '-s', '--format=%B', commit).strip()
-        if change_id := git_footers.get_footer_change_id(message):
-            change_ids_to_message[change_id[0]] = message
-            change_ids_to_commit[change_id[0]] = commit
-            continue
-        raise RuntimeError(f'Change ID not found for {commit}')
+        change_ids_to_message[change_id] = message
 
     print(f'Creating chain of {len(change_ids_to_message)} cherry pick(s)...')
 
     # Gerrit only supports cherry picking one commit per change, so we have
     # to cherry pick each commit individually and create a chain of CLs.
-    host = Changelist().GetGerritHost()
     parent_change_num = options.parent_change_num
     for change_id, orig_message in change_ids_to_message.items():
         change_ids_to_commit.pop(change_id)
@@ -4566,11 +4578,13 @@ def CMDcherry_pick(parser, args):
 
         # Create a cherry pick first, then rebase. If we create a chained CL
         # then cherry pick, the change will lose its relation to the parent.
+        # TODO(b/341792235): Don't retry more than once on merge conflicts and
+        # handle them gracefully.
         new_change_info = gerrit_util.CherryPick(host,
                                                  change_id,
                                                  options.branch,
                                                  message=message)
-        new_change_id = new_change_info['change_id']
+        new_change_id = new_change_info['id']
         new_change_num = new_change_info['_number']
         new_change_url = gerrit_util.GetChangePageUrl(host, new_change_num)
 
