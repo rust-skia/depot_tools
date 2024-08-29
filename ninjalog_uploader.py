@@ -123,7 +123,7 @@ def GetJflag(cmdline):
             return int(cmdline[i][len("-j"):])
 
 
-def GetMetadata(cmdline, ninjalog, exit_code, build_duration):
+def GetMetadata(cmdline, ninjalog, exit_code, build_duration, user):
     """Get metadata for uploaded ninjalog.
 
     Returned metadata has schema defined in
@@ -151,6 +151,7 @@ def GetMetadata(cmdline, ninjalog, exit_code, build_duration):
         build_configs[k] = str(build_configs[k])
 
     metadata = {
+        "user": user,
         "exit_code": exit_code,
         "build_duration_sec": build_duration,
         "platform": platform.system(),
@@ -278,7 +279,7 @@ def main():
         return 0
 
     metadata = GetMetadata(args.cmdline, ninjalog, args.exit_code,
-                           args.build_duration)
+                           args.build_duration, cfg.user)
     exit_code = UploadNinjaLog(args.server, ninjalog, metadata)
     if exit_code == 0:
         last_upload_file.touch()

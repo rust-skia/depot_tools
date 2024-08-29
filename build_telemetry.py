@@ -5,6 +5,7 @@
 
 import argparse
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -44,11 +45,14 @@ class Config:
 
         if not config:
             config = {
-                "is_googler": is_googler(),
+                "user": check_auth().get("email", ""),
                 "status": None,
                 "countdown": self._countdown,
                 "version": VERSION,
             }
+        if not config.get("user"):
+            config["user"] = check_auth().get("email", "")
+
 
         self._config = config
 
@@ -62,9 +66,14 @@ class Config:
 
     @property
     def is_googler(self):
+        return self.user.endswith("@google.com")
+
+    @property
+    def user(self):
         if not self._config:
             return
-        return self._config.get("is_googler") == True
+        return self._config.get("user", "")
+
 
     @property
     def countdown(self):
@@ -84,7 +93,7 @@ class Config:
                   self._config_path,
                   file=sys.stderr)
             return False
-        if not self._config.get("is_googler"):
+        if not self.is_googler:
             return False
         if self._config.get("status") == "opt-out":
             return False
@@ -138,25 +147,22 @@ def load_config(cfg_path=_DEFAULT_CONFIG_PATH, countdown=_DEFAULT_COUNTDOWN):
     return cfg
 
 
-def is_googler():
-    """Checks whether this user is Googler or not."""
+def check_auth():
+    """Checks auth information."""
     p = subprocess.run(
-        "cipd auth-info",
+        "cipd auth-info --json-output -",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         shell=True,
     )
     if p.returncode != 0:
-        return False
-    lines = p.stdout.splitlines()
-    if len(lines) == 0:
-        return False
-    l = lines[0]
-    # |l| will be like 'Logged in as <user>@google.com.' for googler using
-    # reclient.
-    return l.startswith("Logged in as ") and l.endswith("@google.com.")
-
+        return {}
+    try:
+        return json.loads(p.stdout)
+    except json.JSONDecodeError as e:
+        logging.error(e)
+        return {}
 
 def enabled():
     """Checks whether the build can upload build telemetry."""
