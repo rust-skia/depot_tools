@@ -1413,7 +1413,11 @@ def CherryPick(host, change, destination, revision='current', message=None):
     if message:
         body['message'] = message
     conn = CreateHttpConn(host, path, reqtype='POST', body=body)
-    return ReadHttpJsonResponse(conn)
+
+    # If a cherry pick fails due to a merge conflict, Gerrit returns 409.
+    # Retrying more than once probably won't help since the merge conflict will
+    # still exist.
+    return ReadHttpJsonResponse(conn, max_tries=2)
 
 
 def CherryPickCommit(host, project, commit, destination):

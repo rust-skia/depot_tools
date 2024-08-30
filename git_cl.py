@@ -4569,26 +4569,37 @@ def CMDcherry_pick(parser, args):
 
     print(f'Creating chain of {len(change_ids_to_message)} cherry pick(s)...')
 
+    def print_any_remaining_commits():
+        if not change_ids_to_commit:
+            return
+        print('Remaining commit(s) to cherry pick:')
+        for commit in change_ids_to_commit.values():
+            print(f'  {commit}')
+
     # Gerrit only supports cherry picking one commit per change, so we have
     # to cherry pick each commit individually and create a chain of CLs.
     parent_change_num = options.parent_change_num
     for change_id, orig_message in change_ids_to_message.items():
         change_ids_to_commit.pop(change_id)
         message = _create_commit_message(orig_message, options.bug)
+        orig_subj_line = orig_message.splitlines()[0]
 
         # Create a cherry pick first, then rebase. If we create a chained CL
         # then cherry pick, the change will lose its relation to the parent.
-        # TODO(b/341792235): Don't retry more than once on merge conflicts and
-        # handle them gracefully.
-        new_change_info = gerrit_util.CherryPick(host,
-                                                 change_id,
-                                                 options.branch,
-                                                 message=message)
+        try:
+            new_change_info = gerrit_util.CherryPick(host,
+                                                     change_id,
+                                                     options.branch,
+                                                     message=message)
+        except gerrit_util.GerritError as e:
+            print(f'Failed to create cherry pick "{orig_subj_line}": {e}. '
+                  'Please resolve any merge conflicts.')
+            print_any_remaining_commits()
+            return 1
+
         new_change_id = new_change_info['id']
         new_change_num = new_change_info['_number']
         new_change_url = gerrit_util.GetChangePageUrl(host, new_change_num)
-
-        orig_subj_line = orig_message.splitlines()[0]
         print(f'Created cherry pick of "{orig_subj_line}": {new_change_url}')
 
         if parent_change_num:
@@ -4603,13 +4614,9 @@ def CMDcherry_pick(parser, args):
                 print('Once resolved, you can continue the CL chain with '
                       f'`--parent-change-num={new_change_num}` to specify '
                       'which change the chain should start with.\n')
-
-                if change_ids_to_message:
-                    print('Remaining commit(s) to cherry pick:')
-                    for commit in change_ids_to_commit.values():
-                        print(f'  {commit}')
-
+                print_any_remaining_commits()
                 return 1
+
         parent_change_num = new_change_num
 
     return 0
