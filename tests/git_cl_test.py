@@ -51,6 +51,18 @@ def callError(code=1, cmd='', cwd='', stdout=b'', stderr=b''):
 CERR1 = callError(1)
 
 
+def getAccountDetailsMock(host, account_id='self'):
+    if account_id == 'self':
+        return {
+            '_account_id': 123456,
+            'avatars': [],
+            'email': 'getAccountDetailsMock@example.com',
+            'name': 'GetAccountDetails(self)',
+            'status': 'OOO',
+        }
+    return None
+
+
 class TemporaryFileMock(object):
     def __init__(self):
         self.suffix = 0
@@ -1199,6 +1211,8 @@ class TestGitCl(unittest.TestCase):
                    return_value=change_id).start()
         mock.patch('git_common.get_or_create_merge_base',
                    return_value='origin/' + default_branch).start()
+        mock.patch('gerrit_util.GetAccountDetails',
+                    getAccountDetailsMock).start()
         mock.patch(
             'gclient_utils.AskForData',
             lambda prompt: self._mocked_call('ask_for_data', prompt)).start()

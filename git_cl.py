@@ -5252,6 +5252,18 @@ def CMDupload(parser, args):
                        if opt.help != optparse.SUPPRESS_HELP))
         return
 
+    cl = Changelist(branchref=options.target_branch)
+
+    # Do a quick RPC to Gerrit to ensure that our authentication is all working
+    # properly. Otherwise `git cl upload` will:
+    #   * run `git status` (slow for large repos)
+    #   * run presubmit tests (likely slow)
+    #   * ask the user to edit the CL description (requires thinking)
+    #
+    # And then attempt to push the change up to Gerrit, which can fail if
+    # authentication is not working properly.
+    gerrit_util.GetAccountDetails(cl.GetGerritHost())
+
     # TODO(crbug.com/1475405): Warn users if the project uses submodules and
     # they have fsmonitor enabled.
     if os.path.isfile('.gitmodules'):
@@ -5298,8 +5310,6 @@ def CMDupload(parser, args):
     if options.squash is None:
         # Load default for user, repo, squash=true, in this order.
         options.squash = settings.GetSquashGerritUploads()
-
-    cl = Changelist(branchref=options.target_branch)
 
     # Warm change details cache now to avoid RPCs later, reducing latency for
     # developers.
