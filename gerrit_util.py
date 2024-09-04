@@ -179,6 +179,9 @@ def ShouldUseSSO(host: str, email: str) -> bool:
     if not newauth.Enabled():
         LOGGER.debug("SSO=False: not opted in")
         return False
+    if not host.endswith('.googlesource.com'):
+        LOGGER.debug("SSO=False: non-googlesource host %r", host)
+        return False
     if newauth.SkipSSO():
         LOGGER.debug("SSO=False: set skip SSO config")
         return False
