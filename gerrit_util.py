@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import base64
 import contextlib
+import functools
 import http.cookiejar
 import json
 import logging
@@ -173,6 +174,7 @@ class SSOHelper(object):
 ssoHelper = SSOHelper()
 
 
+@functools.lru_cache(maxsize=None)
 def ShouldUseSSO(host: str, email: str) -> bool:
     """Return True if we should use SSO for the given Gerrit host and user."""
     LOGGER.debug("Determining whether we should use SSO...")

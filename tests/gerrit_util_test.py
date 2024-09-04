@@ -731,17 +731,15 @@ class ShouldUseSSOTest(unittest.TestCase):
     def setUp(self) -> None:
         self.newauth = mock.patch('newauth.Enabled', return_value=True)
         self.newauth.start()
-
         self.cwd = mock.patch('os.getcwd', return_value='/fake/cwd')
         self.cwd.start()
-
         self.sso = mock.patch('gerrit_util.ssoHelper.find_cmd',
                               return_value='/fake/git-remote-sso')
         self.sso.start()
-
         scm_mock.GIT(self)
-
         self.addCleanup(mock.patch.stopall)
+
+        gerrit_util.ShouldUseSSO.cache_clear()
         return super().setUp()
 
     def tearDown(self) -> None:
