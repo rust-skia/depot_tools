@@ -5451,6 +5451,8 @@ Original change's description:
 > 
 > Bug: 123456
 > Change-Id: I25699146b24c7ad8776f17775f489b9d41499595
+
+Change-Id: I25699146b24c7ad8776f17775f489b9d41499595
 """
         self.assertEqual(git_cl._create_commit_message(orig_message),
                          expected_message)
@@ -5475,6 +5477,7 @@ Original change's description:
 > Change-Id: I25699146b24c7ad8776f17775f489b9d41499595
 
 Bug: {bug}
+Change-Id: I25699146b24c7ad8776f17775f489b9d41499595
 """
         self.assertEqual(git_cl._create_commit_message(orig_message, bug),
                          expected_message)

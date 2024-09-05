@@ -4512,8 +4512,11 @@ def _create_commit_message(orig_message, bug=None):
                    "Original change's description:\n")
     for line in orig_message_lines:
         new_message += f'> {line}\n'
+    new_message += '\n'
     if bug:
-        new_message += f'\nBug: {bug}\n'
+        new_message += f'Bug: {bug}\n'
+    if change_id := git_footers.get_footer_change_id(orig_message):
+        new_message += f'Change-Id: {change_id[0]}\n'
     return new_message
 
 
