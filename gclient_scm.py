@@ -671,9 +671,14 @@ class GitWrapper(SCMWrapper):
                 # the cache to set and unset consecutively.
                 config_updates = []
 
+                if scm.GIT.GetConfig(
+                        args[0].checkout_path,
+                        'blame.ignorerevsfile') != '.git-blame-ignore-revs':
+                    config_updates.append(
+                        ('blame.ignoreRevsFile', '.git-blame-ignore-revs'))
+
                 if scm.GIT.GetConfig(args[0].checkout_path,
                                      'diff.ignoresubmodules') != 'dirty':
-                    # If diff.ignoreSubmodules is not already set, set it to `all`.
                     config_updates.append(('diff.ignoreSubmodules', 'dirty'))
 
                 if scm.GIT.GetConfig(args[0].checkout_path,
