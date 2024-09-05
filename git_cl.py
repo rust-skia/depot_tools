@@ -4583,7 +4583,6 @@ def CMDcherry_pick(parser, args):
     # to cherry pick each commit individually and create a chain of CLs.
     parent_change_num = options.parent_change_num
     for change_id, orig_message in change_ids_to_message.items():
-        change_ids_to_commit.pop(change_id)
         message = _create_commit_message(orig_message, options.bug)
         orig_subj_line = orig_message.splitlines()[0]
 
@@ -4600,6 +4599,7 @@ def CMDcherry_pick(parser, args):
             print_any_remaining_commits()
             return 1
 
+        change_ids_to_commit.pop(change_id)
         new_change_id = new_change_info['id']
         new_change_num = new_change_info['_number']
         new_change_url = gerrit_util.GetChangePageUrl(host, new_change_num)
