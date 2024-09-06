@@ -149,17 +149,19 @@ def load_config(cfg_path=_DEFAULT_CONFIG_PATH, countdown=_DEFAULT_COUNTDOWN):
 
 def check_auth():
     """Checks auth information."""
-    p = subprocess.run(
-        "cipd auth-info --json-output -",
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        shell=True,
-    )
-    if p.returncode != 0:
+    try:
+        out = subprocess.check_output(
+            "cipd auth-info --json-output -",
+            text=True,
+            shell=True,
+            timeout=3,
+        )
+    except Exception as e:
+        print("WARNING: depot_tools.build_telemetry: "
+              f"failed to get auth info: {e}")
         return {}
     try:
-        return json.loads(p.stdout)
+        return json.loads(out)
     except json.JSONDecodeError as e:
         logging.error(e)
         return {}

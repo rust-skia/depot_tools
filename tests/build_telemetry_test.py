@@ -5,6 +5,7 @@
 
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -19,19 +20,18 @@ import build_telemetry
 class BuildTelemetryTest(unittest.TestCase):
 
     def test_check_auth(self):
-        with unittest.mock.patch('subprocess.run') as run_mock:
-            run_mock.return_value.returncode = 0
+        with unittest.mock.patch('subprocess.check_output') as run_mock:
             auth = {'email': 'bob@google.com'}
-            run_mock.return_value.stdout = json.dumps(auth)
+            run_mock.return_value = json.dumps(auth)
             self.assertEqual(build_telemetry.check_auth(), auth)
 
-        with unittest.mock.patch('subprocess.run') as run_mock:
-            run_mock.return_value.returncode = 1
+        with unittest.mock.patch('subprocess.check_output') as run_mock:
+            run_mock.side_effect = subprocess.CalledProcessError(
+                1, cmd=['check auth'], stderr='failed')
             self.assertEqual(build_telemetry.check_auth(), {})
 
-        with unittest.mock.patch('subprocess.run') as run_mock:
-            run_mock.return_value.returncode = 0
-            run_mock.return_value.stdout = ''
+        with unittest.mock.patch('subprocess.check_output') as run_mock:
+            run_mock.return_value = ''
             self.assertEqual(build_telemetry.check_auth(), {})
 
     def test_load_and_save_config(self):
