@@ -17,6 +17,7 @@ See also the privacy review. http://eldar/assessments/656778450
 """
 
 import argparse
+import getpass
 import gzip
 import http
 import io
@@ -33,41 +34,39 @@ import urllib.request
 
 import build_telemetry
 
-# These build configs affect build performance.
-ALLOWLISTED_CONFIGS = (
-    "android_static_analysis",
-    "blink_symbol_level",
-    "disable_android_lint",
-    "enable_nacl",
-    "host_cpu",
-    "host_os",
-    "incremental_install",
-    "is_component_build",
-    "is_debug",
-    "is_java_debug",
-    "symbol_level",
-    "target_cpu",
-    "target_os",
-    "treat_warnings_as_errors",
-    "use_errorprone_java_compiler",
-    "use_remoteexec",
-    "use_siso",
+# Configs that should not be uploaded as is.
+SENSITIVE_CONFIGS = (
+    "google_api_key",
+    "google_default_client_id",
+    "google_default_client_secret",
+    "ios_credential_provider_extension_api_key",
+    "ios_credential_provider_extension_client_id",
+    "ios_encryption_export_compliance_code",
+    "ios_google_test_oauth_client_id",
+    "ios_google_test_oauth_client_secret",
 )
-
 
 def ParseGNArgs(gn_args):
     """Parse gn_args as json and return config dictionary."""
     configs = json.loads(gn_args)
     build_configs = {}
+    user = getpass.getuser()
 
     for config in configs:
         key = config["name"]
-        if key not in ALLOWLISTED_CONFIGS:
-            continue
         if "current" in config:
-            build_configs[key] = config["current"]["value"]
+            value = config["current"]["value"]
         else:
-            build_configs[key] = config["default"]["value"]
+            value = config["default"]["value"]
+        value = value.strip('"')
+        if key in SENSITIVE_CONFIGS and value:
+            value = '<omitted>'
+        # Do not upload username.
+        if os.path.isabs(value):
+            value = os.path.join(*[
+                p if p != user else "$USER" for p in pathlib.Path(value).parts
+            ])
+        build_configs[key] = value
 
     return build_configs
 

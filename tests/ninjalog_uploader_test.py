@@ -41,7 +41,7 @@ class NinjalogUploaderTest(unittest.TestCase):
                     },
                 ])), {
                     'is_component_build': 'true',
-                    'host_cpu': '"x64"',
+                    'host_cpu': 'x64',
                 })
 
         self.assertEqual(
@@ -68,6 +68,35 @@ class NinjalogUploaderTest(unittest.TestCase):
                 ])), {
                     'is_component_build': 'true',
                     'use_remoteexec': 'false'
+                })
+
+        # Do not include sensitive information.
+        with unittest.mock.patch('getpass.getuser', return_value='bob'):
+            args = ninjalog_uploader.ParseGNArgs(
+                json.dumps([
+                    {
+                        'current': {
+                            'value': 'xyz'
+                        },
+                        'default': {
+                            'value': ''
+                        },
+                        'name': 'google_api_key'
+                    },
+                    {
+                        'current': {
+                            'value': '/home/bob/bobo'
+                        },
+                        'default': {
+                            'value': ''
+                        },
+                        'name': 'path_with_homedir'
+                    },
+                ]))
+            self.assertEqual(
+                args, {
+                    'google_api_key': '<omitted>',
+                    'path_with_homedir': '/home/$USER/bobo',
                 })
 
     def test_get_ninjalog(self):
