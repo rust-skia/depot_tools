@@ -677,27 +677,9 @@ class GitWrapper(SCMWrapper):
                     config_updates.append(
                         ('blame.ignoreRevsFile', '.git-blame-ignore-revs'))
 
-                ignore_submodules = scm.GIT.GetConfig(args[0].checkout_path,
-                                                      'diff.ignoresubmodules',
-                                                      None, 'local')
-
-                if not ignore_submodules:
+                if scm.GIT.GetConfig(args[0].checkout_path,
+                                     'diff.ignoresubmodules') != 'dirty':
                     config_updates.append(('diff.ignoreSubmodules', 'dirty'))
-                elif ignore_submodules != 'dirty':
-                    warning_message = (
-                        "diff.ignoreSubmodules is not set to 'dirty' "
-                        "for this repository.\n"
-                        "This may cause unexpected behavior with submodules; "
-                        "see //docs/git_submodules.md\n"
-                        "Consider setting the config:\n"
-                        "\tgit config diff.ignoreSubmodule dirty\n"
-                        "or disable this warning by setting the "
-                        "GCLIENT_SUPPRESS_SUBMODULE_WARNING environment "
-                        "variable to 1.")
-                    if os.environ.get(
-                            'GCLIENT_SUPPRESS_SUBMODULE_WARNING') != '1':
-                        gclient_utils.AddWarning(warning_message)
-
 
                 if scm.GIT.GetConfig(args[0].checkout_path,
                                      'fetch.recursesubmodules') != 'off':
