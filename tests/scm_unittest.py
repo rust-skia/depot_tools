@@ -11,6 +11,7 @@ import os
 import sys
 import tempfile
 import threading
+from collections import defaultdict
 import unittest
 from unittest import mock
 
@@ -192,6 +193,27 @@ class RealGitTest(fake_repos.FakeReposTestBase):
     def testGetAllFiles(self):
         self.assertEqual(['DEPS', 'foo bar', 'origin'],
                          scm.GIT.GetAllFiles(self.cwd))
+
+    def testScopedConfig(self):
+        scm.GIT.SetConfig(self.cwd,
+                          "diff.test-key",
+                          value="some value",
+                          scope="global")
+        self.assertEqual(scm.GIT.GetConfig(self.cwd, "diff.test-key", None),
+                         "some value")
+        self.assertEqual(
+            scm.GIT.GetConfig(self.cwd, "diff.test-key", None, scope="local"),
+            None)
+
+        scm.GIT.SetConfig(self.cwd,
+                          "diff.test-key1",
+                          value="some value",
+                          scope="local")
+        self.assertEqual(scm.GIT.GetConfig(self.cwd, "diff.test-key1", None),
+                         "some value")
+        self.assertEqual(
+            scm.GIT.GetConfig(self.cwd, "diff.test-key1", None, scope="local"),
+            "some value")
 
     def testGetSetConfig(self):
         key = 'scm.test-key'
@@ -449,28 +471,82 @@ class GitConfigStateTestTest(unittest.TestCase):
         self.assertDictEqual(m.load_config(), {})
 
         gs['section.key'] = ['override']
-        self.assertDictEqual(m.load_config(), {'section.key': ['override']})
+        self.assertDictEqual(
+            m.load_config(), {
+                "global": {
+                    'section.key': ['override']
+                },
+                "default": {
+                    'section.key': ['override']
+                },
+            })
+
+    def defaultdict_to_dict(self, d):
+        if isinstance(d, defaultdict):
+            return {k: self.defaultdict_to_dict(v) for k, v in d.items()}
+        return d
 
     def test_construction_global(self):
-        m, gs = self._make(global_state={'section.key': ['global']})
-        self.assertDictEqual(gs, {'section.key': ['global']})
-        self.assertDictEqual(m.load_config(), {'section.key': ['global']})
+
+        m, gs = self._make(global_state={
+            'section.key': ['global'],
+        })
+        self.assertDictEqual(self.defaultdict_to_dict(gs),
+                             {'section.key': ['global']})
+        self.assertDictEqual(
+            self.defaultdict_to_dict(m.load_config()), {
+                "global": {
+                    'section.key': ['global']
+                },
+                "default": {
+                    'section.key': ['global']
+                },
+            })
 
         gs['section.key'] = ['override']
-        self.assertDictEqual(m.load_config(), {'section.key': ['override']})
+        self.assertDictEqual(
+            self.defaultdict_to_dict(m.load_config()), {
+                "global": {
+                    'section.key': ['override']
+                },
+                "default": {
+                    'section.key': ['override']
+                },
+            })
 
     def test_construction_system(self):
         m, gs = self._make(
             global_state={'section.key': ['global']},
             system_state={'section.key': ['system']},
         )
-        self.assertDictEqual(gs, {'section.key': ['global']})
-        self.assertDictEqual(m.load_config(),
-                             {'section.key': ['system', 'global']})
+        self.assertDictEqual(self.defaultdict_to_dict(gs),
+                             {'section.key': ['global']})
+        self.assertDictEqual(
+            self.defaultdict_to_dict(m.load_config()), {
+                'default': {
+                    'section.key': ['system', 'global']
+                },
+                "global": {
+                    'section.key': ['global']
+                },
+                "system": {
+                    'section.key': ['system']
+                }
+            })
 
         gs['section.key'] = ['override']
-        self.assertDictEqual(m.load_config(),
-                             {'section.key': ['system', 'override']})
+        self.assertDictEqual(
+            self.defaultdict_to_dict(m.load_config()), {
+                "global": {
+                    'section.key': ['override']
+                },
+                "system": {
+                    'section.key': ['system']
+                },
+                'default': {
+                    'section.key': ['system', 'override']
+                }
+            })
 
     def test_set_config_system(self):
         m, _ = self._make()
@@ -496,9 +572,15 @@ class GitConfigStateTestTest(unittest.TestCase):
         self.assertDictEqual(m.load_config(), {})
 
         m.set_config('section.key', 'new_global', append=True, scope='global')
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['new_global'],
-        })
+        self.assertDictEqual(
+            m.load_config(), {
+                "default": {
+                    'section.key': ['new_global']
+                },
+                "global": {
+                    'section.key': ['new_global']
+                }
+            })
 
     def test_set_config_global(self):
         m, gs = self._make()
@@ -506,44 +588,64 @@ class GitConfigStateTestTest(unittest.TestCase):
         self.assertDictEqual(m.load_config(), {})
 
         m.set_config('section.key', 'new_global', append=False, scope='global')
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['new_global'],
-        })
+        self.assertDictEqual(
+            self.defaultdict_to_dict(m.load_config()), {
+                "global": {
+                    'section.key': ['new_global']
+                },
+                "default": {
+                    'section.key': ['new_global']
+                }
+            })
 
         m.set_config('section.key', 'new_global2', append=True, scope='global')
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['new_global', 'new_global2'],
-        })
+        self.assertDictEqual(
+            self.defaultdict_to_dict(m.load_config()), {
+                "global": {
+                    'section.key': ['new_global', 'new_global2']
+                },
+                "default": {
+                    'section.key': ['new_global', 'new_global2']
+                },
+            })
 
-        self.assertDictEqual(gs, {
-            'section.key': ['new_global', 'new_global2'],
-        })
+        self.assertDictEqual(self.defaultdict_to_dict(gs),
+                             {'section.key': ['new_global', 'new_global2']})
 
     def test_set_config_multi_global(self):
-        m, gs = self._make(global_state={
-            'section.key': ['1', '2'],
-        })
+        m, gs = self._make(global_state={'section.key': ['1', '2']})
 
         m.set_config_multi('section.key',
                            'new_global',
                            value_pattern=None,
                            scope='global')
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['new_global'],
-        })
+        self.assertDictEqual(
+            self.defaultdict_to_dict(m.load_config()), {
+                "default": {
+                    'section.key': ['new_global']
+                },
+                "global": {
+                    'section.key': ['new_global']
+                }
+            })
 
-        self.assertDictEqual(gs, {
-            'section.key': ['new_global'],
-        })
+        self.assertDictEqual(gs, {'section.key': ['new_global']})
 
         m.set_config_multi('othersection.key',
                            'newval',
                            value_pattern=None,
                            scope='global')
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['new_global'],
-            'othersection.key': ['newval'],
-        })
+        self.assertDictEqual(
+            m.load_config(), {
+                "global": {
+                    'section.key': ['new_global'],
+                    'othersection.key': ['newval'],
+                },
+                "default": {
+                    'section.key': ['new_global'],
+                    'othersection.key': ['newval'],
+                }
+            })
 
         self.assertDictEqual(gs, {
             'section.key': ['new_global'],
@@ -559,17 +661,29 @@ class GitConfigStateTestTest(unittest.TestCase):
                            'new_global',
                            value_pattern='2',
                            scope='global')
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['1', '1', 'new_global', '3'],
-        })
+        self.assertDictEqual(
+            m.load_config(), {
+                "global": {
+                    'section.key': ['1', '1', 'new_global', '3']
+                },
+                "default": {
+                    'section.key': ['1', '1', 'new_global', '3']
+                }
+            })
 
         m.set_config_multi('section.key',
                            'additional',
                            value_pattern='narp',
                            scope='global')
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['1', '1', 'new_global', '3', 'additional'],
-        })
+        self.assertDictEqual(
+            m.load_config(), {
+                "default": {
+                    'section.key': ['1', '1', 'new_global', '3', 'additional']
+                },
+                "global": {
+                    'section.key': ['1', '1', 'new_global', '3', 'additional']
+                }
+            })
 
     def test_unset_config_global(self):
         m, _ = self._make(global_state={
@@ -595,19 +709,34 @@ class GitConfigStateTestTest(unittest.TestCase):
 
         m.unset_config('section.key', scope='global', missing_ok=False)
         self.assertDictEqual(m.load_config(), {
-            'extra': ['another'],
+            "global": {
+                'extra': ['another']
+            },
+            "default": {
+                'extra': ['another']
+            }
         })
 
         with self.assertRaises(scm.GitConfigUnsetMissingValue):
             m.unset_config('section.key', scope='global', missing_ok=False)
 
         self.assertDictEqual(m.load_config(), {
-            'extra': ['another'],
+            "global": {
+                'extra': ['another']
+            },
+            "default": {
+                'extra': ['another']
+            }
         })
 
         m.unset_config('section.key', scope='global', missing_ok=True)
         self.assertDictEqual(m.load_config(), {
-            'extra': ['another'],
+            "global": {
+                'extra': ['another']
+            },
+            "default": {
+                'extra': ['another']
+            }
         })
 
     def test_unset_config_global_multi(self):
@@ -644,9 +773,15 @@ class GitConfigStateTestTest(unittest.TestCase):
                              value_pattern='2',
                              scope='global',
                              missing_ok=False)
-        self.assertDictEqual(m.load_config(), {
-            'section.key': ['1', '3', '1'],
-        })
+        self.assertDictEqual(
+            m.load_config(), {
+                'global': {
+                    'section.key': ['1', '3', '1'],
+                },
+                'default': {
+                    'section.key': ['1', '3', '1'],
+                }
+            })
 
 
 class CanonicalizeGitConfigKeyTest(unittest.TestCase):

@@ -235,17 +235,30 @@ class CachedGitConfigState(object):
 
     def GetConfig(self,
                   key: str,
-                  default: Optional[str] = None) -> Optional[str]:
+                  default: Optional[str] = None,
+                  scope: Optional[str] = None) -> Optional[str]:
         """Lazily loads all configration observable for this CachedGitConfigState,
         then returns the last value for `key` as a string.
 
         If `key` is missing, returns default.
         """
+
         key = canonicalize_git_config_key(key)
-        values = self._maybe_load_config().get(key, None)
-        if not values:
+        if not scope:
+            scope = "default"
+
+        scoped_config = self._maybe_load_config()
+        if not scoped_config:
             return default
 
+        scoped_config = scoped_config.get(scope, None)
+        if not scoped_config:
+            return default
+
+        values = scoped_config.get(key, None)
+
+        if not values:
+            return default
         return values[-1]
 
     def GetConfigBool(self, key: str) -> bool:
@@ -259,7 +272,7 @@ class CachedGitConfigState(object):
     def GetConfigList(self, key: str) -> list[str]:
         """Returns all values of `key` as a list of strings."""
         key = canonicalize_git_config_key(key)
-        return list(self._maybe_load_config().get(key, ()))
+        return list(self._maybe_load_config().get('default', {}).get(key, ()))
 
     def YieldConfigRegexp(self,
                           pattern: Optional[str] = None
@@ -278,7 +291,8 @@ class CachedGitConfigState(object):
             pred = lambda _: True
         else:
             pred = re.compile(pattern).match
-        for key, values in sorted(self._maybe_load_config().items()):
+        for key, values in sorted(self._maybe_load_config().get('default',
+                                                                {}).items()):
             if pred(key):
                 for value in values:
                     yield key, value
@@ -373,19 +387,36 @@ class GitConfigStateReal(GitConfigStateBase):
     def load_config(self) -> GitFlatConfigData:
         # NOTE: `git config --list` already canonicalizes keys.
         try:
-            rawConfig = GIT.Capture(['config', '--list', '-z'],
+            rawConfig = GIT.Capture(['config', '--list', '-z', '--show-scope'],
                                     cwd=self.root,
                                     strip_out=False)
         except subprocess2.CalledProcessError:
             return {}
 
         assert isinstance(rawConfig, str)
-        cfg: Dict[str, list[str]] = defaultdict(list)
+        cfg: Dict[str, Dict[str,
+                            List[str]]] = defaultdict(lambda: defaultdict(list))
 
-        # Splitting by '\x00' gets an additional empty string at the end.
-        for line in rawConfig.split('\x00')[:-1]:
-            key, value = map(str.strip, line.split('\n', 1))
-            cfg[key].append(value)
+        entries = rawConfig.split('\x00')[:-1]
+
+        def process_entry(entry: str, scope: str) -> None:
+            parts = entry.split('\n', 1)
+            key, value = parts if len(parts) == 2 else (parts[0], '')
+            key, value = key.strip(), value.strip()
+            cfg[scope][key].append(value)
+            if scope != "default":
+                cfg["default"][key].append(value)
+
+        i = 0
+        while i < len(entries):
+            if entries[i] in ['local', 'global', 'system']:
+                scope = entries[i]
+                i += 1
+                if i < len(entries):
+                    process_entry(entries[i], scope)
+            else:
+                process_entry(entries[i], "default")
+            i += 1
 
         return cfg
 
@@ -504,18 +535,20 @@ class GitConfigStateTest(GitConfigStateBase):
             raise GitConfigUnknownScope(scope)
 
     def load_config(self) -> GitFlatConfigData:
-        ret = {k: list(v) for k, v in self.system_state.items()}
-        for scope in GitScopeOrder:
-            if scope == 'system':
+        cfg: Dict[str, Dict[str,
+                            List[str]]] = defaultdict(lambda: defaultdict(list))
+
+        for key, values in self.system_state.items():
+            cfg['system'][key].extend(values)
+            cfg['default'][key].extend(values)
+        for ordered_scope in GitScopeOrder:
+            if ordered_scope == 'system':
                 continue
-            with self._editable_scope(scope) as cfg:
-                for key, value in cfg.items():
-                    curvals = ret.get(key, None)
-                    if curvals is None:
-                        curvals = []
-                        ret[key] = curvals
-                    curvals.extend(value)
-        return ret
+            with self._editable_scope(ordered_scope) as scope_cfg:
+                for key, values in scope_cfg.items():
+                    cfg[ordered_scope][key].extend(values)
+                    cfg['default'][key].extend(values)
+        return cfg
 
     def set_config(self, key: str, value: str, *, append: bool,
                    scope: GitConfigScope):
@@ -644,7 +677,8 @@ class GIT(object):
             state = {}
             for key, val in cls._CONFIG_CACHE.items():
                 if val is not None:
-                    state[str(key)] = val._maybe_load_config()
+                    state[str(key)] = val._maybe_load_config().get(
+                        'default', {})
         return state
 
     @staticmethod
@@ -714,13 +748,14 @@ class GIT(object):
     @staticmethod
     def GetConfig(cwd: str,
                   key: str,
-                  default: Optional[str] = None) -> Optional[str]:
+                  default: Optional[str] = None,
+                  scope: Optional[str] = None) -> Optional[str]:
         """Lazily loads all configration observable for this CachedGitConfigState,
         then returns the last value for `key` as a string.
 
         If `key` is missing, returns default.
         """
-        return GIT._get_config_state(cwd).GetConfig(key, default)
+        return GIT._get_config_state(cwd).GetConfig(key, default, scope)
 
     @staticmethod
     def GetConfigBool(cwd: str, key: str) -> bool:
