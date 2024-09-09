@@ -761,12 +761,14 @@ class GitWrapper(SCMWrapper):
             # Rewrite remote refs to their local equivalents.
             revision = ''.join(remote_ref)
             rev_type = "branch"
-        elif revision.startswith('refs/'):
+        elif revision.startswith('refs/heads/'):
             # Local branch? We probably don't want to support, since DEPS should
             # always specify branches as they are in the upstream repo.
             rev_type = "branch"
         else:
-            # hash is also a tag, only make a distinction at checkout
+            # hash is also a tag, only make a distinction at checkout.
+            # Any ref (e.g. /refs/changes/*) not a branch has no difference from
+            # a hash.
             rev_type = "hash"
 
         # If we are going to introduce a new project, there is a possibility
