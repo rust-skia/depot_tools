@@ -690,10 +690,10 @@ class GitWrapper(SCMWrapper):
                         "This may cause unexpected behavior with submodules; "
                         "see //docs/git_submodules.md\n"
                         "Consider setting the config:\n"
-                        "\tgit config diff.ignoreSubmodule dirty\n"
+                        "\tgit config diff.ignoreSubmodules dirty\n"
                         "or disable this warning by setting the "
-                        "GCLIENT_SUPPRESS_SUBMODULE_WARNING environment "
-                        "variable to 1.")
+                        "GCLIENT_SUPPRESS_SUBMODULE_WARNING\n"
+                        "environment variable to 1.")
                     if os.environ.get(
                             'GCLIENT_SUPPRESS_SUBMODULE_WARNING') != '1':
                         gclient_utils.AddWarning(warning_message)
