@@ -199,13 +199,6 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
         if use_remoteexec:
             if use_reclient:
                 project = _reclient_rbe_project()
-                if not project:
-                    print(
-                        "Can't detect RBE project to use.\n"
-                        "Did you setup properly?\n",
-                        file=sys.stderr,
-                    )
-                    return 1
             elif use_siso and project is None:
                 # siso runs locally if empty project is given
                 # even if use_remoteexec=true is set.
