@@ -9,7 +9,7 @@ set scriptdir=%~dp0
 
 if "%*" == "/?" (
   rem Handle "autoninja /?" which will otherwise give help on the "call" command
-  @call python3.bat %~dp0\ninja.py --help
+  @call %scriptdir%python-bin\python3.bat %~dp0\ninja.py --help
   exit /b
 )
 
@@ -20,7 +20,7 @@ if "%*" == "/?" (
 if "%NINJA_SUMMARIZE_BUILD%" == "1" set "NINJA_STATUS=[%%r processes, %%f/%%t @ %%o/s : %%es ] "
 
 :: Execute autoninja.py and pass all arguments to it.
-@call %scriptdir%\vpython3.bat %scriptdir%autoninja.py "%%*"
+@call %scriptdir%python-bin\python3.bat %scriptdir%autoninja.py "%%*"
 @if errorlevel 1 goto buildfailure
 
 :: Use call to invoke python script here, because we use python via python3.bat.

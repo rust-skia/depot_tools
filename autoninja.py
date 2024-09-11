@@ -1,4 +1,4 @@
-#!/usr/bin/env vpython3
+#!/usr/bin/env python3
 # Copyright (c) 2017 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -16,12 +16,10 @@ settings.
 
 import uuid
 import logging
-import json
 import multiprocessing
 import os
 import platform
 import re
-import shelve
 import shlex
 import shutil
 import subprocess
@@ -29,10 +27,8 @@ import sys
 import time
 import warnings
 
-import google.auth
-from google.auth.transport.requests import AuthorizedSession
-
 import build_telemetry
+import gclient_paths
 import gclient_utils
 import gn_helper
 import ninja
@@ -57,114 +53,46 @@ _UNSAFE_FOR_CMD = set("^<>&|()%")
 _ALL_META_CHARS = _UNSAFE_FOR_CMD.union(set('"'))
 
 
-def _adc_account():
-    """Returns account used to authenticate with GCP application default credentials."""
-
-    try:
-        # Suppress warnings from google.auth.default.
-        # https://github.com/googleapis/google-auth-library-python/issues/271
-        warnings.filterwarnings(
-            "ignore",
-            "Your application has authenticated using end user credentials from"
-            " Google Cloud SDK without a quota project.",
-        )
-        credentials, _ = google.auth.default(
-            scopes=["https://www.googleapis.com/auth/userinfo.email"])
-    except google.auth.exceptions.DefaultCredentialsError:
-        # Application Default Crendetials is not configured.
-        return None
-    finally:
-        warnings.resetwarnings()
-
-    with AuthorizedSession(credentials) as session:
-        try:
-            response = session.get(
-                "https://www.googleapis.com/oauth2/v1/userinfo")
-        except Exception:
-            # Ignore exception.
-            return None
-
-    return response.json().get("email")
-
-
-def _gcloud_auth_account():
-    """Returns active account authenticated with `gcloud auth login`."""
-    if shutil.which("gcloud") is None:
-        return None
-
-    accounts = json.loads(
-        subprocess.check_output("gcloud auth list --format=json",
-                                shell=True,
-                                text=True))
-    for account in accounts:
-        if account["status"] == "ACTIVE":
-            return account["account"]
-    return None
-
-
-def _luci_auth_account():
-    """Returns active account authenticated with `luci-auth login -scopes-context`."""
-    if shutil.which("luci-auth") is None:
-        return None
-
-    # First line returned should be "Logged in as account@domain.com."
-    # Extract the account@domain.com from that line.
-    try:
-        info = subprocess.check_output("luci-auth info -scopes-context",
-                                       shell=True,
-                                       stderr=subprocess.STDOUT,
-                                       text=True).split('\n')[0]
-        if info.startswith("Logged in as "):
-            return info[len("Logged in as "):-1]
-    except subprocess.CalledProcessError:
-        return None
-    return None
-
-
 def _is_google_corp_machine():
     """This assumes that corp machine has gcert binary in known location."""
     return shutil.which("gcert") is not None
 
 
-def _is_google_corp_machine_using_external_account():
-    if os.environ.get("AUTONINJA_SKIP_EXTERNAL_ACCOUNT_CHECK") == "1":
-        print(
-            "WARNING: AUTONINJA_SKIP_EXTERNAL_ACCOUNT_CHECK env var is set.\n"
-            "This is only for some infra, do not set this in personal"
-            " development machine.",
-            file=sys.stderr)
-        return False
+def _reclient_rbe_project():
+    """Returns RBE project used by reclient."""
+    instance = os.environ.get('RBE_instance')
+    if instance:
+        m = re.match(instance, 'projects/([^/]*)/instances/.*')
+        if m:
+            return m[1]
+    reproxy_cfg_path = reclient_helper.find_reclient_cfg()
+    if not reproxy_cfg_path:
+        return ""
+    with open(reproxy_cfg_path) as f:
+        for line in f:
+            m = re.match('instance\s*=\s*projects/([^/]*)/instances/.*', line)
+            if m:
+                return m[1]
+    return ""
 
-    if not _is_google_corp_machine():
-        return False
 
-    with shelve.open(os.path.join(_SCRIPT_DIR, ".autoninja")) as db:
-        last_false = db.get("last_false")
-        now = time.time()
-        if last_false is not None and now < last_false + 12 * 60 * 60:
-            # Do not check account if it is checked in last 12 hours.
-            return False
-
-        account = _adc_account()
-        if account and not account.endswith("@google.com"):
-            return True
-
-        account = _luci_auth_account()
-        if account and not account.endswith("@google.com"):
-            return True
-
-        account = _gcloud_auth_account()
-        if not account:
-            db["last_false"] = now
-            return False
-
-        # Handle service account and google account as internal account.
-        if not (account.endswith("@google.com")
-                or account.endswith("gserviceaccount.com")):
-            return True
-
-        db["last_false"] = now
-        return False
+def _siso_rbe_project():
+    """Returns RBE project used by siso."""
+    siso_project = os.environ.get('SISO_PROJECT')
+    if siso_project:
+        return siso_project
+    root_dir = gclient_paths.GetPrimarySolutionPath()
+    if not root_dir:
+        return ""
+    sisoenv_path = os.path.join(root_dir, 'build/config/siso/.sisoenv')
+    if not os.path.exists(sisoenv_path):
+        return ""
+    with open(sisoenv_path) as f:
+        for line in f:
+            m = re.match('SISO_PROJECT=\s*(\S*)\s*', line)
+            if m:
+                return m[1]
+    return ""
 
 
 def _quote_for_cmd(arg):
@@ -200,6 +128,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
     offline = False
     output_dir = "."
     summarize_build = os.environ.get("NINJA_SUMMARIZE_BUILD") == "1"
+    project = None
 
     # Ninja uses getopt_long, which allow to intermix non-option arguments.
     # To leave non supported parameters untouched, we do not use getopt.
@@ -217,6 +146,12 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             output_dir = arg[2:]
         elif arg in ("-o", "--offline"):
             offline = True
+        elif arg in ("--project", "-project"):
+            project = input_args[index + 2]
+        elif arg.startswith("--project="):
+            project = arg[len("--project="):]
+        elif arg.startswith("-project="):
+            project = arg[len("-project="):]
         elif arg in ("-h", "--help"):
             print(
                 "autoninja: Use -o/--offline to temporary disable remote execution.",
@@ -262,16 +197,46 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             use_reclient = use_remoteexec
 
         if use_remoteexec:
-            if _is_google_corp_machine_using_external_account():
-                print(
-                    "You can't use a non-@google.com account (%s and/or %s) on"
-                    " a corp machine.\n"
-                    "Please login via `gcloud auth login --update-adc` with"
-                    " your @google.com account instead.\n" %
-                    (_adc_account(), _gcloud_auth_account()),
-                    file=sys.stderr,
-                )
-                return 1
+            if use_reclient:
+                project = _reclient_rbe_project()
+                if not project:
+                    print(
+                        "Can't detect RBE project to use.\n"
+                        "Did you setup properly?\n",
+                        file=sys.stderr,
+                    )
+                    return 1
+            elif use_siso and project is None:
+                # siso runs locally if empty project is given
+                # even if use_remoteexec=true is set.
+                project = _siso_rbe_project()
+
+            if _is_google_corp_machine():
+                # user may login on non-@google.com account on corp,
+                # but need to use @google.com and rbe-chrome-untrusted
+                # on corp machine.
+                if project == 'rbe-chromium-untrusted':
+                    print(
+                        "You can't use rbe-chromium-untrusted on corp "
+                        "machine.\n"
+                        "Please use rbe-chrome-untrusted and @google.com "
+                        "account instead to build chromium.\n",
+                        file=sys.stderr,
+                    )
+                    return 1
+            else:
+                # only @google.com is allowed to use rbe-chrome-untrusted
+                # and use @google.com on non-corp machine is not allowed
+                # by corp security policy.
+                if project == 'rbe-chrome-untrusted':
+                    print(
+                        "You can't use rbe-chrome-untrusted on non-corp "
+                        "machine.\n"
+                        "Plase use rbe-chromium-untrusted and non-@google.com "
+                        "account instead to build chromium.",
+                        file=sys.stderr,
+                    )
+                    return 1
 
         if gclient_utils.IsEnvCog():
             if not use_remoteexec or use_reclient or not use_siso:
