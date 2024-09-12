@@ -50,12 +50,16 @@ def ParseGNArgs(gn_args):
     """Parse gn_args as json and return config dictionary."""
     configs = json.loads(gn_args)
     build_configs = {}
+    explicit_keys = []
     user = getpass.getuser()
 
     for config in configs:
         key = config["name"]
         if "current" in config:
             value = config["current"]["value"]
+            # Record configs specified in args.gn as explicit configs.
+            if config["current"]["file"] != "//.gn":
+                explicit_keys.append(key)
         else:
             value = config["default"]["value"]
         value = value.strip('"')
@@ -68,7 +72,7 @@ def ParseGNArgs(gn_args):
             ])
         build_configs[key] = value
 
-    return build_configs
+    return build_configs, explicit_keys
 
 
 def GetBuildTargetFromCommandLine(cmdline):
@@ -132,15 +136,16 @@ def GetMetadata(cmdline, ninjalog, exit_code, build_duration, user):
     build_dir = os.path.dirname(ninjalog)
 
     build_configs = {}
+    explicit_keys = []
 
     try:
-        args = ["gn", "args", build_dir, "--list", "--short", "--json"]
+        args = ["gn", "args", build_dir, "--list", "--json"]
         if sys.platform == "win32":
             # gn in PATH is bat file in windows environment (except cygwin).
             args = ["cmd", "/c"] + args
 
         gn_args = subprocess.check_output(args)
-        build_configs = ParseGNArgs(gn_args)
+        build_configs, explicit_keys = ParseGNArgs(gn_args)
     except subprocess.CalledProcessError as e:
         logging.error("Failed to call gn %s", e)
         build_configs = {}
@@ -156,6 +161,7 @@ def GetMetadata(cmdline, ninjalog, exit_code, build_duration, user):
         "platform": platform.system(),
         "cpu_core": multiprocessing.cpu_count(),
         "build_configs": build_configs,
+        "explicit_build_config_keys": explicit_keys,
         "targets": GetBuildTargetFromCommandLine(cmdline),
     }
 
