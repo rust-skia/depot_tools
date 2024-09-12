@@ -1733,19 +1733,22 @@ class Changelist(object):
         return args
 
     def RunHook(self,
-                committing,
-                may_prompt,
-                verbose,
-                parallel,
-                upstream,
-                description,
-                all_files,
-                files=None,
-                resultdb=False,
-                realm=None):
+                committing: bool,
+                may_prompt: bool,
+                verbose: bool,
+                parallel: bool,
+                upstream: str,
+                description: str,
+                all_files: bool,
+                files: Optional[Sequence[str]] = None,
+                resultdb: Optional[bool] = None,
+                realm: Optional[str] = None,
+                end_commit: Optional[str] = None) -> Mapping[str, Any]:
         """Calls sys.exit() if the hook fails; returns a HookResults otherwise."""
         args = self._GetCommonPresubmitArgs(verbose, upstream)
         args.append('--commit' if committing else '--upload')
+        if end_commit:
+            args.extend(['--end_commit', end_commit])
         if may_prompt:
             args.append('--may_prompt')
         if parallel:
@@ -2068,7 +2071,8 @@ class Changelist(object):
                                         parallel=options.parallel,
                                         upstream=parent,
                                         description=change_desc.description,
-                                        all_files=False)
+                                        all_files=False,
+                                        end_commit=end_commit)
             self.ExtendCC(hook_results['more_cc'])
 
         # Update the change description and ensure we have a Change Id.

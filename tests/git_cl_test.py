@@ -4183,7 +4183,8 @@ class ChangelistTest(unittest.TestCase):
                                             parallel=False,
                                             upstream='420parent',
                                             description=desc,
-                                            all_files=False)
+                                            all_files=False,
+                                            end_commit='420latest_tree')
 
     @mock.patch('git_cl.Changelist.GetAffectedFiles', return_value=[])
     @mock.patch('git_cl.Changelist.GetIssue', return_value='123')
@@ -4233,9 +4234,10 @@ class ChangelistTest(unittest.TestCase):
                                             may_prompt=True,
                                             verbose=False,
                                             parallel=False,
-                                            upstream='420parent',
+                                            upstream=parent,
                                             description=desc,
-                                            all_files=False)
+                                            all_files=False,
+                                            end_commit=latest_tree)
         mockEnsureCanUploadPatchset.assert_called_once()
 
         # Test preserve_tryjob
