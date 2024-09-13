@@ -62,7 +62,7 @@ def _reclient_rbe_project():
     """Returns RBE project used by reclient."""
     instance = os.environ.get('RBE_instance')
     if instance:
-        m = re.match(instance, 'projects/([^/]*)/instances/.*')
+        m = re.match(instance, r'projects/([^/]*)/instances/.*')
         if m:
             return m[1]
     reproxy_cfg_path = reclient_helper.find_reclient_cfg()
