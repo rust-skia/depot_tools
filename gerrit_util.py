@@ -1057,7 +1057,7 @@ def ReadHttpResponse(conn: HttpConn,
         www_authenticate = response.get('www-authenticate')
         if not www_authenticate:
             print('Your Gerrit credentials might be misconfigured.')
-        else:
+        elif not newauth.Enabled():
             auth_match = re.search('realm="([^"]+)"', www_authenticate, re.I)
             host = auth_match.group(1) if auth_match else conn.req_host
             new_password_url = CookiesAuthenticator.get_new_password_url(host)
