@@ -177,8 +177,6 @@ class ConfigChanger(object):
 
     def _apply_gitcookies(self, cwd: str) -> None:
         """Apply config changes relating to gitcookies."""
-        # TODO(ayatane): Clear invalid setting.  Remove line after a few weeks
-        self._set_config(cwd, 'http.gitcookies', None, modify_all=True)
         if self.mode == ConfigMode.NEW_AUTH:
             # Override potential global setting
             self._set_config(cwd, 'http.cookieFile', '', modify_all=True)
