@@ -1778,7 +1778,10 @@ def GetProjectHead(host, project):
     return ReadHttpJsonResponse(conn, accept_statuses=[200])
 
 
-def GetAccountDetails(host, account_id='self'):
+def GetAccountDetails(host,
+                      account_id='self',
+                      *,
+                      authenticator: Optional[_Authenticator] = None):
     """Returns details of the account.
 
     If account_id is not given, uses magic value 'self' which corresponds to
@@ -1789,7 +1792,9 @@ def GetAccountDetails(host, account_id='self'):
 
     Returns None if account is not found (i.e., Gerrit returned 404).
     """
-    conn = CreateHttpConn(host, '/accounts/%s' % account_id)
+    conn = CreateHttpConn(host,
+                          '/accounts/%s' % account_id,
+                          authenticator=authenticator)
     return ReadHttpJsonResponse(conn, accept_statuses=[200, 404])
 
 
