@@ -201,7 +201,14 @@ def ShouldUseSSO(host: str, email: str) -> bool:
         LOGGER.debug("SSO=False: not chromium.org")
         return False
     authenticator = SSOAuthenticator()
-    records = GetAccountEmails(host, 'self', authenticator=authenticator)
+    try:
+        records = GetAccountEmails(host, 'self', authenticator=authenticator)
+    except GerritError as e:
+        if e.http_status == 400:
+            # This is likely because the user doesn't have an account on the Gerrit host.
+            LOGGER.debug("SSO=False: get account emails returned 400")
+            return False
+        raise
     if any(email == r['email'] for r in records):
         LOGGER.debug("SSO=True: email is linked to google.com")
         return True
