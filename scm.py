@@ -52,7 +52,7 @@ def determine_scm(root):
 
 GitConfigScope = Literal['system', 'global', 'local', 'worktree']
 GitScopeOrder: list[GitConfigScope] = ['system', 'global', 'local', 'worktree']
-GitFlatConfigData = Mapping[str, Sequence[str]]
+GitFlatConfigData = Mapping[str, Mapping[str, Sequence[str]]]
 
 
 class GitConfigStateBase(metaclass=abc.ABCMeta):
@@ -395,7 +395,7 @@ class GitConfigStateReal(GitConfigStateBase):
 
         assert isinstance(rawConfig, str)
         cfg: Dict[str, Dict[str,
-                            List[str]]] = defaultdict(lambda: defaultdict(list))
+                            list[str]]] = defaultdict(lambda: defaultdict(list))
 
         entries = rawConfig.split('\x00')[:-1]
 
@@ -535,8 +535,8 @@ class GitConfigStateTest(GitConfigStateBase):
             raise GitConfigUnknownScope(scope)
 
     def load_config(self) -> GitFlatConfigData:
-        cfg: Dict[str, Dict[str,
-                            List[str]]] = defaultdict(lambda: defaultdict(list))
+        cfg: Mapping[str, Mapping[str, list[str]]] = defaultdict(
+            lambda: defaultdict(list))
 
         for key, values in self.system_state.items():
             cfg['system'][key].extend(values)
