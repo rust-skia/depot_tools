@@ -3881,7 +3881,22 @@ def CMDcreds_check(parser, args):
     _, _ = parser.parse_args(args)
 
     if newauth.Enabled():
-        git_auth.Configure(os.getcwd(), Changelist())
+        cl = Changelist()
+        git_auth.Configure(os.getcwd(), cl)
+        # Perform some advisory checks
+        email = scm.GIT.GetConfig(os.getcwd(), 'user.email') or ''
+        if not gerrit_util.ShouldUseSSO(cl.GetGerritHost(), email):
+            a = gerrit_util.LuciAuthAuthenticator()
+            try:
+                a.luci_auth.get_access_token()
+            except auth.LoginRequiredError as e:
+                print('NOTE: You are not logged in with luci-auth.')
+                print(
+                    'You may not be able to perform some actions without logging in.'
+                )
+                print('If you wish to log in, run:')
+                print('   ' + e.login_command)
+                print('and re-run this command.')
         return 0
     if newauth.ExplicitlyDisabled():
         git_auth.ClearRepoConfig(os.getcwd(), Changelist())

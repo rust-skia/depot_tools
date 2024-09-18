@@ -287,6 +287,7 @@ class _Authenticator(object):
                         # GCE detection can't distinguish cloud workstations.
                         GceAuthenticator(),
                         LuciAuthAuthenticator(),
+                        NoAuthenticator(),
                     ]
                     if skip_sso:
                         LOGGER.debug(
@@ -812,6 +813,10 @@ class LuciContextAuthenticator(_Authenticator):
         self._authenticator = auth.Authenticator(' '.join(
             [auth.OAUTH_SCOPE_EMAIL, auth.OAUTH_SCOPE_GERRIT]))
 
+    @property
+    def luci_auth(self) -> auth.Authenticator:
+        return self._authenticator
+
     def authenticate(self, conn: HttpConn):
         conn.req_headers[
             'Authorization'] = f'Bearer {self._authenticator.get_access_token().token}'
@@ -828,9 +833,64 @@ class LuciAuthAuthenticator(LuciContextAuthenticator):
     non-google.com developer credentials.
     """
 
+    @classmethod
+    def gerrit_account_exists(cls, host: str) -> bool:
+        """Return True if the Gerrit account exists.
+
+        This checks the user currently logged in with luci-auth.
+        If the user is not logged in with luci-auth, returns False.
+
+        This method caches positive results in the user's Git config.
+        """
+        cwd = os.getcwd()
+        LOGGER.debug("Checking Gerrit account existence for %r", host)
+        hosts = scm.GIT.GetConfigList(cwd, 'depot-tools.hosthasaccount')
+        if host in hosts:
+            # If a user deletes their Gerrit account, then this cache
+            # might be stale.  This should be a rare case and a user can
+            # just delete this from their Git config.
+            LOGGER.debug("Using cached account existence for Gerrit host %r",
+                         host)
+            return True
+        try:
+            info = GetAccountDetails(host, authenticator=cls())
+        except auth.LoginRequiredError:
+            LOGGER.debug(
+                "Cannot check Gerrit account existence; missing luci-auth login"
+            )
+            return False
+        except GerritError as e:
+            if e.http_status == 400:
+                # This is likely because the user doesn't have an
+                # account on the Gerrit host.
+                LOGGER.debug(
+                    "Gerrit account check returned 400; likely account missing")
+                return False
+            raise
+        if 'email' not in info:
+            LOGGER.debug("Gerrit account does not exist on %r", host)
+            return False
+        LOGGER.debug("Gerrit account exists on %r", host)
+        scm.GIT.SetConfig(cwd, 'depot-tools.hostHasAccount', host, append=True)
+        return True
+
+    def is_applicable(self, *, conn: Optional[HttpConn] = None):
+        return self.gerrit_account_exists(conn.host)
+
+
+class NoAuthenticator(_Authenticator):
+    """_Authenticator implementation that does no auth.
+    """
+
     @staticmethod
     def is_applicable(*, conn: Optional[HttpConn] = None):
         return True
+
+    def authenticate(self, conn: HttpConn):
+        pass
+
+    def debug_summary_state(self) -> str:
+        return ''
 
 
 class ChainedAuthenticator(_Authenticator):
