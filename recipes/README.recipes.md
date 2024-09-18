@@ -135,15 +135,15 @@ the depot_tools repo.
 
 #### **class [DepotToolsApi](/recipes/recipe_modules/depot_tools/api.py#12)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&emsp; **@property**<br>&mdash; **def [cros\_path](/recipes/recipe_modules/depot_tools/api.py#30)(self):**
+&emsp; **@property**<br>&mdash; **def [cros\_path](/recipes/recipe_modules/depot_tools/api.py#34)(self):**
 
 &emsp; **@property**<br>&mdash; **def [download\_from\_google\_storage\_path](/recipes/recipe_modules/depot_tools/api.py#17)(self):**
 
-&emsp; **@property**<br>&mdash; **def [gn\_py\_path](/recipes/recipe_modules/depot_tools/api.py#34)(self):**
+&emsp; **@property**<br>&mdash; **def [gn\_py\_path](/recipes/recipe_modules/depot_tools/api.py#38)(self):**
 
-&emsp; **@property**<br>&mdash; **def [gsutil\_py\_path](/recipes/recipe_modules/depot_tools/api.py#40)(self):**
+&emsp; **@property**<br>&mdash; **def [gsutil\_py\_path](/recipes/recipe_modules/depot_tools/api.py#44)(self):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipes/recipe_modules/depot_tools/api.py#48)(self):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [on\_path](/recipes/recipe_modules/depot_tools/api.py#52)(self):**
 
 Use this context manager to put depot_tools on $PATH.
 
@@ -154,9 +154,11 @@ with api.depot_tools.on_path():
   # run some steps
 ```
 
-&emsp; **@property**<br>&mdash; **def [presubmit\_support\_py\_path](/recipes/recipe_modules/depot_tools/api.py#44)(self):**
+&emsp; **@property**<br>&mdash; **def [presubmit\_support\_py\_path](/recipes/recipe_modules/depot_tools/api.py#48)(self):**
 
-&emsp; **@property**<br>&mdash; **def [root](/recipes/recipe_modules/depot_tools/api.py#25)(self):**
+&emsp; **@property**<br>&mdash; **def [roll\_downstream\_gcs\_deps\_path](/recipes/recipe_modules/depot_tools/api.py#25)(self):**
+
+&emsp; **@property**<br>&mdash; **def [root](/recipes/recipe_modules/depot_tools/api.py#29)(self):**
 
 Returns (Path): The "depot_tools" root directory.
 
