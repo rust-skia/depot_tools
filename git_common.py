@@ -81,6 +81,9 @@ def win_find_git():
 
 GIT_EXE = 'git' if not IS_WIN else win_find_git()
 
+# The recommended minimum version of Git, as (<major>, <minor>, <patch>).
+GIT_MIN_VERSION = (2, 26, 0)
+
 FREEZE = 'FREEZE'
 FREEZE_SECTIONS = {'indexed': 'soft', 'unindexed': 'mixed'}
 FREEZE_MATCHER = re.compile(r'%s.(%s)' % (FREEZE, '|'.join(FREEZE_SECTIONS)))
@@ -1195,6 +1198,39 @@ def upstream(branch):
         return None
 
 
+def check_git_version(
+        min_version: Tuple[int] = GIT_MIN_VERSION) -> Optional[str]:
+    """Checks whether git is installed, and its version meets the recommended
+    minimum version, which defaults to GIT_MIN_VERSION if not specified.
+
+    Returns:
+        - the remediation action to take.
+    """
+    min_tag = '.'.join(str(x) for x in min_version)
+    if shutil.which(GIT_EXE) is None:
+        # git command was not found.
+        return ('git command not found.\n'
+                f'Please install version >={min_tag} of git.\n'
+                'See instructions at\n'
+                'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git')
+
+    if meets_git_version(min_version):
+        # git version is sufficient; no remediation action necessary.
+        return None
+
+    # git is installed but older than the recommended version.
+    tag = '.'.join(str(x) for x in get_git_version()) or 'unknown'
+    return ('git update is recommended.\n'
+            f'Installed git version is {tag};\n'
+            f'depot_tools recommends version {min_tag} or later.')
+
+
+def meets_git_version(min_version: Tuple[int]) -> bool:
+    """Returns whether the current git version meets the minimum specified."""
+    return get_git_version() >= min_version
+
+
+@functools.lru_cache(maxsize=1)
 def get_git_version():
     """Returns a tuple that contains the numeric components of the current git
     version."""
@@ -1204,9 +1240,10 @@ def get_git_version():
 
 def _extract_git_tuple(version_string):
     version_match = re.search(r'(\d+.)+(\d+)', version_string)
-    version = version_match.group() if version_match else ''
-
-    return tuple(int(x) for x in version.split('.'))
+    if version_match:
+        version = version_match.group()
+        return tuple(int(x) for x in version.split('.'))
+    return tuple()
 
 
 def get_num_commits(branch):
