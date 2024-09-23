@@ -514,6 +514,35 @@ class GitConfigStateTestTest(unittest.TestCase):
                 },
             })
 
+    @mock.patch('git_common.get_git_version')
+    @mock.patch('scm.GIT.Capture')
+    def test_load_config_git_version_2_old(self, mock_capture,
+                                           mock_get_git_version):
+        mock_get_git_version.return_value = (2, 25)
+        mock_capture.return_value = ""
+
+        config_state = scm.GitConfigStateReal("/fake/path")
+        config_state.load_config()
+
+        mock_capture.assert_called_once_with(['config', '--list', '-z'],
+                                             cwd=config_state.root,
+                                             strip_out=False)
+
+    @mock.patch('git_common.get_git_version')
+    @mock.patch('scm.GIT.Capture')
+    def test_load_config_git_version_new(self, mock_capture,
+                                         mock_get_git_version):
+        mock_get_git_version.return_value = (2, 26)
+        mock_capture.return_value = ""
+
+        config_state = scm.GitConfigStateReal("/fake/path")
+        config_state.load_config()
+
+        mock_capture.assert_called_once_with(
+            ['config', '--list', '-z', '--show-scope'],
+            cwd=config_state.root,
+            strip_out=False)
+
     def test_construction_system(self):
         m, gs = self._make(
             global_state={'section.key': ['global']},
