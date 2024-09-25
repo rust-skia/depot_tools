@@ -163,6 +163,7 @@ def GetMetadata(cmdline, ninjalog, exit_code, build_duration, user):
         "platform": platform.system(),
         "cpu_core": multiprocessing.cpu_count(),
         "is_cog": gclient_utils.IsEnvCog(),
+        "is_cloudtop": False,
         "build_configs": build_configs,
         "explicit_build_config_keys": explicit_keys,
         "targets": GetBuildTargetFromCommandLine(cmdline),
