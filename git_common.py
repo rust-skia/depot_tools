@@ -48,6 +48,7 @@ from typing import ContextManager
 from typing import Optional
 from typing import Tuple
 
+import gclient_utils
 import scm
 import subprocess2
 
@@ -1200,6 +1201,7 @@ def upstream(branch):
         return None
 
 
+@functools.lru_cache
 def check_git_version(
         min_version: Tuple[int] = GIT_MIN_VERSION) -> Optional[str]:
     """Checks whether git is installed, and its version meets the recommended
@@ -1208,6 +1210,10 @@ def check_git_version(
     Returns:
         - the remediation action to take.
     """
+    if gclient_utils.IsEnvCog():
+        # No remediation action required in a non-git environment.
+        return None
+
     min_tag = '.'.join(str(x) for x in min_version)
     if shutil.which(GIT_EXE) is None:
         # git command was not found.

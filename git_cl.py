@@ -5293,6 +5293,13 @@ def CMDupload(parser, args):
     # authentication is not working properly.
     gerrit_util.GetAccountDetails(cl.GetGerritHost())
 
+    # Check whether git should be updated.
+    recommendation = git_common.check_git_version()
+    if recommendation:
+        print(colorama.Fore.RED)
+        print(f'WARNING: {recommendation}')
+        print(colorama.Style.RESET_ALL)
+
     # TODO(crbug.com/1475405): Warn users if the project uses submodules and
     # they have fsmonitor enabled.
     if os.path.isfile('.gitmodules'):

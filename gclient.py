@@ -2453,6 +2453,16 @@ it or fix the checkout.
                 % ('\n'.join(patch_repo + '@' + patch_ref
                              for patch_repo, patch_ref in patch_refs.items())))
 
+        # Check whether git should be updated.
+        recommendation = git_common.check_git_version()
+        if (recommendation and
+                os.environ.get('GCLIENT_SUPPRESS_GIT_VERSION_WARNING') != '1'):
+            message = (f'{recommendation}\n'
+                       'Disable this warning by setting the '
+                       'GCLIENT_SUPPRESS_GIT_VERSION_WARNING\n'
+                       'environment variable to 1.')
+            gclient_utils.AddWarning(message)
+
         # TODO(crbug.com/1475405): Warn users if the project uses submodules and
         # they have fsmonitor enabled.
         if command == 'update':

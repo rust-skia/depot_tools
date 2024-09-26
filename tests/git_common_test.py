@@ -1144,10 +1144,19 @@ class GitTestUtilsTest(git_test_utils.GitRepoReadOnlyTestBase):
 class CheckGitVersionTest(GitCommonTestBase):
 
     def setUp(self):
+        self.addCleanup(self.gc.check_git_version.cache_clear)
         self.addCleanup(self.gc.get_git_version.cache_clear)
 
+    @mock.patch('gclient_utils.IsEnvCog')
+    def testNonGitEnv(self, mockCog):
+        mockCog.return_value = True
+
+        self.assertIsNone(self.gc.check_git_version())
+
+    @mock.patch('gclient_utils.IsEnvCog')
     @mock.patch('shutil.which')
-    def testGitNotInstalled(self, mockWhich):
+    def testGitNotInstalled(self, mockWhich, mockCog):
+        mockCog.return_value = False
         mockWhich.return_value = None
 
         recommendation = self.gc.check_git_version()
@@ -1156,9 +1165,11 @@ class CheckGitVersionTest(GitCommonTestBase):
 
         mockWhich.assert_called_once()
 
+    @mock.patch('gclient_utils.IsEnvCog')
     @mock.patch('shutil.which')
     @mock.patch('git_common.run')
-    def testGitOldVersion(self, mockRun, mockWhich):
+    def testGitOldVersion(self, mockRun, mockWhich, mockCog):
+        mockCog.return_value = False
         mockWhich.return_value = '/example/bin/git'
         mockRun.return_value = 'git version 2.2.40-abc'
 
@@ -1169,9 +1180,11 @@ class CheckGitVersionTest(GitCommonTestBase):
         mockWhich.assert_called_once()
         mockRun.assert_called_once()
 
+    @mock.patch('gclient_utils.IsEnvCog')
     @mock.patch('shutil.which')
     @mock.patch('git_common.run')
-    def testGitSufficientVersion(self, mockRun, mockWhich):
+    def testGitSufficientVersion(self, mockRun, mockWhich, mockCog):
+        mockCog.return_value = False
         mockWhich.return_value = '/example/bin/git'
         mockRun.return_value = 'git version 2.30.1.456'
 
@@ -1180,9 +1193,11 @@ class CheckGitVersionTest(GitCommonTestBase):
         mockWhich.assert_called_once()
         mockRun.assert_called_once()
 
+    @mock.patch('gclient_utils.IsEnvCog')
     @mock.patch('shutil.which')
     @mock.patch('git_common.run')
-    def testHandlesErrorGettingVersion(self, mockRun, mockWhich):
+    def testHandlesErrorGettingVersion(self, mockRun, mockWhich, mockCog):
+        mockCog.return_value = False
         mockWhich.return_value = '/example/bin/git'
         mockRun.return_value = 'Error running git version'
 
