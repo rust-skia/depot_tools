@@ -3292,6 +3292,9 @@ def CMDgitmodules(parser, args):
     This command should be run in the root directory of the repo.
     It will create or update the .gitmodules file and include
     `gclient-condition` values. Commits in gitlinks will also be updated.
+    If you are running this command to set `gclient-recursedeps` for the first
+    time, you will need to delete the .gitmodules file (if any) before running
+    this command.
     """
     if gclient_utils.IsEnvCog():
         raise gclient_utils.Error(
@@ -3337,11 +3340,24 @@ def CMDgitmodules(parser, args):
     # some old branch which contains already contains submodules with .git.
     # This check makes the transition easier.
     strip_git_suffix = True
+    # Users may have an outdated depot_tools which doesn't set
+    # gclient-recursedeps, which may undo changes made by an up-to-date `gclient
+    # gitmodules` run. Users may also have an up-to-date depot_tools but an
+    # outdated chromium/src without gclient-recursedeps set which would cause
+    # confusion when they run `gclient gitmodules` and see unexpected
+    # gclient-recursedeps in the diff. We only want to set gclient-recursedeps
+    # if it's already set in the .gitmodules file or if there is no existing
+    # .gitmodules file so we know `gclient gitmodules` is being run for the
+    # first time.
+    set_recursedeps = True
     if os.path.exists(options.output_gitmodules):
         dot_git_pattern = re.compile('^(\s*)url(\s*)=.*\.git$')
         with open(options.output_gitmodules) as f:
             strip_git_suffix = not any(dot_git_pattern.match(l) for l in f)
+            set_recursedeps = any(
+                'gclient-recursedeps' in l for l in f)
 
+    recursedeps = ls.get('recursedeps')
     with open(options.output_gitmodules, 'w', newline='') as f:
         for path, dep in ls.get('deps').items():
             if path in options.skip_dep:
@@ -3354,6 +3370,7 @@ def CMDgitmodules(parser, args):
                 logging.error('error on %s; %s, not adding it', path,
                               dep["url"])
                 continue
+            isRecurseDeps = recursedeps and path in recursedeps
             if prefix_length:
                 path = path[prefix_length:]
 
@@ -3366,6 +3383,8 @@ def CMDgitmodules(parser, args):
             f.write(f'[submodule "{path}"]\n\tpath = {path}\n\turl = {url}\n')
             if 'condition' in dep:
                 f.write(f'\tgclient-condition = {dep["condition"]}\n')
+            if isRecurseDeps and set_recursedeps:
+                f.write('\tgclient-recursedeps = true\n')
             # Windows has limit how long, so let's chunk those calls.
             if len(cache_info) >= 100:
                 subprocess2.call(['git', 'update-index', '--add'] + cache_info)
