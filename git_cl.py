@@ -4795,7 +4795,10 @@ def FindFilesForLint(options, args):
     """Returns the base folder and a list of files to lint."""
     files = []
     cwd = os.getcwd()
-    if len(args) > 0:
+    if len(args) == 1 and args[0] == '-':
+        # the input is from stdin.
+        files.append(args[0])
+    elif len(args) > 0:
         # If file paths are given in positional args, run the lint tools
         # against them without using git commands. This allows git_cl.py
         # runnable against any files even out of git checkouts.
@@ -4836,10 +4839,8 @@ def CMDlint(parser, args):
     """Runs cpplint on the current changelist or given files.
 
     positional arguments:
-      files           Files to lint. If omitted in the current git checkout, it
-                      will run cpplint against all the affected files. If it is
-                      not executed in git checkouts, files to lint must be
-                      provided.
+      files           Files to lint. If omitted, lint all the affected files.
+                      If -, lint stdin.
     """
     parser.add_option(
         '--filter',
