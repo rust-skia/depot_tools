@@ -37,7 +37,7 @@ infra/tools/luci/vpython3/${platform} git_revision:b1f414539ac10cc67a0250890a387
 infra/tools/luci/led/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
 
 # LUCI config generator
-infra/tools/luci/lucicfg/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
+infra/tools/luci/lucicfg/${platform} git_revision:f1e7e75db759fe58faa35f1f331087e71da7f9a9
 
 # Mac toolchain installer
 infra/tools/mac_toolchain/${os=mac}-${arch} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
