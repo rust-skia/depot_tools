@@ -907,8 +907,9 @@ def CheckChromiumDependencyMetadata(input_api, output_api, file_filter=None):
 _IGNORE_FREEZE_FOOTER = 'Ignore-Freeze'
 
 _FREEZE_TZ = datetime.timezone(-datetime.timedelta(hours=8), 'PST')
-_FREEZE_START = datetime.datetime(2023, 12, 15, 0, 0, tzinfo=_FREEZE_TZ)
-_FREEZE_END = datetime.datetime(2024, 1, 2, 0, 0, tzinfo=_FREEZE_TZ)
+_FREEZE_START = datetime.datetime(2024, 10, 12, 0, 0, tzinfo=_FREEZE_TZ)
+_FREEZE_END = datetime.datetime(2024, 10, 19, 0, 0, tzinfo=_FREEZE_TZ)
+_FREEZE_DETAILS = 'Internal infra conference'
 
 def CheckInfraFreeze(input_api,
                      output_api,
@@ -969,9 +970,12 @@ def CheckInfraFreeze(input_api,
     else:
         report_type = output_api.PresubmitError
     return [
-        report_type('There is a prod infra freeze in effect from {} until {},'
-                    'the following files cannot be modified:\n  {}'.format(
-                        _FREEZE_START, _FREEZE_END, '\n  '.join(files)))
+        report_type('There is a prod infra freeze in effect from {} until {}:\n'
+                    '\t{}\n\n'
+                    'The following files cannot be modified:\n  {}.\n\n'
+                    'Set git-footer "{}" to override.'.format(
+                        _FREEZE_START, _FREEZE_END, _FREEZE_DETAILS,
+                        '\n  '.join(files), _IGNORE_FREEZE_FOOTER))
     ]
 
 
