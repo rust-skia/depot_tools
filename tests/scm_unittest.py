@@ -149,6 +149,15 @@ class GitWrapperTestCase(unittest.TestCase):
     def testListSubmodules_missing(self):
         self.assertEqual(scm.GIT.ListSubmodules('root'), [])
 
+    @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('scm.GIT.Capture')
+    def testListSubmodules_empty(self, mockCapture, *_mock):
+        mockCapture.side_effect = [
+            subprocess2.CalledProcessError(1, '', '', '', ''),
+        ]
+        self.assertEqual(scm.GIT.ListSubmodules('root'), [])
+
+
 
 class RealGitTest(fake_repos.FakeReposTestBase):
     def setUp(self):

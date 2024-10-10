@@ -1113,9 +1113,13 @@ class GIT(object):
         """
         if not os.path.exists(os.path.join(repo_root, '.gitmodules')):
             return []
-        config_output = GIT.Capture(
-            ['config', '--file', '.gitmodules', '--get-regexp', 'path'],
-            cwd=repo_root)
+        try:
+            config_output = GIT.Capture(
+                ['config', '--file', '.gitmodules', '--get-regexp', 'path'],
+                cwd=repo_root)
+        except subprocess2.CalledProcessError:
+            # Git exits with 1 if no config matches are found.
+            return []
         assert isinstance(config_output, str)
         return [
             line.split()[-1].replace('/', os.path.sep)
