@@ -876,7 +876,8 @@ class GitWrapper(SCMWrapper):
         # See if the url has changed (the unittests use git://foo for the url,
         # let that through).
         current_url = scm.GIT.GetConfig(self.checkout_path,
-                                        f'remote.{self.remote}.url')
+                                        f'remote.{self.remote}.url',
+                                        default='')
         return_early = False
         # TODO(maruel): Delete url != 'git://foo' since it's just to make the
         # unit test pass. (and update the comment above)
