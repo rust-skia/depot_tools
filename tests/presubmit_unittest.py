@@ -1097,15 +1097,6 @@ def CheckChangeOnCommit(input_api, output_api):
             end_commit=options.end_commit)
         scm.GIT.GetAllFiles.assert_called_once_with(options.root)
 
-    def testParseChange_EmptyDiffFile(self):
-        gclient_utils.FileRead.return_value = ''
-        options = mock.Mock(all_files=False,
-                            files=[],
-                            generate_diff=False,
-                            diff_file='foo.diff')
-        with self.assertRaises(presubmit.PresubmitFailure):
-            presubmit._parse_change(None, options)
-
     @mock.patch('presubmit_support.ProvidedDiffChange', mock.Mock())
     def testParseChange_ProvidedDiffFile(self):
         diff = """

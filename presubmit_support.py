@@ -2127,7 +2127,7 @@ def _parse_change(parser, options):
         options.issue, options.patchset, options.author
     ]
 
-    if diff:
+    if diff is not None:
         return ProvidedDiffChange(*change_args, diff=diff)
     if change_scm == 'git':
         return GitChange(*change_args,
@@ -2197,7 +2197,7 @@ def _parse_unified_diff(diff):
 def _process_diff_file(diff_file):
     diff = gclient_utils.FileRead(diff_file)
     if not diff:
-        raise PresubmitFailure('diff file is empty')
+        return '', []
     return diff, _diffs_to_change_files(_parse_unified_diff(diff))
 
 
