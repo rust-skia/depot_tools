@@ -2835,9 +2835,11 @@ class Changelist(object):
             print('Committed patch for change %i patchset %i locally.' %
                   (parsed_issue_arg.issue, patchset))
             print(
-                'Note: this created a local commit which does not have '
-                'the same hash as the one uploaded for review. This will make '
-                'uploading changes based on top of this branch difficult.\n'
+                'Note: this created a local commit on top of parent commit '
+                'that is different from the one in Gerrit. If the patched CL '
+                'is not yours and you cannot upload new patches to it, you '
+                'will not be able to upload stacked changes created on top of '
+                'this branch.\n'
                 'If you want to do that, use "git cl patch --force" instead.')
 
         if self.GetBranch():
