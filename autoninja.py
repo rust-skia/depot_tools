@@ -261,7 +261,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             # Build ID consistently used in other tools. e.g. Reclient, ninjalog.
             os.environ.setdefault("SISO_BUILD_ID", build_id)
             if use_remoteexec:
-                if use_reclient:
+                if use_reclient and not t_specified:
                     return reclient_helper.run_siso(
                         [
                             'siso',
