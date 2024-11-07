@@ -352,6 +352,11 @@ class SSOAuthenticator(_Authenticator):
     # Overridden in tests.
     _timeout_secs = 5
 
+    # The required fields for the sso config, expected from the sso helper's
+    # output.
+    _required_fields = frozenset(
+        ['http.cookiefile', 'http.proxy', 'include.path'])
+
     @dataclass
     class SSOInfo:
         proxy: httplib2.ProxyInfo
@@ -387,24 +392,27 @@ class SSOAuthenticator(_Authenticator):
         return email.endswith('@google.com')
 
     @classmethod
-    def _parse_config(cls, config: str) -> SSOInfo:
-        parsed: Dict[str, str] = dict(line.strip().split('=', 1)
-                                      for line in config.splitlines())
+    def _parse_config(cls, config: Dict[str, str]) -> SSOInfo:
+        """Parses the sso info from the given config.
 
+        Note: update cls._required_fields appropriately when making
+        changes to this method, to ensure the field values are captured
+        from the sso helper.
+        """
         fullAuthHeader = cast(
             str,
             scm.GIT.Capture([
                 'config',
                 '-f',
-                parsed['include.path'],
+                config['include.path'],
                 'http.extraHeader',
             ]))
         headerKey, headerValue = fullAuthHeader.split(':', 1)
         headers = {headerKey.strip(): headerValue.strip()}
 
-        proxy_host, proxy_port = parsed['http.proxy'].split(':', 1)
+        proxy_host, proxy_port = config['http.proxy'].split(':', 1)
 
-        cfpath = parsed['http.cookiefile']
+        cfpath = config['http.cookiefile']
         cj = http.cookiejar.MozillaCookieJar(cfpath)
         # NOTE: python3.8 doesn't support httponly cookie lines, so we parse
         # this manually. Once we move to python3.10+, this hack can be removed.
@@ -442,8 +450,9 @@ class SSOAuthenticator(_Authenticator):
                 #
                 # 1. writes files to disk.
                 # 2. writes config to stdout, referencing those files.
-                # 3. closes stdout (thus sending EOF to us, allowing
-                #    sys.stdout.read() to complete).
+                # 3. closes stdout (sending EOF to us, ending the stdout data).
+                #    - Note: on Windows, stdout.read() times out anyway, so
+                #      instead we process stdout line by line.
                 # 4. waits for stdin to close.
                 # 5. deletes files on disk (which is why we make sys.stdin a PIPE
                 #    instead of closing it outright).
@@ -466,24 +475,39 @@ class SSOAuthenticator(_Authenticator):
                     timer = threading.Timer(cls._timeout_secs, _fire_timeout)
                     timer.start()
                     try:
-                        stdout_data = proc.stdout.read()
+                        config = {}
+                        for line in proc.stdout:
+                            if not line:
+                                break
+                            field, value = line.strip().split('=', 1)
+                            config[field] = value
+                            # Stop reading if we have all the required fields.
+                            if cls._required_fields.issubset(config.keys()):
+                                break
                     finally:
                         timer.cancel()
 
+                    missing_fields = cls._required_fields - config.keys()
                     if timedout:
+                        # Within the time limit, at least one required field was
+                        # still missing. Killing the process has been triggered,
+                        # even if we now have all fields.
+                        details = ''
+                        if missing_fields:
+                            details = ': missing fields [{names}]'.format(
+                                names=', '.join(missing_fields))
                         LOGGER.error(
-                            'SSOAuthenticator: Timeout: %r: reading config.',
-                            cmd)
+                            'SSOAuthenticator: Timeout: %r: reading config%s.',
+                            cmd, details)
                         raise subprocess.TimeoutExpired(
                             cmd=cmd, timeout=cls._timeout_secs)
-
                     # if the process already ended, then something is wrong.
                     retcode = proc.poll()
-                    # if stdout was closed without any data, we need to wait for
-                    # end-of-process here and hope for an error message - the
-                    # poll above is racy in this case (we could see stdout EOF
-                    # but the process may not have quit yet).
-                    if not retcode and not stdout_data:
+                    # if stdout was closed without all required data, we need to
+                    # wait for end-of-process here and hope for an error message
+                    # - the poll above is racy in this case (we could see stdout
+                    # EOF but the process may not have quit yet).
+                    if not retcode and missing_fields:
                         retcode = proc.wait(timeout=cls._timeout_secs)
                         # We timed out while doing `wait` - we can't safely open
                         # stderr on windows, so just emit a generic timeout
@@ -505,7 +529,7 @@ class SSOAuthenticator(_Authenticator):
                                 f'SSOAuthenticator: exit {retcode}: {stderr.read().strip()}'
                             )
 
-                    return cls._parse_config(stdout_data)
+                    return cls._parse_config(config)
 
     @classmethod
     def _get_sso_info(cls) -> SSOInfo:
