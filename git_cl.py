@@ -171,6 +171,11 @@ assert len(_KNOWN_GERRIT_TO_SHORT_URLS) == len(
 # at once. Picked arbitrarily.
 _MAX_STACKED_BRANCHES_UPLOAD = 20
 
+_NO_BRANCH_ERROR = (
+    'Unable to determine base commit in detached HEAD state. '
+    'Get on a branch or run `git cl upload --no-squash <base>` to '
+    'upload all commits since base!')
+
 
 class GitPushError(Exception):
     pass
@@ -2151,8 +2156,7 @@ class Changelist(object):
             custom_cl_base = base_branch = git_diff_args[0]
         else:
             if self.GetBranch() is None:
-                DieWithError(
-                    'Can\'t upload from detached HEAD state. Get on a branch!')
+                DieWithError(_NO_BRANCH_ERROR)
 
             # Default to diffing against common ancestor of upstream branch
             base_branch = self.GetCommonAncestorWithUpstream()
@@ -5531,7 +5535,7 @@ def _UploadAllPrecheck(
     """
     cl = Changelist()
     if cl.GetBranch() is None:
-        DieWithError('Can\'t upload from detached HEAD state. Get on a branch!')
+        DieWithError(_NO_BRANCH_ERROR)
 
     branch_ref = None
     cls: List[Changelist] = []
