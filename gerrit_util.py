@@ -1671,11 +1671,17 @@ def AddReviewers(host,
                      accept_statuses=[200])
 
 
-def SetReview(host, change, msg=None, labels=None, notify=None, ready=None):
+def SetReview(host,
+              change,
+              revision='current',
+              msg=None,
+              labels=None,
+              notify=None,
+              ready=None):
     """Sets labels and/or adds a message to a code review."""
     if not msg and not labels:
         return
-    path = 'changes/%s/revisions/current/review' % change
+    path = f'changes/{change}/revisions/{revision}/review'
     body: Dict[str, Any] = {'drafts': 'KEEP'}
     if msg:
         body['message'] = msg
