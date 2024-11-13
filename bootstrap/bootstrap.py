@@ -247,7 +247,10 @@ GIT_POSTPROCESS_VERSION = '2'
 
 def _within_depot_tools(path):
     """Returns whether the given path is within depot_tools."""
-    return os.path.commonpath([os.path.abspath(path), ROOT_DIR]) == ROOT_DIR
+    try:
+        return os.path.commonpath([os.path.abspath(path), ROOT_DIR]) == ROOT_DIR
+    except ValueError:
+        return False
 
 
 def _traverse_to_git_root(abspath):
