@@ -468,3 +468,41 @@ class GitApi(recipe_api.RecipeApi):
                           stdout=self.m.raw_io.output_text(add_output_log=True),
                           step_test_data=step_test_data)
     return [l.strip() for l in step_result.stdout.strip().splitlines()]
+
+  def ls_remote(self, url, ref, name=None, tags=True, branches=True, **kwargs):
+    """Request the head revision for a given ref using ls-remote. Raise a
+    StepFailure if the ref does not exist, or more than one ref was found.
+
+    Args:
+      * url (str): url of remote repo to use as upstream.
+      * ref (str): ref to query head revision.
+      * name (str):  Name of the infra step.
+      * tags (bool): Include tags.
+      * branches (bool): Include branches.
+
+    Returns: A git revision.
+    """
+    cwd = self.m.context.cwd or self.m.path.start_dir
+    name = name or f'Retrieve revision for {ref}'
+
+    cmd = ['ls-remote']
+    if tags:
+      cmd.append('-t')
+    if branches:
+      cmd.append('-b')
+    cmd.extend([url, ref])
+
+    with self.m.context(cwd):
+      result = self(*cmd,
+                    name=name,
+                    stdout=self.m.raw_io.output_text(),
+                    **kwargs)
+      lines = result.stdout.strip().splitlines()
+
+    if len(lines) > 1:
+      raise self.m.step.StepFailure(f'Multiple remote refs found for {ref}')
+
+    if not lines:
+      raise self.m.step.StepFailure(f'No remote ref found for {ref}')
+
+    return lines[0].split('\t')[0]

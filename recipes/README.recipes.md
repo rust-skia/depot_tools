@@ -30,6 +30,7 @@
   * [gclient:tests/sync_failure](#recipes-gclient_tests_sync_failure)
   * [gerrit:examples/full](#recipes-gerrit_examples_full)
   * [git:examples/full](#recipes-git_examples_full)
+  * [git:tests/ls_remote](#recipes-git_tests_ls_remote)
   * [git:tests/number](#recipes-git_tests_number)
   * [git_cl:examples/full](#recipes-git_cl_examples_full)
   * [gitiles:examples/full](#recipes-gitiles_examples_full)
@@ -535,6 +536,20 @@ Returns: (str) The URL of the remote Git repository, or None.
 &mdash; **def [get\_timestamp](/recipes/recipe_modules/git/api.py#331)(self, commit='HEAD', test_data=None, \*\*kwargs):**
 
 Find and return the timestamp of the given commit.
+
+&mdash; **def [ls\_remote](/recipes/recipe_modules/git/api.py#472)(self, url, ref, name=None, tags=True, branches=True, \*\*kwargs):**
+
+Request the head revision for a given ref using ls-remote. Raise a
+StepFailure if the ref does not exist, or more than one ref was found.
+
+Args:
+  * url (str): url of remote repo to use as upstream.
+  * ref (str): ref to query head revision.
+  * name (str):  Name of the infra step.
+  * tags (bool): Include tags.
+  * branches (bool): Include branches.
+
+Returns: A git revision.
 
 &mdash; **def [new\_branch](/recipes/recipe_modules/git/api.py#404)(self, branch, name=None, upstream=None, upstream_current=False, \*\*kwargs):**
 
@@ -1135,6 +1150,12 @@ Raises:
 
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/git/examples/full.py#20)(api):**
+### *recipes* / [git:tests/ls\_remote](/recipes/recipe_modules/git/tests/ls_remote.py)
+
+[DEPS](/recipes/recipe_modules/git/tests/ls_remote.py#7): [git](#recipe_modules-git), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+
+
+&mdash; **def [RunSteps](/recipes/recipe_modules/git/tests/ls_remote.py#18)(api):**
 ### *recipes* / [git:tests/number](/recipes/recipe_modules/git/tests/number.py)
 
 [DEPS](/recipes/recipe_modules/git/tests/number.py#9): [git](#recipe_modules-git), [recipe\_engine/assertions][recipe_engine/recipe_modules/assertions], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties]
