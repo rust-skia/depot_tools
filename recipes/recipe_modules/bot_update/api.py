@@ -212,6 +212,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
                       download_topics=False,
                       recipe_revision_overrides=None,
                       step_tags=None,
+                      parse_commit_position=True,
                       **kwargs):
     """
     Args:
@@ -248,6 +249,8 @@ class BotUpdateApi(recipe_api.RecipeApi):
         change's commit message to get this revision override requested by the
         author.
       * step_tags: a dict {tag name: tag value} of tags to add to the step
+      * parse_commit_position: if True and got_revision_cp is set, parse output
+        commit ref and position from got_revision_cp.
     """
     assert not (ignore_input_commit and set_output_commit)
     if assert_one_gerrit_change:
@@ -527,7 +530,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
           in_rev = self.m.gclient.resolve_revision(revisions.get(out_solution))
           if not in_rev:
             in_rev = 'HEAD'
-          if got_revision_cp:
+          if got_revision_cp and parse_commit_position:
             # If commit position string is available, read the ref from there.
             out_commit.ref, out_commit.position = (
                 self.m.commit_position.parse(got_revision_cp))
