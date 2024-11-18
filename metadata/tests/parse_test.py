@@ -77,7 +77,7 @@ class ParseTest(unittest.TestCase):
                  "     https://www.example.com/parser"),
                 ("Version", "1.0.12"),
                 ("Date", "2020-12-03"),
-                ("License", "Apache, 2.0 and MIT"),
+                ("License", "Apache-2.0 and MIT"),
                 ("License File", "LICENSE"),
                 ("Security Critical", "yes"),
                 ("Shipped", "yes"),

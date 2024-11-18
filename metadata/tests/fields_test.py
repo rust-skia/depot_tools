@@ -115,13 +115,12 @@ class FieldValidationTest(unittest.TestCase):
         self._run_field_validation(
             field=known_fields.LICENSE,
             valid_values=[
-                "Apache, 2.0 / MIT / MPL 2",
-                "LGPL 2.1",
-                "GPL v2 or later",
-                "LGPL2 with the classpath exception",
-                "Apache, Version 2 and Public domain",
-                "Public domain or MPL 2",
-                "APSL 2 and the MIT license",
+                "Apache-2.0 / MIT",
+                "Apache-2.0",
+                "BSD-2-Clause",
+                "BSD-2-Clause-FreeBSD",
+                "MIT",
+                "APSL-2.0 and MIT",
             ],
             error_values=["", "\n", ",", "Apache 2.0 / MIT / "],
             warning_values=[

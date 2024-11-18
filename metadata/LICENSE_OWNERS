@@ -1,0 +1,7 @@
+# ATLs are responsible for approving new licenses.
+# TODO(b/379562012) Replace with file:/ATL_OWNERS.
+rbyers@chromium.org
+thakis@chromium.org
+
+# TODO(b/379223095) Remove security team once transition to spdx allow list is complete.
+file:SECURITY_TEAM_OWNERS

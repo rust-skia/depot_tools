@@ -18,34 +18,7 @@ sys.path.insert(0, _ROOT_DIR)
 import metadata.fields.field_types as field_types
 import metadata.fields.util as util
 import metadata.validation_result as vr
-
-# Copied from ANDROID_ALLOWED_LICENSES in
-# https://chromium.googlesource.com/chromium/src/+/refs/heads/main/third_party/PRESUBMIT.py
-_ANDROID_ALLOWED_LICENSES = [
-    "A(pple )?PSL 2(\.0)?",
-    "Android Software Development Kit License",
-    "Apache( License)?,?( Version)? 2(\.0)?",
-    "(New )?([23]-Clause )?BSD( [23]-Clause)?( with advertising clause)?",
-    "GNU Lesser Public License",
-    "L?GPL ?v?2(\.[01])?( or later)?( with the classpath exception)?",
-    "(The )?MIT(/X11)?(-like)?( License)?",
-    "MPL 1\.1 ?/ ?GPL 2(\.0)? ?/ ?LGPL 2\.1",
-    "MPL 2(\.0)?",
-    "Microsoft Limited Public License",
-    "Microsoft Permissive License",
-    "Public Domain",
-    "Python",
-    "SIL Open Font License, Version 1.1",
-    "SGI Free Software License B",
-    "Unicode, Inc. License",
-    "University of Illinois\/NCSA Open Source",
-    "X11",
-    "Zlib",
-]
-_PATTERN_LICENSE_ALLOWED = re.compile(
-    "^({})$".format("|".join(_ANDROID_ALLOWED_LICENSES)),
-    re.IGNORECASE,
-)
+from metadata.fields.custom.license_allowlist import ALLOWED_SPDX_LICENSES
 
 _PATTERN_VERBOSE_DELIMITER = re.compile(r" and | or | / ")
 
@@ -97,7 +70,7 @@ def is_license_allowlisted(value: str) -> bool:
     """Returns whether the value is in the allowlist for license
     types.
     """
-    return util.matches(_PATTERN_LICENSE_ALLOWED, value)
+    return value in ALLOWED_SPDX_LICENSES
 
 
 class LicenseField(field_types.SingleLineTextField):

@@ -30,7 +30,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.URL.get_name(),
                              "https://www.example.com")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
@@ -53,7 +53,7 @@ class DependencyValidationTest(unittest.TestCase):
                              "Test alias field used")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         # Use Shipped in Chromium instead of Shipped.
         dependency.add_entry(known_fields.SHIPPED_IN_CHROMIUM.get_name(), "no")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
@@ -75,7 +75,7 @@ class DependencyValidationTest(unittest.TestCase):
                              "Test alias field overwrite")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.SHIPPED_IN_CHROMIUM.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "test")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
@@ -98,7 +98,7 @@ class DependencyValidationTest(unittest.TestCase):
                              "Test alias field error attributed")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.SHIPPED_IN_CHROMIUM.get_name(),
                              "test")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "yes")
@@ -121,7 +121,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.URL.get_name(),
                              "https://www.example.com")
         dependency.add_entry(known_fields.VERSION.get_name(), "N/A")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
@@ -145,7 +145,7 @@ class DependencyValidationTest(unittest.TestCase):
                              "https://www.example.com")
         dependency.add_entry(known_fields.VERSION.get_name(), "N/A")
         dependency.add_entry(known_fields.REVISION.get_name(), "N/A")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
@@ -173,7 +173,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
         dependency.add_entry(known_fields.REVISION.get_name(),
                              "invalid_revision")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
@@ -197,7 +197,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.URL.get_name(),
                              "https://www.example.com")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
@@ -227,7 +227,7 @@ class DependencyValidationTest(unittest.TestCase):
                              "https://www.example.com")
         dependency.add_entry(known_fields.VERSION.get_name(), "N/A")
         dependency.add_entry(known_fields.REVISION.get_name(), "DEPS")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
@@ -245,7 +245,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
         dependency.add_entry(known_fields.NAME.get_name(), "Test missing field")
         # Leave URL field unspecified.
@@ -267,7 +267,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.NAME.get_name(), "Test invalid field")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "test")
 
@@ -288,7 +288,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.URL.get_name(),
                              "https://www.example.com")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(),
                              "MISSING-LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
@@ -309,7 +309,7 @@ class DependencyValidationTest(unittest.TestCase):
                              "Test multiple errors")
         # Leave URL field unspecified.
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(),
                              "MISSING-LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "test")
@@ -335,7 +335,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.URL.get_name(),
                              "https://www.example.com")
         dependency.add_entry(known_fields.VERSION.get_name(), "1.0.0")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "no")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
@@ -357,7 +357,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency.add_entry(known_fields.URL.get_name(),
                              "This is the canonical repository")
         dependency.add_entry(known_fields.VERSION.get_name(), "N/A")
-        dependency.add_entry(known_fields.LICENSE.get_name(), "Public Domain")
+        dependency.add_entry(known_fields.LICENSE.get_name(), "MIT")
         dependency.add_entry(known_fields.LICENSE_FILE.get_name(), "LICENSE")
         dependency.add_entry(known_fields.SECURITY_CRITICAL.get_name(), "yes")
         dependency.add_entry(known_fields.SHIPPED.get_name(), "yes")
