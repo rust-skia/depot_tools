@@ -18,10 +18,8 @@ REPO_URL = 'https://chromium.googlesource.com/v8/v8'
 def RunSteps(api):
   url = api.properties.get('url', REPO_URL)
   ref = api.properties.get('ref', 'main')
-  tags = api.properties.get('tags', True)
-  branches = api.properties.get('branches', True)
 
-  result = api.git.ls_remote(url, ref, tags=tags, branches=branches)
+  result = api.git.ls_remote(url, ref)
   api.step.empty('revision', step_text=result)
 
 
@@ -56,7 +54,7 @@ def GenTests(api):
 
   yield test(
       'basic',
-      ['git', 'ls-remote', '-t', '-b', REPO_URL, 'main'],
+      ['git', 'ls-remote', REPO_URL, 'main'],
       mock_ls_remote('main', [('badc0ffee0ded', 'refs/heads/main')]),
       api.post_process(
           post.StepTextEquals,
@@ -66,22 +64,8 @@ def GenTests(api):
   )
 
   yield test(
-      'no-tags',
-      ['git', 'ls-remote', '-b', REPO_URL, 'main'],
-      api.properties(tags=False),
-      mock_ls_remote('main', [('badc0ffee0ded', 'refs/heads/main')]),
-  )
-
-  yield test(
-      'no-branches',
-      ['git', 'ls-remote', '-t', REPO_URL, 'main'],
-      api.properties(branches=False),
-      mock_ls_remote('main', [('badc0ffee0ded', 'refs/heads/main')]),
-  )
-
-  yield test(
       'multiple-refs',
-      ['git', 'ls-remote', '-t', '-b', REPO_URL, '13.3.19'],
+      ['git', 'ls-remote', REPO_URL, '13.3.19'],
       api.properties(ref='13.3.19'),
       mock_ls_remote('13.3.19', [
           ('badc0ffee0ded', 'refs/heads/13.3.19'),
@@ -95,7 +79,7 @@ def GenTests(api):
 
   yield test(
       'no-refs',
-      ['git', 'ls-remote', '-t', '-b', REPO_URL, '13.3'],
+      ['git', 'ls-remote', REPO_URL, '13.3'],
       api.properties(ref='13.3'),
       mock_ls_remote('13.3', []),
       api.post_process(post.StatusFailure),

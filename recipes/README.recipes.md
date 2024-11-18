@@ -537,7 +537,7 @@ Returns: (str) The URL of the remote Git repository, or None.
 
 Find and return the timestamp of the given commit.
 
-&mdash; **def [ls\_remote](/recipes/recipe_modules/git/api.py#472)(self, url, ref, name=None, tags=True, branches=True, \*\*kwargs):**
+&mdash; **def [ls\_remote](/recipes/recipe_modules/git/api.py#472)(self, url, ref, name=None, \*\*kwargs):**
 
 Request the head revision for a given ref using ls-remote. Raise a
 StepFailure if the ref does not exist, or more than one ref was found.
@@ -546,8 +546,6 @@ Args:
   * url (str): url of remote repo to use as upstream.
   * ref (str): ref to query head revision.
   * name (str):  Name of the infra step.
-  * tags (bool): Include tags.
-  * branches (bool): Include branches.
 
 Returns: A git revision.
 
