@@ -391,6 +391,15 @@ def infradata_master_manager(c):
   del c.got_revision_mapping['infra_internal']
   c.got_revision_mapping['infra-data-master-manager'] = 'got_revision'
 
+
+@config_ctx()
+def infradata_cloud_run(c):
+  soln = c.solutions.add()
+  soln.name = 'infra-data-cloud-run'
+  soln.url = 'https://chrome-internal.googlesource.com/infradata/cloud-run.git'
+  c.got_revision_mapping['infra-data-cloud-run'] = 'got_revision'
+
+
 @config_ctx()
 def infradata_config(c):
   soln = c.solutions.add()

@@ -46,6 +46,7 @@ TEST_CONFIGS = [
     'infra_superproject',
     'infra_internal_superproject',
     'infradata_master_manager',
+    'infradata_cloud_run',
     'infradata_config',
     'infradata_rbe',
     'internal_deps',
