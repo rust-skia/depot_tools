@@ -1630,14 +1630,17 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         return tuple(out)
 
     def get_builtin_vars(self):
+        linux_names = ['linux', 'unix']
+        mac_names = ['mac', 'osx']
+        win_names = ['win', 'windows']
         return {
             'checkout_android': 'android' in self.target_os,
             'checkout_chromeos': 'chromeos' in self.target_os,
             'checkout_fuchsia': 'fuchsia' in self.target_os,
             'checkout_ios': 'ios' in self.target_os,
-            'checkout_linux': 'unix' in self.target_os,
-            'checkout_mac': 'mac' in self.target_os,
-            'checkout_win': 'win' in self.target_os,
+            'checkout_linux': any(n in self.target_os for n in linux_names),
+            'checkout_mac': any(n in self.target_os for n in mac_names),
+            'checkout_win': any(n in self.target_os for n in win_names),
             'host_os': _detect_host_os(),
             'checkout_arm': 'arm' in self.target_cpu,
             'checkout_arm64': 'arm64' in self.target_cpu,
