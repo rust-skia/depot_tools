@@ -22,9 +22,10 @@ def RunSteps(api):
   sln.name = 'src'
   sln.url = api.properties.get('git_repo')
   api.gclient.c = config
-  api.bot_update.ensure_checkout(set_output_commit=True,
-                                 parse_commit_position=api.properties.get(
-                                     'parse_commit_position', True))
+  api.bot_update.ensure_checkout(
+      set_output_commit=True,
+      parse_commit_position_for_tags=api.properties.get(
+          'parse_commit_position_for_tags', True))
 
 
 def GenTests(api):
@@ -76,10 +77,10 @@ def GenTests(api):
   )
 
   yield api.test(
-      'got_revision_cp_do_not_parse_commit_position',
+      'got_revision_cp_do_not_parse_commit_position_for_tags',
       api.properties(
           git_repo='https://chromium.googlesource.com/chromium/src.git',
-          parse_commit_position=False),
+          parse_commit_position_for_tags=False),
       api.buildbucket.ci_build(
           git_repo='https://chromium.googlesource.com/chromium/src.git',
           git_ref='refs/tags/100.0.0000.0',
