@@ -10,6 +10,7 @@
 ALLOWED_SPDX_LICENSES = frozenset([
     "APSL-2.0",
     "Apache-2.0",
+    "Supplement:Apache-2.0",
     "BSD-2-Clause",
     "BSD-2-Clause-FreeBSD",
     "BSD-3-Clause",
