@@ -907,14 +907,21 @@ def CheckChromiumDependencyMetadata(input_api, output_api, file_filter=None):
 _IGNORE_FREEZE_FOOTER = 'Ignore-Freeze'
 
 _FREEZE_TZ = datetime.timezone(-datetime.timedelta(hours=8), 'PST')
-_FREEZE_START = datetime.datetime(2024, 10, 12, 0, 0, tzinfo=_FREEZE_TZ)
-_FREEZE_END = datetime.datetime(2024, 10, 19, 0, 0, tzinfo=_FREEZE_TZ)
-_FREEZE_DETAILS = 'Internal infra conference'
+_CHROMIUM_FREEZE_START = datetime.datetime(2024, 12, 13, 0, 0, tzinfo=_FREEZE_TZ)
+_CHROMIUM_FREEZE_END = datetime.datetime(2025, 1, 2, 0, 0, tzinfo=_FREEZE_TZ)
+_CHROMIUM_FREEZE_DETAILS = 'Holiday freeze'
 
 def CheckInfraFreeze(input_api,
                      output_api,
                      files_to_include=None,
                      files_to_exclude=None):
+  return CheckChromiumInfraFreeze(input_api, output_api, files_to_include,
+                                files_to_exclude)
+
+def CheckChromiumInfraFreeze(input_api,
+                             output_api,
+                             files_to_include=None,
+                             files_to_exclude=None):
     """Prevent modifications during infra code freeze.
 
     Args:
@@ -936,7 +943,7 @@ def CheckInfraFreeze(input_api,
     """
     # Not in the freeze time range
     now = datetime.datetime.now(_FREEZE_TZ)
-    if now < _FREEZE_START or now >= _FREEZE_END:
+    if now < _CHROMIUM_FREEZE_START or now >= _CHROMIUM_FREEZE_END:
         input_api.logging.info('No freeze is in effect')
         return []
 
@@ -975,8 +982,9 @@ def CheckInfraFreeze(input_api,
             '\t{}\n\n'
             'The following files cannot be modified:\n  {}.\n\n'
             'Add "{}: <reason>" to the end of your commit message to override.'.
-            format(_FREEZE_START, _FREEZE_END, _FREEZE_DETAILS,
-                   '\n  '.join(files), _IGNORE_FREEZE_FOOTER))
+            format(_CHROMIUM_FREEZE_START, _CHROMIUM_FREEZE_END,
+                   _CHROMIUM_FREEZE_DETAILS, '\n  '.join(files),
+                   _IGNORE_FREEZE_FOOTER))
     ]
 
 
