@@ -56,6 +56,7 @@ class Result:
       repository and revision that was checked out.
     fixed_revisions: The explicitly requested revisions; a mapping from the
       checkout_dir-relative path to the requested revision.
+    out_commit: Gitiles output commit derived from got_revision.
   """
   # Directories relevant to the checkout
   checkout_dir: Path
@@ -66,6 +67,8 @@ class Result:
   properties: dict[str, str]
   manifest: dict[str, ManifestRepo]
   fixed_revisions: dict[str, str]
+
+  out_commit: common_pb2.GitilesCommit | None
 
 
 class BotUpdateApi(recipe_api.RecipeApi):
@@ -501,10 +504,10 @@ class BotUpdateApi(recipe_api.RecipeApi):
             blamelist_pins.append(pin)
           self.m.milo.show_blamelist_for(blamelist_pins)
 
-        # Set output commit of the build.
-        if (set_output_commit and
-            'got_revision' in self._last_returned_properties and
-            'got_revision' in reverse_rev_map):
+        out_commit = None
+
+        if ('got_revision' in self._last_returned_properties
+            and 'got_revision' in reverse_rev_map):
           # As of April 2019, got_revision describes the output commit,
           # the same commit that Build.output.gitiles_commit describes.
           # In particular, users tend to set got_revision to make Milo display
@@ -546,7 +549,9 @@ class BotUpdateApi(recipe_api.RecipeApi):
                 'Unsupported case. '
                 'Call buildbucket.set_output_gitiles_commit directly.'
             )
-          self.m.buildbucket.set_output_gitiles_commit(out_commit)
+
+          if set_output_commit:
+            self.m.buildbucket.set_output_gitiles_commit(out_commit)
 
         # Set the "checkout" path for the main solution.
         # This is used by the Chromium module to figure out where to look for
@@ -570,6 +575,7 @@ class BotUpdateApi(recipe_api.RecipeApi):
         properties=result.get('properties', {}),
         manifest=result.get('manifest', {}),
         fixed_revisions=result.get('fixed_revisions', {}),
+        out_commit=out_commit,
     )
 
   def _destination_ref(self, cfg, path):
