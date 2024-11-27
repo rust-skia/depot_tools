@@ -7,6 +7,18 @@ import os
 import re
 
 
+def _find_root(output_dir):
+    curdir = output_dir
+    while True:
+        if os.path.exists(os.path.join(curdir, ".gn")):
+            return curdir
+        nextdir = os.path.join(curdir, "..")
+        if os.path.abspath(curdir) == os.path.abspath(nextdir):
+            raise Exception(
+                'Could not find checkout in any parent of the current path.')
+        curdir = nextdir
+
+
 def _gn_lines(output_dir, path):
     """
     Generator function that returns args.gn lines one at a time, following
@@ -20,7 +32,7 @@ def _gn_lines(output_dir, path):
                 raw_import_path = match.groups()[0]
                 if raw_import_path[:2] == "//":
                     import_path = os.path.normpath(
-                        os.path.join(output_dir, "..", "..",
+                        os.path.join(_find_root(output_dir),
                                      raw_import_path[2:]))
                 else:
                     import_path = os.path.normpath(
