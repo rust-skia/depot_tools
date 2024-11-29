@@ -60,7 +60,7 @@ def _import_from_path(module_name, file_path):
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
-    except Exception:
+    except:
         raise ImportError(
             'Could not import module "{}" from "{}"'.format(
                 module_name, file_path),
@@ -133,20 +133,43 @@ def _print_cmd(cmd):
     print(*[shell_quoter(arg) for arg in cmd], file=sys.stderr)
 
 
+def _get_use_reclient_value(output_dir):
+    root_dir = gclient_paths.GetPrimarySolutionPath()
+    if not root_dir:
+        return None
+    script_path = os.path.join(root_dir,
+                               "build/toolchain/use_reclient_value.py")
+    if not os.path.exists(script_path):
+        return None
+
+    script = _import_from_path("use_reclient_value", script_path)
+    try:
+        r = script.use_reclient_value(output_dir)
+    except:
+        raise RuntimeError(
+            'Could not call method "use_reclient_value" in {}"'.format(
+                script_path))
+    if not isinstance(r, bool):
+        raise TypeError(
+            'Method "use_reclient_defualt" in "{}" returns invalid result. Expected bool, got "{}" (type "{}")'
+            .format(script_path, r, type(r)))
+    return r
+
+
 def _get_use_siso_default(output_dir):
     # TODO(379584977): move this in depot_tools
     # once gn rule for action_remote.py, which check use_siso` is removed.
     root_dir = gclient_paths.GetPrimarySolutionPath()
     if not root_dir:
-        return False
+        return None
     script_path = os.path.join(root_dir, "build/toolchain/use_siso_default.py")
     if not os.path.exists(script_path):
-        return False
+        return None
 
     script = _import_from_path("use_siso_default", script_path)
     try:
         r = script.use_siso_default(output_dir)
-    except Exception:
+    except:
         raise RuntimeError(
             'Could not call method "use_siso_default" in {}"'.format(
                 script_path))
@@ -201,7 +224,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             print(file=sys.stderr)
 
     use_remoteexec = False
-    use_reclient = None
+    use_reclient = _get_use_reclient_value(output_dir)
     use_siso = _get_use_siso_default(output_dir)
 
     # Attempt to auto-detect remote build acceleration. We support gn-based
@@ -223,19 +246,21 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                 use_remoteexec = False
                 continue
             if k == "use_siso" and v == "true":
+                assert use_siso != False
                 use_siso = True
                 continue
             if k == "use_siso" and v == "false":
+                assert use_siso != True
                 use_siso = False
                 continue
             if k == "use_reclient" and v == "true":
+                assert use_reclient != False
                 use_reclient = True
                 continue
             if k == "use_reclient" and v == "false":
+                assert use_reclient != True
                 use_reclient = False
                 continue
-        if use_reclient is None:
-            use_reclient = use_remoteexec
 
         if use_remoteexec:
             if use_reclient:
