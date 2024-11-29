@@ -261,6 +261,8 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                 assert use_reclient != True
                 use_reclient = False
                 continue
+        if use_reclient is None:
+            use_reclient = use_remoteexec
 
         if use_remoteexec:
             if use_reclient:
