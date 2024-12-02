@@ -544,13 +544,12 @@ class BotUpdateApi(recipe_api.RecipeApi):
           elif out_commit.id == in_commit.id and in_commit.ref:
             # Derive output ref from the input ref.
             out_commit.ref = in_commit.ref
-          else: # pragma: no cover
-            assert False, (
-                'Unsupported case. '
-                'Call buildbucket.set_output_gitiles_commit directly.'
-            )
 
           if set_output_commit:
+            assert out_commit.ref, (
+                'Unsupported case. '
+                'Call buildbucket.set_output_gitiles_commit directly.')
+
             self.m.buildbucket.set_output_gitiles_commit(out_commit)
 
         # Set the "checkout" path for the main solution.
