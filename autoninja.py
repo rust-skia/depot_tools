@@ -246,19 +246,15 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                 use_remoteexec = False
                 continue
             if k == "use_siso" and v == "true":
-                assert use_siso != False
                 use_siso = True
                 continue
             if k == "use_siso" and v == "false":
-                assert use_siso != True
                 use_siso = False
                 continue
             if k == "use_reclient" and v == "true":
-                assert use_reclient != False
                 use_reclient = True
                 continue
             if k == "use_reclient" and v == "false":
-                assert use_reclient != True
                 use_reclient = False
                 continue
         if use_reclient is None:
