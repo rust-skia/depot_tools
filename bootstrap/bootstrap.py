@@ -34,6 +34,19 @@ WIN_GIT_STUBS = {
     'ssh-keygen.bat': 'usr\\bin\\ssh-keygen.exe',
 }
 
+# The global git config which should be applied by |git_postprocess|.
+# The following set of parameters is versioned by "GIT_POSTPROCESS_VERSION".
+# If they change, update "GIT_POSTPROCESS_VERSION" accordingly.
+GIT_GLOBAL_CONFIG = {
+    'core.autocrlf': 'false',
+    'core.filemode': 'false',
+    'core.preloadindex': 'true',
+    'core.fscache': 'true',
+    'protocol.version': '2',
+}
+# Version of GIT_GLOBAL_CONFIG above.
+GIT_POSTPROCESS_VERSION = '2'
+
 
 # Accumulated template parameters for generated stubs.
 class Template(
@@ -185,14 +198,15 @@ def _toolchain_in_use(toolchain_path):
 
 
 def _check_call(argv, stdin_input=None, **kwargs):
-    """Wrapper for subprocess.check_call that adds logging."""
+    """Wrapper for subprocess.Popen that adds logging."""
     logging.info('running %r', argv)
     if stdin_input is not None:
         kwargs['stdin'] = subprocess.PIPE
     proc = subprocess.Popen(argv, **kwargs)
-    proc.communicate(input=stdin_input)
+    stdout, stderr = proc.communicate(input=stdin_input)
     if proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, argv, None)
+    return stdout, stderr
 
 
 def _safe_rmtree(path):
@@ -239,10 +253,6 @@ def clean_up_old_installations(skip_dir):
                 _safe_rmtree(full_entry)
             else:
                 logging.info('Toolchain at %r is in-use; skipping', full_entry)
-
-
-# Version of "git_postprocess" system configuration (see |git_postprocess|).
-GIT_POSTPROCESS_VERSION = '2'
 
 
 def _within_depot_tools(path):
@@ -307,7 +317,85 @@ def git_get_mingw_dir(git_directory):
     return None
 
 
-def git_postprocess(template, bootstrap_git_dir, add_docs):
+def get_git_global_config_value(git_path, key):
+    """Helper to get the value from the global git config.
+
+    Returns:
+      - if present in the global git config, the associated value for the key;
+      - empty string if the key is not in the global git config.
+
+    Raises:
+        subprocess.CalledProcessError if there was an error reading the config
+        which resulted in an exit code other than 1.
+    """
+    try:
+        stdout, _ = _check_call([git_path, 'config', '--global', key],
+                                stdout=subprocess.PIPE,
+                                encoding='utf-8')
+        return stdout.strip()
+    except subprocess.CalledProcessError as e:
+        # Exit code is 1 if the key is invalid (i.e. not in the config).
+        if e.returncode == 1:
+            logging.info('{} was not in the global git config.'.format(key))
+            return ''
+
+        raise e
+
+
+def _win_git_bootstrap_config():
+    """Bootstraps the global git config, if enabled by the user.
+
+    To allow depot_tools to update your global git config, run:
+        git config --global depot-tools.allowGlobalGitConfig true
+
+    To prevent depot_tools updating your global git config and silence the
+    warning, run:
+        git config --global depot-tools.allowGlobalGitConfig false
+    """
+    git_bat_path = os.path.join(ROOT_DIR, 'git.bat')
+
+    postprocess_key = 'depot-tools.gitPostprocessVersion'
+    postprocess_version = get_git_global_config_value(git_path=git_bat_path,
+                                                      key=postprocess_key)
+    if postprocess_version == GIT_POSTPROCESS_VERSION:
+        # Already configured. Nothing to do.
+        return
+
+    # Check whether the user has authorized depot_tools to update their global
+    # git config.
+    allow_global_key = 'depot-tools.allowGlobalGitConfig'
+    allow_global = get_git_global_config_value(git_path=git_bat_path,
+                                               key=allow_global_key).lower()
+
+    if allow_global in ('false', '0', 'no', 'off'):
+        # The user has explicitly disabled this.
+        return
+
+    if allow_global not in ('true', '1', 'yes', 'on'):
+        logging.warning(
+            'depot_tools would like to update your global Git config\n'
+            'to have the optimal settings for Chromium development.\n'
+            'Allow this by running:\n'
+            f'    git config --global {allow_global_key} true\n'
+            'Then, get depot_tools to update your config by running:\n'
+            '    gclient sync\n'
+            'To deny and silence this warning, run:\n'
+            f'    git config --global {allow_global_key} false\n')
+        return
+
+    # Global git config changes have been authorized - do the update.
+    for k, v in GIT_GLOBAL_CONFIG.items():
+        _check_call([git_bat_path, 'config', '--global', k, v])
+
+    # Update the postprocess version to denote this version of the config has
+    # been applied.
+    _check_call([
+        git_bat_path, 'config', '--global', postprocess_key,
+        GIT_POSTPROCESS_VERSION
+    ])
+
+
+def git_postprocess(template, add_docs):
     if add_docs:
         # Update depot_tools files for "git help <command>".
         mingw_dir = git_get_mingw_dir(template.GIT_BIN_ABSDIR)
@@ -327,25 +415,8 @@ def git_postprocess(template, bootstrap_git_dir, add_docs):
         stub_template.maybe_install('git.template.bat',
                                     os.path.join(ROOT_DIR, stub_name))
 
-    # Set-up our system configuration environment. The following set of
-    # parameters is versioned by "GIT_POSTPROCESS_VERSION". If they change,
-    # update "GIT_POSTPROCESS_VERSION" accordingly.
-    def configure_git_system():
-        git_bat_path = os.path.join(ROOT_DIR, 'git.bat')
-        _check_call(
-            [git_bat_path, 'config', '--system', 'core.autocrlf', 'false'])
-        _check_call(
-            [git_bat_path, 'config', '--system', 'core.filemode', 'false'])
-        _check_call(
-            [git_bat_path, 'config', '--system', 'core.preloadindex', 'true'])
-        _check_call(
-            [git_bat_path, 'config', '--system', 'core.fscache', 'true'])
-        _check_call(
-            [git_bat_path, 'config', '--system', 'protocol.version', '2'])
-
-    os.makedirs(bootstrap_git_dir, exist_ok=True)
-    call_if_outdated(os.path.join(bootstrap_git_dir, '.git_postprocess'),
-                     GIT_POSTPROCESS_VERSION, configure_git_system)
+    # Bootstrap the git global config.
+    _win_git_bootstrap_config()
 
 
 def main(argv):
@@ -374,7 +445,6 @@ def main(argv):
     clean_up_old_installations(bootstrap_dir)
 
     if IS_WIN:
-        bootstrap_git_dir = os.path.join(bootstrap_dir, 'git')
         # Avoid messing with system git docs.
         add_docs = False
         git_dir = None
@@ -384,10 +454,10 @@ def main(argv):
             # Either using system git was not enabled
             # or git was not found in PATH.
             # Fall back to depot_tools bundled git.
-            git_dir = bootstrap_git_dir
+            git_dir = os.path.join(bootstrap_dir, 'git')
             add_docs = True
         template = template._replace(GIT_BIN_ABSDIR=git_dir)
-        git_postprocess(template, bootstrap_git_dir, add_docs)
+        git_postprocess(template, add_docs)
         templates = [
             ('git-bash.template.sh', 'git-bash', ROOT_DIR),
             ('python3.bat', 'python3.bat', ROOT_DIR),

@@ -8,12 +8,15 @@ from replacing it outright without breaking running code. To
 ommodate this, and Python cleanup, we handle Python in two stages:
 
 1. Use CIPD to install both Git and Python at once.
-2. Use "win_tools.py" as a post-processor to install generated files and
+2. Use "bootstrap.py" as a post-processor to install generated files and
    fix-ups.
 
 ## Software bootstrapped
   * Python 3 (https://www.python.org/)
   * Git for Windows (https://git-for-windows.github.io/)
+    * This will soon be unbundled from depot_tools. To prepare for this change,
+    please install Git directly. See the instructions in the
+    [Windows build docs](https://chromium.googlesource.com/chromium/src/+/main/docs/windows_build_instructions.md#Install-git).
 
 ## Mechanism
 
@@ -29,7 +32,7 @@ cases is not true, it will download and unpack the respective binary.
 Installation of Git and Python is done by the [win_tools.bat](./win_tools.bat)
 script, which uses CIPD (via the [cipd](/cipd.bat) bootstrap) to acquire and
 install each package into the root of the `depot_tools` repository. Afterwards,
-the [win_tools.py](./win_tools.py) Python script is invoked to install stubs,
+the [bootstrap.py](./bootstrap.py) Python script is invoked to install stubs,
 wrappers, and support scripts into `depot_tools` for end-users.
 
 ### Manifest
