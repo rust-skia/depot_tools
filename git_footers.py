@@ -115,15 +115,13 @@ def add_footer_change_id(message, change_id):
                       after_keys=['Bug', 'Issue', 'Test', 'Feature'])
 
 
-def add_footer(message, key, value, after_keys=None, before_keys=None):
+def add_footer(message, key, value, after_keys=None):
     """Returns a message with given footer appended.
 
-    If after_keys and before_keys are both None (default), appends footer last.
+    If after_keys is None (default), appends footer last.
     If after_keys is provided and matches footers already present, inserts
     footer as *early* as possible while still appearing after all provided
-    keys, even if doing so conflicts with before_keys.
-    If before_keys is provided, inserts footer as late as possible while still
-    appearing before all provided keys.
+    keys.
 
     For example, given
         message='Header.\n\nAdded: 2016\nBug: 123\nVerified-By: CQ'
@@ -147,16 +145,9 @@ def add_footer(message, key, value, after_keys=None, before_keys=None):
             footer_lines.index(x) for x in footer_lines for k in after_keys
             if matches_footer_key(x, k)
         ]
-        before_keys = set(map(normalize_name, before_keys or []))
-        before_indices = [
-            footer_lines.index(x) for x in footer_lines for k in before_keys
-            if matches_footer_key(x, k)
-        ]
         if after_indices:
             # after_keys takes precedence, even if there's a conflict.
             insert_idx = max(after_indices) + 1
-        elif before_indices:
-            insert_idx = min(before_indices)
         else:
             insert_idx = len(footer_lines)
         footer_lines.insert(insert_idx, new_footer)

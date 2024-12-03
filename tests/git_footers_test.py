@@ -208,31 +208,6 @@ My commit message is my best friend. It is my life.
                                    after_keys=['Some']),
             'Top\n\nSome: footer\nKey: value\nOther: footer')
 
-        self.assertEqual(
-            git_footers.add_footer('Top\n\nSome: footer\nOther: footer',
-                                   'Key',
-                                   'value',
-                                   before_keys=['Other']),
-            'Top\n\nSome: footer\nKey: value\nOther: footer')
-
-        self.assertEqual(
-            git_footers.add_footer(
-                'Top\n\nSome: footer\nOther: footer\nFinal: footer',
-                'Key',
-                'value',
-                after_keys=['Some'],
-                before_keys=['Final']),
-            'Top\n\nSome: footer\nKey: value\nOther: footer\nFinal: footer')
-
-        self.assertEqual(
-            git_footers.add_footer(
-                'Top\n\nSome: footer\nOther: footer\nFinal: footer',
-                'Key',
-                'value',
-                after_keys=['Other'],
-                before_keys=['Some']),
-            'Top\n\nSome: footer\nOther: footer\nKey: value\nFinal: footer')
-
     def testRemoveFooter(self):
         self.assertEqual(git_footers.remove_footer('message', 'Key'), 'message')
 
