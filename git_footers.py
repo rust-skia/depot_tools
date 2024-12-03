@@ -42,15 +42,12 @@ def parse_footers(message):
     return footer_map
 
 
-def matches_footer_key(line, key):
-    """Returns whether line is a valid footer whose key matches a given one.
-
-    Keys are compared in normalized form.
-    """
+def normalize_key(line):
+    """Returns the key of the footer line in normalized form."""
     r = parse_footer(line)
     if r is None:
-        return False
-    return normalize_name(r[0]) == normalize_name(key)
+        return ''
+    return normalize_name(r[0])
 
 
 def split_footers(message):
@@ -140,16 +137,27 @@ def add_footer(message, key, value, after_keys=None):
             top_lines.append('')
         footer_lines = [new_footer]
     else:
+        # find the index of the last footer with any of the after_keys.
         after_keys = set(map(normalize_name, after_keys or []))
-        after_indices = [
-            footer_lines.index(x) for x in footer_lines for k in after_keys
-            if matches_footer_key(x, k)
-        ]
-        if after_indices:
-            # after_keys takes precedence, even if there's a conflict.
-            insert_idx = max(after_indices) + 1
-        else:
+        last_akey_idx = None
+        for idx in range(len(footer_lines)):
+            line = footer_lines[idx]
+
+            # if the current footer is indented, it may be a continuation of
+            # the previous line.
+            if line and line[0] == ' ':
+                if last_akey_idx is None:
+                    continue
+                if idx - last_akey_idx > 1:
+                    continue
+            elif normalize_key(line) not in after_keys:
+                continue
+            last_akey_idx = idx
+
+        if last_akey_idx is None:
             insert_idx = len(footer_lines)
+        else:
+            insert_idx = last_akey_idx + 1
         footer_lines.insert(insert_idx, new_footer)
     return '\n'.join(top_lines + footer_lines)
 

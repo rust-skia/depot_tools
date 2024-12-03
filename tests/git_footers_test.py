@@ -171,6 +171,100 @@ My commit message is my best friend. It is my life.
                                              'Ix'),
             'Header.\n\nBug: v8\nChange-Id: Ix\nN=t\nT=z')
 
+    def testAddFooterChangeIdWithMultilineFooters(self):
+        add_change_id = lambda lines: git_footers.add_footer_change_id(
+            '\n'.join(lines), 'Ixxx')
+
+        self.assertEqual(
+            add_change_id([
+                'header',
+                '',
+                '',
+                'BUG: yy',
+                'Test: hello ',
+                '  world',
+            ]),
+            '\n'.join([
+                'header',
+                '',
+                '',
+                'BUG: yy',
+                'Test: hello ',
+                '  world',
+                'Change-Id: Ixxx',
+            ]),
+        )
+
+        self.assertEqual(
+            add_change_id([
+                'header',
+                '',
+                '',
+                'BUG: yy',
+                'Yeah: hello ',
+                '  world',
+            ]),
+            '\n'.join([
+                'header',
+                '',
+                '',
+                'BUG: yy',
+                'Change-Id: Ixxx',
+                'Yeah: hello ',
+                '  world',
+            ]),
+        )
+
+        self.assertEqual(
+            add_change_id([
+                'header',
+                '',
+                '',
+                'Something: ',
+                '   looks great',
+                'BUG: yy',
+                'Test: hello ',
+                '  world',
+            ]),
+            '\n'.join([
+                'header',
+                '',
+                '',
+                'Something: ',
+                '   looks great',
+                'BUG: yy',
+                'Test: hello ',
+                '  world',
+                'Change-Id: Ixxx',
+            ]),
+        )
+
+        self.assertEqual(
+            add_change_id([
+                'header',
+                '',
+                '',
+                'Something: ',
+                'BUG: yy',
+                'Something: ',
+                '   looks great',
+                'Test: hello ',
+                '  world',
+            ]),
+            '\n'.join([
+                'header',
+                '',
+                '',
+                'Something: ',
+                'BUG: yy',
+                'Something: ',
+                '   looks great',
+                'Test: hello ',
+                '  world',
+                'Change-Id: Ixxx',
+            ]),
+        )
+
     def testAddFooter(self):
         with self.assertRaises(ValueError):
             git_footers.add_footer('', 'Invalid Footer', 'Value')
