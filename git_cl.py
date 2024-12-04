@@ -3888,17 +3888,23 @@ def CMDcreds_check(parser, args):
 
     if newauth.Enabled():
         cl = Changelist()
+        host = cl.GetGerritHost()
+        print(f'Using Gerrit host: {host!r}')
         git_auth.Configure(os.getcwd(), cl)
         # Perform some advisory checks
         email = scm.GIT.GetConfig(os.getcwd(), 'user.email') or ''
-        if not gerrit_util.ShouldUseSSO(cl.GetGerritHost(), email):
+        print(f'Using email (configured in Git): {email!r}')
+        if gerrit_util.ShouldUseSSO(host, email):
+            print('Detected that we should be using SSO.')
+        else:
+            print('Detected that we should be using luci-auth.')
             a = gerrit_util.LuciAuthAuthenticator()
             try:
                 a.luci_auth.get_access_token()
             except auth.LoginRequiredError as e:
                 print('NOTE: You are not logged in with luci-auth.')
                 print(
-                    'You may not be able to perform some actions without logging in.'
+                    'You will not be able to perform many actions without logging in.'
                 )
                 print('If you wish to log in, run:')
                 print('   ' + e.login_command)
