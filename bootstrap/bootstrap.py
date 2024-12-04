@@ -42,7 +42,6 @@ GIT_GLOBAL_CONFIG = {
     'core.filemode': 'false',
     'core.preloadindex': 'true',
     'core.fscache': 'true',
-    'protocol.version': '2',
 }
 # Version of GIT_GLOBAL_CONFIG above.
 GIT_POSTPROCESS_VERSION = '2'
