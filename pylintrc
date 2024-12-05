@@ -114,6 +114,7 @@ disable=
     invalid-string-quote,
     invalid-triple-quote,
     locally-enabled,
+    line-too-long,
     misplaced-comparison-constant,
     misplaced-bare-raise,
     missing-final-newline,
