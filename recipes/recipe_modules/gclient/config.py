@@ -193,19 +193,6 @@ def build_internal(c):
   c.got_revision_mapping['build'] = 'got_build_revision'
 
 @config_ctx()
-def build_internal_scripts_slave(c):
-  s = c.solutions.add()
-  s.name = 'build_internal/scripts/slave'
-  s.url = ('https://chrome-internal.googlesource.com/'
-           'chrome/tools/build_limited/scripts/slave.git')
-  c.got_revision_mapping['build_internal/scripts/slave'] = 'got_revision'
-  # We do not use 'includes' here, because we want build_internal to be the
-  # first solution in the list as run_presubmit computes upstream revision
-  # from the first solution.
-  build(c)
-  c.got_revision_mapping['build'] = 'got_build_revision'
-
-@config_ctx()
 def pdfium(c):
   soln = c.solutions.add()
   soln.name = 'pdfium'

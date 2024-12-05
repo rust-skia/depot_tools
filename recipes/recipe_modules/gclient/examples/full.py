@@ -20,7 +20,6 @@ TEST_CONFIGS = [
     'android',
     'boringssl',
     'build_internal',
-    'build_internal_scripts_slave',
     'catapult',
     'celab',
     'crashpad',
