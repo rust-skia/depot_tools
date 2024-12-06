@@ -286,7 +286,7 @@ class _Authenticator(object):
                         SSOAuthenticator(),
                         # GCE detection can't distinguish cloud workstations.
                         GceAuthenticator(),
-                        LuciAuthAuthenticator(),
+                        GitCredsAuthenticator(),
                         NoAuthenticator(),
                     ]
                     if skip_sso:
@@ -850,12 +850,23 @@ class LuciContextAuthenticator(_Authenticator):
         return ''
 
 
-class LuciAuthAuthenticator(LuciContextAuthenticator):
-    """_Authenticator implementation that uses `luci-auth` credentials.
+class GitCredsAuthenticator(_Authenticator):
+    """_Authenticator implementation that uses `git-credential-luci` with OAuth.
 
-    This is the same as LuciContextAuthenticator, except that it is for local
-    non-google.com developer credentials.
+    This is similar to LuciContextAuthenticator, except that it is for
+    local non-google.com developer credentials.
     """
+
+    def __init__(self):
+        self._authenticator = auth.GerritAuthenticator()
+
+    def authenticate(self, conn: HttpConn):
+        conn.req_headers[
+            'Authorization'] = f'Bearer {self._authenticator.get_access_token()}'
+
+    def debug_summary_state(self) -> str:
+        # TODO(b/343230702) - report ambient account name.
+        return ''
 
     @classmethod
     def gerrit_account_exists(cls, host: str) -> bool:

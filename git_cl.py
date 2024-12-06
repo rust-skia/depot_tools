@@ -3897,12 +3897,12 @@ def CMDcreds_check(parser, args):
         if gerrit_util.ShouldUseSSO(host, email):
             print('Detected that we should be using SSO.')
         else:
-            print('Detected that we should be using luci-auth.')
-            a = gerrit_util.LuciAuthAuthenticator()
+            print('Detected that we should be using git-credential-luci.')
+            a = gerrit_util.GitCredsAuthenticator()
             try:
                 a.luci_auth.get_access_token()
-            except auth.LoginRequiredError as e:
-                print('NOTE: You are not logged in with luci-auth.')
+            except auth.GitLoginRequiredError as e:
+                print('NOTE: You are not logged in with git-credential-luci.')
                 print(
                     'You will not be able to perform many actions without logging in.'
                 )

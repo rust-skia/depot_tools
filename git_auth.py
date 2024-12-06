@@ -130,7 +130,7 @@ class ConfigChanger(object):
         email: str = scm.GIT.GetConfig(cwd, 'user.email') or ''
         if gerrit_util.ShouldUseSSO(gerrit_host, email):
             return ConfigMode.NEW_AUTH_SSO
-        if not gerrit_util.LuciAuthAuthenticator.gerrit_account_exists(
+        if not gerrit_util.GitCredsAuthenticator.gerrit_account_exists(
                 gerrit_host):
             return ConfigMode.NO_AUTH
         return ConfigMode.NEW_AUTH
