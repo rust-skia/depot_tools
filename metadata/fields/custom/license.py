@@ -98,7 +98,8 @@ class LicenseField(field_types.SingleLineTextField):
 
         if not_allowlisted:
             return vr.ValidationWarning(
-                reason=f"{self._name} has a license not in the allowlist.",
+                reason=f"{self._name} has a license not in the allowlist."
+                " (see https://source.chromium.org/chromium/chromium/tools/depot_tools/+/main:metadata/fields/custom/license_allowlist.py).",
                 additional=[
                     "Licenses not allowlisted: "
                     f"{util.quoted(not_allowlisted)}.",
