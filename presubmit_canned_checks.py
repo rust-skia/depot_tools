@@ -601,24 +601,21 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
     # '.h' is considered an obj-c file extension, since OBJC_EXCEPTIONS are a
     # superset of CPP_EXCEPTIONS.
     CPP_FILE_EXTS = ('c', 'cc')
-    CPP_EXCEPTIONS = ('#define', '#endif', '#if', '#include', '#pragma')
+    CPP_EXCEPTIONS = ('#define', '#endif', '#if', '#include', '#pragma',
+                      '// LINT.ThenChange(')
     HTML_FILE_EXTS = ('html', )
-    HTML_EXCEPTIONS = (
-        '<g ',
-        '<link ',
-        '<path ',
-    )
+    HTML_EXCEPTIONS = ('<g ', '<link ', '<path ', '<!-- LINT.ThenChange(')
     JAVA_FILE_EXTS = ('java', )
-    JAVA_EXCEPTIONS = ('import ', 'package ')
+    JAVA_EXCEPTIONS = ('import ', 'package ', '// LINT.ThenChange(')
     JS_FILE_EXTS = ('js', )
-    JS_EXCEPTIONS = ("GEN('#include", 'import ')
+    JS_EXCEPTIONS = ("GEN('#include", 'import ', '// LINT.ThenChange(')
     TS_FILE_EXTS = ('ts', )
-    TS_EXCEPTIONS = ('import ')
+    TS_EXCEPTIONS = ('import ', '// LINT.ThenChange(')
     OBJC_FILE_EXTS = ('h', 'm', 'mm')
     OBJC_EXCEPTIONS = ('#define', '#endif', '#if', '#import', '#include',
-                       '#pragma')
+                       '#pragma', '// LINT.ThenChange(')
     PY_FILE_EXTS = ('py', )
-    PY_EXCEPTIONS = ('import', 'from')
+    PY_EXCEPTIONS = ('import', 'from', '# LINT.ThenChange(')
 
     LANGUAGE_EXCEPTIONS = [
         (CPP_FILE_EXTS, CPP_EXCEPTIONS),
@@ -916,8 +913,8 @@ def CheckInfraFreeze(input_api,
                      output_api,
                      files_to_include=None,
                      files_to_exclude=None):
-  return CheckChromiumInfraFreeze(input_api, output_api, files_to_include,
-                                files_to_exclude)
+    return CheckChromiumInfraFreeze(input_api, output_api, files_to_include,
+                                    files_to_exclude)
 
 def CheckChromiumInfraFreeze(input_api,
                              output_api,
