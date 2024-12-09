@@ -907,8 +907,9 @@ def CheckChromiumDependencyMetadata(input_api, output_api, file_filter=None):
 _IGNORE_FREEZE_FOOTER = 'Ignore-Freeze'
 
 _FREEZE_TZ = datetime.timezone(-datetime.timedelta(hours=8), 'PST')
-_CHROMIUM_FREEZE_START = datetime.datetime(2024, 12, 13, 0, 0, tzinfo=_FREEZE_TZ)
-_CHROMIUM_FREEZE_END = datetime.datetime(2025, 1, 2, 0, 0, tzinfo=_FREEZE_TZ)
+_CHROMIUM_FREEZE_START = datetime.datetime(
+    2024, 12, 20, 17, 1, tzinfo=_FREEZE_TZ)
+_CHROMIUM_FREEZE_END = datetime.datetime(2025, 1, 5, 17, 0, tzinfo=_FREEZE_TZ)
 _CHROMIUM_FREEZE_DETAILS = 'Holiday freeze'
 
 def CheckInfraFreeze(input_api,
