@@ -860,6 +860,10 @@ class GitCredsAuthenticator(_Authenticator):
     def __init__(self):
         self._authenticator = auth.GerritAuthenticator()
 
+    @property
+    def luci_auth(self) -> auth.Authenticator:
+        return self._authenticator
+
     def authenticate(self, conn: HttpConn):
         conn.req_headers[
             'Authorization'] = f'Bearer {self._authenticator.get_access_token()}'
