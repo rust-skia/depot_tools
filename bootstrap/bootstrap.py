@@ -415,13 +415,21 @@ def _win_git_bootstrap_config():
 
     if allow_global not in ('true', '1', 'yes', 'on'):
         lines = [
-            'depot_tools would like to update your global Git config',
-            'to have the optimal settings for Chromium development.',
+            'depot_tools recommends setting the following for',
+            'optimal Chromium development:',
+            '',
+        ] + [
+            f'$ git config --global {k} {GIT_GLOBAL_CONFIG.get(k)}'
+            for k in mismatching_keys
+        ] + [
+            '',
+            'You can silence this message by setting these recommended values.',
+            '',
             'You can allow depot_tools to automatically update your global',
             'Git config to recommended settings by running:',
             f'$ git config --global {allow_global_key} true',
             '',
-            'To suppress this warning:',
+            'To suppress this warning and silence future recommendations, run:',
             f'$ git config --global {allow_global_key} false',
         ]
 
