@@ -436,9 +436,10 @@ def _win_git_bootstrap_config():
         logging.warning('\n'.join(lines))
         return
 
-    # Global git config changes have been authorized - do the update.
-    for k, v in GIT_GLOBAL_CONFIG.items():
-        _check_call([git_bat_path, 'config', '--global', k, v])
+    # Global git config changes have been authorized - do the necessary updates.
+    for k in mismatching_keys:
+        desired = GIT_GLOBAL_CONFIG.get(k)
+        _check_call([git_bat_path, 'config', '--global', k, desired])
 
     # Clean up deprecated setting depot-tools.gitPostprocessVersion.
     postprocess_key = 'depot-tools.gitPostprocessVersion'
