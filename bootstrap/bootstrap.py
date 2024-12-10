@@ -35,16 +35,12 @@ WIN_GIT_STUBS = {
 }
 
 # The global git config which should be applied by |git_postprocess|.
-# The following set of parameters is versioned by "GIT_POSTPROCESS_VERSION".
-# If they change, update "GIT_POSTPROCESS_VERSION" accordingly.
 GIT_GLOBAL_CONFIG = {
     'core.autocrlf': 'false',
     'core.filemode': 'false',
     'core.preloadindex': 'true',
     'core.fscache': 'true',
 }
-# Version of GIT_GLOBAL_CONFIG above.
-GIT_POSTPROCESS_VERSION = '2'
 
 
 # Accumulated template parameters for generated stubs.
@@ -316,29 +312,70 @@ def git_get_mingw_dir(git_directory):
     return None
 
 
-def get_git_global_config_value(git_path, key):
-    """Helper to get the value from the global git config.
+class GitConfigDict(collections.UserDict):
+    """Custom dict to support mixed case sensitivity for Git config options.
+
+    See the docs at: https://git-scm.com/docs/git-config#_syntax
+    """
+
+    @staticmethod
+    def _to_case_compliant_key(config_key):
+        parts = config_key.split('.')
+        if len(parts) < 2:
+            # The config key does not conform to the expected format.
+            # Leave as-is.
+            return config_key
+
+        # Section headers are case-insensitive; set to lowercase for lookup
+        # consistency.
+        section = parts[0].lower()
+        # Subsection headers are case-sensitive and allow '.'.
+        subsection_parts = parts[1:-1]
+        # Variable names are case-insensitive; again, set to lowercase for
+        # lookup consistency.
+        name = parts[-1].lower()
+
+        return '.'.join([section] + subsection_parts + [name])
+
+    def __setitem__(self, key, value):
+        self.data[self._to_case_compliant_key(key)] = value
+
+    def __getitem__(self, key):
+        return self.data[self._to_case_compliant_key(key)]
+
+
+def get_git_global_config(git_path):
+    """Helper to get all values from the global git config.
+
+    Note: multivalued config variables (multivars) are not supported; only the
+    last value for each multivar will be in the returned config.
 
     Returns:
-      - if present in the global git config, the associated value for the key;
-      - empty string if the key is not in the global git config.
+      - dict of the current global git config.
 
     Raises:
-        subprocess.CalledProcessError if there was an error reading the config
-        which resulted in an exit code other than 1.
+        subprocess.CalledProcessError if there was an error reading the config.
     """
     try:
-        stdout, _ = _check_call([git_path, 'config', '--global', key],
+        # List all values in the global git config. Using the `-z` option allows
+        # us to securely parse the output even if a value contains line breaks.
+        # See docs at:
+        # https://git-scm.com/docs/git-config#Documentation/git-config.txt--z
+        stdout, _ = _check_call([git_path, 'config', 'list', '--global', '-z'],
                                 stdout=subprocess.PIPE,
                                 encoding='utf-8')
-        return stdout.strip()
     except subprocess.CalledProcessError as e:
-        # Exit code is 1 if the key is invalid (i.e. not in the config).
-        if e.returncode == 1:
-            logging.info('{} was not in the global git config.'.format(key))
-            return ''
-
         raise e
+
+    # Process all entries in the config.
+    config = {}
+    for line in stdout.split('\0'):
+        entry = line.split('\n', 1)
+        if len(entry) != 2:
+            continue
+        config[entry[0]] = entry[1]
+
+    return GitConfigDict(config)
 
 
 def _win_git_bootstrap_config():
@@ -353,19 +390,24 @@ def _win_git_bootstrap_config():
     """
     git_bat_path = os.path.join(ROOT_DIR, 'git.bat')
 
-    postprocess_key = 'depot-tools.gitPostprocessVersion'
-    postprocess_version = get_git_global_config_value(git_path=git_bat_path,
-                                                      key=postprocess_key)
-    if postprocess_version == GIT_POSTPROCESS_VERSION:
-        # Previously configured automatically by depot_tools at the current
-        # version of the global git config. Nothing to do.
+    # Read the current global git config in its entirety.
+    current_config = get_git_global_config(git_bat_path)
+
+    # Get the current values for the settings which have defined values for
+    # optimal Chromium development.
+    config_keys = sorted(GIT_GLOBAL_CONFIG.keys())
+    mismatching_keys = []
+    for k in config_keys:
+        if current_config.get(k) != GIT_GLOBAL_CONFIG.get(k):
+            mismatching_keys.append(k)
+    if not mismatching_keys:
+        # Global git config already has the desired values. Nothing to do.
         return
 
     # Check whether the user has authorized depot_tools to update their global
     # git config.
     allow_global_key = 'depot-tools.allowGlobalGitConfig'
-    allow_global = get_git_global_config_value(git_path=git_bat_path,
-                                               key=allow_global_key).lower()
+    allow_global = current_config.get(allow_global_key, '').lower()
 
     if allow_global in ('false', '0', 'no', 'off'):
         # The user has explicitly disabled this.
@@ -387,12 +429,11 @@ def _win_git_bootstrap_config():
     for k, v in GIT_GLOBAL_CONFIG.items():
         _check_call([git_bat_path, 'config', '--global', k, v])
 
-    # Update the postprocess version to denote this version of the config has
-    # been applied.
-    _check_call([
-        git_bat_path, 'config', '--global', postprocess_key,
-        GIT_POSTPROCESS_VERSION
-    ])
+    # Clean up deprecated setting depot-tools.gitPostprocessVersion.
+    postprocess_key = 'depot-tools.gitPostprocessVersion'
+    if current_config.get(postprocess_key) != None:
+        _check_call(
+            [git_bat_path, 'config', 'unset', '--global', postprocess_key])
 
 
 def git_postprocess(template, add_docs):
