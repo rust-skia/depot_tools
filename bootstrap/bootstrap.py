@@ -361,9 +361,10 @@ def get_git_global_config(git_path):
         # us to securely parse the output even if a value contains line breaks.
         # See docs at:
         # https://git-scm.com/docs/git-config#Documentation/git-config.txt--z
-        stdout, _ = _check_call([git_path, 'config', 'list', '--global', '-z'],
-                                stdout=subprocess.PIPE,
-                                encoding='utf-8')
+        stdout, _ = _check_call(
+            [git_path, 'config', '--list', '--global', '-z'],
+            stdout=subprocess.PIPE,
+            encoding='utf-8')
     except subprocess.CalledProcessError as e:
         raise e
 
@@ -445,7 +446,7 @@ def _win_git_bootstrap_config():
     postprocess_key = 'depot-tools.gitPostprocessVersion'
     if current_config.get(postprocess_key) != None:
         _check_call(
-            [git_bat_path, 'config', 'unset', '--global', postprocess_key])
+            [git_bat_path, 'config', '--unset', '--global', postprocess_key])
 
 
 def git_postprocess(template, add_docs):
