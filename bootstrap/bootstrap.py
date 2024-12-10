@@ -357,7 +357,8 @@ def _win_git_bootstrap_config():
     postprocess_version = get_git_global_config_value(git_path=git_bat_path,
                                                       key=postprocess_key)
     if postprocess_version == GIT_POSTPROCESS_VERSION:
-        # Already configured. Nothing to do.
+        # Previously configured automatically by depot_tools at the current
+        # version of the global git config. Nothing to do.
         return
 
     # Check whether the user has authorized depot_tools to update their global
