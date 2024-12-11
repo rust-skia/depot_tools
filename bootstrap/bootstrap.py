@@ -351,10 +351,9 @@ def get_git_global_config(git_path):
     last value for each multivar will be in the returned config.
 
     Returns:
-      - dict of the current global git config.
-
-    Raises:
-        subprocess.CalledProcessError if there was an error reading the config.
+      - GitConfigDict of the current global git config.
+      - If there was an error reading the global git config (e.g. file doesn't
+        exist, or is an invalid config), returns an empty GitConfigDict.
     """
     try:
         # List all values in the global git config. Using the `-z` option allows
@@ -366,7 +365,8 @@ def get_git_global_config(git_path):
             stdout=subprocess.PIPE,
             encoding='utf-8')
     except subprocess.CalledProcessError as e:
-        raise e
+        logging.warning(f'Failed to read your global Git config:\n{e}\n')
+        return GitConfigDict({})
 
     # Process all entries in the config.
     config = {}
