@@ -58,6 +58,7 @@ import git_new_branch
 import google_java_format
 import metrics
 import metrics_utils
+import metrics_xml_format
 import newauth
 import owners_client
 import owners_finder
@@ -6765,7 +6766,7 @@ def _RunMojomFormat(opts, paths, top_dir, upstream_commit):
     return ret
 
 
-def _FormatXml(opts, paths, top_dir, upstream_commit):
+def _RunMetricsXMLFormat(opts, paths, top_dir, upstream_commit):
     # Skip the metrics formatting from the global presubmit hook. These files
     # have a separate presubmit hook that issues an error if the files need
     # formatting, whereas the top-level presubmit script merely issues a
@@ -6776,14 +6777,11 @@ def _FormatXml(opts, paths, top_dir, upstream_commit):
 
     return_value = 0
     for path in paths:
-        xml_dir = GetMetricsDir(path)
-        if not xml_dir:
+        pretty_print_tool = metrics_xml_format.FindMetricsXMLFormatterTool(path)
+        if not pretty_print_tool:
             continue
 
-        tool_dir = os.path.join(top_dir, xml_dir.replace('/', os.path.sep))
-        pretty_print_tool = os.path.join(tool_dir, 'pretty_print.py')
         cmd = [shutil.which('vpython3'), pretty_print_tool, '--non-interactive']
-
         # If the XML file is histograms.xml or enums.xml, add the xml path
         # to the command as histograms/pretty_print.py now needs a relative
         # path argument after splitting the histograms into multiple
@@ -6792,13 +6790,8 @@ def _FormatXml(opts, paths, top_dir, upstream_commit):
         # tools/metrics/histogrmas, pretty-print should be run with an
         # additional relative path argument, like: $ python pretty_print.py
         # metadata/UMA/histograms.xml $ python pretty_print.py enums.xml
-        if xml_dir == 'tools/metrics/histograms':
-            if os.path.basename(path) not in ('histograms.xml', 'enums.xml',
-                                              'histogram_suffixes_list.xml'):
-                # Skip this XML file if it's not one of the known types.
-                continue
+        if metrics_xml_format.GetMetricsDir(path) == 'tools/metrics/histograms':
             cmd.append(path.replace('/', os.path.sep))
-
         if opts.dry_run or opts.diff:
             cmd.append('--diff')
 
@@ -6935,7 +6928,7 @@ def CMDformat(parser, args):
 
     formatters = [
         (GN_EXTS, _RunGnFormat),
-        (['.xml'], _FormatXml),
+        (['.xml'], _RunMetricsXMLFormat),
     ]
     if not opts.no_java:
         formatters += [(['.java'], _RunGoogleJavaFormat)]
@@ -6960,19 +6953,6 @@ def CMDformat(parser, args):
         return_value = return_value or ret
 
     return return_value
-
-
-def GetMetricsDir(diff_xml):
-    metrics_xml_dirs = [
-        'tools/metrics/actions',
-        'tools/metrics/histograms',
-        'tools/metrics/structured',
-        'tools/metrics/ukm',
-    ]
-    for xml_dir in metrics_xml_dirs:
-        if diff_xml.startswith(xml_dir):
-            return xml_dir
-    return None
 
 
 @subcommand.usage('<codereview url or issue id>')
