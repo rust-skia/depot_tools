@@ -56,7 +56,7 @@ class ValidateContentTest(unittest.TestCase):
             source_file_dir=_SOURCE_FILE_DIR,
             repo_root_dir=_THIS_DIR,
         )
-        self.assertEqual(len(results), 9)
+        self.assertEqual(len(results), 11)
         error_count = 0
         warning_count = 0
         for result in results:
@@ -64,8 +64,8 @@ class ValidateContentTest(unittest.TestCase):
                 error_count += 1
             else:
                 warning_count += 1
-        self.assertEqual(error_count, 7)
-        self.assertEqual(warning_count, 2)
+        self.assertEqual(error_count, 8)
+        self.assertEqual(warning_count, 3)
 
 
 class ValidateFileTest(unittest.TestCase):
@@ -94,7 +94,7 @@ class ValidateFileTest(unittest.TestCase):
             filepath=_INVALID_METADATA_FILEPATH,
             repo_root_dir=_THIS_DIR,
         )
-        self.assertEqual(len(results), 9)
+        self.assertEqual(len(results), 11)
         error_count = 0
         warning_count = 0
         for result in results:
@@ -102,8 +102,8 @@ class ValidateFileTest(unittest.TestCase):
                 error_count += 1
             else:
                 warning_count += 1
-        self.assertEqual(error_count, 7)
-        self.assertEqual(warning_count, 2)
+        self.assertEqual(error_count, 8)
+        self.assertEqual(warning_count, 3)
 
 
 class CheckFileTest(unittest.TestCase):
@@ -141,7 +141,7 @@ class CheckFileTest(unittest.TestCase):
         # self.assertEqual(len(errors), 7)
         # self.assertEqual(len(warnings), 2)
         self.assertEqual(len(errors), 0)
-        self.assertEqual(len(warnings), 9)
+        self.assertEqual(len(warnings), 11)
 
 
 class ValidationResultTest(unittest.TestCase):

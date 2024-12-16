@@ -20,13 +20,6 @@ import metadata.fields.util as util
 import metadata.validation_result as vr
 from metadata.fields.custom.license_allowlist import ALLOWED_SPDX_LICENSES
 
-_PATTERN_VERBOSE_DELIMITER = re.compile(r" and | or | / ")
-
-# Split on the canonical delimiter, or any of the non-canonical delimiters.
-_PATTERN_SPLIT_LICENSE = re.compile("{}|{}".format(
-    _PATTERN_VERBOSE_DELIMITER.pattern,
-    field_types.MetadataField.VALUE_DELIMITER))
-
 
 def process_license_value(value: str,
                           atomic_delimiter: str) -> List[Tuple[str, bool]]:
@@ -50,18 +43,12 @@ def process_license_value(value: str,
         return [(value, True)]
 
     breakdown = []
-    if re.search(_PATTERN_VERBOSE_DELIMITER, value):
-        # Split using the verbose delimiters.
-        for component in re.split(_PATTERN_VERBOSE_DELIMITER, value):
-            breakdown.extend(
-                process_license_value(component.strip(), atomic_delimiter))
-    else:
-        # Split using the standard value delimiter. This results in
-        # atomic values; there is no further splitting possible.
-        for atomic_value in value.split(atomic_delimiter):
-            atomic_value = atomic_value.strip()
-            breakdown.append(
-                (atomic_value, is_license_allowlisted(atomic_value)))
+    # Split using the standard value delimiter. This results in
+    # atomic values; there is no further splitting possible.
+    for atomic_value in value.split(atomic_delimiter):
+        atomic_value = atomic_value.strip()
+        breakdown.append(
+            (atomic_value, is_license_allowlisted(atomic_value)))
 
     return breakdown
 
@@ -74,30 +61,30 @@ def is_license_allowlisted(value: str) -> bool:
 
 
 class LicenseField(field_types.SingleLineTextField):
-    """Custom field for the package's license type(s).
+  """Custom field for the package's license type(s).
 
     e.g. Apache 2.0, MIT, BSD, Public Domain.
     """
-    def __init__(self):
-        super().__init__(name="License")
+  def __init__(self):
+    super().__init__(name="License")
 
-    def validate(self, value: str) -> Optional[vr.ValidationResult]:
-        """Checks the given value consists of recognized license types.
+  def validate(self, value: str) -> Optional[vr.ValidationResult]:
+    """Checks the given value consists of recognized license types.
 
         Note: this field supports multiple values.
         """
-        not_allowlisted = []
-        licenses = process_license_value(value,
+    not_allowlisted = []
+    licenses = process_license_value(value,
                                          atomic_delimiter=self.VALUE_DELIMITER)
-        for license, allowed in licenses:
-            if util.is_empty(license):
-                return vr.ValidationError(
+    for license, allowed in licenses:
+      if util.is_empty(license):
+        return vr.ValidationError(
                     reason=f"{self._name} has an empty value.")
-            if not allowed:
-                not_allowlisted.append(license)
+      if not allowed:
+        not_allowlisted.append(license)
 
-        if not_allowlisted:
-            return vr.ValidationWarning(
+    if not_allowlisted:
+      return vr.ValidationWarning(
                 reason=f"{self._name} has a license not in the allowlist."
                 " (see https://source.chromium.org/chromium/chromium/tools/depot_tools/+/main:metadata/fields/custom/license_allowlist.py).",
                 additional=[
@@ -105,12 +92,12 @@ class LicenseField(field_types.SingleLineTextField):
                     f"{util.quoted(not_allowlisted)}.",
                 ])
 
-        return None
+    return None
 
-    def narrow_type(self, value: str) -> Optional[List[str]]:
-        if not value:
-            # Empty License field is equivalent to "not declared".
-            return None
+  def narrow_type(self, value: str) -> Optional[List[str]]:
+    if not value:
+      # Empty License field is equivalent to "not declared".
+      return None
 
-        parts = _PATTERN_SPLIT_LICENSE.split(value)
-        return list(filter(bool, map(lambda str: str.strip(), parts)))
+    parts = value.split(self.VALUE_DELIMITER)
+    return list(filter(bool, map(lambda str: str.strip(), parts)))

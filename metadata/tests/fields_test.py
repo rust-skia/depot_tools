@@ -115,17 +115,19 @@ class FieldValidationTest(unittest.TestCase):
         self._run_field_validation(
             field=known_fields.LICENSE,
             valid_values=[
-                "Apache-2.0 / MIT",
+                "Apache-2.0 , MIT",
                 "Apache-2.0",
                 "BSD-2-Clause",
                 "BSD-2-Clause-FreeBSD",
                 "MIT",
-                "APSL-2.0 and MIT",
+                "APSL-2.0, MIT",
+                "APSL-2.0 ,MIT",
             ],
-            error_values=["", "\n", ",", "Apache 2.0 / MIT / "],
+            error_values=["", "\n", ",", "Apache 2.0 ,"],
             warning_values=[
                 "Custom license",
                 "Custom / MIT",
+                "Custom, MIT",
             ],
         )
 
