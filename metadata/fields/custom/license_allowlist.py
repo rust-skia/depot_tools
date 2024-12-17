@@ -33,6 +33,7 @@ ALLOWED_SPDX_LICENSES = frozenset([
     # Public Domain variants.
     "ISC",
     "ICU",
+    "LZMA-SDK-9.22",
     "SunPro",
     "BSL-1.0",
 ])
