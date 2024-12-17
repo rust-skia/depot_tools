@@ -18,7 +18,7 @@ def GetMetricsDir(path):
         'tools/metrics/structured',
         'tools/metrics/ukm',
     ]
-    normalized_abs_dirname = os.path.dirname(os.path.abspath(path)).replace(
+    normalized_abs_dirname = os.path.dirname(os.path.realpath(path)).replace(
         os.sep, '/')
     for xml_dir in metrics_xml_dirs:
         if normalized_abs_dirname.endswith(xml_dir):
@@ -52,7 +52,7 @@ def FindMetricsXMLFormatterTool(path, verbose=False):
         return ''
     # Just to ensure that the given file is located in the current checkout
     # folder. If not, skip the formatting.
-    if not os.path.abspath(path).startswith(os.path.abspath(top_dir)):
+    if not os.path.realpath(path).startswith(os.path.realpath(top_dir)):
         log(
             f'{path} is not located in the current Chromium checkout; '
             'skip formatting', verbose)

@@ -23,16 +23,16 @@ class TestBase(gclient_paths_test.TestBase):
     def setUp(self):
         super().setUp()
 
-        # os.path.abspath() doesn't seem to use os.path.getcwd() to compute
-        # the abspath of a given path.
+        # os.path.realpath() doesn't seem to use os.path.getcwd() to compute
+        # the realpath of a given path.
         #
-        # This mock os.path.abspath such that it uses the mocked getcwd().
-        mock.patch('os.path.abspath', self.abspath).start()
+        # This mock os.path.realpath such that it uses the mocked getcwd().
+        mock.patch('os.path.realpath', self.realpath).start()
         # gclient_paths.GetPrimarysolutionPath() defaults to src.
         self.make_file_tree({'.gclient': ''})
         self.cwd = join(self.cwd, 'src')
 
-    def abspath(self, path):
+    def realpath(self, path):
         if os.path.isabs(path):
             return path
 
