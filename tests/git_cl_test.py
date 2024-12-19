@@ -5227,6 +5227,70 @@ class CMDFormatTestCase(unittest.TestCase):
         ]
         self._check_yapf_filtering(files, expected)
 
+    @mock.patch('gclient_paths.GetPrimarySolutionPath')
+    def testRunMetricsXMLFormatSkipIfPresubmit(self, find_top_dir):
+        """Verifies that it skips the formatting if opts.presubmit is True."""
+        find_top_dir.return_value = self._top_dir
+        mock_opts = mock.Mock(full=True,
+                              dry_run=True,
+                              diff=False,
+                              presubmit=True)
+        files = [
+            os.path.join(self._top_dir, 'tools', 'metrics', 'ukm', 'ukm.xml'),
+        ]
+        return_value = git_cl._RunMetricsXMLFormat(mock_opts, files,
+                                                   self._top_dir, 'HEAD')
+        git_cl.RunCommand.assert_not_called()
+        self.assertEqual(0, return_value)
+
+    @mock.patch('gclient_paths.GetPrimarySolutionPath')
+    def testRunMetricsFormatWithUkm(self, find_top_dir):
+        """Checks if the command line arguments do not contain the input path.
+        """
+        find_top_dir.return_value = self._top_dir
+        mock_opts = mock.Mock(full=True,
+                              dry_run=False,
+                              diff=False,
+                              presubmit=False)
+        files = [
+            os.path.join(self._top_dir, 'tools', 'metrics', 'ukm', 'ukm.xml'),
+        ]
+        git_cl._RunMetricsXMLFormat(mock_opts, files, self._top_dir, 'HEAD')
+        git_cl.RunCommand.assert_called_with([
+            mock.ANY,
+            os.path.join(self._top_dir, 'tools', 'metrics', 'ukm',
+                         'pretty_print.py'),
+            '--non-interactive',
+        ],
+                                             cwd=self._top_dir)
+
+    @mock.patch('gclient_paths.GetPrimarySolutionPath')
+    def testRunMetricsFormatWithHistograms(self, find_top_dir):
+        """Checks if the command line arguments contain the input file paths."""
+        find_top_dir.return_value = self._top_dir
+        mock_opts = mock.Mock(full=True,
+                              dry_run=False,
+                              diff=False,
+                              presubmit=False)
+        files = [
+            os.path.join(self._top_dir, 'tools', 'metrics', 'histograms',
+                         'enums.xml'),
+            os.path.join(self._top_dir, 'tools', 'metrics', 'histograms',
+                         'test_data', 'enums.xml'),
+        ]
+        git_cl._RunMetricsXMLFormat(mock_opts, files, self._top_dir, 'HEAD')
+
+        pretty_print_path = os.path.join(self._top_dir, 'tools', 'metrics',
+                                         'histograms', 'pretty_print.py')
+        git_cl.RunCommand.assert_has_calls([
+            mock.call(
+                [mock.ANY, pretty_print_path, '--non-interactive', files[0]],
+                cwd=self._top_dir),
+            mock.call(
+                [mock.ANY, pretty_print_path, '--non-interactive', files[1]],
+                cwd=self._top_dir),
+        ])
+
 
 @unittest.skipIf(gclient_utils.IsEnvCog(),
                 'not supported in non-git environment')

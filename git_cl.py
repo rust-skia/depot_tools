@@ -6790,8 +6790,10 @@ def _RunMetricsXMLFormat(opts, paths, top_dir, upstream_commit):
         # tools/metrics/histogrmas, pretty-print should be run with an
         # additional relative path argument, like: $ python pretty_print.py
         # metadata/UMA/histograms.xml $ python pretty_print.py enums.xml
-        if metrics_xml_format.GetMetricsDir(path) == 'tools/metrics/histograms':
-            cmd.append(path.replace('/', os.path.sep))
+        metricsDir = metrics_xml_format.GetMetricsDir(top_dir, path)
+        histogramsDir = os.path.join(top_dir, 'tools', 'metrics', 'histograms')
+        if metricsDir == histogramsDir:
+            cmd.append(path)
         if opts.dry_run or opts.diff:
             cmd.append('--diff')
 
