@@ -11,16 +11,17 @@ import subprocess
 import sys
 
 
-def GetMetricsDir(top_dir, path):
+def GetMetricsDir(path):
     metrics_xml_dirs = [
-        os.path.join(top_dir, 'tools', 'metrics', 'actions'),
-        os.path.join(top_dir, 'tools', 'metrics', 'histograms'),
-        os.path.join(top_dir, 'tools', 'metrics', 'structured'),
-        os.path.join(top_dir, 'tools', 'metrics', 'ukm'),
+        'tools/metrics/actions',
+        'tools/metrics/histograms',
+        'tools/metrics/structured',
+        'tools/metrics/ukm',
     ]
-    abs_dirname = os.path.dirname(os.path.realpath(path))
+    normalized_abs_dirname = os.path.dirname(os.path.realpath(path)).replace(
+        os.sep, '/')
     for xml_dir in metrics_xml_dirs:
-        if abs_dirname.startswith(xml_dir):
+        if normalized_abs_dirname.endswith(xml_dir):
             return xml_dir
     return None
 
@@ -45,7 +46,7 @@ def FindMetricsXMLFormatterTool(path, verbose=False):
     if not top_dir:
         log('Not executed in a Chromium checkout; skip formatting', verbose)
         return ''
-    xml_dir = GetMetricsDir(top_dir, path)
+    xml_dir = GetMetricsDir(path)
     if not xml_dir:
         log(f'{path} is not a metric XML; skip formatting', verbose)
         return ''
@@ -57,16 +58,17 @@ def FindMetricsXMLFormatterTool(path, verbose=False):
             'skip formatting', verbose)
         return ''
 
-    histograms_base_dir = os.path.join(top_dir, 'tools', 'metrics',
-                                       'histograms')
-    if xml_dir.startswith(histograms_base_dir):
+    if xml_dir == 'tools/metrics/histograms':
         # Skips the formatting, if the XML file is not one of the known types.
         if not IsSupportedHistogramsXML(path):
             log(f'{path} is not a supported histogram XML; skip formatting',
                 verbose)
             return ''
 
-    return os.path.join(xml_dir, 'pretty_print.py')
+    # top_dir is already formatted with the OS specific path separator, whereas
+    # xml_dir is not yet.
+    tool_dir = os.path.join(top_dir, xml_dir.replace('/', os.path.sep))
+    return os.path.join(tool_dir, 'pretty_print.py')
 
 
 usage_text = """Usage: %s [option] filepath
