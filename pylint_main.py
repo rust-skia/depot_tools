@@ -41,8 +41,7 @@ def main(argv):
     # their own PYLINTRC, or set an empty PYLINTRC to use pylint's normal config
     # file resolution, which would include the "more global" options that are
     # normally overridden by the depot_tools config.
-    if os.path.isfile(RC_FILE) and 'PYLINTRC' not in os.environ:
-        os.environ['PYLINTRC'] = RC_FILE
+    os.environ.setdefault('PYLINTRC', RC_FILE)
 
     # This import has to happen after PYLINTRC is set because the module tries
     # to resolve the config file location on load.
