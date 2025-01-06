@@ -6,7 +6,6 @@ import itertools
 import re
 
 from recipe_engine import recipe_api
-from recipe_engine import util as recipe_util
 
 class GitApi(recipe_api.RecipeApi):
   _GIT_HASH_RE = re.compile('[0-9a-f]{40}', re.IGNORECASE)
@@ -98,7 +97,7 @@ class GitApi(recipe_api.RecipeApi):
       return result
     except Exception as ex:
       if step_result:
-        step_result.presentation.logs['exception'] = recipe_util.format_ex(ex)
+        step_result.presentation.logs['exception'] = repr(ex)
         step_result.presentation.status = self.m.step.WARNING
       if raise_on_failure:
         raise recipe_api.InfraFailure('count-objects failed: %s' % ex)
