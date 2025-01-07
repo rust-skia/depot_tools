@@ -597,25 +597,32 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
         '': maxlen,
     }
 
+    # To avoid triggering on the magic string, break it up.
+    LINT_THEN_CHANGE_EXCEPTION = ('LI'
+                                  'NT.ThenChange(')
+
     # Language specific exceptions to max line length.
     # '.h' is considered an obj-c file extension, since OBJC_EXCEPTIONS are a
     # superset of CPP_EXCEPTIONS.
     CPP_FILE_EXTS = ('c', 'cc')
     CPP_EXCEPTIONS = ('#define', '#endif', '#if', '#include', '#pragma',
-                      '// LINT.ThenChange(')
+                      '// ' + LINT_THEN_CHANGE_EXCEPTION)
     HTML_FILE_EXTS = ('html', )
-    HTML_EXCEPTIONS = ('<g ', '<link ', '<path ', '<!-- LINT.ThenChange(')
+    HTML_EXCEPTIONS = ('<g ', '<link ', '<path ',
+                       '<!-- ' + LINT_THEN_CHANGE_EXCEPTION)
     JAVA_FILE_EXTS = ('java', )
-    JAVA_EXCEPTIONS = ('import ', 'package ', '// LINT.ThenChange(')
+    JAVA_EXCEPTIONS = ('import ', 'package ',
+                       '// ' + LINT_THEN_CHANGE_EXCEPTION)
     JS_FILE_EXTS = ('js', )
-    JS_EXCEPTIONS = ("GEN('#include", 'import ', '// LINT.ThenChange(')
+    JS_EXCEPTIONS = ("GEN('#include", 'import ',
+                     '// ' + LINT_THEN_CHANGE_EXCEPTION)
     TS_FILE_EXTS = ('ts', )
-    TS_EXCEPTIONS = ('import ', '// LINT.ThenChange(')
+    TS_EXCEPTIONS = ('import ', '// ' + LINT_THEN_CHANGE_EXCEPTION)
     OBJC_FILE_EXTS = ('h', 'm', 'mm')
     OBJC_EXCEPTIONS = ('#define', '#endif', '#if', '#import', '#include',
-                       '#pragma', '// LINT.ThenChange(')
+                       '#pragma', '// ' + LINT_THEN_CHANGE_EXCEPTION)
     PY_FILE_EXTS = ('py', )
-    PY_EXCEPTIONS = ('import', 'from', '# LINT.ThenChange(')
+    PY_EXCEPTIONS = ('import', 'from', '# ' + LINT_THEN_CHANGE_EXCEPTION)
 
     LANGUAGE_EXCEPTIONS = [
         (CPP_FILE_EXTS, CPP_EXCEPTIONS),
