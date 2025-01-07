@@ -2890,7 +2890,7 @@ the current line as well!
         presubmit.sigint_handler.wait.return_value = (b'', None)
 
         pylint = os.path.join(_ROOT, 'pylint-2.7')
-        pylintrc = os.path.join(_ROOT, 'pylintrc')
+        pylintrc = os.path.join(_ROOT, 'pylintrc-2.7')
         env = {str('PYTHONPATH'): str('')}
         if sys.platform == 'win32':
             pylint += '.bat'
