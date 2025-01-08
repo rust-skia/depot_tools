@@ -910,7 +910,18 @@ class GitCredsAuthenticator(_Authenticator):
             LOGGER.debug("Gerrit account does not exist on %r", host)
             return False
         LOGGER.debug("Gerrit account exists on %r", host)
-        scm.GIT.SetConfig(cwd, 'depot-tools.hostHasAccount', host, append=True)
+        try:
+            scm.GIT.SetConfig(cwd,
+                              'depot-tools.hostHasAccount',
+                              host,
+                              append=True)
+        except subprocess2.CalledProcessError as e:
+            # This may be called outside of a Git repository (e.g., when
+            # fetching from scratch), in which case we don't have a Git
+            # repository to cache the results of our check, so skip the
+            # caching.
+            LOGGER.debug(
+                "Got error trying to cache 'depot-tools.hostHasAccount': %s", e)
         return True
 
     def is_applicable(self, *, conn: Optional[HttpConn] = None):
