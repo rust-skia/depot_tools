@@ -18,7 +18,7 @@ sys.path.insert(0, _ROOT_DIR)
 import metadata.fields.field_types as field_types
 import metadata.fields.util as util
 import metadata.validation_result as vr
-from metadata.fields.custom.license_allowlist import ALLOWED_SPDX_LICENSES
+from metadata.fields.custom.license_allowlist import ALLOWED_LICENSES
 
 
 def process_license_value(value: str,
@@ -57,7 +57,7 @@ def is_license_allowlisted(value: str) -> bool:
     """Returns whether the value is in the allowlist for license
     types.
     """
-    return value in ALLOWED_SPDX_LICENSES
+    return value in ALLOWED_LICENSES
 
 
 class LicenseField(field_types.SingleLineTextField):
