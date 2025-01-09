@@ -1431,8 +1431,18 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
         if self._use_relative_paths:
             path_prefix = os.path.join(path_prefix, self.name)
 
-        with open(os.path.join(path_prefix, self._gn_args_file), 'wb') as f:
-            f.write('\n'.join(lines).encode('utf-8', 'replace'))
+        gn_args_path = os.path.join(path_prefix, self._gn_args_file)
+
+        new_content = '\n'.join(lines).encode('utf-8', 'replace')
+
+        if os.path.exists(gn_args_path):
+            with open(gn_args_path, 'rb') as f:
+                old_content = f.read()
+            if old_content == new_content:
+                return
+
+        with open(gn_args_path, 'wb') as f:
+            f.write(new_content)
 
     @gclient_utils.lockedmethod
     def _run_is_done(self, file_list):
