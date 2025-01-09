@@ -109,4 +109,18 @@ EXTENDED_LICENSE_CLASSIFIERS = frozenset([
     "zxing",
 ])
 
+# These licenses are only allowed in open source projects due to their
+# reciprocal requirements. TODO(b/385020146): Enforce this restriction.
+OPEN_SOURCE_SPDX_LICENSES = frozenset([
+    # reciprocal.
+    "APSL-2.0",
+    "CDDL-1.0",
+    "CDDL-1.1",
+    "CPL-1.0",
+    "EPL-1.0",
+    "MPL-1.1",
+    "MPL-2.0",
+])
+
 ALLOWED_LICENSES = ALLOWED_SPDX_LICENSES | EXTENDED_LICENSE_CLASSIFIERS
+ALLOWED_OPEN_SOURCE_LICENSES = ALLOWED_LICENSES | OPEN_SOURCE_SPDX_LICENSES
