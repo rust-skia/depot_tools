@@ -175,6 +175,10 @@ class SystemExitMock(Exception):
     pass
 
 
+class ParserErrorMock(Exception):
+    pass
+
+
 class TestGitClBasic(unittest.TestCase):
     def setUp(self):
         mock.patch('sys.exit', side_effect=SystemExitMock).start()
@@ -5547,6 +5551,31 @@ Change-Id: I25699146b24c7ad8776f17775f489b9d41499595
 """
         self.assertEqual(git_cl._create_commit_message(orig_message, bug),
                          expected_message)
+
+
+@unittest.skipIf(gclient_utils.IsEnvCog(),
+                 'not supported in non-git environment')
+class CMDSplitTestCase(CMDTestCaseBase):
+
+    def setUp(self):
+        super(CMDTestCaseBase, self).setUp()
+        mock.patch('git_cl.Settings.GetRoot', return_value='root').start()
+
+    @mock.patch("split_cl.SplitCl", return_value=0)
+    @mock.patch("git_cl.OptionParser.error", side_effect=ParserErrorMock)
+    def testDescriptionFlagRequired(self, _, mock_split_cl):
+        # --description-file is mandatory...
+        self.assertRaises(ParserErrorMock, git_cl.main, ['split'])
+        self.assertEqual(mock_split_cl.call_count, 0)
+
+        self.assertEqual(git_cl.main(['split', '--description=SomeFile.txt']),
+                         0)
+        self.assertEqual(mock_split_cl.call_count, 1)
+
+        # Unless we're doing a dry run
+        mock_split_cl.reset_mock()
+        self.assertEqual(git_cl.main(['split', '-n']), 0)
+        self.assertEqual(mock_split_cl.call_count, 1)
 
 
 if __name__ == '__main__':

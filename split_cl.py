@@ -218,6 +218,14 @@ def PrintClInfo(cl_index, num_cls, directories, file_paths, description,
     print()
 
 
+def LoadDescription(description_file):
+    if not description_file:
+        return ('Dummy description for dry run.\n'
+                'directory = $directory')
+
+    return gclient_utils.FileRead(description_file)
+
+
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
             cq_dry_run, enable_auto_submit, max_depth, topic, repository_root):
     """"Splits a branch into smaller branches and uploads CLs.
@@ -237,8 +245,10 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     Returns:
         0 in case of success. 1 in case of error.
     """
-    description = AddUploadedByGitClSplitToDescription(
-        gclient_utils.FileRead(description_file))
+
+    description = LoadDescription(description_file, dry_run)
+    description = AddUploadedByGitClSplitToDescription(description)
+
     comment = gclient_utils.FileRead(comment_file) if comment_file else None
 
     try:
@@ -262,7 +272,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         assert refactor_branch_upstream, \
             "Branch %s must have an upstream." % refactor_branch
 
-        if not CheckDescriptionBugLink(description):
+        if not dry_run and not CheckDescriptionBugLink(description):
             return 0
 
         files_split_by_reviewers = SelectReviewersForFiles(

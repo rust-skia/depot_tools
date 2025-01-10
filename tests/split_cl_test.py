@@ -193,6 +193,17 @@ class SplitClTest(unittest.TestCase):
         self.assertTrue(split_cl.CheckDescriptionBugLink("Description"))
         self.assertEqual(mock_ask_for_data.call_count, 1)
 
+    @mock.patch("gclient_utils.FileRead", return_value="Description")
+    def testLoadDescription(self, mock_file_read):
+        # No description provided, use the dummy:
+        self.assertTrue(split_cl.LoadDescription(None).startswith("Dummy"))
+        self.assertEqual(mock_file_read.call_count, 0)
+
+        # Description file provided, load it
+        self.assertEqual(split_cl.LoadDescription("SomeFile.txt"),
+                         "Description")
+        self.assertEqual(mock_file_read.call_count, 1)
+
 
 if __name__ == '__main__':
     unittest.main()
