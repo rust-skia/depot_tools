@@ -18,7 +18,7 @@ sys.path.insert(0, _ROOT_DIR)
 import metadata.fields.field_types as field_types
 import metadata.fields.util as util
 import metadata.validation_result as vr
-from metadata.fields.custom.license_allowlist import ALLOWED_LICENSES
+from metadata.fields.custom.license_allowlist import ALLOWED_LICENSES, ALLOWED_OPEN_SOURCE_LICENSES
 
 
 def process_license_value(value: str,
@@ -33,13 +33,13 @@ def process_license_value(value: str,
                           delimiter.
 
     Returns: a list of the constituent licenses within the given value,
-             and whether the constituent license is on the allowlist.
+             and whether the constituent license is a recognized license type.
              e.g. [("Apache, 2.0", True), ("MIT", True),
                    ("custom", False)]
     """
     # Check if the value is on the allowlist as-is, and thus does not
     # require further processing.
-    if is_license_allowlisted(value):
+    if is_license_valid(value):
         return [(value, True)]
 
     breakdown = []
@@ -48,22 +48,33 @@ def process_license_value(value: str,
     for atomic_value in value.split(atomic_delimiter):
         atomic_value = atomic_value.strip()
         breakdown.append(
-            (atomic_value, is_license_allowlisted(atomic_value)))
+            (atomic_value, is_license_valid(
+                atomic_value,
+            ))
+        )
 
     return breakdown
 
 
-def is_license_allowlisted(value: str) -> bool:
+def is_license_valid(value: str) -> bool:
     """Returns whether the value is in the allowlist for license
     types.
     """
-    return value in ALLOWED_LICENSES
+    # The open source allowlist is the most permissive.
+    return value in ALLOWED_OPEN_SOURCE_LICENSES
 
+def is_license_allowlisted(value: str, is_open_source_project: bool = False) -> bool:
+    """Returns whether the value is in the allowlist for license
+    types.
+    """
+    if is_open_source_project:
+        return value in ALLOWED_OPEN_SOURCE_LICENSES
+    return value in ALLOWED_LICENSES
 
 class LicenseField(field_types.SingleLineTextField):
   """Custom field for the package's license type(s).
 
-    e.g. Apache 2.0, MIT, BSD, Public Domain.
+    e.g. Apache-2.0, MIT, BSD-2.0
     """
   def __init__(self):
     super().__init__(name="License")
@@ -75,7 +86,8 @@ class LicenseField(field_types.SingleLineTextField):
         """
     not_allowlisted = []
     licenses = process_license_value(value,
-                                         atomic_delimiter=self.VALUE_DELIMITER)
+          atomic_delimiter=self.VALUE_DELIMITER,
+    )
     for license, allowed in licenses:
       if util.is_empty(license):
         return vr.ValidationError(

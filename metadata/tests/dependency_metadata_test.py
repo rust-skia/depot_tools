@@ -1,3 +1,4 @@
+
 #!/usr/bin/env vpython3
 # Copyright (c) 2023 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -367,6 +368,33 @@ class DependencyValidationTest(unittest.TestCase):
             repo_root_dir=_THIS_DIR,
         )
         self.assertEqual(len(results), 0)
+
+    def test_all_licenses_allowlisted(self):
+        """Test that a single allowlisted license returns True."""
+        dependency = dm.DependencyMetadata()
+        # "MPL-2.0" is a reciprocal license, i.e. only allowed in open source projects.
+        self.assertTrue(dependency.all_licenses_allowlisted("MIT", False))
+        self.assertTrue(dependency.all_licenses_allowlisted("MIT, Apache-2.0", False))
+        self.assertTrue(dependency.all_licenses_allowlisted("MPL-2.0", True))
+        self.assertFalse(dependency.all_licenses_allowlisted("InvalidLicense", False))
+        self.assertFalse(dependency.all_licenses_allowlisted("MIT, InvalidLicense", False))
+        self.assertFalse(dependency.all_licenses_allowlisted("", False))
+        self.assertFalse(dependency.all_licenses_allowlisted("MPL-2.0", False))
+
+
+    def test_only_open_source_licenses(self):
+        """Test that only open source licenses are returned."""
+        dependency = dm.DependencyMetadata()
+        self.assertEqual(dependency.only_open_source_licenses(""), [])
+        self.assertEqual(dependency.only_open_source_licenses("MIT"), [])
+        self.assertEqual(dependency.only_open_source_licenses("MPL-2.0"), ["MPL-2.0"])
+        result = dependency.only_open_source_licenses("MIT, MPL-2.0")
+        self.assertEqual(result, ["MPL-2.0"])
+        result = dependency.only_open_source_licenses("MPL-2.0, APSL-2.0")
+        self.assertEqual(set(result), {"MPL-2.0", "APSL-2.0"})
+        # Test with mix of invalid and valid licenses
+        result = dependency.only_open_source_licenses("InvalidLicense, MPL-2.0")
+        self.assertEqual(result, ["MPL-2.0"])
 
 if __name__ == "__main__":
     unittest.main()

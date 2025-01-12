@@ -77,7 +77,7 @@ class ParseTest(unittest.TestCase):
                  "     https://www.example.com/parser"),
                 ("Version", "1.0.12"),
                 ("Date", "2020-12-03"),
-                ('License', 'Apache-2.0 and MIT and not_an_spdx'),
+                ('License', 'Apache-2.0, MIT'),
                 ("License File", "LICENSE"),
                 ("Security Critical", "yes"),
                 ("Shipped", "yes"),
@@ -96,7 +96,7 @@ class ParseTest(unittest.TestCase):
             all_metadata[1].get_entries(),
             [
                 ("Name",
-                 "Test-B README for Chromium metadata (4 errors, 1 warning)"),
+                 "Test-B README for Chromium metadata (3 errors, 1 warning)"),
                 ("SHORT NAME", "metadata-test-invalid"),
                 ("URL", "file://home/drive/chromium/src/metadata"),
                 ("Version", "0"),
@@ -108,7 +108,7 @@ class ParseTest(unittest.TestCase):
                 ("Local Modifications", "None."),
             ],
         )
-        self.assertEqual((24, 35),
+        self.assertEqual((24, 46),
                          all_metadata[1].get_first_and_last_line_number())
 
         # Check repeated fields persist in the metadata's entries.
@@ -116,18 +116,34 @@ class ParseTest(unittest.TestCase):
             all_metadata[2].get_entries(),
             [
                 ("Name",
-                 "Test-C README for Chromium metadata (5 errors, 1 warning)"),
+                 "Test-C README for Chromium metadata (4 errors, 1 warning)"),
                 ("URL", "https://www.example.com/first"),
                 ("URL", "https://www.example.com/second"),
                 ("Version", "N/A"),
                 ("Date", "2020-12-03"),
                 ("License", "Custom license"),
                 ("Security Critical", "yes"),
-                ("Description", "Test metadata with multiple entries for one "
-                 "field, and\nmissing a mandatory field."),
+                ("Description", """Test metadata with multiple entries for one field, and
+missing a mandatory field.
+These are the expected errors (here for reference only):
+
+1. Required field 'License Android Compatible' is missing.
+
+2. Required field 'License File' is missing.
+
+3. Required field 'Shipped' is missing.
+
+4. Repeated fields: URL (2)
+
+warnings:
+1. License has a license not in the allowlist.
+(see https://source.chromium.org/chromium/chromiu
+m/tools/depot_tools/+/main:metadata/fields/custom/license_al
+lowlist.py). Licenses not allowlisted: 'Custom license'."""),
+
             ],
         )
-        self.assertEqual((40, 50),
+        self.assertEqual((51, 76),
                          all_metadata[2].get_first_and_last_line_number())
 
     def test_parse_multiple_local_modifications(self):

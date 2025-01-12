@@ -60,10 +60,6 @@ ALLOWED_SPDX_LICENSES = frozenset([
     "X11",
     "Zlib",
     "libtiff",
-    # reciprocal. TODO(b/385020146): Only allow for opensource projects.
-    "APSL-2.0",
-    "MPL-1.1",
-    "MPL-2.0",
 ])
 
 # These are licenses that are not in the SPDX license list, but are identified
@@ -110,7 +106,7 @@ EXTENDED_LICENSE_CLASSIFIERS = frozenset([
 ])
 
 # These licenses are only allowed in open source projects due to their
-# reciprocal requirements. TODO(b/385020146): Enforce this restriction.
+# reciprocal requirements.
 OPEN_SOURCE_SPDX_LICENSES = frozenset([
     # reciprocal.
     "APSL-2.0",

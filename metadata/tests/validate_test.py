@@ -56,7 +56,7 @@ class ValidateContentTest(unittest.TestCase):
             source_file_dir=_SOURCE_FILE_DIR,
             repo_root_dir=_THIS_DIR,
         )
-        self.assertEqual(len(results), 11)
+        self.assertEqual(len(results), 9)
         error_count = 0
         warning_count = 0
         for result in results:
@@ -64,8 +64,8 @@ class ValidateContentTest(unittest.TestCase):
                 error_count += 1
             else:
                 warning_count += 1
-        self.assertEqual(error_count, 8)
-        self.assertEqual(warning_count, 3)
+        self.assertEqual(error_count, 7)
+        self.assertEqual(warning_count, 2)
 
 
 class ValidateFileTest(unittest.TestCase):
@@ -94,7 +94,7 @@ class ValidateFileTest(unittest.TestCase):
             filepath=_INVALID_METADATA_FILEPATH,
             repo_root_dir=_THIS_DIR,
         )
-        self.assertEqual(len(results), 11)
+        self.assertEqual(len(results), 9)
         error_count = 0
         warning_count = 0
         for result in results:
@@ -102,8 +102,8 @@ class ValidateFileTest(unittest.TestCase):
                 error_count += 1
             else:
                 warning_count += 1
-        self.assertEqual(error_count, 8)
-        self.assertEqual(warning_count, 3)
+        self.assertEqual(error_count, 7)
+        self.assertEqual(warning_count, 2)
 
 
 class CheckFileTest(unittest.TestCase):
@@ -141,7 +141,7 @@ class CheckFileTest(unittest.TestCase):
         # self.assertEqual(len(errors), 7)
         # self.assertEqual(len(warnings), 2)
         self.assertEqual(len(errors), 0)
-        self.assertEqual(len(warnings), 11)
+        self.assertEqual(len(warnings), 9)
 
 
 class ValidationResultTest(unittest.TestCase):
@@ -218,6 +218,42 @@ class ValidationWithLineNumbers(unittest.TestCase):
             elif r.get_reason() == "Shipped in Chromium is invalid":
                 self.assertEqual(r.get_lines(), [13])
 
+
+class ValidateReciprocalLicenseTest(unittest.TestCase):
+    """Tests that validate_content handles allowing reciprocal licenses correctly."""
+    def test_reciprocal_licenses(self):
+        # Test content with a reciprocal license (MPL-2.0).
+        reciprocal_license_metadata_filepath = os.path.join(_THIS_DIR, "data",
+            "README.chromium.test.reciprocal-license")
+        # Without is_open_source_project, should get a warning.
+        results = metadata.validate.validate_content(
+            content=gclient_utils.FileRead(reciprocal_license_metadata_filepath),
+            source_file_dir=_SOURCE_FILE_DIR,
+            repo_root_dir=_THIS_DIR,
+            is_open_source_project=False
+        )
+
+        license_errors = []
+        for result in results:
+            if not result.is_fatal() and "License has a license not in the allowlist" in result.get_reason():
+                license_errors.append(result)
+
+        self.assertEqual(len(license_errors), 1, "Should create an error when a reciprocal license is used in a non-open source project")
+
+        # With is_open_source_project=True, should be no warnings.
+        results = metadata.validate.validate_content(
+            content=gclient_utils.FileRead(reciprocal_license_metadata_filepath),
+            source_file_dir=_SOURCE_FILE_DIR,
+            repo_root_dir=_THIS_DIR,
+            is_open_source_project=True
+        )
+
+        license_errors = []
+        for result in results:
+            if not result.is_fatal() and "License has a license not in the allowlist" in result.get_reason():
+                license_errors.append(result)
+
+        self.assertEqual(len(license_errors), 0, "Should not create an error when a reciprocal license is used in an open source project")
 
 if __name__ == "__main__":
     unittest.main()

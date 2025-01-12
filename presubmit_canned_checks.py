@@ -894,6 +894,7 @@ def CheckChromiumDependencyMetadata(input_api, output_api, file_filter=None):
             filepath=f.AbsoluteLocalPath(),
             repo_root_dir=repo_root_dir,
             reader=input_api.ReadFile,
+            is_open_source_project=True,
         )
 
         for warning in warnings:
