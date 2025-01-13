@@ -133,5 +133,28 @@ OPEN_SOURCE_SPDX_LICENSES = frozenset([
     # go/keep-sorted end
 ])
 
+# TODO(b/388620886): Implement warning when changing to or from these licenses
+# (but not every time the README.chromium file is modified).
+WITH_PERMISSION_ONLY = frozenset([
+    # restricted.
+    # go/keep-sorted start case=no
+    "CC-BY-SA-3.0",
+    "GPL-2.0",
+    "GPL-3.0",
+    "LGPL-2.0",
+    "LGPL-2.1",
+    "LGPL-3.0",
+    "NPL-1.1",
+    # go/keep-sorted end
+    # by_exception_only.
+    # go/keep-sorted start case=no
+    "Commercial",
+    "LicenseRef-Play-Core-SDK-TOS",
+    "LicenseRef-Unity-Companion-License-1.3",
+    "Opus-Patent-BSD-3-Clause",
+    "UnRAR",
+    # go/keep-sorted end
+])
+
 ALLOWED_LICENSES = ALLOWED_SPDX_LICENSES | EXTENDED_LICENSE_CLASSIFIERS
 ALLOWED_OPEN_SOURCE_LICENSES = ALLOWED_LICENSES | OPEN_SOURCE_SPDX_LICENSES
