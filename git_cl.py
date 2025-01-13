@@ -693,9 +693,17 @@ def _ComputeFormatDiffLineRanges(files, upstream_commit, expand=0):
                 diff_start = match[1]
                 diff_count = 1
 
+            # if the original lines were removed without replacements,
+            # the diff count is 0. Then, no formatting is necessary.
+            if diff_count == 0:
+                continue
+
             diff_start = int(diff_start)
             diff_count = int(diff_count)
-            diff_end = diff_start + diff_count + expand
+            # diff_count contains the diff_start line, and the line numbers
+            # given to formatter args are inclusive. For example, in
+            # google-java-format "--lines 5:10" includes 5th-10th lines.
+            diff_end = diff_start + diff_count - 1 + expand
             diff_start = max(prev_end + 1, diff_start - expand)
             if diff_start <= diff_end:
                 prev_end = diff_end
