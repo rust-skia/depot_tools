@@ -10,20 +10,28 @@
 # Licenses below are grouped by restrictiveness level and then alphabetically.
 ALLOWED_SPDX_LICENSES = frozenset([
     # other_ignorable.
+    # go/keep-sorted start case=no
     "LZMA-SDK-9.22",
+    # go/keep-sorted end
     # unencumbered.
+    # go/keep-sorted start case=no
+    "blessing",
     "CC0-1.0",
     "Unlicense",
-    "blessing",
+    # go/keep-sorted end
     # permissive.
+    # go/keep-sorted start case=no
     "GPL-2.0-with-autoconf-exception",
     "GPL-2.0-with-classpath-exception",
     "GPL-3.0-with-autoconf-exception",
     "MIT-0",
+    # go/keep-sorted end
     # notice.
+    # go/keep-sorted start case=no
     "AML",
     "Apache-2.0",
     "Artistic-2.0",
+    "Beerware",
     "BSD-2-Clause",
     "BSD-2-Clause-FreeBSD",
     "BSD-3-Clause",
@@ -33,7 +41,6 @@ ALLOWED_SPDX_LICENSES = frozenset([
     "BSD-4.3TAHOE",
     "BSD-Source-Code",
     "BSL-1.0",
-    "Beerware",
     "CC-BY-3.0",
     "CC-BY-4.0",
     "FTL",
@@ -44,7 +51,7 @@ ALLOWED_SPDX_LICENSES = frozenset([
     "ISC",
     "JSON",
     "Libpng",
-    "ISC",
+    "libtiff",
     "MIT",
     "MIT-Modern-Variant",
     "MS-PL",
@@ -59,56 +66,63 @@ ALLOWED_SPDX_LICENSES = frozenset([
     "Unicode-DFS-2016",
     "X11",
     "Zlib",
-    "libtiff",
+    # go/keep-sorted end
 ])
 
 # These are licenses that are not in the SPDX license list, but are identified
 # by the license classifier.
 EXTENDED_LICENSE_CLASSIFIERS = frozenset([
     # unencumbered.
+    # go/keep-sorted start case=no
     "AhemFont",
     "Android-SDK",
     "LZMA",
-    "SPL-SQRT-FLOOR",
     "public-domain-md5",
+    "SPL-SQRT-FLOOR",
+    # go/keep-sorted end
     # permissive.
+    # go/keep-sorted start case=no
     "LicenseRef-AMSFonts-2.2",
     "test_fonts",
+    # go/keep-sorted end
     # notice.
+    # go/keep-sorted start case=no
     "Apache-with-LLVM-Exception",
     "Apache-with-Runtime-Exception",
+    "Bitstream",
     "BSD-2-Clause-Flex",
     "BSD-3-Clause-OpenMPI",
     "BSD-4-Clause-Wasabi",
-    "Bitstream",
-    "CERN",
     "Caffe",
+    "CERN",
+    "cURL",
+    "dso",
     "Entenssa",
     "FFT2D",
+    "getopt",
     "GIF-Encoder",
     "GNU-All-permissive-Copying-License",
     "IBM-DHCP",
     "JsonCPP",
     "Khronos",
     "Libpng-2.0",
-    "LicenseRef-OpenGLUT",
     "LicenseRef-base64",
+    "LicenseRef-OpenGLUT",
     "LicenseRef-takuya-ooura",
+    "pffft",
     "Punycode",
     "SSLeay",
     "WebM-Project-Patent",
     "X11-Lucent",
-    "cURL",
-    "dso",
-    "getopt",
-    "pffft",
     "zxing",
+    # go/keep-sorted end
 ])
 
 # These licenses are only allowed in open source projects due to their
 # reciprocal requirements.
 OPEN_SOURCE_SPDX_LICENSES = frozenset([
     # reciprocal.
+    # go/keep-sorted start case=no
     "APSL-2.0",
     "CDDL-1.0",
     "CDDL-1.1",
@@ -116,6 +130,7 @@ OPEN_SOURCE_SPDX_LICENSES = frozenset([
     "EPL-1.0",
     "MPL-1.1",
     "MPL-2.0",
+    # go/keep-sorted end
 ])
 
 ALLOWED_LICENSES = ALLOWED_SPDX_LICENSES | EXTENDED_LICENSE_CLASSIFIERS
