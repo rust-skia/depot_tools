@@ -40,9 +40,11 @@ def CMDmovechanges(parser, args):
                       help='where to move changes to')
 
     (opt, args) = parser.parse_args(args)
-    assert opt.destination_branch, "--destination_branch not defined"
+    if not opt.destination_branch:
+        parser.error('--destination_branch is required')
     for p in opt.params:
-        assert '=' in p, '--param is key=value, not "%s"' % p
+        if '=' not in p:
+            parser.error('--param is key=value, not "%s"' % p)
     host = urllib.parse.urlparse(opt.host).netloc
 
     limit = 100
@@ -89,7 +91,8 @@ def CMDrawapi(parser, args):
                       help='Comma-delimited list of status codes for success.')
 
     (opt, args) = parser.parse_args(args)
-    assert opt.path, "--path not defined"
+    if not opt.path:
+        parser.error('--path is required')
 
     host = urllib.parse.urlparse(opt.host).netloc
     kwargs = {}
@@ -118,9 +121,12 @@ def CMDbranch(parser, args):
               ' branch head points the given commit'))
 
     (opt, args) = parser.parse_args(args)
-    assert opt.project, "--project not defined"
-    assert opt.branch, "--branch not defined"
-    assert opt.commit, "--commit not defined"
+    if not opt.project:
+        parser.error('--project is required')
+    if not opt.branch:
+        parser.error('--branch is required')
+    if not opt.commit:
+        parser.error('--commit is required')
 
     project = urllib.parse.quote_plus(opt.project)
     host = urllib.parse.urlparse(opt.host).netloc
@@ -158,9 +164,12 @@ def CMDtag(parser, args):
     parser.add_option('--commit', dest='commit', help='commit hash')
 
     (opt, args) = parser.parse_args(args)
-    assert opt.project, "--project not defined"
-    assert opt.tag, "--tag not defined"
-    assert opt.commit, "--commit not defined"
+    if not opt.project:
+        parser.error('--project is required')
+    if not opt.tag:
+        parser.error('--tag is required')
+    if not opt.commit:
+        parser.error('--commit is required')
 
     project = urllib.parse.quote_plus(opt.project)
     host = urllib.parse.urlparse(opt.host).netloc
@@ -176,8 +185,10 @@ def CMDhead(parser, args):
     parser.add_option('--branch', dest='branch', help='branch name')
 
     (opt, args) = parser.parse_args(args)
-    assert opt.project, "--project not defined"
-    assert opt.branch, "--branch not defined"
+    if not opt.project:
+        parser.error('--project is required')
+    if not opt.branch:
+        parser.error('--branch is required')
 
     project = urllib.parse.quote_plus(opt.project)
     host = urllib.parse.urlparse(opt.host).netloc
@@ -192,7 +203,8 @@ def CMDheadinfo(parser, args):
     """Retrieves the current HEAD of the project."""
 
     (opt, args) = parser.parse_args(args)
-    assert opt.project, "--project not defined"
+    if not opt.project:
+        parser.error('--project is required')
 
     project = urllib.parse.quote_plus(opt.project)
     host = urllib.parse.urlparse(opt.host).netloc
@@ -227,9 +239,11 @@ def CMDchanges(parser, args):
                       '(starting with the most recent)')
 
     (opt, args) = parser.parse_args(args)
-    assert opt.params or opt.query, '--param or --query required'
+    if not (opt.params or opt.query):
+        parser.error('--param or --query required')
     for p in opt.params:
-        assert '=' in p, '--param is key=value, not "%s"' % p
+        if '=' not in p:
+            parser.error('--param is key=value, not "%s"' % p)
 
     result = gerrit_util.QueryChanges(
         urllib.parse.urlparse(opt.host).netloc,
@@ -282,7 +296,8 @@ def CMDcreatechange(parser, args):
 
     (opt, args) = parser.parse_args(args)
     for p in opt.params:
-        assert '=' in p, '--param is key=value, not "%s"' % p
+        if '=' not in p:
+            parser.error('--param is key=value, not "%s"' % p)
 
     params = list(tuple(p.split('=', 1)) for p in opt.params)
 
@@ -407,8 +422,10 @@ def CMDaddMessage(parser, args):
         'for acceptable format')
     parser.add_option('-m', '--message', type=str, help='message to add')
     (opt, args) = parser.parse_args(args)
-    assert opt.change, "-c not defined"
-    assert opt.message, "-m not defined"
+    if not opt.change:
+        parser.error('--change is required')
+    if not opt.message:
+        parser.error('--message is required')
     result = gerrit_util.SetReview(urllib.parse.urlparse(opt.host).netloc,
                                    opt.change,
                                    revision=opt.revision,
@@ -427,7 +444,8 @@ def CMDrestore(parser, args):
                       help='reason for restoring')
 
     (opt, args) = parser.parse_args(args)
-    assert opt.change, "-c not defined"
+    if not opt.change:
+        parser.error('--change is required')
     result = gerrit_util.RestoreChange(
         urllib.parse.urlparse(opt.host).netloc, opt.change, opt.message)
     logging.info(result)
@@ -444,7 +462,8 @@ def CMDabandon(parser, args):
                       help='reason for abandoning')
 
     (opt, args) = parser.parse_args(args)
-    assert opt.change, "-c not defined"
+    if not opt.change:
+        parser.error('--change is required')
     result = gerrit_util.AbandonChange(
         urllib.parse.urlparse(opt.host).netloc, opt.change, opt.message)
     logging.info(result)
@@ -485,7 +504,8 @@ def CMDmass_abandon(parser, args):
     opt, args = parser.parse_args(args)
 
     for p in opt.params:
-        assert '=' in p, '--param is key=value, not "%s"' % p
+        if '=' not in p:
+            parser.error('--param is key=value, not "%s"' % p)
     search_query = list(tuple(p.split('=', 1)) for p in opt.params)
     if not any(t for t in search_query if t[0] == 'owner'):
         # owner should always be present when abandoning changes
@@ -544,7 +564,8 @@ class OptionParser(optparse.OptionParser):
     def parse_args(self, args=None, values=None):
         options, args = optparse.OptionParser.parse_args(self, args, values)
         # Host is always required
-        assert options.host, "--host not defined."
+        if not options.host:
+            self.error('--host is required')
         levels = [logging.WARNING, logging.INFO, logging.DEBUG]
         logging.basicConfig(level=levels[min(options.verbose, len(levels) - 1)])
         return options, args
