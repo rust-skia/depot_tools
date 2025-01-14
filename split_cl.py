@@ -218,8 +218,12 @@ def PrintClInfo(cl_index, num_cls, directories, file_paths, description,
     print()
 
 
-def LoadDescription(description_file):
+def LoadDescription(description_file, dry_run):
     if not description_file:
+        if not dry_run:
+            # Parser checks this as well, so should be impossible
+            raise ValueError(
+                "Must provide a description file except during dry runs")
         return ('Dummy description for dry run.\n'
                 'directory = $directory')
 
