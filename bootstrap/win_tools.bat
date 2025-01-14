@@ -52,7 +52,7 @@ if "%PYTHON3_VERSION%" == "" (
 :: Python is upgraded.
 set BOOTSTRAP_NAME=bootstrap-%PYTHON3_VERSION:.=_%_bin
 set BOOTSTRAP_PATH=%BOOTSTRAP_ROOT_DIR%\%BOOTSTRAP_NAME%
-set BOOTSTRAP_EXTRA_ARGS=--bootstrap-name "%BOOTSTRAP_NAME%" --use-system-git
+set BOOTSTRAP_EXTRA_ARGS=--bootstrap-name "%BOOTSTRAP_NAME%"
 
 :: Install our CIPD packages. The CIPD client self-bootstraps.
 :: See "//cipd.bat" and "//.cipd_impl.ps1" for more information.

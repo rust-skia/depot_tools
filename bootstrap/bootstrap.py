@@ -483,11 +483,6 @@ def main(argv):
     parser.add_argument('--bootstrap-name',
                         required=True,
                         help='The directory of the Python installation.')
-    parser.add_argument(
-        '--use-system-git',
-        action='store_true',
-        help='Whether to prefer a direct git installation over a depot_tools '
-        'bundled git.')
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARN)
@@ -505,9 +500,7 @@ def main(argv):
     if IS_WIN:
         # Avoid messing with system git docs.
         add_docs = False
-        git_dir = None
-        if args.use_system_git:
-            git_dir = search_win_git_directory()
+        git_dir = search_win_git_directory()
         if not git_dir:
             # Either using system git was not enabled
             # or git was not found in PATH.
