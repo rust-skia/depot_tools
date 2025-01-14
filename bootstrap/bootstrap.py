@@ -296,9 +296,13 @@ def search_win_git_directory():
 
     # Log deprecation warning.
     logging.warning(
-        'depot_tools will soon stop bundling Git for Windows.\n'
+        'depot_tools will stop bundling Git for Windows on 2025-01-27.\n'
         'To prepare for this change, please install Git directly. See\n'
         'https://chromium.googlesource.com/chromium/src/+/main/docs/windows_build_instructions.md#Install-git\n'
+        '\n'
+        'Having issues and not ready for depot_tools to stop bundling\n'
+        'Git for Windows? File a bug at:\n'
+        'https://issues.chromium.org/issues/new?component=1456702&template=2045785\n'
     )
     return None
 
