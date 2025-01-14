@@ -453,20 +453,7 @@ def _win_git_bootstrap_config():
             [git_bat_path, 'config', '--unset', '--global', postprocess_key])
 
 
-def git_postprocess(template, add_docs):
-    if add_docs:
-        # Update depot_tools files for "git help <command>".
-        mingw_dir = git_get_mingw_dir(template.GIT_BIN_ABSDIR)
-        if mingw_dir:
-            docsrc = os.path.join(ROOT_DIR, 'man', 'html')
-            git_docs_dir = os.path.join(mingw_dir, 'share', 'doc', 'git-doc')
-            for name in os.listdir(docsrc):
-                maybe_copy(os.path.join(docsrc, name),
-                           os.path.join(git_docs_dir, name))
-        else:
-            logging.info('Could not find mingw directory for %r.',
-                         template.GIT_BIN_ABSDIR)
-
+def git_postprocess(template):
     # Create Git templates and configure its base layout.
     for stub_name, relpath in WIN_GIT_STUBS.items():
         stub_template = template._replace(GIT_PROGRAM=relpath)
@@ -498,17 +485,14 @@ def main(argv):
     clean_up_old_installations(bootstrap_dir)
 
     if IS_WIN:
-        # Avoid messing with system git docs.
-        add_docs = False
         git_dir = search_win_git_directory()
         if not git_dir:
             # Either using system git was not enabled
             # or git was not found in PATH.
             # Fall back to depot_tools bundled git.
             git_dir = os.path.join(bootstrap_dir, 'git')
-            add_docs = True
         template = template._replace(GIT_BIN_ABSDIR=git_dir)
-        git_postprocess(template, add_docs)
+        git_postprocess(template)
         templates = [
             ('git-bash.template.sh', 'git-bash', ROOT_DIR),
             ('python3.bat', 'python3.bat', ROOT_DIR),
