@@ -1469,7 +1469,10 @@ def SubmitChange(host, change):
     """Submits a Gerrit change via Gerrit."""
     path = 'changes/%s/submit' % change
     conn = CreateHttpConn(host, path, reqtype='POST')
-    return ReadHttpJsonResponse(conn)
+    # If a submit fails due to a merge conflict, Gerrit returns 409. Retrying
+    # more than once probably won't help since the merge conflict will still
+    # exist.
+    return ReadHttpJsonResponse(conn, max_tries=2)
 
 
 def GetChangesSubmittedTogether(host, change):
