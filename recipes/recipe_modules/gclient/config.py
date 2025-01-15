@@ -518,6 +518,15 @@ def crossbench(c):
 
 
 @config_ctx()
+def website(c):  # pragma: no cover
+  s = c.solutions.add()
+  s.name = 'website'
+  s.url = ChromiumGitURL(c, 'website.git')
+  m = c.got_revision_mapping
+  m['src'] = 'got_revision'
+
+
+@config_ctx()
 def ytdevinfra(c):
   soln = c.solutions.add()
   soln.name = 'ytdevinfra'
