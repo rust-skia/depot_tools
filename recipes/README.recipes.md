@@ -285,7 +285,7 @@ Wrapper for easy calling of gerrit_utils steps.
 
 &mdash; **def [abandon\_change](/recipes/recipe_modules/gerrit/api.py#262)(self, host, change, message=None, name=None, step_test_data=None):**
 
-&mdash; **def [add\_message](/recipes/recipe_modules/gerrit/api.py#320)(self, host: str, change: int, message: str, revision: (str | int)='current', step_name: str=None, step_test_data: (Callable[([], StepTestData)] | None)=None):**
+&mdash; **def [add\_message](/recipes/recipe_modules/gerrit/api.py#320)(self, host: str, change: int, message: str, revision: (str | int)='current', automatic_attention_set_update: Optional[bool]=None, step_name: str=None, step_test_data: (Callable[([], StepTestData)] | None)=None):**
 
 Add a message to a change at given revision.
 
@@ -298,6 +298,7 @@ Args:
       documented here:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#revision-id
       This defaults to current, which names the most recent patchset.
+  * automatic_attention_set_update: Whether to update the attention set.
   * step_name: Optional step name.
   * step_test_data: Optional mock test data for the underlying gerrit
       client.
@@ -393,13 +394,13 @@ Returns:
   A dict for the target revision as documented here:
       https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
 
-&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#357)(self, host, project, from_branch, to_branch, step_test_data=None):**
+&mdash; **def [move\_changes](/recipes/recipe_modules/gerrit/api.py#364)(self, host, project, from_branch, to_branch, step_test_data=None):**
 
 &mdash; **def [restore\_change](/recipes/recipe_modules/gerrit/api.py#282)(self, host, change, message=None, name=None, step_test_data=None):**
 
 &mdash; **def [set\_change\_label](/recipes/recipe_modules/gerrit/api.py#302)(self, host, change, label_name, label_value, name=None, step_test_data=None):**
 
-&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#381)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), cc_list=frozenset([]), submit=False, submit_later=False, step_test_data_create_change=None, step_test_data_submit_change=None):**
+&mdash; **def [update\_files](/recipes/recipe_modules/gerrit/api.py#388)(self, host, project, branch, new_contents_by_file_path, commit_msg, params=frozenset(['status=NEW']), cc_list=frozenset([]), submit=False, submit_later=False, step_test_data_create_change=None, step_test_data_submit_change=None):**
 
 Update a set of files by creating and submitting a Gerrit CL.
 
