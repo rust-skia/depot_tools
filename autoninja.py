@@ -478,6 +478,7 @@ def _upload_ninjalog(args, exit_code, build_duration):
         cmd,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        start_new_session=True,
         creationflags=creationflags,
     )
 
