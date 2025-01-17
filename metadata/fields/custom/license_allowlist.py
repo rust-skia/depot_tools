@@ -83,6 +83,7 @@ EXTENDED_LICENSE_CLASSIFIERS = frozenset([
     # permissive.
     # go/keep-sorted start case=no
     "LicenseRef-AMSFonts-2.2",
+    "SolarDesigner",
     "test_fonts",
     # go/keep-sorted end
     # notice.
@@ -90,6 +91,7 @@ EXTENDED_LICENSE_CLASSIFIERS = frozenset([
     "Apache-with-LLVM-Exception",
     "Apache-with-Runtime-Exception",
     "Bitstream",
+    "BLAS",
     "BSD-2-Clause-Flex",
     "BSD-3-Clause-OpenMPI",
     "BSD-4-Clause-Wasabi",
@@ -107,6 +109,7 @@ EXTENDED_LICENSE_CLASSIFIERS = frozenset([
     "Khronos",
     "Libpng-2.0",
     "LicenseRef-base64",
+    "LicenseRef-base64-cpp",
     "LicenseRef-OpenGLUT",
     "LicenseRef-takuya-ooura",
     "pffft",
