@@ -2187,7 +2187,10 @@ class Changelist(object):
 
         change_desc = self._GetDescriptionForUpload(options, git_diff_args,
                                                     files)
-        if not options.bypass_hooks:
+
+        # For options.squash, RunHook is called once for each branch in
+        # PrepareChange().
+        if not options.bypass_hooks and not options.squash:
             hook_results = self.RunHook(committing=False,
                                         may_prompt=not options.force,
                                         verbose=options.verbose,
