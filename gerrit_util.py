@@ -876,8 +876,8 @@ class GitCredsAuthenticator(_Authenticator):
     def gerrit_account_exists(cls, host: str) -> bool:
         """Return True if the Gerrit account exists.
 
-        This checks the user currently logged in with luci-auth.
-        If the user is not logged in with luci-auth, returns False.
+        This checks the user currently logged in with git-credential-luci.
+        If the user is not logged in with git-credential-luci, returns False.
 
         This method caches positive results in the user's Git config.
         """
