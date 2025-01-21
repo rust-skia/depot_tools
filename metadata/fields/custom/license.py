@@ -11,6 +11,9 @@ from typing import List, Tuple, Optional
 _THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 # The repo's root directory.
 _ROOT_DIR = os.path.abspath(os.path.join(_THIS_DIR, "..", "..", ".."))
+# Bad delimiter characters.
+BAD_DELIMITERS = ["/", ";", " and ", " or "]
+BAD_DELIMITERS_REGEX = re.compile("|".join(re.escape(delimiter) for delimiter in BAD_DELIMITERS))
 
 # Add the repo's root directory for clearer imports.
 sys.path.insert(0, _ROOT_DIR)
@@ -92,6 +95,15 @@ class LicenseField(field_types.SingleLineTextField):
       if util.is_empty(license):
         return vr.ValidationError(
                     reason=f"{self._name} has an empty value.")
+      if BAD_DELIMITERS_REGEX.search(license):
+        return vr.ValidationError(
+                reason=f"{self._name} contains a bad license separator. "
+                "Separate licenses by commas only.",
+                # Try and preemptively address the root cause of this behaviour,
+                # which is having multiple choices for a license.
+                additional=[f"When given a choice of licenses, chose the most "
+                            "permissive one, do not list all options."]
+        )
       if not allowed:
         not_allowlisted.append(license)
 

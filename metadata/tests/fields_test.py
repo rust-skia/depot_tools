@@ -123,10 +123,17 @@ class FieldValidationTest(unittest.TestCase):
                 "APSL-2.0, MIT",
                 "APSL-2.0 ,MIT",
             ],
-            error_values=["", "\n", ",", "Apache 2.0 ,"],
+            error_values=[
+                "",
+                "\n",
+                ",",
+                "Apache 2.0 ,",
+                "Custom / MIT",
+                "Apache-2.0 and MIT",
+                "Apache-2.0; MIT; BSD-2-Clause",
+            ],
             warning_values=[
                 "Custom license",
-                "Custom / MIT",
                 "Custom, MIT",
             ],
         )
