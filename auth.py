@@ -68,8 +68,9 @@ class GitLoginRequiredError(Exception):
     """
 
     def __init__(self):
-        msg = ('You are not logged in. Please login first by running:\n'
-               '  %s' % self.login_command)
+        msg = (
+            'You are not logged in to Gerrit. Please login first by running:\n'
+            '  %s' % self.login_command)
         super(GitLoginRequiredError, self).__init__(msg)
 
     @property
