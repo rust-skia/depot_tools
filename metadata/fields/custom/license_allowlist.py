@@ -5,18 +5,51 @@
 
 # These licenses are used to verify that code imported to Android complies with
 # their licensing requirements. Do not add entries to this list without approval.
-# Any licenses added should be a valid SPDX Identifier. For the full list of
+# SPDX Identifiers are preferred when available. For the full list of
 # identifiers; see https://spdx.org/licenses/.
-# Licenses below are grouped by restrictiveness level and then alphabetically.
+# Licenses are grouped by their classification (restrictiveness level) and then alphabetically.
+#
+# The classifications are based on the license classifier tool available at:
+# https://github.com/google/licenseclassifier/blob/main/license_type.go
+# Unfortunately, this open source version is no longer maintained.
+# These are the differrent classifications we identify, ordered by restrictiveness level:
+# * unencumbered, permissive, notice, reciprocal, restricted, by_exception_only, forbidden.
+#
+# 'by_exception_only' and 'forbidden' should never enter Chromium, reach out to
+# product counsel if the need arises.
+#
+# REVIEW INSTRUCTIONS FOR chromium-third-party@google.com (and a guide to contributing to this file):
+# 1. Paste the contents of the license to be classified into
+#   https://opensource.corp.google.com/license/analyze. This will provide the ID
+#   and the classification. Command line alternatives are documented at
+#   go/license-classifier, but work on entire files only.
+#   1.1 'unencumbered', 'permissive', or 'notice' are allowed ✅.
+#   1.2 'reciprocal' are allowed, but only in open source projects e.g. Chromium.
+#       See OPEN_SOURCE_SPDX_LICENSES below.
+#   1.3 >='restricted' are handled on a case-by-case basis and require individual approval
+#       from opensource-licensing@google.com and chromium-third-party@google.com. Be sure to include
+#       the license and relevant details in the email. It can be helpful to
+#       identify existing dependencies that have already been approved.
+#
+# 2. Check spdx.org/licenses to see if the license has an SPDX identifier.
+#   2.1 If it does: Use this value instead of the license classifier output,
+#       and add it to ALLOWED_SPDX_LICENSES.
+#   2.2 If does not: Add the id provided by the license classifier
+#       to EXTENDED_LICENSE_CLASSIFIERS.
+#
+# 3. Ensure that it is added under the correct classification
+#   e.g. '# notice', and then sorted alphabetically asscending.
+#
+# 4. If you are uncertain whether a given third-party library can be included in
+#   Chromium, please email opensource-licensing@google.com with the library's
+#   license documentation, and explain where and how the component is going to
+#   be used.
 ALLOWED_SPDX_LICENSES = frozenset([
-    # other_ignorable.
-    # go/keep-sorted start case=no
-    "LZMA-SDK-9.22",
-    # go/keep-sorted end
     # unencumbered.
     # go/keep-sorted start case=no
     "blessing",
     "CC0-1.0",
+    "LZMA-SDK-9.22",
     "Unlicense",
     # go/keep-sorted end
     # permissive.
