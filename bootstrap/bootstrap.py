@@ -485,12 +485,13 @@ def main(argv):
     clean_up_old_installations(bootstrap_dir)
 
     if IS_WIN:
+        # Search for a Git installation.
         git_dir = search_win_git_directory()
         if not git_dir:
-            # Either using system git was not enabled
-            # or git was not found in PATH.
-            # Fall back to depot_tools bundled git.
-            git_dir = os.path.join(bootstrap_dir, 'git')
+            logging.error('Failed to bootstrap depot_tools.\n'
+                          'Git was not found in PATH. Have you installed it?')
+            return 1
+
         template = template._replace(GIT_BIN_ABSDIR=git_dir)
         git_postprocess(template)
         templates = [
