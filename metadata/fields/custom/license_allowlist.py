@@ -108,7 +108,6 @@ EXTENDED_LICENSE_CLASSIFIERS = frozenset([
     # unencumbered.
     # go/keep-sorted start case=no
     "AhemFont",
-    "Android-SDK",
     "LZMA",
     "public-domain-md5",
     "SPL-SQRT-FLOOR",
@@ -152,6 +151,12 @@ EXTENDED_LICENSE_CLASSIFIERS = frozenset([
     "X11-Lucent",
     "zxing",
     # go/keep-sorted end
+
+    # The Android Software Development Kit License is a special case.
+    # It can introduce licensing complexities due to the potentially extensive
+    # transitive dependency chain. Developers should carefully review the
+    # licenses of all dependencies.
+    "Android Software Development Kit License",
 ])
 
 # These licenses are only allowed in open source projects due to their
