@@ -178,6 +178,24 @@ class TestConfigChanger(unittest.TestCase):
         }
         self.assertEqual(self.global_state, want)
 
+    def test_apply_global_chain_sso_new(self):
+        git_auth.ConfigChanger(
+            mode=git_auth.ConfigMode.NEW_AUTH_SSO,
+            remote_url=
+            'https://chromium.googlesource.com/chromium/tools/depot_tools.git',
+        ).apply_global('/some/fake/dir')
+        git_auth.ConfigChanger(
+            mode=git_auth.ConfigMode.NEW_AUTH,
+            remote_url=
+            'https://chromium.googlesource.com/chromium/tools/depot_tools.git',
+        ).apply_global('/some/fake/dir')
+        want = {
+            'protocol.sso.allow': ['always'],
+            'credential.https://chromium.googlesource.com/.helper':
+            ['', 'luci'],
+        }
+        self.assertEqual(self.global_state, want)
+
 
 if __name__ == '__main__':
     logging.basicConfig(
