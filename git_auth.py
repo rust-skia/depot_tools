@@ -36,7 +36,7 @@ class ConfigChanger(object):
     #
     # Increment this when making changes to the config, so that reliant
     # code can determine whether the config needs to be re-applied.
-    VERSION: int = 3
+    VERSION: int = 4
 
     def __init__(
         self,
@@ -166,15 +166,20 @@ class ConfigChanger(object):
     def _apply_sso(self, cwd: str) -> None:
         """Apply config changes relating to SSO."""
         sso_key: str = f'url.sso://{self._shortname}/.insteadOf'
+        http_key: str = f'url.{self._remote_url}.insteadOf'
         if self.mode == ConfigMode.NEW_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
             self._set_config(cwd, sso_key, None, modify_all=True)
+            # Shadow a potential global SSO rewrite rule.
+            self._set_config(cwd, http_key, self._remote_url, modify_all=True)
         elif self.mode == ConfigMode.NEW_AUTH_SSO:
             self._set_config(cwd, 'protocol.sso.allow', 'always')
             self._set_config(cwd, sso_key, self._base_url, modify_all=True)
+            self._set_config(cwd, http_key, None, modify_all=True)
         elif self.mode == ConfigMode.NO_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
             self._set_config(cwd, sso_key, None, modify_all=True)
+            self._set_config(cwd, http_key, None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
 
