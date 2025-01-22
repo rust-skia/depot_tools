@@ -255,5 +255,23 @@ class ValidateReciprocalLicenseTest(unittest.TestCase):
 
         self.assertEqual(len(license_errors), 0, "Should not create an error when a reciprocal license is used in an open source project")
 
+
+class ValidateRestrictedLicenseTest(unittest.TestCase):
+    """Tests that validate_content handles allowing restricted licenses correctly."""
+
+    # TODO(b/388620886): Warn when changing to a restricted license.
+    def test_restricted_licenses(self):
+        # Test content with a restricted license (GPL-2.0).
+        restricted_license_metadata_filepath = os.path.join(_THIS_DIR, "data",
+            "README.chromium.test.restricted-license")
+        results = metadata.validate.validate_content(
+            content=gclient_utils.FileRead(restricted_license_metadata_filepath),
+            source_file_dir=_SOURCE_FILE_DIR,
+            repo_root_dir=_THIS_DIR,
+            is_open_source_project=False
+        )
+
+        self.assertEqual(len(results), 0, "Should not create an error when a restricted license is used")
+
 if __name__ == "__main__":
     unittest.main()

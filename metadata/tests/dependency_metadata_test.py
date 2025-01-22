@@ -372,14 +372,22 @@ class DependencyValidationTest(unittest.TestCase):
     def test_all_licenses_allowlisted(self):
         """Test that a single allowlisted license returns True."""
         dependency = dm.DependencyMetadata()
-        # "MPL-2.0" is a reciprocal license, i.e. only allowed in open source projects.
         self.assertTrue(dependency.all_licenses_allowlisted("MIT", False))
+        self.assertTrue(dependency.all_licenses_allowlisted("MIT, GPL-2.0", False))
         self.assertTrue(dependency.all_licenses_allowlisted("MIT, Apache-2.0", False))
-        self.assertTrue(dependency.all_licenses_allowlisted("MPL-2.0", True))
         self.assertFalse(dependency.all_licenses_allowlisted("InvalidLicense", False))
         self.assertFalse(dependency.all_licenses_allowlisted("MIT, InvalidLicense", False))
         self.assertFalse(dependency.all_licenses_allowlisted("", False))
+
+        # "MPL-2.0" is a reciprocal license, i.e. only allowed in open source projects.
+        self.assertTrue(dependency.all_licenses_allowlisted("MPL-2.0", True))
         self.assertFalse(dependency.all_licenses_allowlisted("MPL-2.0", False))
+
+        # Restricted licenses are treated the same as other license types, until
+        # the exception and enforcement is resourced.
+        self.assertTrue(dependency.all_licenses_allowlisted("GPL-2.0", False))
+        self.assertTrue(dependency.all_licenses_allowlisted("GPL-2.0", True))
+        self.assertFalse(dependency.all_licenses_allowlisted("MPL-2.0, GPL-2.0", False))
 
 
     def test_only_open_source_licenses(self):
@@ -387,6 +395,7 @@ class DependencyValidationTest(unittest.TestCase):
         dependency = dm.DependencyMetadata()
         self.assertEqual(dependency.only_open_source_licenses(""), [])
         self.assertEqual(dependency.only_open_source_licenses("MIT"), [])
+        self.assertEqual(dependency.only_open_source_licenses("GPL-2.0"), [])
         self.assertEqual(dependency.only_open_source_licenses("MPL-2.0"), ["MPL-2.0"])
         result = dependency.only_open_source_licenses("MIT, MPL-2.0")
         self.assertEqual(result, ["MPL-2.0"])

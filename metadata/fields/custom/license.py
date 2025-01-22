@@ -21,7 +21,7 @@ sys.path.insert(0, _ROOT_DIR)
 import metadata.fields.field_types as field_types
 import metadata.fields.util as util
 import metadata.validation_result as vr
-from metadata.fields.custom.license_allowlist import ALLOWED_LICENSES, ALLOWED_OPEN_SOURCE_LICENSES
+from metadata.fields.custom.license_allowlist import ALLOWED_LICENSES, ALLOWED_OPEN_SOURCE_LICENSES, ALL_LICENSES, WITH_PERMISSION_ONLY
 
 
 def process_license_value(value: str,
@@ -60,16 +60,17 @@ def process_license_value(value: str,
 
 
 def is_license_valid(value: str) -> bool:
-    """Returns whether the value is in the allowlist for license
-    types.
+    """Returns whether the value is a valid license type.
     """
-    # The open source allowlist is the most permissive.
-    return value in ALLOWED_OPEN_SOURCE_LICENSES
+    return value in ALL_LICENSES
 
 def is_license_allowlisted(value: str, is_open_source_project: bool = False) -> bool:
     """Returns whether the value is in the allowlist for license
     types.
     """
+    # Restricted licenses are not enforced by presubmits, see b/388620886 😢.
+    if value in WITH_PERMISSION_ONLY:
+      return True
     if is_open_source_project:
         return value in ALLOWED_OPEN_SOURCE_LICENSES
     return value in ALLOWED_LICENSES
