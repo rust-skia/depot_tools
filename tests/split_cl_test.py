@@ -12,6 +12,7 @@ import split_cl
 
 
 class SplitClTest(unittest.TestCase):
+
     def testAddUploadedByGitClSplitToDescription(self):
         description = """Convert use of X to Y in $directory
 
@@ -97,6 +98,7 @@ class SplitClTest(unittest.TestCase):
 
     class UploadClTester:
         """Sets up test environment for testing split_cl.UploadCl()"""
+
         def __init__(self, test):
             self.mock_git_branches = self.StartPatcher("git_common.branches",
                                                        test)
@@ -213,6 +215,104 @@ class SplitClTest(unittest.TestCase):
         self.assertEqual(split_cl.LoadDescription("SomeFile.txt", True),
                          "Description")
         self.assertEqual(mock_file_read.call_count, 1)
+
+    class SplitClTester:
+        """Sets up test environment for testing split_cl.SplitCl()"""
+
+        def __init__(self, test):
+            self.mocks = []
+            self.mock_file_read = self.StartPatcher(
+                "gclient_utils.FileRead",
+                test,
+                return_value="Non-dummy description\nBug: 1243")
+            self.mock_in_git_repo = self.StartPatcher(
+                "split_cl.EnsureInGitRepository", test)
+            self.mock_git_status = self.StartPatcher("scm.GIT.CaptureStatus",
+                                                     test)
+            self.mock_git_run = self.StartPatcher("git_common.run", test)
+            self.mock_git_current_branch = self.StartPatcher(
+                "git_common.current_branch",
+                test,
+                return_value="current_branch")
+            self.mock_git_upstream = self.StartPatcher(
+                "git_common.upstream", test, return_value="upstream_branch")
+            self.mock_get_reviewers = self.StartPatcher(
+                "split_cl.SelectReviewersForFiles", test)
+            self.mock_ask_for_data = self.StartPatcher(
+                "gclient_utils.AskForData", test)
+            self.mock_print_cl_info = self.StartPatcher("split_cl.PrintClInfo",
+                                                        test)
+            self.mock_upload_cl = self.StartPatcher("split_cl.UploadCl", test)
+            # Suppress output for cleaner tests
+            self.mock_print = self.StartPatcher("builtins.print", test)
+
+        def StartPatcher(self, target, test, **kwargs):
+            patcher = mock.patch(target, **kwargs)
+            test.addCleanup(patcher.stop)
+            m = patcher.start()
+            self.mocks.append(m)
+            return m
+
+        def ResetMocks(self):
+            for m in self.mocks:
+                m.reset_mock()
+
+        def DoSplitCl(self, description_file, dry_run, files_split_by_reviewers,
+                      proceed_response):
+            all_files = [v.files for v in files_split_by_reviewers.values()]
+            all_files_flattened = [
+                file for files in all_files for file in files
+            ]
+
+            self.mock_git_status.return_value = all_files_flattened
+            self.mock_get_reviewers.return_value = files_split_by_reviewers
+            self.mock_ask_for_data.return_value = proceed_response
+
+            split_cl.SplitCl(description_file, None, mock.Mock(), None, dry_run,
+                             False, False, None, None, None)
+
+    def testSplitClConfirm(self):
+        split_cl_tester = self.SplitClTester(self)
+
+        files_split_by_reviewers = {
+            "a@example.com":
+            split_cl.FilesAndOwnersDirectory([
+                ("M", "a/b/foo.cc"),
+                ("M", "d/e/bar.h"),
+            ], []),
+            "b@example.com":
+            split_cl.FilesAndOwnersDirectory([
+                ("A", "f/g/baz.py"),
+            ], [])
+        }
+
+        # Should prompt for confirmation and upload several times
+        split_cl_tester.DoSplitCl("SomeFile.txt", False,
+                                  files_split_by_reviewers, "y")
+
+        split_cl_tester.mock_ask_for_data.assert_called_once()
+        split_cl_tester.mock_print_cl_info.assert_not_called()
+        self.assertEqual(split_cl_tester.mock_upload_cl.call_count,
+                         len(files_split_by_reviewers))
+
+        split_cl_tester.ResetMocks()
+        # Should prompt for confirmation and not upload
+        split_cl_tester.DoSplitCl("SomeFile.txt", False,
+                                  files_split_by_reviewers, "f")
+
+        split_cl_tester.mock_ask_for_data.assert_called_once()
+        split_cl_tester.mock_print_cl_info.assert_not_called()
+        split_cl_tester.mock_upload_cl.assert_not_called()
+
+        split_cl_tester.ResetMocks()
+        # Dry run: Don't prompt, print info instead of uploading
+        split_cl_tester.DoSplitCl("SomeFile.txt", True,
+                                  files_split_by_reviewers, "f")
+
+        split_cl_tester.mock_ask_for_data.assert_not_called()
+        self.assertEqual(split_cl_tester.mock_print_cl_info.call_count,
+                         len(files_split_by_reviewers))
+        split_cl_tester.mock_upload_cl.assert_not_called()
 
 
 if __name__ == '__main__':
