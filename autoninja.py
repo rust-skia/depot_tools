@@ -186,6 +186,13 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
     # and keep workspace clean.
     if not os.environ.get("PYTHONPYCACHEPREFIX"):
         os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+    # Workaround for reproxy timing out on startup due to the Google Cloud
+    # Go SDK making a call to user.Current(), which can be slow on Googler
+    # machines due to go.dev/issue/68312. This can be removed once Go 1.24
+    # has been released, and reproxy + other tools have been rebuilt with
+    # that.
+    if _is_google_corp_machine():
+        os.environ.setdefault("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false")
     # The -t tools are incompatible with -j
     t_specified = False
     j_specified = False
