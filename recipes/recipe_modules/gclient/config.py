@@ -523,7 +523,7 @@ def website(c):  # pragma: no cover
   s.name = 'website'
   s.url = ChromiumGitURL(c, 'website.git')
   m = c.got_revision_mapping
-  m['src'] = 'got_revision'
+  m['website'] = 'got_revision'
 
 
 @config_ctx()
