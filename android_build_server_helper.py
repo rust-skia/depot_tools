@@ -10,6 +10,8 @@ import subprocess
 
 import gclient_paths
 
+# Keeps track of whether our SIGINT handler was called.
+_is_canceled = False
 
 def _register_build_id(local_dev_server_path, build_id):
     subprocess.run([
@@ -31,6 +33,8 @@ def _set_signal_handler(local_dev_server_path, build_id):
     original_sigint_handler = signal.getsignal(signal.SIGINT)
 
     def _kill_handler(signum, frame):
+        global _is_canceled
+        _is_canceled = True
         # Cancel the pending build tasks if user CTRL+c early.
         print('Canceling pending build_server tasks', file=sys.stderr)
         subprocess.run([local_dev_server_path, '--cancel-build', build_id])
@@ -61,4 +65,6 @@ def build_server_context(build_id, use_android_build_server=False):
     _register_build_id(server_path, build_id)
     _set_signal_handler(server_path, build_id)
     yield
-    _print_status(server_path, build_id)
+    # No need to print status if we CTRL+Ced out.
+    if (not _is_canceled):
+        _print_status(server_path, build_id)
