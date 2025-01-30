@@ -168,7 +168,9 @@ def _get_use_siso_default(output_dir):
 
     script = _import_from_path("use_siso_default", script_path)
     try:
-        r = script.use_siso_default(output_dir)
+        # Older versions of chromium won't have this function.
+        use_siso_default = getattr(script, "use_siso_default_and_suggest_siso", script.use_siso_default)
+        r = use_siso_default(output_dir)
     except:
         raise RuntimeError(
             'Could not call method "use_siso_default" in {}"'.format(
