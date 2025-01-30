@@ -2061,8 +2061,17 @@ def CheckForCommitObjects(input_api, output_api):
 
     gitmodules_file = input_api.os_path.join(input_api.PresubmitLocalPath(),
                                              '.gitmodules')
-    with open(gitmodules_file) as f:
-        gitmodules_content = f.read()
+    import configparser
+    config = configparser.ConfigParser()
+    config.read(gitmodules_file)
+    gitmodule_paths = set([])
+    for name, section in config.items():
+        if not name.startswith('submodule '):
+            continue
+        if 'path' not in section:
+            continue
+        gitmodule_paths.add(section['path'])
+
 
     mismatch_entries = []
     deps_msg = ""
@@ -2094,7 +2103,9 @@ def CheckForCommitObjects(input_api, output_api):
                         'Make sure DEPS paths match those in .gitmodules \n'
                         f'and a gitlink exists at {dep_path}.')
                 ]
-            if f'path = {submodule_path}' not in gitmodules_content:
+            try:
+                gitmodule_paths.remove(submodule_path)
+            except KeyError:
                 return [
                     output_api.PresubmitError(
                         f'No submodule with path {submodule_path} in '
@@ -2122,6 +2133,18 @@ def CheckForCommitObjects(input_api, output_api):
                 '\n\n'
                 'The following entries diverged: ' + deps_msg)
         ]
+
+    if len(gitmodule_paths) > 0:
+        return [
+            output_api.PresubmitError(
+                '.gitmodules file contains submodules that no longer exist\n'
+                'in DEPS or Git (gitlink).\n'
+                'Remove the following entries from .gitmodules:\n'
+                '\n\t' + '\n\t'.join(gitmodule_paths) +
+                '\n\nor run the following command:\n'
+                '    gclient gitmodules\n')
+        ]
+
 
     return []
 
