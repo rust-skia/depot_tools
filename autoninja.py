@@ -232,13 +232,13 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
 
     use_remoteexec = False
     use_reclient = _get_use_reclient_value(output_dir)
-    use_siso = _get_use_siso_default(output_dir)
     use_android_build_server = False
 
     # Attempt to auto-detect remote build acceleration. We support gn-based
     # builds, where we look for args.gn in the build tree, and cmake-based
     # builds where we look for rules.ninja.
     if gn_helper.exists(output_dir):
+        use_siso = None
         for k, v in gn_helper.args(output_dir):
             # use_remoteexec will activate build acceleration.
             #
@@ -268,6 +268,10 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             if k == "android_static_analysis" and v == '"build_server"':
                 use_android_build_server = True
                 continue
+
+        if use_siso is None:
+            use_siso = _get_use_siso_default(output_dir)
+
         if use_reclient is None:
             use_reclient = use_remoteexec
 
