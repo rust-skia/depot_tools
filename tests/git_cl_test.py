@@ -5295,6 +5295,49 @@ class CMDFormatTestCase(unittest.TestCase):
                 cwd=self._top_dir),
         ])
 
+    @mock.patch('subprocess2.call')
+    def testLUCICfgFormatWorks(self, mock_call):
+        """Checks if lucicfg is given then input file path."""
+        mock_opts = mock.Mock(dry_run=False)
+        files = ['test/main.star']
+        mock_call.return_value = 0
+        ret = git_cl._RunLUCICfgFormat(mock_opts, files, self._top_dir, 'HEAD')
+        mock_call.assert_called_with([
+            mock.ANY,
+            'fmt',
+            'test/main.star',
+        ])
+        self.assertEqual(ret, 0)
+
+    @mock.patch('subprocess2.call')
+    def testLUCICfgFormatWithDryRun(self, mock_call):
+        """Tests the command with --dry-run."""
+        mock_opts = mock.Mock(dry_run=True)
+        files = ['test/main.star']
+        git_cl._RunLUCICfgFormat(mock_opts, files, self._top_dir, 'HEAD')
+        mock_call.assert_called_with([
+            mock.ANY,
+            'fmt',
+            '--dry-run',
+            'test/main.star',
+        ])
+
+    @mock.patch('subprocess2.call')
+    def testLUCICfgFormatWithDryRunReturnCode(self, mock_call):
+        """Tests that it returns 2 for non-zero exit codes."""
+        mock_opts = mock.Mock(dry_run=True)
+        files = ['test/main.star']
+        run = git_cl._RunLUCICfgFormat
+
+        mock_call.return_value = 0
+        self.assertEqual(run(mock_opts, files, self._top_dir, 'HEAD'), 0)
+        mock_call.return_value = 1
+        self.assertEqual(run(mock_opts, files, self._top_dir, 'HEAD'), 2)
+        mock_call.return_value = 2
+        self.assertEqual(run(mock_opts, files, self._top_dir, 'HEAD'), 2)
+        mock_call.return_value = 255
+        self.assertEqual(run(mock_opts, files, self._top_dir, 'HEAD'), 2)
+
 
 @unittest.skipIf(gclient_utils.IsEnvCog(),
                 'not supported in non-git environment')

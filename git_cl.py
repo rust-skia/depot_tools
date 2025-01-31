@@ -6843,6 +6843,24 @@ def _RunMetricsXMLFormat(opts, paths, top_dir, upstream_commit):
     return return_value
 
 
+def _RunLUCICfgFormat(opts, paths, top_dir, upstream_commit):
+    depot_tools_path = os.path.dirname(os.path.abspath(__file__))
+    lucicfg = os.path.join(depot_tools_path, 'lucicfg')
+    if sys.platform == 'win32':
+        lucicfg += '.bat'
+
+    cmd = [lucicfg, 'fmt']
+    if opts.dry_run:
+        cmd.append('--dry-run')
+    cmd.extend(paths)
+
+    ret = subprocess2.call(cmd)
+    if opts.dry_run and ret != 0:
+        return 2
+
+    return ret
+
+
 def MatchingFileType(file_name, extensions):
     """Returns True if the file name ends with one of the given extensions."""
     return bool([ext for ext in extensions if file_name.lower().endswith(ext)])
@@ -6929,6 +6947,10 @@ def CMDformat(parser, args):
                       action='store_true',
                       help='Disable auto-formatting of .java')
 
+    parser.add_option('--lucicfg',
+                      action='store_true',
+                      help='Enables formatting of .star files.')
+
     opts, files = parser.parse_args(args)
 
     # Normalize files against the current path, so paths relative to the
@@ -6982,6 +7004,8 @@ def CMDformat(parser, args):
         formatters += [(['.py'], _RunYapf)]
     if opts.mojom:
         formatters += [(['.mojom'], _RunMojomFormat)]
+    if opts.lucicfg:
+        formatters += [(['.star'], _RunLUCICfgFormat)]
 
     top_dir = settings.GetRoot()
     return_value = 0
