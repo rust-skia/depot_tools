@@ -516,7 +516,6 @@ def crossbench(c):
   soln.url = 'https://chromium.googlesource.com/crossbench'
   c.got_revision_mapping['crossbench'] = 'got_revision'
 
-
 @config_ctx()
 def website(c):  # pragma: no cover
   s = c.solutions.add()
@@ -525,10 +524,21 @@ def website(c):  # pragma: no cover
   m = c.got_revision_mapping
   m['website'] = 'got_revision'
 
-
 @config_ctx()
 def ytdevinfra(c):
   soln = c.solutions.add()
   soln.name = 'ytdevinfra'
   soln.url = 'https://lbshell-internal.googlesource.com/cobalt_src.git'
   c.got_revision_mapping['ytdevinfra'] = 'got_revision'
+
+
+@config_ctx()
+def ytdevinfra_github(c):
+  soln = c.solutions.add()
+  soln.name = 'ytdevinfra_github'
+  soln.url = 'https://github.googlesource.com/youtube/cobalt.git'
+  soln.custom_vars = {
+      'download_remoteexec_cfg': True,
+      'rbe_instance': 'projects/cobalt-actions-prod/instances/default_instance'
+  }
+  c.got_revision_mapping['ytdevinfra_github'] = 'got_revision'

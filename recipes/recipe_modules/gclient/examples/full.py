@@ -62,6 +62,7 @@ TEST_CONFIGS = [
     'with_branch_heads',
     'with_tags',
     'ytdevinfra',
+    'ytdevinfra_github',
 ]
 
 DEPS_CONTENT = """
