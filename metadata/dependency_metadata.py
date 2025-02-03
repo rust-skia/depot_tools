@@ -306,6 +306,10 @@ class DependencyMetadata:
         return self._return_as_property(known_fields.NAME)
 
     @property
+    def mitigated(self) -> Optional[List[str]]:
+        return self._return_as_property(known_fields.MITIGATED)
+
+    @property
     def short_name(self) -> Optional[str]:
         return self._return_as_property(known_fields.SHORT_NAME)
 

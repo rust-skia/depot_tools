@@ -18,6 +18,7 @@ sys.path.insert(0, _ROOT_DIR)
 import metadata.fields.known as known_fields
 import metadata.fields.field_types as field_types
 import metadata.validation_result as vr
+import metadata.fields.custom.mitigated
 
 
 class FieldValidationTest(unittest.TestCase):
@@ -231,6 +232,33 @@ class FieldValidationTest(unittest.TestCase):
         for value in _MAY_CONTAIN_MODIFICATION_VALUES:
             self.assertFalse(
                 known_fields.LOCAL_MODIFICATIONS.should_terminate_field(value))
+
+    def test_vulnerability_ids(self):
+        valid_ids = [
+            "CVE-2024-12345",
+            "CVE-2024-1234567",
+            "PYSEC-2024-1234",
+            "OSV-2024-1234",
+            "DSA-1234-1",
+            "GHSA-1234-5678-90ab",
+        ]
+
+        invalid_ids = [
+            "CVE-123-456",
+            "GHSA-123-456",
+            "PYSEC-2024",  # Missing ID part.
+            "NOT-A-VALID-ID",  # Bad prefix.
+            "CVE_2024_12345",  # Wrong separator.
+            "",  # Empty.
+            " ",  # Just space.
+        ]
+
+        test_ids = valid_ids + invalid_ids
+        valid_result, invalid_result = metadata.fields.custom.mitigated.validate_vuln_ids(
+            ",".join(test_ids))
+
+        self.assertListEqual(sorted(valid_result), sorted(valid_ids))
+        self.assertListEqual(sorted(invalid_result), sorted(invalid_ids))
 
 if __name__ == "__main__":
     unittest.main()
