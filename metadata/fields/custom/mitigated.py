@@ -19,9 +19,10 @@ _VULN_PREFIXES = [
     "DSA",  # Debian Security Advisory.
 ]
 
-_PREFIX_PATTERN = "|".join(_VULN_PREFIXES)
-_VULN_ID_PATTERN = re.compile(
-    rf"^({_PREFIX_PATTERN})-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9:-]+$")
+_PATTERN_PREFIX = "|".join(_VULN_PREFIXES)
+PATTERN_VULN_ID = re.compile(
+    rf"({_PATTERN_PREFIX})-[a-zA-Z0-9]{{4}}-[a-zA-Z0-9:-]+")
+PATTERN_VULN_ID_WITH_ANCHORS = re.compile(f"^{PATTERN_VULN_ID.pattern}$")
 
 
 def validate_vuln_ids(vuln_ids: str) -> Tuple[List[str], List[str]]:
@@ -46,7 +47,7 @@ def validate_vuln_ids(vuln_ids: str) -> Tuple[List[str], List[str]]:
 
     for cve in vuln_ids.split(","):
         cve_stripped = cve.strip()
-        if _VULN_ID_PATTERN.match(cve_stripped):
+        if PATTERN_VULN_ID_WITH_ANCHORS.match(cve_stripped):
             valid_vuln_ids.append(cve_stripped)
         else:
             invalid_vuln_ids.append(cve)
