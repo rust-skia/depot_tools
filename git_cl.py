@@ -6873,8 +6873,8 @@ def CMDformat(parser, args):
     if gclient_utils.IsEnvCog():
         print(
             'format command is not supported. Please use the "Format '
-            'Document" functionality in command palette in the Editor '
-            'instead.',
+            'Modified Lines in All Files (git cl format)" functionality in'
+            'command palette in the editor instead.',
             file=sys.stderr)
         return 1
     clang_exts = ['.cc', '.cpp', '.h', '.m', '.mm', '.proto']
