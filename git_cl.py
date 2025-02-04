@@ -4587,7 +4587,7 @@ def CMDcherry_pick(parser, args):
     host = None
     if options.host:
         try:
-            host = urllib.parse.urlparse(host).hostname
+            host = urllib.parse.urlparse(options.host).hostname
         except ValueError as e:
             print(f'Unable to parse host: {host}. Error: {e}', file=sys.stderr)
             return 1
