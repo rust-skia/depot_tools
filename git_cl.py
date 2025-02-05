@@ -55,6 +55,7 @@ import git_auth
 import git_common
 import git_footers
 import git_new_branch
+import git_squash_branch
 import google_java_format
 import metrics
 import metrics_utils
@@ -4271,6 +4272,91 @@ def CMDarchive(parser, args):
             # Clean up the tag if we failed to delete the branch.
             RunGit(['tag', '-d', tagname])
 
+    print('\nJob\'s done!')
+
+    return 0
+
+
+@metrics.collector.collect_metrics('git cl squash-closed')
+def CMDsquash_closed(parser, args):
+    """Squashes branches associated with closed changelists, and reparents their children."""
+    if gclient_utils.IsEnvCog():
+        print('squash_closed command is not supported in non-git environment.',
+              file=sys.stderr)
+        return 1
+
+    parser.add_option(
+        '-j',
+        '--maxjobs',
+        action='store',
+        type=int,
+        help='The maximum number of jobs to use when retrieving review status.')
+    parser.add_option('-f',
+                      '--force',
+                      action='store_true',
+                      help='Bypasses the confirmation prompt.')
+    parser.add_option('-d',
+                      '--dry-run',
+                      action='store_true',
+                      help='Skip the branch tagging and removal steps.')
+
+    options, args = parser.parse_args(args)
+    if args:
+        parser.error('Unsupported args: %s' % ' '.join(args))
+
+    if git_common.is_dirty_git_tree('squash-closed'):
+        return 1
+
+    branches = RunGit(['for-each-ref', '--format=%(refname)', 'refs/heads'])
+    if not branches:
+        return 0
+
+    print('Finding all branches associated with closed issues...')
+    changes = [Changelist(branchref=b) for b in branches.splitlines()]
+    statuses = get_cl_statuses(changes,
+                               fine_grained=True,
+                               max_processes=options.maxjobs)
+    proposal = [cl.GetBranch() for cl, status in statuses if status == 'closed']
+    proposal.sort()
+
+    if not proposal:
+        print('No branches with closed codereview issues found.')
+        return 0
+
+    print('\nBranches with closed issues that will be squashed:\n')
+    for next_item in proposal:
+        print('  ' + next_item)
+
+    # Quit now on if this is a dry run.
+    if options.dry_run:
+        print('\nNo changes were made (dry run).\n')
+        return 0
+
+    current_branch = scm.GIT.GetBranch(settings.GetRoot())
+    if current_branch in proposal:
+        print('You are currently on a branch \'%s\' which is associated with a '
+              'closed codereview issue, so squash-closed cannot proceed. '
+              'Please checkout another branch and run this command again.' %
+              current_branch)
+        return 1
+
+    # Prompt the user to continue unless they've specified to always continue.
+    if not options.force:
+        answer = gclient_utils.AskForData(
+            '\nProceed with deletion (Y/n)? ').lower()
+        if answer not in ('y', ''):
+            print('Aborted.')
+            return 1
+
+    # scm.GIT.GetBranch does not work for detached HEAD situations.
+    reset_branch = git_common.current_branch()
+    for branch in proposal:
+        RunGit(['checkout', branch])
+        if git_squash_branch.main([]) != 0:
+            RunGit(['checkout', reset_branch])
+            return 1
+
+    RunGit(['checkout', reset_branch])
     print('\nJob\'s done!')
 
     return 0

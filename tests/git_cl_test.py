@@ -2987,6 +2987,110 @@ class TestGitCl(unittest.TestCase):
                             'archived/{issue}-{branch}']))
 
     @unittest.skipIf(gclient_utils.IsEnvCog(),
+                     'not supported in non-git environment')
+    def test_squash_closed(self):
+        self.calls = [
+            ((['git', 'for-each-ref', '--format=%(refname)', 'refs/heads'], ),
+             'refs/heads/main\nrefs/heads/foo\nrefs/heads/bar'),
+            ((['git', 'checkout', 'foo'], ), ''),
+            ((['git', 'checkout', 'main'], ), ''),
+        ]
+
+        mock.patch(
+            'git_cl.get_cl_statuses',
+            lambda branches, fine_grained, max_processes: [
+                (MockChangelistWithBranchAndIssue('main', 1), 'open'),
+                (MockChangelistWithBranchAndIssue('foo', 456), 'closed'),
+                (MockChangelistWithBranchAndIssue('bar', 789), 'open')
+            ]).start()
+        mock.patch('git_common.current_branch', return_value='main').start()
+        mock.patch('git_squash_branch.main', return_value=0).start()
+
+        self.assertEqual(0, git_cl.main(['squash-closed', '-f']))
+
+    @unittest.skipIf(gclient_utils.IsEnvCog(),
+                     'not supported in non-git environment')
+    def test_squash_closed_dry_run(self):
+        self.calls = [
+            ((['git', 'for-each-ref', '--format=%(refname)', 'refs/heads'], ),
+             'refs/heads/main\nrefs/heads/foo\nrefs/heads/bar'),
+        ]
+
+        mock.patch(
+            'git_cl.get_cl_statuses',
+            lambda branches, fine_grained, max_processes: [
+                (MockChangelistWithBranchAndIssue('main', 1), 'open'),
+                (MockChangelistWithBranchAndIssue('foo', 456), 'closed'),
+                (MockChangelistWithBranchAndIssue('bar', 789), 'open')
+            ]).start()
+
+        self.assertEqual(0, git_cl.main(['squash-closed', '-d']))
+
+    @unittest.skipIf(gclient_utils.IsEnvCog(),
+                     'not supported in non-git environment')
+    def test_squash_closed_current_branch_fails(self):
+        self.calls = [
+            ((['git', 'for-each-ref', '--format=%(refname)', 'refs/heads'], ),
+             'refs/heads/main\nrefs/heads/foo\nrefs/heads/bar'),
+        ]
+
+        mock.patch(
+            'git_cl.get_cl_statuses',
+            lambda branches, fine_grained, max_processes: [
+                (MockChangelistWithBranchAndIssue('main', 1), 'closed'),
+            ]).start()
+
+        self.assertEqual(1, git_cl.main(['squash-closed', '-f']))
+
+    @unittest.skipIf(gclient_utils.IsEnvCog(),
+                     'not supported in non-git environment')
+    def test_squash_closed_reset_on_failure(self):
+        self.calls = [
+            ((['git', 'for-each-ref', '--format=%(refname)', 'refs/heads'], ),
+             'refs/heads/main\nrefs/heads/foo\nrefs/heads/bar'),
+            ((['git', 'checkout', 'foo'], ), ''),
+            ((['git', 'checkout', 'main'], ), ''),
+        ]
+
+        mock.patch(
+            'git_cl.get_cl_statuses',
+            lambda branches, fine_grained, max_processes: [
+                (MockChangelistWithBranchAndIssue('main', 1), 'open'),
+                (MockChangelistWithBranchAndIssue('foo', 456), 'closed'),
+                (MockChangelistWithBranchAndIssue('bar', 789), 'open')
+            ]).start()
+        mock.patch('git_common.current_branch', return_value='main').start()
+        mock.patch('git_squash_branch.main', return_value=1).start()
+
+        self.assertEqual(1, git_cl.main(['squash-closed', '-f']))
+
+    @unittest.skipIf(gclient_utils.IsEnvCog(),
+                     'not supported in non-git environment')
+    def test_squash_closed_clean_exit_no_closed_branches(self):
+        self.calls = [
+            ((['git', 'for-each-ref', '--format=%(refname)', 'refs/heads'], ),
+             'refs/heads/main\nrefs/heads/foo\nrefs/heads/bar'),
+        ]
+
+        mock.patch(
+            'git_cl.get_cl_statuses',
+            lambda branches, fine_grained, max_processes: [
+                (MockChangelistWithBranchAndIssue('main', 1), 'open'),
+                (MockChangelistWithBranchAndIssue('foo', 456), 'open'),
+                (MockChangelistWithBranchAndIssue('bar', 789), 'open')
+            ]).start()
+        mock.patch('git_common.current_branch', return_value='main').start()
+        mock.patch('git_squash_branch.main', return_value=0).start()
+
+        self.assertEqual(0, git_cl.main(['squash-closed', '-f']))
+
+    @unittest.skipIf(gclient_utils.IsEnvCog(),
+                     'not supported in non-git environment')
+    def test_squash_closed_abort_on_dirty_tree(self):
+        mock.patch('git_common.is_dirty_git_tree', return_value=True).start()
+        self.assertEqual(1, git_cl.main(['squash-closed', '-f']))
+
+    @unittest.skipIf(gclient_utils.IsEnvCog(),
                     'not supported in non-git environment')
     def test_cmd_issue_erase_existing(self):
         scm.GIT.SetConfig('', 'branch.main.gerritissue', '123')
