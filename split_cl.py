@@ -5,10 +5,12 @@
 """Splits a branch into smaller branches and uploads CLs."""
 
 import collections
+import dataclasses
 import os
 import re
 import subprocess2
 import sys
+from typing import List, Set, Tuple, Dict, Any
 
 import gclient_utils
 import git_footers
@@ -27,8 +29,60 @@ CL_SPLIT_FORCE_LIMIT = 10
 # will be listed.
 CL_SPLIT_TOP_REVIEWERS = 5
 
+
+def EmitWarning(msg: str):
+    print("Warning: ", msg)
+
+
 FilesAndOwnersDirectory = collections.namedtuple("FilesAndOwnersDirectory",
                                                  "files owners_directories")
+
+
+@dataclasses.dataclass
+class CLInfo:
+    """
+    Data structure representing a single CL. The script will split the large CL
+    into a list of these.
+
+    Fields:
+    - reviewers: the reviewers the CL will be sent to.
+    - files: a list of <action>, <file> pairs in the CL.
+             Has the same format as `git status`.
+    - directories: a string representing the directories containing the files
+                   in this CL. This is only used for replacing $directory in
+                   the user-provided CL description.
+    """
+    # Have to use default_factory because lists are mutable
+    reviewers: Set[str] = dataclasses.field(default_factory=set)
+    files: List[Tuple[str, str]] = dataclasses.field(default_factory=list)
+
+    # This is only used for formatting in the CL description, so it just
+    # has to be convertible to string.
+    directories: Any = ""
+
+    def FormatForPrinting(self) -> str:
+        """
+        Format the CLInfo for printing to a file in a human-readable format.
+        """
+        # Don't quote the reviewer emails in the output
+        reviewers_str = ", ".join(self.reviewers)
+        lines = [
+            f"Reviewers: [{reviewers_str}]", f"Directories: {self.directories}"
+        ] + [f"{action}, {file}" for (action, file) in self.files]
+        return "\n".join(lines)
+
+
+def CLInfoFromFilesAndOwnersDirectoriesDict(
+        d: Dict[Tuple[str], FilesAndOwnersDirectory]) -> List[CLInfo]:
+    """
+    Transform a dictionary mapping reviewer tuples to FilesAndOwnersDirectories
+    into a list of CLInfo
+    """
+    cl_infos = []
+    for (reviewers, fod) in d.items():
+        cl_infos.append(
+            CLInfo(set(reviewers), fod.files, fod.owners_directories))
+    return cl_infos
 
 
 def EnsureInGitRepository():
@@ -230,7 +284,7 @@ def LoadDescription(description_file, dry_run):
     return gclient_utils.FileRead(description_file)
 
 
-def PrintSummary(files_split_by_reviewers, refactor_branch):
+def PrintSummary(cl_infos, refactor_branch):
     """Print a brief summary of the splitting so the user
        can review it before uploading.
 
@@ -238,26 +292,27 @@ def PrintSummary(files_split_by_reviewers, refactor_branch):
        files_split_by_reviewers: A dictionary mapping reviewer tuples
            to the files and directories assigned to them.
     """
+    for info in cl_infos:
+        print(f'Reviewers: {info.reviewers}, files: {len(info.files)}, ',
+              f'directories: {info.directories}')
 
-    for reviewers, file_info in files_split_by_reviewers.items():
-        print(f'Reviewers: {reviewers}, files: {len(file_info.files)}, '
-              f'directories: {file_info.owners_directories}')
-
-    num_cls = len(files_split_by_reviewers)
+    num_cls = len(cl_infos)
     print(f'\nWill split branch {refactor_branch} into {num_cls} CLs. '
           'Please quickly review them before proceeding.\n')
+
     if (num_cls > CL_SPLIT_FORCE_LIMIT):
-        print('Warning: Uploading this many CLs may potentially '
-              'reach the limit of concurrent runs, imposed on you by the '
-              'build infrastructure. Your runs may be throttled as a '
-              'result.\n\nPlease email infra-dev@chromium.org if you '
-              'have any questions. '
-              'The infra team reserves the right to cancel '
-              'your jobs if they are overloading the CQ.\n\n'
-              '(Alternatively, you can reduce the number of CLs created by '
-              'using the --max-depth option. Pass --dry-run to examine the '
-              'CLs which will be created until you are happy with the '
-              'results.)')
+        EmitWarning(
+            'Uploading this many CLs may potentially '
+            'reach the limit of concurrent runs, imposed on you by the '
+            'build infrastructure. Your runs may be throttled as a '
+            'result.\n\nPlease email infra-dev@chromium.org if you '
+            'have any questions. '
+            'The infra team reserves the right to cancel '
+            'your jobs if they are overloading the CQ.\n\n'
+            '(Alternatively, you can reduce the number of CLs created by '
+            'using the --max-depth option. Pass --dry-run to examine the '
+            'CLs which will be created until you are happy with the '
+            'results.)')
 
 
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
@@ -311,30 +366,30 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
 
         files_split_by_reviewers = SelectReviewersForFiles(
             cl, author, files, max_depth)
+        cl_infos = CLInfoFromFilesAndOwnersDirectoriesDict(
+            files_split_by_reviewers)
 
         if not dry_run:
-            PrintSummary(files_split_by_reviewers, refactor_branch)
+            PrintSummary(cl_infos, refactor_branch)
             answer = gclient_utils.AskForData('Proceed? (y/N):')
             if answer.lower() != 'y':
                 return 0
 
         cls_per_reviewer = collections.defaultdict(int)
-        for cl_index, (reviewers, cl_info) in \
-            enumerate(files_split_by_reviewers.items(), 1):
+        for cl_index, cl_info in enumerate(cl_infos, 1):
             # Convert reviewers from tuple to set.
-            reviewer_set = set(reviewers)
             if dry_run:
                 file_paths = [f for _, f in cl_info.files]
-                PrintClInfo(cl_index, len(files_split_by_reviewers),
-                            cl_info.owners_directories, file_paths, description,
-                            reviewer_set, cq_dry_run, enable_auto_submit, topic)
+                PrintClInfo(cl_index, len(cl_infos), cl_info.directories,
+                            file_paths, description, cl_info.reviewers,
+                            cq_dry_run, enable_auto_submit, topic)
             else:
                 UploadCl(refactor_branch, refactor_branch_upstream,
-                         cl_info.owners_directories, cl_info.files, description,
-                         comment, reviewer_set, changelist, cmd_upload,
+                         cl_info.directories, cl_info.files, description,
+                         comment, cl_info.reviewers, changelist, cmd_upload,
                          cq_dry_run, enable_auto_submit, topic, repository_root)
 
-            for reviewer in reviewers:
+            for reviewer in cl_info.reviewers:
                 cls_per_reviewer[reviewer] += 1
 
         # List the top reviewers that will be sent the most CLs as a result of
