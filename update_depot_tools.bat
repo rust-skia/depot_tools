@@ -34,13 +34,16 @@ IF "%DEPOT_TOOLS_UPDATE%" == "0" GOTO :EOF
 
 echo Updating depot_tools...
 
-:: Test git is installed by checking its version.
+:: Download git for the first time if it's not present.
 call git --version > nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-  echo Git isn't installed. Please install it.
+if %ERRORLEVEL% == 0 goto :GIT_UPDATE
+call "%DEPOT_TOOLS_DIR%bootstrap\win_tools.bat"
+if errorlevel 1 (
+  echo Error updating depot_tools, no revision tool found.
   exit /b %ERRORLEVEL%
 )
 
+:GIT_UPDATE
 :: Now clear errorlevel so it can be set by other programs later.
 set errorlevel=
 
@@ -62,5 +65,5 @@ if errorlevel 1 (
 :: Sync CIPD and CIPD client tools.
 call "%~dp0\cipd_bin_setup.bat"
 
-:: Update python.
+:: Update git and python.
 call "%DEPOT_TOOLS_DIR%bootstrap\win_tools.bat"
