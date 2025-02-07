@@ -143,7 +143,7 @@ class SplitClTest(unittest.TestCase):
         self.assertEqual(mock_git_run.call_count, 4)
         mock_git_run.assert_has_calls([
             mock.call("checkout", "-t", "upstream_branch", "-b",
-                      f"branch_to_upload_{split_cl.HashList(files)}_split"),
+                      split_cl.CreateBranchName("branch_to_upload", files)),
             mock.call("rm", os.path.join(abs_repository_path, "foo", "b.cc")),
             mock.call("checkout", "branch_to_upload", "--",
                       os.path.join(abs_repository_path, "bar", "a.cc")),
@@ -168,7 +168,8 @@ class SplitClTest(unittest.TestCase):
         reviewers = {"reviewer1@gmail.com"}
         mock_cmd_upload = mock.Mock()
         upload_cl_tester.mock_git_branches.return_value = [
-            "branch0", f"branch_to_upload_{split_cl.HashList(files)}_split"
+            "branch0",
+            split_cl.CreateBranchName("branch_to_upload", files)
         ]
         upload_cl_tester.DoUploadCl(directories, files, reviewers,
                                     mock_cmd_upload)

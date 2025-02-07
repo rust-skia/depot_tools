@@ -99,14 +99,35 @@ def EnsureInGitRepository():
     git.run('rev-parse')
 
 
-def CreateBranchForOneCL(prefix, files, upstream):
+def CreateBranchName(prefix: str, files: List[Tuple[str, str]]) -> str:
+    """
+    Given a sub-CL as a list of (action, file) pairs, create a unique and
+    deterministic branch name for it.
+    The name has the format <prefix>_<dirname>_<hash(files)>_split.
+    """
+    file_names = [file for _, file in files]
+    if len(file_names) == 1:
+        # Only one file, just use its directory as the common path
+        common_path = os.path.dirname(file_names[0])
+    else:
+        common_path = os.path.commonpath(file_names)
+    if not common_path:
+        # Files have nothing in common at all. Unlikely but possible.
+        common_path = "None"
+    # Replace path delimiter with underscore in common_path.
+    common_path = common_path.replace(os.path.sep, '_')
+    return f"{prefix}_{HashList(files):020}_{common_path}_split"
+
+
+def CreateBranchForOneCL(prefix: str, files: List[Tuple[str, str]],
+                         upstream: str) -> bool:
     """Creates a branch named |prefix| + "_" + |hash(files)| + "_split".
 
     Return false if the branch already exists. |upstream| is used as upstream
     for the created branch.
     """
     existing_branches = set(git.branches(use_limit=False))
-    branch_name = f'{prefix}_{HashList(files)}_split'
+    branch_name = CreateBranchName(prefix, files)
     if branch_name in existing_branches:
         return False
     git.run('checkout', '-t', upstream, '-b', branch_name)
