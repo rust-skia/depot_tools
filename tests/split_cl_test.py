@@ -143,7 +143,7 @@ class SplitClTest(unittest.TestCase):
         self.assertEqual(mock_git_run.call_count, 4)
         mock_git_run.assert_has_calls([
             mock.call("checkout", "-t", "upstream_branch", "-b",
-                      "branch_to_upload_dir0_split"),
+                      f"branch_to_upload_{split_cl.HashList(files)}_split"),
             mock.call("rm", os.path.join(abs_repository_path, "foo", "b.cc")),
             mock.call("checkout", "branch_to_upload", "--",
                       os.path.join(abs_repository_path, "bar", "a.cc")),
@@ -161,15 +161,15 @@ class SplitClTest(unittest.TestCase):
         """Tests that a CL is not uploaded if split branch already exists"""
 
         upload_cl_tester = self.UploadClTester(self)
-        upload_cl_tester.mock_git_branches.return_value = [
-            "branch0", "branch_to_upload_dir0_split"
-        ]
 
         directories = ["dir0"]
         files = [("M", os.path.join("bar", "a.cc")),
                  ("D", os.path.join("foo", "b.cc"))]
         reviewers = {"reviewer1@gmail.com"}
         mock_cmd_upload = mock.Mock()
+        upload_cl_tester.mock_git_branches.return_value = [
+            "branch0", f"branch_to_upload_{split_cl.HashList(files)}_split"
+        ]
         upload_cl_tester.DoUploadCl(directories, files, reviewers,
                                     mock_cmd_upload)
 
