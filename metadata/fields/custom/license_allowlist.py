@@ -54,6 +54,7 @@ ALLOWED_SPDX_LICENSES = frozenset([
     # go/keep-sorted end
     # permissive.
     # go/keep-sorted start case=no
+    "0BSD",
     "GPL-2.0-with-autoconf-exception",
     "GPL-2.0-with-classpath-exception",
     "GPL-3.0-with-autoconf-exception",
@@ -92,6 +93,7 @@ ALLOWED_SPDX_LICENSES = frozenset([
     "NCSA",
     "OFL-1.1",
     "OpenSSL",
+    "Python-2.0",
     "SGI-B-2.0",
     "SunPro",
     "Unicode-3.0",
