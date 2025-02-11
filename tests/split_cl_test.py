@@ -9,9 +9,20 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import split_cl
+import gclient_utils
 
 
 class SplitClTest(unittest.TestCase):
+
+    @property
+    def _input_dir(self):
+        base = os.path.splitext(os.path.abspath(__file__))[0]
+        # Here _testMethodName is a string like "testCmdAssemblyFound"
+        # If the test doesn't have its own subdirectory, it uses a common one
+        path = os.path.join(base + ".inputs", self._testMethodName)
+        if not os.path.isdir(path):
+            path = os.path.join(base + ".inputs", "commonFiles")
+        return path
 
     def testAddUploadedByGitClSplitToDescription(self):
         description = """Convert use of X to Y in $directory
@@ -244,6 +255,8 @@ class SplitClTest(unittest.TestCase):
             self.mock_print_cl_info = self.StartPatcher("split_cl.PrintClInfo",
                                                         test)
             self.mock_upload_cl = self.StartPatcher("split_cl.UploadCl", test)
+            self.mock_save_splitting = self.StartPatcher(
+                "split_cl.SaveSplittingToTempFile", test)
             # Suppress output for cleaner tests
             self.mock_print = self.StartPatcher("builtins.print", test)
 
@@ -269,8 +282,8 @@ class SplitClTest(unittest.TestCase):
             self.mock_get_reviewers.return_value = files_split_by_reviewers
             self.mock_ask_for_data.return_value = proceed_response
 
-            split_cl.SplitCl(description_file, None, mock.Mock(), None, dry_run,
-                             False, False, None, None, None)
+            split_cl.SplitCl(description_file, None, mock.Mock(), mock.Mock(),
+                             dry_run, False, False, None, None, None, None)
 
     def testSplitClConfirm(self):
         split_cl_tester = self.SplitClTester(self)
@@ -314,6 +327,143 @@ class SplitClTest(unittest.TestCase):
         self.assertEqual(split_cl_tester.mock_print_cl_info.call_count,
                          len(files_split_by_reviewers))
         split_cl_tester.mock_upload_cl.assert_not_called()
+
+    # Tests related to saving to and loading from files
+    # Sample CLInfos for testing
+    CLInfo_1 = split_cl.CLInfo(reviewers=["a@example.com"],
+                               directories="['chrome/browser']",
+                               files=[
+                                   ("M", "chrome/browser/a.cc"),
+                                   ("M", "chrome/browser/b.cc"),
+                               ])
+
+    CLInfo_2 = split_cl.CLInfo(reviewers=["a@example.com", "b@example.com"],
+                               directories="['foo', 'bar/baz']",
+                               files=[("M", "foo/browser/a.cc"),
+                                      ("M", "bar/baz/b.cc"),
+                                      ("D", "foo/bar/c.h")])
+
+    def testCLInfoFormat(self):
+        """ Make sure CLInfo printing works as expected """
+
+        def ReadAndStripPreamble(file):
+            """ Read the contents of a file and strip the automatically-added
+                preamble so we can do string comparison
+            """
+            content = gclient_utils.FileRead(os.path.join(
+                self._input_dir, file))
+            # Strip preamble
+            stripped = [
+                line for line in content.splitlines()
+                if not line.startswith("#")
+            ]
+            # Strip newlines in preamble
+            return "\n".join(stripped[2:])
+
+        # Direct string comparison
+        self.assertEqual(self.CLInfo_1.FormatForPrinting(),
+                         ReadAndStripPreamble("1_cl.txt"))
+
+        self.assertEqual(
+            self.CLInfo_1.FormatForPrinting() +
+            "\n\n" + self.CLInfo_2.FormatForPrinting(),
+            ReadAndStripPreamble("2_cls.txt"))
+
+    @mock.patch("split_cl.EmitWarning")
+    def testParseCLInfo(self, mock_emit_warning):
+        """ Make sure we can parse valid files """
+
+        self.assertEqual([self.CLInfo_1],
+                         split_cl.LoadSplittingFromFile(
+                             os.path.join(self._input_dir, "1_cl.txt"),
+                             self.CLInfo_1.files))
+        self.assertEqual([self.CLInfo_1, self.CLInfo_2],
+                         split_cl.LoadSplittingFromFile(
+                             os.path.join(self._input_dir, "2_cls.txt"),
+                             self.CLInfo_1.files + self.CLInfo_2.files))
+
+        # Make sure everything in this file is valid to parse
+        split_cl.LoadSplittingFromFile(
+            os.path.join(self._input_dir, "odd_formatting.txt"),
+            self.CLInfo_1.files + self.CLInfo_2.files + [("A", "a/b/c"),
+                                                         ("A", "a/b/d"),
+                                                         ("D", "a/e")])
+        mock_emit_warning.assert_not_called()
+
+    def testParseBadFiles(self):
+        """ Make sure we don't parse invalid files """
+        for file in os.listdir(self._input_dir):
+            lines = gclient_utils.FileRead(os.path.join(self._input_dir,
+                                                        file)).splitlines()
+            self.assertRaises(split_cl.ClSplitParseError,
+                              split_cl.ParseSplittings, lines)
+
+    @mock.patch("split_cl.EmitWarning")
+    def testValidateBadFiles(self, mock_emit_warning):
+        """ Make sure we reject invalid CL lists """
+        # Warn on an empty file
+        split_cl.LoadSplittingFromFile(
+            os.path.join(self._input_dir, "warn_0_cls.txt"), [])
+        mock_emit_warning.assert_called_once()
+        mock_emit_warning.reset_mock()
+
+        # Warn if reviewers don't look like emails
+        split_cl.LoadSplittingFromFile(
+            os.path.join(self._input_dir, "warn_bad_reviewer_email.txt"),
+            [("M", "a.cc")])
+        self.assertEqual(mock_emit_warning.call_count, 2)
+        mock_emit_warning.reset_mock()
+
+        # Fail if a file appears in multiple CLs
+        self.assertRaises(
+            split_cl.ClSplitParseError, split_cl.LoadSplittingFromFile,
+            os.path.join(self._input_dir, "error_file_in_multiple_cls.txt"),
+            [("M", "chrome/browser/a.cc"), ("M", "chrome/browser/b.cc"),
+             ("M", "bar/baz/b.cc"), ("D", "foo/bar/c.h")])
+
+        # Fail if a file is listed that doesn't appear on disk
+        self.assertRaises(
+            split_cl.ClSplitParseError, split_cl.LoadSplittingFromFile,
+            os.path.join(self._input_dir, "no_inherent_problems.txt"),
+            [("M", "chrome/browser/a.cc"), ("M", "chrome/browser/b.cc")])
+        self.assertRaises(
+            split_cl.ClSplitParseError,
+            split_cl.LoadSplittingFromFile,
+            os.path.join(self._input_dir, "no_inherent_problems.txt"),
+            [
+                ("M", "chrome/browser/a.cc"),
+                ("M", "chrome/browser/b.cc"),
+                ("D", "c.h")  # Wrong action, should still error
+            ])
+
+        # Warn if not all files on disk are included
+        split_cl.LoadSplittingFromFile(
+            os.path.join(self._input_dir, "no_inherent_problems.txt"),
+            [("M", "chrome/browser/a.cc"), ("M", "chrome/browser/b.cc"),
+             ("A", "c.h"), ("D", "d.h")])
+        mock_emit_warning.assert_called_once()
+
+    @mock.patch("builtins.print")
+    @mock.patch("gclient_utils.FileWrite")
+    def testParsingRoundTrip(self, mock_file_write, _):
+        """ Make sure that if we parse a file and save the result,
+            we get the same file. Only works on test files that are
+            nicely formatted. """
+
+        for file in os.listdir(self._input_dir):
+            if file == "odd_formatting.txt":
+                continue
+            contents = gclient_utils.FileRead(
+                os.path.join(self._input_dir, file))
+            parsed_contents = split_cl.ParseSplittings(contents.splitlines())
+            split_cl.SaveSplittingToFile(parsed_contents, "file.txt")
+
+            written_lines = [
+                args[0][1] for args in mock_file_write.call_args_list
+            ]
+
+            self.assertEqual(contents, "".join(written_lines))
+            mock_file_write.reset_mock()
 
 
 if __name__ == '__main__':

@@ -5854,6 +5854,12 @@ def CMDsplit(parser, args):
     parser.add_option('--topic',
                       default=None,
                       help='Topic to specify when uploading')
+    parser.add_option('--from-file',
+                      type='str',
+                      default=None,
+                      help='If present, load the split CLs from the given file '
+                      'instead of computing a splitting. These file are '
+                      'generated each time the script is run.')
     options, _ = parser.parse_args(args)
 
     if not options.description_file and not options.dry_run:
@@ -5865,7 +5871,7 @@ def CMDsplit(parser, args):
     return split_cl.SplitCl(options.description_file, options.comment_file,
                             Changelist, WrappedCMDupload, options.dry_run,
                             options.cq_dry_run, options.enable_auto_submit,
-                            options.max_depth, options.topic,
+                            options.max_depth, options.topic, options.from_file,
                             settings.GetRoot())
 
 
