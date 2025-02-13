@@ -140,7 +140,7 @@ def remove_empty_branches(branch_tree):
         print(git.run('branch', '-d', branch))
 
 
-def rebase_branch(branch, parent, start_hash):
+def rebase_branch(branch, parent, start_hash, no_squash):
     logging.debug('considering %s(%s) -> %s(%s) : %s', branch,
                   git.hash_one(branch), parent, git.hash_one(parent),
                   start_hash)
@@ -161,7 +161,8 @@ def rebase_branch(branch, parent, start_hash):
     if git.hash_one(parent) != start_hash:
         # Try a plain rebase first
         print('Rebasing:', branch)
-        consider_squashing = git.get_num_commits(branch) != 1
+        consider_squashing = git.get_num_commits(branch) != 1 and not (
+            no_squash)
         rebase_ret = git.rebase(parent,
                                 start_hash,
                                 branch,
@@ -275,6 +276,11 @@ def main(args=None):
                         '-e',
                         action='store_true',
                         help='Do not automatically delete empty branches.')
+    parser.add_argument(
+        '--no-squash',
+        action='store_true',
+        help='Will not try to squash branches if rebasing fails.')
+
     opts = parser.parse_args(args)
 
     if opts.verbose:  # pragma: no cover
@@ -341,7 +347,8 @@ def main(args=None):
         if git.is_dormant(branch):
             print('Skipping dormant branch', branch)
         else:
-            ret = rebase_branch(branch, parent, merge_base[branch])
+            ret = rebase_branch(branch, parent, merge_base[branch],
+                                opts.no_squash)
             if not ret:
                 retcode = 1
 

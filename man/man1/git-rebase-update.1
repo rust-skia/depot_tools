@@ -32,7 +32,7 @@ git-rebase-update \- Updates all branches to have the latest changes from their 
 .SH "SYNOPSIS"
 .sp
 .nf
-\fIgit rebase\-update\fR [\-v | \-\-verbose] [\-n | \-\-no\-fetch] [\-k | \-\-keep\-going]
+\fIgit rebase\-update\fR [\-v | \-\-verbose] [\-n | \-\-no\-fetch] [\-k | \-\-keep\-going] | [\-\-no\-squash]
 .fi
 .sp
 .SH "DESCRIPTION"
@@ -123,6 +123,11 @@ Keep processing past failed rebases\&.
 Skip the
 \fBgit fetch\fR
 phase of rebase\-update\&.
+.RE
+.PP
+\-\-no\-squash
+.RS 4
+Skip the squashing phase of rebase\-update\&.
 .RE
 .PP
 \-v, \-\-verbose
