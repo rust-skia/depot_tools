@@ -6,6 +6,7 @@
 
 import collections
 import dataclasses
+import hashlib
 import os
 import re
 import tempfile
@@ -33,14 +34,17 @@ def EmitWarning(msg: str):
     print("Warning: ", msg)
 
 
-def HashList(lst: List[Any]) -> int:
+def HashList(lst: List[Any]) -> str:
     """
     Hash a list, returning a positive integer. Lists with identical elements
     should have the same hash, regardless of order.
     """
-    # Python refuses to hash lists directly because they're mutable
-    tup = tuple(sorted(lst))
-    return abs(hash(tup))
+    # We need a bytes-like object for hashlib algorithms
+    byts = bytes().join(
+        (action + file).encode() for action, file in sorted(lst))
+    # No security implication: we just need a deterministic output
+    hashed = hashlib.sha1(byts)
+    return hashed.hexdigest()[:10]
 
 FilesAndOwnersDirectory = collections.namedtuple("FilesAndOwnersDirectory",
                                                  "files owners_directories")
@@ -115,7 +119,7 @@ def CreateBranchName(prefix: str, files: List[Tuple[str, str]]) -> str:
         common_path = "None"
     # Replace path delimiter with underscore in common_path.
     common_path = common_path.replace(os.path.sep, '_')
-    return f"{prefix}_{HashList(files):020}_{common_path}_split"
+    return f"{prefix}_{HashList(files)}_{common_path}_split"
 
 
 def CreateBranchForOneCL(prefix: str, files: List[Tuple[str, str]],
