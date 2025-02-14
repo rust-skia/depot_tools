@@ -226,7 +226,7 @@ fi
 (
   export GIT_DIR="$(git rev-parse --git-dir)" &&
   cd git/Documentation &&
-  GIT_EDITOR=true make "${MAN1_TARGETS[@]}" "${MAN7_TARGETS[@]}" "${HTML_TARGETS[@]}"
+  GIT_EDITOR=true PYTHONWARNINGS="ignore" make "${MAN1_TARGETS[@]}" "${MAN7_TARGETS[@]}" "${HTML_TARGETS[@]}"
 )
 
 for x in "${HTML_TARGETS[@]}"
