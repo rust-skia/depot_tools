@@ -8,8 +8,6 @@ import collections
 import dataclasses
 import os
 import re
-import subprocess2
-import sys
 import tempfile
 from typing import List, Set, Tuple, Dict, Any
 
@@ -372,90 +370,82 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
 
     comment = gclient_utils.FileRead(comment_file) if comment_file else None
 
-    try:
-        EnsureInGitRepository()
+    EnsureInGitRepository()
 
-        cl = changelist()
-        upstream = cl.GetCommonAncestorWithUpstream()
-        files = [
-            (action.strip(), f)
-            for action, f in scm.GIT.CaptureStatus(repository_root, upstream)
-        ]
+    cl = changelist()
+    upstream = cl.GetCommonAncestorWithUpstream()
+    files = [(action.strip(), f)
+             for action, f in scm.GIT.CaptureStatus(repository_root, upstream)]
 
-        if not files:
-            print('Cannot split an empty CL.')
-            return 1
-
-        author = git.run('config', 'user.email').strip() or None
-        refactor_branch = git.current_branch()
-        assert refactor_branch, "Can't run from detached branch."
-        refactor_branch_upstream = git.upstream(refactor_branch)
-        assert refactor_branch_upstream, \
-            "Branch %s must have an upstream." % refactor_branch
-
-        if not dry_run and not CheckDescriptionBugLink(description):
-            return 0
-
-        if from_file:
-            cl_infos = LoadSplittingFromFile(from_file, files_on_disk=files)
-        else:
-            files_split_by_reviewers = SelectReviewersForFiles(
-                cl, author, files, max_depth)
-
-            cl_infos = CLInfoFromFilesAndOwnersDirectoriesDict(
-                files_split_by_reviewers)
-
-        if not dry_run:
-            PrintSummary(cl_infos, refactor_branch)
-            answer = gclient_utils.AskForData(
-                'Proceed? (y/N, or i to edit interactively): ')
-            if answer.lower() == 'i':
-                cl_infos = EditSplittingInteractively(cl_infos,
-                                                      files_on_disk=files)
-            else:
-                # Save even if we're continuing, so the user can safely resume an
-                # aborted upload with the same splitting
-                SaveSplittingToTempFile(cl_infos)
-                if answer.lower() != 'y':
-                    return 0
-
-        cls_per_reviewer = collections.defaultdict(int)
-        for cl_index, cl_info in enumerate(cl_infos, 1):
-            # Convert reviewers from tuple to set.
-            if dry_run:
-                file_paths = [f for _, f in cl_info.files]
-                PrintClInfo(cl_index, len(cl_infos), cl_info.directories,
-                            file_paths, description, cl_info.reviewers,
-                            cq_dry_run, enable_auto_submit, topic)
-            else:
-                UploadCl(refactor_branch, refactor_branch_upstream,
-                         cl_info.directories, cl_info.files, description,
-                         comment, cl_info.reviewers, changelist, cmd_upload,
-                         cq_dry_run, enable_auto_submit, topic, repository_root)
-
-            for reviewer in cl_info.reviewers:
-                cls_per_reviewer[reviewer] += 1
-
-        # List the top reviewers that will be sent the most CLs as a result of
-        # the split.
-        reviewer_rankings = sorted(cls_per_reviewer.items(),
-                                   key=lambda item: item[1],
-                                   reverse=True)
-        print('The top reviewers are:')
-        for reviewer, count in reviewer_rankings[:CL_SPLIT_TOP_REVIEWERS]:
-            print(f'    {reviewer}: {count} CLs')
-
-        if dry_run:
-            # Wait until now to save the splitting so the file name doesn't get
-            # washed away by the flood of dry-run printing.
-            SaveSplittingToTempFile(cl_infos)
-
-        # Go back to the original branch.
-        git.run('checkout', refactor_branch)
-
-    except subprocess2.CalledProcessError as cpe:
-        sys.stderr.write(cpe.stderr)
+    if not files:
+        print('Cannot split an empty CL.')
         return 1
+
+    author = git.run('config', 'user.email').strip() or None
+    refactor_branch = git.current_branch()
+    assert refactor_branch, "Can't run from detached branch."
+    refactor_branch_upstream = git.upstream(refactor_branch)
+    assert refactor_branch_upstream, \
+        "Branch %s must have an upstream." % refactor_branch
+
+    if not dry_run and not CheckDescriptionBugLink(description):
+        return 0
+
+    if from_file:
+        cl_infos = LoadSplittingFromFile(from_file, files_on_disk=files)
+    else:
+        files_split_by_reviewers = SelectReviewersForFiles(
+            cl, author, files, max_depth)
+
+        cl_infos = CLInfoFromFilesAndOwnersDirectoriesDict(
+            files_split_by_reviewers)
+
+    if not dry_run:
+        PrintSummary(cl_infos, refactor_branch)
+        answer = gclient_utils.AskForData(
+            'Proceed? (y/N, or i to edit interactively): ')
+        if answer.lower() == 'i':
+            cl_infos = EditSplittingInteractively(cl_infos, files_on_disk=files)
+        else:
+            # Save even if we're continuing, so the user can safely resume an
+            # aborted upload with the same splitting
+            SaveSplittingToTempFile(cl_infos)
+            if answer.lower() != 'y':
+                return 0
+
+    cls_per_reviewer = collections.defaultdict(int)
+    for cl_index, cl_info in enumerate(cl_infos, 1):
+        # Convert reviewers from tuple to set.
+        if dry_run:
+            file_paths = [f for _, f in cl_info.files]
+            PrintClInfo(cl_index, len(cl_infos), cl_info.directories,
+                        file_paths, description, cl_info.reviewers, cq_dry_run,
+                        enable_auto_submit, topic)
+        else:
+            UploadCl(refactor_branch, refactor_branch_upstream,
+                     cl_info.directories, cl_info.files, description, comment,
+                     cl_info.reviewers, changelist, cmd_upload, cq_dry_run,
+                     enable_auto_submit, topic, repository_root)
+
+        for reviewer in cl_info.reviewers:
+            cls_per_reviewer[reviewer] += 1
+
+    # List the top reviewers that will be sent the most CLs as a result of
+    # the split.
+    reviewer_rankings = sorted(cls_per_reviewer.items(),
+                               key=lambda item: item[1],
+                               reverse=True)
+    print('The top reviewers are:')
+    for reviewer, count in reviewer_rankings[:CL_SPLIT_TOP_REVIEWERS]:
+        print(f'    {reviewer}: {count} CLs')
+
+    if dry_run:
+        # Wait until now to save the splitting so the file name doesn't get
+        # washed away by the flood of dry-run printing.
+        SaveSplittingToTempFile(cl_infos)
+
+    # Go back to the original branch.
+    git.run('checkout', refactor_branch)
     return 0
 
 
