@@ -1444,9 +1444,8 @@ class InputApiUnittest(PresubmitTestsBase):
                 self.assertEqual(results[i].LocalPath(),
                                  presubmit.normpath(item[1][i]))
             # Same number of expected results.
-            self.assertEqual(
-                sorted([f.LocalPath().replace(os.sep, '/') for f in results]),
-                sorted(item[1]))
+            self.assertEqual(sorted([f.UnixLocalPath() for f in results]),
+                             sorted(item[1]))
 
     def testDefaultOverrides(self):
         input_api = presubmit.InputApi(self.fake_change, './PRESUBMIT.py',
@@ -1791,6 +1790,42 @@ class AffectedFileUnittest(PresubmitTestsBase):
         output = list(filter(lambda x: x.IsTestableFile(), files))
         self.assertEqual(2, len(output))
         self.assertEqual(files[:2], output[:2])
+
+    def testGetUnixLocalPath(self):
+        # If current platform already uses Unix-style paths,
+        # there is nothing to test
+        if os.path.sep == '/':
+            return
+
+        # If path separator is not forward slash, then we are on Windows and
+        # which uses backward slash
+        self.assertEqual('\\', os.path.sep)
+
+        cases = [('foo/blat.txt', 'foo/blat.txt'),
+                 ('foo\\blat.txt', 'foo/blat.txt'),
+                 ('C:\\development\\src\\chrome\\VERSION',
+                  'C:/development/src/chrome/VERSION')]
+        for path, expectedUnixLocalPath in cases:
+            unixLocalPath = presubmit.GitAffectedFile(path, 'M',
+                                                      self.fake_root_dir,
+                                                      None).UnixLocalPath()
+            self.assertEqual(expectedUnixLocalPath, unixLocalPath)
+
+    def testGetExtension(self):
+        cases = [('foo/blat.txt', '.txt'), ('net/features.gni', '.gni'),
+                 ('archive.tar.gz', '.gz'), ('sub/archive.tar.gz', '.gz'),
+                 ('.hidden', ''), ('sub/.hidden', ''), ('OWNERS', '')]
+
+        # If current platform uses Windows-style paths, check them too
+        if os.path.sep != '/':
+            cases.append(('foo\\blat.txt', '.txt'))
+            cases.append(('C:\\development\\src\\chrome\\VERSION', ''))
+            cases.append(('C:\\development\\src\\.hidden', ''))
+
+        for path, expectedExtension in cases:
+            extension = presubmit.GitAffectedFile(path, 'M', self.fake_root_dir,
+                                                  None).Extension()
+            self.assertEqual(expectedExtension, extension)
 
 
 class ChangeUnittest(PresubmitTestsBase):
