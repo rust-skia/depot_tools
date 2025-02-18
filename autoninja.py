@@ -235,12 +235,12 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
     use_remoteexec = False
     use_reclient = _get_use_reclient_value(output_dir)
     use_android_build_server = False
+    use_siso = None
 
     # Attempt to auto-detect remote build acceleration. We support gn-based
     # builds, where we look for args.gn in the build tree, and cmake-based
     # builds where we look for rules.ninja.
     if gn_helper.exists(output_dir):
-        use_siso = None
         for k, v in gn_helper.args(output_dir):
             # use_remoteexec will activate build acceleration.
             #
@@ -514,6 +514,7 @@ def main(args):
     # splitting ourselves. This means that arguments containing actual spaces
     # are not supported by autoninja, but that is not a real limitation.
     input_args = args
+    exit_code = 127
     if sys.platform.startswith("win") and len(args) == 2:
         input_args = args[:1] + args[1].split()
     try:
