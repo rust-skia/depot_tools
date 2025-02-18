@@ -1041,10 +1041,10 @@ class AffectedFile(object):
         self._path = path
         self._action = action
         self._local_root = repository_root
-        self._diff_cache = diff_cache
+        self._is_directory = None
         self._cached_changed_contents = None
         self._cached_new_contents = None
-        self._extension = None
+        self._diff_cache = diff_cache
         self._is_testable_file = None
         logging.debug('%s(%s)', self.__class__.__name__, self._path)
 
@@ -1160,20 +1160,6 @@ class AffectedFile(object):
             return result
         self._cached_changed_contents = result
         return self._cached_changed_contents[:]
-
-    def Extension(self):
-        """Returns the file extension as a string.
-
-        File extension is the portion of file name after the last dot, including the dot.
-        If file name has no dot (like 'OWNERS'), then returns an empty string ''.
-        If file has multiple extensions (like 'archive.tar.gz'), then the last
-        extension is returned (like '.gz')
-        This method is equivalent to NodeJS node:path method path.extname()
-        and Python3 pathlib PurePath.suffix() and os.path.splitext()
-        """
-        if self._extension is None:
-            self._extension = os.path.splitext(self._path)[1]
-        return self._extension
 
     def __str__(self):
         return self.LocalPath()

@@ -150,7 +150,7 @@ def CheckCIPDManifest(input_api, output_api):
     tests = []
     for path in affected_manifests:
         path = path.AbsoluteLocalPath()
-        if path.Extension() == '.txt':
+        if path.endswith('.txt'):
             tests.append(
                 input_api.canned_checks.CheckCIPDManifest(input_api,
                                                           output_api,
