@@ -7096,7 +7096,7 @@ def CMDformat(parser, args):
     if opts.python is not False:
         formatters += [(['.py'], _RunYapf)]
     if opts.mojom:
-        formatters += [(['.mojom'], _RunMojomFormat)]
+        formatters += [(['.mojom', '.test-mojom'], _RunMojomFormat)]
     if opts.lucicfg:
         formatters += [(['.star'], _RunLUCICfgFormat)]
 
