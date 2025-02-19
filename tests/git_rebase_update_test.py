@@ -6,6 +6,7 @@
 
 import os
 import sys
+from unittest import mock
 
 DEPOT_TOOLS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEPOT_TOOLS_ROOT)
@@ -67,6 +68,8 @@ class GitRebaseUpdateTest(git_test_utils.GitRepoReadWriteTestBase):
         self.repo.git('branch', '--set-upstream-to', 'origin/main', 'branch_G')
 
         self.repo.to_schema_refs += ['origin/main']
+        mock.patch('git_rebase_update.RESET', '').start()
+        mock.patch('git_rebase_update.BRIGHT', '').start()
 
     def tearDown(self):
         self.origin.nuke()
