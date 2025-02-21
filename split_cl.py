@@ -129,13 +129,41 @@ def CreateBranchForOneCL(prefix: str, files: List[Tuple[str, str]],
     Return false if the branch already exists. |upstream| is used as upstream
     for the created branch.
     """
-    existing_branches = set(git.branches(use_limit=False))
+    branches_on_disk = set(git.branches(use_limit=False))
     branch_name = CreateBranchName(prefix, files)
-    if branch_name in existing_branches:
+    if branch_name in branches_on_disk:
         return False
     git.run('checkout', '-t', upstream, '-b', branch_name)
     return True
 
+
+def ValidateExistingBranches(prefix: str, cl_infos: List[CLInfo]) -> bool:
+    """
+    Check if there are splitting branches left over from a previous run.
+    We only allow branches to exist if we're resuming a previous upload,
+    in which case we require that the existing branches are a subset of
+    the branches we're going to generate.
+    """
+    branches_on_disk = set(
+        branch for branch in git.branches(use_limit=False)
+        if branch.startswith(prefix + "_") and branch.endswith("_split"))
+
+    branches_to_be_made = set(
+        CreateBranchName(prefix, info.files) for info in cl_infos)
+
+    if not branches_on_disk.issubset(branches_to_be_made):
+        print(
+            "It seems like you've already run `git cl split` on this branch.\n"
+            "If you're resuming a previous upload, you must pass in the "
+            "same splitting as before, using the --from-file option.\n"
+            "If you're starting a new upload, please clean up existing split "
+            f"branches (starting with '{prefix}_' and ending with '_split'), "
+            "and re-run the tool.")
+        print("The following branches need to be cleaned up:\n")
+        for branch in branches_on_disk - branches_to_be_made:
+            print(branch)
+        return False
+    return True
 
 def FormatDirectoriesForPrinting(directories, prefix=None):
     """Formats directory list for printing
@@ -172,8 +200,9 @@ def AddUploadedByGitClSplitToDescription(description):
 
 
 def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
-             description, comment, reviewers, changelist, cmd_upload,
-             cq_dry_run, enable_auto_submit, topic, repository_root):
+             description, saved_splitting_file, comment, reviewers, changelist,
+             cmd_upload, cq_dry_run, enable_auto_submit, topic,
+             repository_root):
     """Uploads a CL with all changes to |files| in |refactor_branch|.
 
     Args:
@@ -240,8 +269,9 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
     if ret != 0:
         print('Uploading failed.')
         print('Note: git cl split has built-in resume capabilities.')
-        print('Delete ' + git.current_branch() +
-              ' then run git cl split again to resume uploading.')
+        print(f'Delete {git.current_branch()} then run\n'
+              f'git cl split --from-file={saved_splitting_file}\n'
+              'to resume uploading.')
 
     if comment:
         changelist().AddComment(FormatDescriptionOrComment(
@@ -409,12 +439,16 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         answer = gclient_utils.AskForData(
             'Proceed? (y/N, or i to edit interactively): ')
         if answer.lower() == 'i':
-            cl_infos = EditSplittingInteractively(cl_infos, files_on_disk=files)
+            cl_infos, saved_splitting_file = EditSplittingInteractively(
+                cl_infos, files_on_disk=files)
         else:
             # Save even if we're continuing, so the user can safely resume an
             # aborted upload with the same splitting
-            SaveSplittingToTempFile(cl_infos)
+            saved_splitting_file = SaveSplittingToTempFile(cl_infos)
             if answer.lower() != 'y':
+                return 0
+            # Make sure there isn't any clutter left over from a previous run
+            if not ValidateExistingBranches(refactor_branch, cl_infos):
                 return 0
 
     cls_per_reviewer = collections.defaultdict(int)
@@ -427,9 +461,10 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
                         enable_auto_submit, topic)
         else:
             UploadCl(refactor_branch, refactor_branch_upstream,
-                     cl_info.directories, cl_info.files, description, comment,
-                     cl_info.reviewers, changelist, cmd_upload, cq_dry_run,
-                     enable_auto_submit, topic, repository_root)
+                     cl_info.directories, cl_info.files, description,
+                     saved_splitting_file, comment, cl_info.reviewers,
+                     changelist, cmd_upload, cq_dry_run, enable_auto_submit,
+                     topic, repository_root)
 
         for reviewer in cl_info.reviewers:
             cls_per_reviewer[reviewer] += 1
@@ -715,4 +750,4 @@ def EditSplittingInteractively(
     # and edit it if there are any typos
     SaveSplittingToFile(cl_infos, tmp_file)
     ValidateSplitting(cl_infos, "the provided splitting", files_on_disk)
-    return cl_infos
+    return cl_infos, tmp_file
