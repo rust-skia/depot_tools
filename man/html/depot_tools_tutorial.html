@@ -1097,6 +1097,16 @@ then <code>git rebase-update</code> will clean it up for you.</p></div>
 rebase-update</code>, and it will pick up where it left off. Once the command has
 finished updating all of your branches, it will return you back to the branch
 you started on.</p></div>
+<div class="paragraph"><p>As an alternative, or if you experience issues with multiple merge conflicts on
+the same changes you can run <code>git squash-branch</code> on the conflicted branch
+(either after running <code>git rebase --abort</code> or before running <code>git
+rebase-update</code>). This will convert the branch to a single commit, which should
+apply more cleanly, or at least result in only needing to resolve the merge
+conflicts once. Running <code>git cl squash-closed</code> prior to <code>git rebase-update</code> will
+perform this <code>git squash-branch</code> on all branches that gerrit thinks are closed.
+These now-closed branches should have a single commit that will cleanly apply
+(and then subsequently be deleted by the rebase process), and can reduce the
+risk of running into merge conflicts during the rebase.</p></div>
 <div class="admonitionblock">
 <table><tr>
 <td class="icon">
@@ -1628,7 +1638,7 @@ by checking out the <a href="https://chromium.googlesource.com/chromium/tools/de
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-02-18 06:58:12 UTC
+ 2025-02-20 16:05:41 PST
 </div>
 </div>
 </body>

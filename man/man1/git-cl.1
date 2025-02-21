@@ -2,12 +2,12 @@
 .\"     Title: git-cl
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 02/18/2025
+.\"      Date: 02/20/2025
 .\"    Manual: Chromium depot_tools Manual
-.\"    Source: depot_tools 6cf251b5
+.\"    Source: depot_tools 8a5ec2b9
 .\"  Language: English
 .\"
-.TH "GIT\-CL" "1" "02/18/2025" "depot_tools 6cf251b5" "Chromium depot_tools Manual"
+.TH "GIT\-CL" "1" "02/20/2025" "depot_tools 8a5ec2b9" "Chromium depot_tools Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -120,6 +120,13 @@ applies (cherry\-picks) a Gerrit changelist locally
 presubmit
 .RS 4
 runs presubmit tests on the current changelist
+.RE
+.PP
+squash\-closed
+.RS 4
+runs
+\fBgit squash\-branch\fR
+on all branches associated with closed changelists
 .RE
 .PP
 set\-close

@@ -281,6 +281,17 @@ rebase-update`, and it will pick up where it left off. Once the command has
 finished updating all of your branches, it will return you back to the branch
 you started on.
 
+As an alternative, or if you experience issues with multiple merge conflicts on
+the same changes you can run `git squash-branch` on the conflicted branch
+(either after running `git rebase --abort` or before running `git
+rebase-update`). This will convert the branch to a single commit, which should
+apply more cleanly, or at least result in only needing to resolve the merge
+conflicts once. Running `git cl squash-closed` prior to `git rebase-update` will
+perform this `git squash-branch` on all branches that gerrit thinks are closed.
+These now-closed branches should have a single commit that will cleanly apply
+(and then subsequently be deleted by the rebase process), and can reduce the
+risk of running into merge conflicts during the rebase.
+
 [NOTE]
 Running `git rebase-update` will update all your branches, but it will not
 automatically run `gclient sync` to update your dependencies. Use caution when
