@@ -6608,7 +6608,7 @@ def _RunClangFormatDiff(opts, clang_diff_files, top_dir, upstream_commit):
     except clang_format.NotFoundError as e:
         DieWithError(e)
 
-    if opts.full or settings.GetFormatFullByDefault():
+    if opts.full:
         cmd = [clang_format_tool]
         if not opts.dry_run and not opts.diff:
             cmd.append('-i')
@@ -6675,7 +6675,7 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
         else:
             base_cmd += ['--replace']
 
-    changed_lines_only = not (opts.full or settings.GetFormatFullByDefault())
+    changed_lines_only = not opts.full
     if changed_lines_only:
         # Format two lines around each changed line so that the correct amount
         # of blank lines will be added between symbols.
@@ -7045,6 +7045,7 @@ def CMDformat(parser, args):
                       help='Enables formatting of .star files.')
 
     opts, files = parser.parse_args(args)
+    opts.full = opts.full or settings.GetFormatFullByDefault()
 
     # Normalize files against the current path, so paths relative to the
     # current directory are still resolved as expected.
