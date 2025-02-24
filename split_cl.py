@@ -30,6 +30,10 @@ CL_SPLIT_FORCE_LIMIT = 10
 CL_SPLIT_TOP_REVIEWERS = 5
 
 
+def Emit(msg: str):
+    """Wrapper for easier mocking during tests"""
+    print(msg)
+
 def EmitWarning(msg: str):
     print("Warning: ", msg)
 
@@ -152,16 +156,15 @@ def ValidateExistingBranches(prefix: str, cl_infos: List[CLInfo]) -> bool:
         CreateBranchName(prefix, info.files) for info in cl_infos)
 
     if not branches_on_disk.issubset(branches_to_be_made):
-        print(
-            "It seems like you've already run `git cl split` on this branch.\n"
-            "If you're resuming a previous upload, you must pass in the "
-            "same splitting as before, using the --from-file option.\n"
-            "If you're starting a new upload, please clean up existing split "
-            f"branches (starting with '{prefix}_' and ending with '_split'), "
-            "and re-run the tool.")
-        print("The following branches need to be cleaned up:\n")
+        Emit("It seems like you've already run `git cl split` on this branch.\n"
+             "If you're resuming a previous upload, you must pass in the "
+             "same splitting as before, using the --from-file option.\n"
+             "If you're starting a new upload, please clean up existing split "
+             f"branches (starting with '{prefix}_' and ending with '_split'), "
+             "and re-run the tool.")
+        Emit("The following branches need to be cleaned up:\n")
         for branch in branches_on_disk - branches_to_be_made:
-            print(branch)
+            Emit(branch)
         return False
     return True
 
@@ -223,8 +226,8 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
     # Create a branch.
     if not CreateBranchForOneCL(refactor_branch, files,
                                 refactor_branch_upstream):
-        print('Skipping ' + FormatDirectoriesForPrinting(directories) +
-              ' for which a branch already exists.')
+        Emit('Skipping ' + FormatDirectoriesForPrinting(directories) +
+             ' for which a branch already exists.')
         return
 
     # Checkout all changes to files in |files|.
@@ -262,16 +265,16 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
         upload_args.append('--enable-auto-submit')
     if topic:
         upload_args.append('--topic={}'.format(topic))
-    print('Uploading CL for ' + FormatDirectoriesForPrinting(directories) +
-          '...')
+    Emit('Uploading CL for ' + FormatDirectoriesForPrinting(directories) +
+         '...')
 
     ret = cmd_upload(upload_args)
     if ret != 0:
-        print('Uploading failed.')
-        print('Note: git cl split has built-in resume capabilities.')
-        print(f'Delete {git.current_branch()} then run\n'
-              f'git cl split --from-file={saved_splitting_file}\n'
-              'to resume uploading.')
+        Emit('Uploading failed.')
+        Emit('Note: git cl split has built-in resume capabilities.')
+        Emit(f'Delete {git.current_branch()} then run\n'
+             f'git cl split --from-file={saved_splitting_file}\n'
+             'to resume uploading.')
 
     if comment:
         changelist().AddComment(FormatDescriptionOrComment(
@@ -324,15 +327,15 @@ def PrintClInfo(cl_index, num_cls, directories, file_paths, description,
                                                    directories).splitlines()
     indented_description = '\n'.join(['    ' + l for l in description_lines])
 
-    print('CL {}/{}'.format(cl_index, num_cls))
-    print('Paths: {}'.format(FormatDirectoriesForPrinting(directories)))
-    print('Reviewers: {}'.format(', '.join(reviewers)))
-    print('Auto-Submit: {}'.format(enable_auto_submit))
-    print('CQ Dry Run: {}'.format(cq_dry_run))
-    print('Topic: {}'.format(topic))
-    print('\n' + indented_description + '\n')
-    print('\n'.join(file_paths))
-    print()
+    Emit('CL {}/{}'.format(cl_index, num_cls))
+    Emit('Paths: {}'.format(FormatDirectoriesForPrinting(directories)))
+    Emit('Reviewers: {}'.format(', '.join(reviewers)))
+    Emit('Auto-Submit: {}'.format(enable_auto_submit))
+    Emit('CQ Dry Run: {}'.format(cq_dry_run))
+    Emit('Topic: {}'.format(topic))
+    Emit('\n' + indented_description + '\n')
+    Emit('\n'.join(file_paths))
+    Emit()
 
 
 def LoadDescription(description_file, dry_run):
@@ -356,12 +359,12 @@ def PrintSummary(cl_infos, refactor_branch):
            to the files and directories assigned to them.
     """
     for info in cl_infos:
-        print(f'Reviewers: {info.reviewers}, files: {len(info.files)}, ',
-              f'directories: {info.directories}')
+        Emit(f'Reviewers: {info.reviewers}, files: {len(info.files)}, ',
+             f'directories: {info.directories}')
 
     num_cls = len(cl_infos)
-    print(f'\nWill split branch {refactor_branch} into {num_cls} CLs. '
-          'Please quickly review them before proceeding.\n')
+    Emit(f'\nWill split branch {refactor_branch} into {num_cls} CLs. '
+         'Please quickly review them before proceeding.\n')
 
     if (num_cls > CL_SPLIT_FORCE_LIMIT):
         EmitWarning(
@@ -412,7 +415,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
              for action, f in scm.GIT.CaptureStatus(repository_root, upstream)]
 
     if not files:
-        print('Cannot split an empty CL.')
+        Emit('Cannot split an empty CL.')
         return 1
 
     author = git.run('config', 'user.email').strip() or None
@@ -474,9 +477,9 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     reviewer_rankings = sorted(cls_per_reviewer.items(),
                                key=lambda item: item[1],
                                reverse=True)
-    print('The top reviewers are:')
+    Emit('The top reviewers are:')
     for reviewer, count in reviewer_rankings[:CL_SPLIT_TOP_REVIEWERS]:
-        print(f'    {reviewer}: {count} CLs')
+        Emit(f'    {reviewer}: {count} CLs')
 
     if dry_run:
         # Wait until now to save the splitting so the file name doesn't get
@@ -559,7 +562,7 @@ def SaveSplittingToFile(cl_infos: List[CLInfo], filename: str, silent=False):
     cl_string = "\n\n".join([info.FormatForPrinting() for info in cl_infos])
     gclient_utils.FileWrite(filename, preamble + cl_string)
     if not silent:
-        print(f"Saved splitting to {filename}")
+        Emit(f"Saved splitting to {filename}")
 
 
 def SaveSplittingToTempFile(cl_infos: List[CLInfo], silent=False):

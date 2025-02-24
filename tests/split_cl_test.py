@@ -261,7 +261,7 @@ class SplitClTest(unittest.TestCase):
             self.mock_save_splitting = self.StartPatcher(
                 "split_cl.SaveSplittingToTempFile", test)
             # Suppress output for cleaner tests
-            self.mock_print = self.StartPatcher("builtins.print", test)
+            self.mock_emit = self.StartPatcher("split_cl.Emit", test)
 
         def StartPatcher(self, target, test, **kwargs):
             patcher = mock.patch(target, **kwargs)
@@ -481,7 +481,7 @@ class SplitClTest(unittest.TestCase):
              ("A", "c.h"), ("D", "d.h")])
         mock_emit_warning.assert_called_once()
 
-    @mock.patch("builtins.print")
+    @mock.patch("split_cl.Emit")
     @mock.patch("gclient_utils.FileWrite")
     def testParsingRoundTrip(self, mock_file_write, _):
         """ Make sure that if we parse a file and save the result,
