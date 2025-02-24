@@ -981,7 +981,7 @@ class TestGitCl(unittest.TestCase):
                     ref_suffix
                 ] + (push_opts if push_opts else []), ),
                 (('remote:\n'
-                  'remote: Processing changes: (\)\n'
+                  'remote: Processing changes: (\\)\n'
                   'remote: Processing changes: (|)\n'
                   'remote: Processing changes: (/)\n'
                   'remote: Processing changes: (-)\n'
