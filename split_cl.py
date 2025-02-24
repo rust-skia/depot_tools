@@ -382,8 +382,8 @@ def PrintSummary(cl_infos, refactor_branch):
 
 
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
-            cq_dry_run, enable_auto_submit, max_depth, topic, from_file,
-            repository_root):
+            summarize, cq_dry_run, enable_auto_submit, max_depth, topic,
+            from_file, repository_root):
     """"Splits a branch into smaller branches and uploads CLs.
 
     Args:
@@ -453,11 +453,14 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
             # Make sure there isn't any clutter left over from a previous run
             if not ValidateExistingBranches(refactor_branch, cl_infos):
                 return 0
+    elif summarize:
+        PrintSummary(cl_infos, refactor_branch)
 
     cls_per_reviewer = collections.defaultdict(int)
     for cl_index, cl_info in enumerate(cl_infos, 1):
-        # Convert reviewers from tuple to set.
-        if dry_run:
+        if dry_run and summarize:
+            pass
+        elif dry_run:
             file_paths = [f for _, f in cl_info.files]
             PrintClInfo(cl_index, len(cl_infos), cl_info.directories,
                         file_paths, description, cl_info.reviewers, cq_dry_run,

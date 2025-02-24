@@ -257,6 +257,8 @@ class SplitClTest(unittest.TestCase):
                 "gclient_utils.AskForData", test)
             self.mock_print_cl_info = self.StartPatcher("split_cl.PrintClInfo",
                                                         test)
+            self.mock_print_summary = self.StartPatcher("split_cl.PrintSummary",
+                                                        test)
             self.mock_upload_cl = self.StartPatcher("split_cl.UploadCl", test)
             self.mock_save_splitting = self.StartPatcher(
                 "split_cl.SaveSplittingToTempFile", test)
@@ -274,8 +276,8 @@ class SplitClTest(unittest.TestCase):
             for m in self.mocks:
                 m.reset_mock()
 
-        def DoSplitCl(self, description_file, dry_run, files_split_by_reviewers,
-                      proceed_response):
+        def DoSplitCl(self, description_file, dry_run, summarize,
+                      files_split_by_reviewers, proceed_response):
             all_files = [v.files for v in files_split_by_reviewers.values()]
             all_files_flattened = [
                 file for files in all_files for file in files
@@ -286,7 +288,8 @@ class SplitClTest(unittest.TestCase):
             self.mock_ask_for_data.return_value = proceed_response
 
             split_cl.SplitCl(description_file, None, mock.Mock(), mock.Mock(),
-                             dry_run, False, False, None, None, None, None)
+                             dry_run, summarize, False, False, None, None, None,
+                             None)
 
     # Save for re-use
     files_split_by_reviewers = {
@@ -305,7 +308,7 @@ class SplitClTest(unittest.TestCase):
         split_cl_tester = self.SplitClTester(self)
 
         # Should prompt for confirmation and upload several times
-        split_cl_tester.DoSplitCl("SomeFile.txt", False,
+        split_cl_tester.DoSplitCl("SomeFile.txt", False, False,
                                   self.files_split_by_reviewers, "y")
 
         split_cl_tester.mock_ask_for_data.assert_called_once()
@@ -315,7 +318,7 @@ class SplitClTest(unittest.TestCase):
 
         split_cl_tester.ResetMocks()
         # Should prompt for confirmation and not upload
-        split_cl_tester.DoSplitCl("SomeFile.txt", False,
+        split_cl_tester.DoSplitCl("SomeFile.txt", False, False,
                                   self.files_split_by_reviewers, "f")
 
         split_cl_tester.mock_ask_for_data.assert_called_once()
@@ -323,13 +326,25 @@ class SplitClTest(unittest.TestCase):
         split_cl_tester.mock_upload_cl.assert_not_called()
 
         split_cl_tester.ResetMocks()
-        # Dry run: Don't prompt, print info instead of uploading
-        split_cl_tester.DoSplitCl("SomeFile.txt", True,
+
+        # Dry runs: Don't prompt, print info instead of uploading
+        split_cl_tester.DoSplitCl("SomeFile.txt", True, False,
                                   self.files_split_by_reviewers, "f")
 
         split_cl_tester.mock_ask_for_data.assert_not_called()
         self.assertEqual(split_cl_tester.mock_print_cl_info.call_count,
                          len(self.files_split_by_reviewers))
+        split_cl_tester.mock_print_summary.assert_not_called()
+        split_cl_tester.mock_upload_cl.assert_not_called()
+
+        split_cl_tester.ResetMocks()
+        # Summarize is true: Don't prompt, emit a summary
+        split_cl_tester.DoSplitCl("SomeFile.txt", True, True,
+                                  self.files_split_by_reviewers, "f")
+
+        split_cl_tester.mock_ask_for_data.assert_not_called()
+        split_cl_tester.mock_print_cl_info.assert_not_called()
+        split_cl_tester.mock_print_summary.assert_called_once()
         split_cl_tester.mock_upload_cl.assert_not_called()
 
     def testValidateExistingBranches(self):
@@ -344,7 +359,7 @@ class SplitClTest(unittest.TestCase):
         split_cl_tester.mock_git_branches.return_value = [
             "branch0", "branch_to_upload"
         ]
-        split_cl_tester.DoSplitCl("SomeFile.txt", False,
+        split_cl_tester.DoSplitCl("SomeFile.txt", False, False,
                                   self.files_split_by_reviewers, "y")
         self.assertEqual(split_cl_tester.mock_upload_cl.call_count,
                          len(self.files_split_by_reviewers))
@@ -361,7 +376,7 @@ class SplitClTest(unittest.TestCase):
             "branch0", "branch_to_upload",
             "branch_to_upload_123456789_whatever_split"
         ]
-        split_cl_tester.DoSplitCl("SomeFile.txt", False,
+        split_cl_tester.DoSplitCl("SomeFile.txt", False, False,
                                   self.files_split_by_reviewers, "y")
         split_cl_tester.mock_upload_cl.assert_not_called()
 
