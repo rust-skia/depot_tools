@@ -5785,8 +5785,8 @@ def CMDsplit(parser, args):
 
     Creates a branch and uploads a CL for each group of files modified in the
     current branch that share a common OWNERS file. In the CL description and
-    comment, the string '$directory', is replaced with the directory containing
-    the shared OWNERS file.
+    comment, the string '$directory' or '$description', is replaced with the
+    directory containing the shared OWNERS file.
     """
     if gclient_utils.IsEnvCog():
         print('split command is not supported in non-git environment.',
@@ -5796,9 +5796,13 @@ def CMDsplit(parser, args):
     parser.add_option('-d',
                       '--description',
                       dest='description_file',
-                      help='A text file containing a CL description in which '
-                      '$directory will be replaced by each CL\'s directory. '
-                      'Mandatory except in dry runs.')
+                      help='A text file containing a CL description, in which '
+                      'the string $description will be replaced by a '
+                      'description of each generated CL (by default, the list '
+                      'of directories that CL covers). '
+                      'Mandatory except in dry runs.\n'
+                      'Usage of the string $directory instead of $description '
+                      'is deprecated, and will be removed in the future.')
     parser.add_option('-c',
                       '--comment',
                       dest='comment_file',

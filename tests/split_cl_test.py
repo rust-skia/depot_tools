@@ -25,7 +25,7 @@ class SplitClTest(unittest.TestCase):
         return path
 
     def testAddUploadedByGitClSplitToDescription(self):
-        description = """Convert use of X to Y in $directory
+        description = """Convert use of X to Y in $description
 
 <add some background about this conversion for the reviewers>
 
@@ -44,20 +44,38 @@ class SplitClTest(unittest.TestCase):
                                                           footers),
             description + added_line + '\n\n' + footers)
 
-    def testFormatDescriptionOrComment(self):
-        description = "Converted use of X to Y in $directory."
+    @mock.patch("split_cl.EmitWarning")
+    def testFormatDescriptionOrComment(self, mock_emit_warning):
+        description = "Converted use of X to Y in $description."
 
         # One directory
         self.assertEqual(
-            split_cl.FormatDescriptionOrComment(description, ["foo"]),
+            split_cl.FormatDescriptionOrComment(
+                description, split_cl.FormatDirectoriesForPrinting(["foo"])),
             "Converted use of X to Y in foo.",
         )
 
         # Many directories
         self.assertEqual(
-            split_cl.FormatDescriptionOrComment(description, ["foo", "bar"]),
+            split_cl.FormatDescriptionOrComment(
+                description,
+                split_cl.FormatDirectoriesForPrinting(["foo", "bar"])),
             "Converted use of X to Y in ['foo', 'bar'].",
         )
+
+        mock_emit_warning.assert_not_called()
+
+        description_deprecated = "Converted use of X to Y in $directory."
+
+        # Make sure we emit a deprecation warning if the old format is used
+        self.assertEqual(
+            split_cl.FormatDescriptionOrComment(
+                description_deprecated,
+                split_cl.FormatDirectoriesForPrinting([])),
+            "Converted use of X to Y in [].",
+        )
+
+        mock_emit_warning.assert_called_once()
 
     def GetDirectoryBaseName(self, file_path):
         return os.path.basename(os.path.dirname(file_path))
@@ -130,9 +148,9 @@ class SplitClTest(unittest.TestCase):
             test.addCleanup(patcher.stop)
             return patcher.start()
 
-        def DoUploadCl(self, directories, files, reviewers, cmd_upload):
+        def DoUploadCl(self, description, files, reviewers, cmd_upload):
             split_cl.UploadCl("branch_to_upload", "upstream_branch",
-                              directories, files, "description",
+                              description, files, "description",
                               "splitting_file.txt", None, reviewers,
                               mock.Mock(), cmd_upload, True, True, "topic",
                               os.path.sep)
@@ -142,12 +160,12 @@ class SplitClTest(unittest.TestCase):
 
         upload_cl_tester = self.UploadClTester(self)
 
-        directories = ["dir0"]
+        description = split_cl.FormatDirectoriesForPrinting(["dir0"])
         files = [("M", os.path.join("bar", "a.cc")),
                  ("D", os.path.join("foo", "b.cc"))]
         reviewers = {"reviewer1@gmail.com", "reviewer2@gmail.com"}
         mock_cmd_upload = mock.Mock()
-        upload_cl_tester.DoUploadCl(directories, files, reviewers,
+        upload_cl_tester.DoUploadCl(description, files, reviewers,
                                     mock_cmd_upload)
 
         abs_repository_path = os.path.abspath(os.path.sep)
@@ -174,7 +192,7 @@ class SplitClTest(unittest.TestCase):
 
         upload_cl_tester = self.UploadClTester(self)
 
-        directories = ["dir0"]
+        description = split_cl.FormatDirectoriesForPrinting(["dir0"])
         files = [("M", os.path.join("bar", "a.cc")),
                  ("D", os.path.join("foo", "b.cc"))]
         reviewers = {"reviewer1@gmail.com"}
@@ -183,7 +201,7 @@ class SplitClTest(unittest.TestCase):
             "branch0",
             split_cl.CreateBranchName("branch_to_upload", files)
         ]
-        upload_cl_tester.DoUploadCl(directories, files, reviewers,
+        upload_cl_tester.DoUploadCl(description, files, reviewers,
                                     mock_cmd_upload)
 
         upload_cl_tester.mock_git_run.assert_not_called()
@@ -384,14 +402,14 @@ class SplitClTest(unittest.TestCase):
     # Tests related to saving to and loading from files
     # Sample CLInfos for testing
     CLInfo_1 = split_cl.CLInfo(reviewers=["a@example.com"],
-                               directories="['chrome/browser']",
+                               description="['chrome/browser']",
                                files=[
                                    ("M", "chrome/browser/a.cc"),
                                    ("M", "chrome/browser/b.cc"),
                                ])
 
     CLInfo_2 = split_cl.CLInfo(reviewers=["a@example.com", "b@example.com"],
-                               directories="['foo', 'bar/baz']",
+                               description="['foo', 'bar/baz']",
                                files=[("M", "foo/browser/a.cc"),
                                       ("M", "bar/baz/b.cc"),
                                       ("D", "foo/bar/c.h")])

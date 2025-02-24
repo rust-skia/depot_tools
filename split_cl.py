@@ -64,8 +64,8 @@ class CLInfo:
     - reviewers: the reviewers the CL will be sent to.
     - files: a list of <action>, <file> pairs in the CL.
              Has the same format as `git status`.
-    - directories: a string representing the directories containing the files
-                   in this CL. This is only used for replacing $directory in
+    - description: a string describing the CL. Typically the list of affected
+                   directories. Only used for replacing $description in
                    the user-provided CL description.
     """
     # Have to use default_factory because lists are mutable
@@ -74,7 +74,7 @@ class CLInfo:
 
     # This is only used for formatting in the CL description, so it just
     # has to be convertible to string.
-    directories: Any = ""
+    description: Any = ""
 
     def FormatForPrinting(self) -> str:
         """
@@ -83,7 +83,7 @@ class CLInfo:
         # Don't quote the reviewer emails in the output
         reviewers_str = ", ".join(self.reviewers)
         lines = [
-            f"Reviewers: [{reviewers_str}]", f"Description: {self.directories}"
+            f"Reviewers: [{reviewers_str}]", f"Description: {self.description}"
         ] + [f"{action}, {file}" for (action, file) in self.files]
         return "\n".join(lines)
 
@@ -97,7 +97,8 @@ def CLInfoFromFilesAndOwnersDirectoriesDict(
     cl_infos = []
     for (reviewers, fod) in d.items():
         cl_infos.append(
-            CLInfo(set(reviewers), fod.files, fod.owners_directories))
+            CLInfo(set(reviewers), fod.files,
+                   FormatDirectoriesForPrinting(fod.owners_directories)))
     return cl_infos
 
 
@@ -168,7 +169,9 @@ def ValidateExistingBranches(prefix: str, cl_infos: List[CLInfo]) -> bool:
         return False
     return True
 
-def FormatDirectoriesForPrinting(directories, prefix=None):
+
+def FormatDirectoriesForPrinting(directories: List[str],
+                                 prefix: str = None) -> str:
     """Formats directory list for printing
 
     Uses dedicated format for single-item list."""
@@ -177,13 +180,20 @@ def FormatDirectoriesForPrinting(directories, prefix=None):
     if prefix:
         prefixed = [(prefix + d) for d in directories]
 
-    return str(prefixed) if len(prefixed) > 1 else str(prefixed[0])
+    return str(prefixed[0]) if len(prefixed) == 1 else str(prefixed)
 
 
-def FormatDescriptionOrComment(txt, directories):
-    """Replaces $directory with |directories| in |txt|."""
-    to_insert = FormatDirectoriesForPrinting(directories)
-    return txt.replace('$directory', to_insert)
+def FormatDescriptionOrComment(txt, desc):
+    """Replaces $description with |desc| in |txt|."""
+    # TODO(389069356): Remove support for $directory entirely once it's been
+    # deprecated for a while.
+    replaced_txt = txt.replace('$directory', desc)
+    if txt != replaced_txt:
+        EmitWarning('Usage of $directory is deprecated and will be removed '
+                    'in a future update. Please use $description instead, '
+                    'which has the same behavior by default.\n\n')
+    replaced_txt = replaced_txt.replace('$description', desc)
+    return replaced_txt
 
 
 def AddUploadedByGitClSplitToDescription(description):
@@ -202,19 +212,19 @@ def AddUploadedByGitClSplitToDescription(description):
     return '\n'.join(lines)
 
 
-def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
-             description, saved_splitting_file, comment, reviewers, changelist,
-             cmd_upload, cq_dry_run, enable_auto_submit, topic,
+def UploadCl(refactor_branch, refactor_branch_upstream, cl_description, files,
+             user_description, saved_splitting_file, comment, reviewers,
+             changelist, cmd_upload, cq_dry_run, enable_auto_submit, topic,
              repository_root):
     """Uploads a CL with all changes to |files| in |refactor_branch|.
 
     Args:
         refactor_branch: Name of the branch that contains the changes to upload.
         refactor_branch_upstream: Name of the upstream of |refactor_branch|.
-        directories: Paths to the directories that contain the OWNERS files for
-            which to upload a CL.
+        cl_description: Description of this specific CL, e.g. the list of
+          affected directories.
         files: List of AffectedFile instances to include in the uploaded CL.
-        description: Description of the uploaded CL.
+        user_description: Description provided by user.
         comment: Comment to post on the uploaded CL.
         reviewers: A set of reviewers for the CL.
         changelist: The Changelist class.
@@ -226,8 +236,9 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
     # Create a branch.
     if not CreateBranchForOneCL(refactor_branch, files,
                                 refactor_branch_upstream):
-        Emit('Skipping ' + FormatDirectoriesForPrinting(directories) +
-             ' for which a branch already exists.')
+        Emit(
+            f'Skipping existing branch for CL with description: {cl_description}'
+        )
         return
 
     # Checkout all changes to files in |files|.
@@ -250,7 +261,8 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
     # when it is closed.
     with gclient_utils.temporary_file() as tmp_file:
         gclient_utils.FileWrite(
-            tmp_file, FormatDescriptionOrComment(description, directories))
+            tmp_file,
+            FormatDescriptionOrComment(user_description, cl_description))
         git.run('commit', '-F', tmp_file)
 
     # Upload a CL.
@@ -265,8 +277,7 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
         upload_args.append('--enable-auto-submit')
     if topic:
         upload_args.append('--topic={}'.format(topic))
-    Emit('Uploading CL for ' + FormatDirectoriesForPrinting(directories) +
-         '...')
+    Emit(f'Uploading CL with description: {cl_description} ...')
 
     ret = cmd_upload(upload_args)
     if ret != 0:
@@ -278,7 +289,7 @@ def UploadCl(refactor_branch, refactor_branch_upstream, directories, files,
 
     if comment:
         changelist().AddComment(FormatDescriptionOrComment(
-            comment, directories),
+            comment, cl_description),
                                 publish=True)
 
 
@@ -307,28 +318,28 @@ def GetFilesSplitByOwners(files, max_depth):
     return files_split_by_owners
 
 
-def PrintClInfo(cl_index, num_cls, directories, file_paths, description,
+def PrintClInfo(cl_index, num_cls, cl_description, file_paths, user_description,
                 reviewers, cq_dry_run, enable_auto_submit, topic):
     """Prints info about a CL.
 
     Args:
         cl_index: The index of this CL in the list of CLs to upload.
         num_cls: The total number of CLs that will be uploaded.
-        directories: Paths to directories that contains the OWNERS files for
-            which to upload a CL.
+        cl_description: Description of this specific CL, e.g. the list of
+          affected directories.
         file_paths: A list of files in this CL.
-        description: The CL description.
+        user_description: Description provided by user.
         reviewers: A set of reviewers for this CL.
         cq_dry_run: If the CL should also be sent to CQ dry run.
         enable_auto_submit: If the CL should also have auto submit enabled.
         topic: Topic to set for this CL.
     """
-    description_lines = FormatDescriptionOrComment(description,
-                                                   directories).splitlines()
+    description_lines = FormatDescriptionOrComment(user_description,
+                                                   cl_description).splitlines()
     indented_description = '\n'.join(['    ' + l for l in description_lines])
 
     Emit('CL {}/{}'.format(cl_index, num_cls))
-    Emit('Paths: {}'.format(FormatDirectoriesForPrinting(directories)))
+    Emit('Paths: {}'.format(cl_description))
     Emit('Reviewers: {}'.format(', '.join(reviewers)))
     Emit('Auto-Submit: {}'.format(enable_auto_submit))
     Emit('CQ Dry Run: {}'.format(cq_dry_run))
@@ -345,7 +356,7 @@ def LoadDescription(description_file, dry_run):
             raise ValueError(
                 "Must provide a description file except during dry runs")
         return ('Dummy description for dry run.\n'
-                'directory = $directory')
+                'description = $description')
 
     return gclient_utils.FileRead(description_file)
 
@@ -360,7 +371,7 @@ def PrintSummary(cl_infos, refactor_branch):
     """
     for info in cl_infos:
         Emit(f'Reviewers: {info.reviewers}, files: {len(info.files)}, ',
-             f'directories: {info.directories}')
+             f'description: {info.description}')
 
     num_cls = len(cl_infos)
     Emit(f'\nWill split branch {refactor_branch} into {num_cls} CLs. '
@@ -462,12 +473,12 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
             pass
         elif dry_run:
             file_paths = [f for _, f in cl_info.files]
-            PrintClInfo(cl_index, len(cl_infos), cl_info.directories,
+            PrintClInfo(cl_index, len(cl_infos), cl_info.description,
                         file_paths, description, cl_info.reviewers, cq_dry_run,
                         enable_auto_submit, topic)
         else:
             UploadCl(refactor_branch, refactor_branch_upstream,
-                     cl_info.directories, cl_info.files, description,
+                     cl_info.description, cl_info.files, description,
                      saved_splitting_file, comment, cl_info.reviewers,
                      changelist, cmd_upload, cq_dry_run, enable_auto_submit,
                      topic, repository_root)
@@ -591,11 +602,6 @@ description_re = re.compile(r'Description:\s*(.+)')
 # <action> must be a valid code (either 1 or 2 letters)
 file_re = re.compile(r'([MTADRC]{1,2}),\s*(.+)')
 
-# TODO(crbug.com/389069356): Replace the "Description" line with an optional
-# "Description" line, and adjust the description variables accordingly, as well
-# as all the places in the code that expect to get a directory list.
-
-
 # We use regex parsing instead of e.g. json because it lets us use a much more
 # human-readable format, similar to the summary printed in dry runs
 def ParseSplittings(lines: List[str]) -> List[CLInfo]:
@@ -644,11 +650,11 @@ def ParseSplittings(lines: List[str]) -> List[CLInfo]:
         # Description is just used as a description, so any string is fine
         m = re.fullmatch(description_re, line)
         if m:
-            if current_cl_info.directories:
+            if current_cl_info.description:
                 raise ClSplitParseError(
-                    f"Error parsing line: CL already has a directories entry\n{line}"
+                    f"Error parsing line: CL already has a description entry\n{line}"
                 )
-            current_cl_info.directories = m.group(1).strip()
+            current_cl_info.description = m.group(1).strip()
             continue
 
         # Any other line is presumed to be an '<action>, <file>' pair
