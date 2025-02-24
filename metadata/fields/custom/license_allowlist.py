@@ -202,6 +202,16 @@ WITH_PERMISSION_ONLY = frozenset([
     # go/keep-sorted end
 ])
 
-ALLOWED_LICENSES = ALLOWED_SPDX_LICENSES | EXTENDED_LICENSE_CLASSIFIERS
+# These are references to files that are not licenses, but are allowed to be
+# included in the LICENSE field.
+ALLOWED_REFERENCES = frozenset([
+    "Refer to additional_readme_paths.json",
+])
+
+ALLOWED_LICENSES = (
+    ALLOWED_SPDX_LICENSES
+    | EXTENDED_LICENSE_CLASSIFIERS
+    | ALLOWED_REFERENCES
+)
 ALLOWED_OPEN_SOURCE_LICENSES = ALLOWED_LICENSES | OPEN_SOURCE_SPDX_LICENSES
 ALL_LICENSES = ALLOWED_OPEN_SOURCE_LICENSES | WITH_PERMISSION_ONLY

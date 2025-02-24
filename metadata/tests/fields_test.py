@@ -123,6 +123,7 @@ class FieldValidationTest(unittest.TestCase):
                 "MIT",
                 "APSL-2.0, MIT",
                 "APSL-2.0 ,MIT",
+                "Refer to additional_readme_paths.json"
             ],
             error_values=[
                 "",
@@ -136,6 +137,7 @@ class FieldValidationTest(unittest.TestCase):
             warning_values=[
                 "Custom license",
                 "Custom, MIT",
+                "Refer to any_other_readme_paths.json",
             ],
         )
 
