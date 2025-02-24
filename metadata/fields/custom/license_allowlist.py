@@ -200,6 +200,8 @@ WITH_PERMISSION_ONLY = frozenset([
     "Opus-Patent-BSD-3-Clause",
     "UnRAR",
     # go/keep-sorted end
+    # Patent files are special, and must be handled on a case by case basis.
+    "Patent",
 ])
 
 # These are references to files that are not licenses, but are allowed to be
