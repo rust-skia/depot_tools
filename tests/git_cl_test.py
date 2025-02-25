@@ -5719,11 +5719,36 @@ class CMDSplitTestCase(CMDTestCaseBase):
                          0)
         self.assertEqual(mock_split_cl.call_count, 1)
 
-        # Unless we're doing a dry run
+        # ...unless we're doing a dry run
         mock_split_cl.reset_mock()
         self.assertEqual(git_cl.main(['split', '-n']), 0)
         self.assertEqual(mock_split_cl.call_count, 1)
 
+    @mock.patch("split_cl.SplitCl", return_value=0)
+    @mock.patch("git_cl.OptionParser.error", side_effect=ParserErrorMock)
+    def testReviewerParsing(self, _, mock_split_cl):
+        """Make sure we correctly parse various combinations of --reviewers"""
+
+        # Helper function to pull out the reviewers arg and compare it
+        def testOneSetOfFlags(flags, expected):
+            self.assertEqual(git_cl.main(['split', '-n'] + flags), 0)
+            mock_split_cl.assert_called_once()
+            # It's unfortunate that there's no better way to get the argument
+            # than to hardcode its number, unless we switch to using keyword
+            # arguments everywhere or pass the options in directly.
+            reviewers_arg = mock_split_cl.call_args.args[6]
+            self.assertEqual(reviewers_arg, expected)
+            mock_split_cl.reset_mock()
+
+        # If no --reviewers flag is passed, we should get None
+        testOneSetOfFlags([], None)
+        # If --reviewers flag is passed, we should get a list of args
+        testOneSetOfFlags(['--reviewers', 'a@b.com'], ['a@b.com'])
+        testOneSetOfFlags(['--reviewers', 'a@b.com', '--reviewers', 'c@d.com'],
+                          ['a@b.com', 'c@d.com'])
+        # If --no-reviewers flag is passed, we should always get an empty list
+        testOneSetOfFlags(['--no-reviewers'], [])
+        testOneSetOfFlags(['--reviewers', 'a@b.com', '--no-reviewers'], [])
 
 if __name__ == '__main__':
     logging.basicConfig(

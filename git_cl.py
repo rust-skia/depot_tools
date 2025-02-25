@@ -5872,18 +5872,36 @@ def CMDsplit(parser, args):
         help='If passed during a dry run, will print out a summary of the '
         'generated splitting, rather than full details. No effect outside of '
         'a dry run.')
+    # If we ever switch from optparse to argparse, we can combine these flags
+    # using nargs='*'
+    parser.add_option(
+        '--reviewers',
+        action='append',
+        default=None,
+        help='If present, all generated CLs will be sent to the specified '
+        'reviewer(s) specified, rather than automatically assigned reviewers.\n'
+        'Multiple reviewers can be specified as '
+        '--reviewers a@b.com --reviewers c@d.com\n')
+    parser.add_option(
+        '--no-reviewers',
+        action='store_true',
+        help='If present, generated CLs will not be assigned reviewers. '
+        'Overrides --reviewers.')
     options, _ = parser.parse_args(args)
 
     if not options.description_file and not options.dry_run:
         parser.error('No --description flag specified.')
+
+    if options.no_reviewers:
+        options.reviewers = []
 
     def WrappedCMDupload(args):
         return CMDupload(OptionParser(), args)
 
     return split_cl.SplitCl(options.description_file, options.comment_file,
                             Changelist, WrappedCMDupload, options.dry_run,
-                            options.summarize, options.cq_dry_run,
-                            options.enable_auto_submit,
+                            options.summarize, options.reviewers,
+                            options.cq_dry_run, options.enable_auto_submit,
                             options.max_depth, options.topic, options.from_file,
                             settings.GetRoot())
 

@@ -393,8 +393,8 @@ def PrintSummary(cl_infos, refactor_branch):
 
 
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
-            summarize, cq_dry_run, enable_auto_submit, max_depth, topic,
-            from_file, repository_root):
+            summarize, reviewers_override, cq_dry_run, enable_auto_submit,
+            max_depth, topic, from_file, repository_root):
     """"Splits a branch into smaller branches and uploads CLs.
 
     Args:
@@ -403,6 +403,8 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         changelist: The Changelist class.
         cmd_upload: The function associated with the git cl upload command.
         dry_run: Whether this is a dry run (no branches or CLs created).
+        reviewers_override: Either None or a (possibly empty) list of reviewers
+            all CLs should be sent to.
         cq_dry_run: If CL uploads should also do a cq dry run.
         enable_auto_submit: If CL uploads should also enable auto submit.
         max_depth: The maximum directory depth to search for OWNERS files. A
@@ -447,6 +449,12 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
 
         cl_infos = CLInfoFromFilesAndOwnersDirectoriesDict(
             files_split_by_reviewers)
+
+    # Note that we do this override even if the list is empty (indicating that
+    # the user requested CLs not be assigned to any reviewers).
+    if reviewers_override != None:
+        for info in cl_infos:
+            info.reviewers = set(reviewers_override)
 
     if not dry_run:
         PrintSummary(cl_infos, refactor_branch)
