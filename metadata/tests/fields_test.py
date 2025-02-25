@@ -176,7 +176,7 @@ class FieldValidationTest(unittest.TestCase):
             source_file_dir=os.path.join(_THIS_DIR, "data"),
             repo_root_dir=_THIS_DIR,
         )
-        self.assertIsInstance(result, vr.ValidationError)
+        self.assertIsInstance(result, vr.ValidationWarning)
 
         # Check deprecated NOT_SHIPPED.
         result = known_fields.LICENSE_FILE.validate_on_disk(
