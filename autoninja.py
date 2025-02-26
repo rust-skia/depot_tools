@@ -371,7 +371,9 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
         # Build ID consistently used in other tools. e.g. Reclient, ninjalog.
         os.environ.setdefault("SISO_BUILD_ID", build_id)
         with android_build_server_helper.build_server_context(
-                build_id, use_android_build_server=use_android_build_server):
+                build_id,
+                output_dir,
+                use_android_build_server=use_android_build_server):
             if use_remoteexec:
                 if use_reclient and not t_specified:
                     return reclient_helper.run_siso(
@@ -483,7 +485,8 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
         _print_cmd(ninja_args)
 
     with android_build_server_helper.build_server_context(
-            build_id, use_android_build_server=use_android_build_server):
+            build_id, output_dir,
+            use_android_build_server=use_android_build_server):
         if use_reclient and not t_specified:
             return reclient_helper.run_ninja(ninja_args, should_collect_logs)
         return ninja.main(ninja_args)
