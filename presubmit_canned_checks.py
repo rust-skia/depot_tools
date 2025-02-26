@@ -2221,6 +2221,43 @@ def CheckNoNewGitFilesAddedInDependencies(input_api, output_api):
     return errors
 
 
+def CheckNewDEPSHooksHasRequiredReviewers(input_api, output_api,
+                                          required_reviewers: list[str]):
+    """Ensure CL to add new DEPS hook(s) has at least one required reviewer."""
+    if not required_reviewers:
+        raise ValueError('required_reviewers must be non-empty')
+    if not input_api.change.issue:
+        return []  # Gerrit CL not yet uploaded.
+    deps_affected_files = [
+        f for f in input_api.AffectedFiles() if f.LocalPath() == 'DEPS'
+    ]
+    if not deps_affected_files:
+        return []  # Not a DEPS change.
+    deps_affected_file = deps_affected_files[0]
+
+    def _get_hooks_names(dep_contents):
+        deps = _ParseDeps('\n'.join(dep_contents))
+        hooks = deps.get('hooks', [])
+        return set(hook.get('name') for hook in hooks)
+
+    old_hooks = _get_hooks_names(deps_affected_file.OldContents())
+    new_hooks = _get_hooks_names(deps_affected_file.NewContents())
+    if new_hooks.issubset(old_hooks):
+        return []  # No new hooks added.
+
+    reviewers = input_api.gerrit.GetChangeReviewers(input_api.change.issue,
+                                                    approving_only=False)
+
+    if set(r for r in reviewers if r in required_reviewers):
+        return []  # At least one required reviewer is present.
+    msg = (f'New DEPS {"hook" if len(new_hooks-old_hooks) == 1 else "hooks"} '
+           f'({", ".join(sorted(new_hooks-old_hooks))}) are found. Please add '
+           'one of the following reviewers:')
+    for r in required_reviewers:
+        msg += f'\n * {r}'
+    return [output_api.PresubmitError(msg)]
+
+
 @functools.lru_cache(maxsize=None)
 def _ParseDeps(contents):
     """Simple helper for parsing DEPS files."""
