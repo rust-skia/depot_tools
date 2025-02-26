@@ -40,6 +40,11 @@ import siso
 if sys.platform in ["darwin", "linux"]:
     import resource
 
+_SISO_SUGGESTION = """Please run 'gn clean {output_dir}' when convenient to
+upgrade this output directory to Siso (Chromium’s Ninja replacement). If you
+run into any issues, please file a bug via go/siso-bug and switch back
+temporarily by setting the GN arg 'use_siso = false'"""
+
 _SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 _NINJALOG_UPLOADER = os.path.join(_SCRIPT_DIR, "ninjalog_uploader.py")
 
@@ -156,30 +161,43 @@ def _get_use_reclient_value(output_dir):
     return r
 
 
-def _get_use_siso_default(output_dir):
-    # TODO(379584977): move this in depot_tools
-    # once gn rule for action_remote.py, which check use_siso` is removed.
+def _siso_supported(output_dir):
     root_dir = gclient_paths.GetPrimarySolutionPath()
     if not root_dir:
-        return None
-    script_path = os.path.join(root_dir, "build/toolchain/use_siso_default.py")
-    if not os.path.exists(script_path):
-        return None
+        return False
+    sisoenv_path = os.path.join(root_dir, "build/config/siso/.sisoenv")
+    if not os.path.exists(sisoenv_path):
+        return False
+    # If it's not chromium project, use Ninja.
+    gclient_args_gni = os.path.join(root_dir, "build/config/gclient_args.gni")
+    if not os.path.exists(gclient_args_gni):
+        return False
+    with open(gclient_args_gni) as f:
+        if "build_with_chromium = true" not in f.read():
+            return False
+    # Use Siso by default for Googlers working on corp machine.
+    if _is_google_corp_machine():
+        return True
+    # Otherwise, use Ninja, until we are ready to roll it out
+    # on non-corp machines, too.
+    # TODO(378078715): enable True by default.
+    return False
 
-    script = _import_from_path("use_siso_default", script_path)
-    try:
-        # Older versions of chromium won't have this function.
-        use_siso_default = getattr(script, "use_siso_default_and_suggest_siso", script.use_siso_default)
-        r = use_siso_default(output_dir)
-    except:
-        raise RuntimeError(
-            'Could not call method "use_siso_default" in {}"'.format(
-                script_path))
-    if not isinstance(r, bool):
-        raise TypeError(
-            'Method "use_siso_default" in "{}" returns invalid result. Expected bool, got "{}" (type "{}")'
-            .format(script_path, r, type(r)))
-    return r
+
+def _get_use_siso_default(output_dir):
+    """Returns use_siso default value."""
+    if not _siso_supported(output_dir):
+        return False
+
+    # This output directory is already using Siso.
+    if os.path.exists(os.path.join(output_dir, ".siso_deps")):
+        return True
+
+    # This output directory is still using Ninja.
+    if os.path.exists(os.path.join(output_dir, ".ninja_deps")):
+        print(_SISO_SUGGESTION.format(output_dir=output_dir), file=sys.stderr)
+        return False
+    return True
 
 
 def _main_inner(input_args, build_id, should_collect_logs=False):
