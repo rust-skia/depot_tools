@@ -346,7 +346,6 @@ def PrintClInfo(cl_index, num_cls, cl_description, file_paths, user_description,
     Emit('Topic: {}'.format(topic))
     Emit('\n' + indented_description + '\n')
     Emit('\n'.join(file_paths))
-    Emit()
 
 
 def LoadDescription(description_file, dry_run):
@@ -370,7 +369,7 @@ def PrintSummary(cl_infos, refactor_branch):
            to the files and directories assigned to them.
     """
     for info in cl_infos:
-        Emit(f'Reviewers: {info.reviewers}, files: {len(info.files)}, ',
+        Emit(f'Reviewers: {info.reviewers}, files: {len(info.files)}, '
              f'description: {info.description}')
 
     num_cls = len(cl_infos)
