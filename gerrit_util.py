@@ -190,6 +190,9 @@ def ShouldUseSSO(host: str, email: str) -> bool:
     if not ssoHelper.find_cmd():
         LOGGER.debug("SSO=False: no SSO command")
         return False
+    if gclient_utils.IsEnvCog():
+        LOGGER.debug("SSO=True: in Cog")
+        return True
     if not email:
         LOGGER.debug(
             "SSO=True: email is empty or missing (and SSO command available)")
