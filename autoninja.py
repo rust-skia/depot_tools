@@ -138,27 +138,27 @@ def _print_cmd(cmd):
     print(*[shell_quoter(arg) for arg in cmd], file=sys.stderr)
 
 
-def _get_use_reclient_value(output_dir):
+def _get_remoteexec_defaults():
     root_dir = gclient_paths.GetPrimarySolutionPath()
     if not root_dir:
         return None
-    script_path = os.path.join(root_dir,
-                               "build/toolchain/use_reclient_value.py")
-    if not os.path.exists(script_path):
-        return None
-
-    script = _import_from_path("use_reclient_value", script_path)
-    try:
-        r = script.use_reclient_value(output_dir)
-    except:
-        raise RuntimeError(
-            'Could not call method "use_reclient_value" in {}"'.format(
-                script_path))
-    if not isinstance(r, bool):
-        raise TypeError(
-            'Method "use_reclient_defualt" in "{}" returns invalid result. Expected bool, got "{}" (type "{}")'
-            .format(script_path, r, type(r)))
-    return r
+    default_file = os.path.join(root_dir,
+                                "build/toolchain/remoteexec_defaults.gni")
+    values = {
+        "use_reclient_on_siso": True,
+        "use_reclient_on_ninja": True,
+    }
+    if not os.path.exists(default_file):
+        return values
+    pattern = re.compile(r"(^|\s*)([^=\s]*)\s*=\s*(\S*)\s*$")
+    with open(default_file, encoding="utf-8") as f:
+        for line in f:
+            line = line.split("#")[0]
+            m = pattern.match(line)
+            if not m:
+                continue
+            values[m.group(2)] = m.group(3) == "true"
+    return values
 
 
 def _siso_supported(output_dir):
@@ -251,7 +251,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             print(file=sys.stderr)
 
     use_remoteexec = False
-    use_reclient = _get_use_reclient_value(output_dir)
+    use_reclient = None
     use_android_build_server = False
     use_siso = None
 
@@ -293,7 +293,14 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             use_siso = _get_use_siso_default(output_dir)
 
         if use_reclient is None:
-            use_reclient = use_remoteexec
+            if os.path.exists(os.path.join(output_dir, ".reproxy_tmp")):
+                use_reclient = True
+            elif use_remoteexec:
+                values = _get_remoteexec_defaults()
+                if use_siso:
+                    use_reclient = values["use_reclient_on_siso"]
+                else:
+                    use_reclient = values["use_reclient_on_ninja"]
 
     if use_remoteexec:
         if use_reclient:
