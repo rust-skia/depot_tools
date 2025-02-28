@@ -41,7 +41,7 @@ class FakeRepos(fake_repos.FakeReposBase):
             'repo_1', {
                 'DEPS': '\n'.join([
                     'deps = {',
-                    ' "src/foo": "file://%(git_base)srepo_2@%(repo_2_revision)s",',
+                    ' "src/foo": "%(git_base)srepo_2@%(repo_2_revision)s",',
                     '}',
                     'hooks = [',
                     '  {"action": ["foo", "--android", "{checkout_android}"]}',
@@ -71,11 +71,9 @@ class RollDepTest(fake_repos.FakeReposTestBase):
         self.src_dir = os.path.join(self.root_dir, 'src')
         self.foo_dir = os.path.join(self.src_dir, 'foo')
         if self.enabled:
-            self.call([
-                GCLIENT, 'config', 'file://' + self.git_base + 'repo_1',
-                '--name', 'src'
-            ],
-                      cwd=self.root_dir)
+            self.call(
+                [GCLIENT, 'config', self.git_base + 'repo_1', '--name', 'src'],
+                cwd=self.root_dir)
             self.call([GCLIENT, 'sync'], cwd=self.root_dir)
 
     def call(self, cmd, cwd=None):
@@ -110,8 +108,8 @@ class RollDepTest(fake_repos.FakeReposTestBase):
         self.assertEqual(self.gitrevparse(self.foo_dir), expected_revision)
         self.assertEqual([
             'deps = {',
-            ' "src/foo": "file://' + self.git_base.replace('\\', '\\\\') +
-            'repo_2@' + expected_revision + '",',
+            ' "src/foo": "' + self.git_base.replace('\\', '\\\\') + 'repo_2@' +
+            expected_revision + '",',
             '}',
             'hooks = [',
             '  {"action": ["foo", "--android", "{checkout_android}"]}',
@@ -159,8 +157,8 @@ class RollDepTest(fake_repos.FakeReposTestBase):
         self.assertEqual(self.gitrevparse(self.foo_dir), expected_revision)
         self.assertEqual([
             'deps = {',
-            ' "src/foo": "file://' + self.git_base.replace('\\', '\\\\') +
-            'repo_2@' + expected_revision + '",',
+            ' "src/foo": "' + self.git_base.replace('\\', '\\\\') + 'repo_2@' +
+            expected_revision + '",',
             '}',
             'hooks = [',
             '  {"action": ["foo", "--android", "{checkout_android}"]}',
@@ -191,8 +189,8 @@ class RollDepTest(fake_repos.FakeReposTestBase):
         self.assertEqual(self.gitrevparse(self.foo_dir), expected_revision)
         self.assertEqual([
             'deps = {',
-            ' "src/foo": "file://' + self.git_base.replace('\\', '\\\\') +
-            'repo_2@' + expected_revision + '",',
+            ' "src/foo": "' + self.git_base.replace('\\', '\\\\') + 'repo_2@' +
+            expected_revision + '",',
             '}',
             'hooks = [',
             '  {"action": ["foo", "--android", "{checkout_android}"]}',
