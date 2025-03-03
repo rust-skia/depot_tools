@@ -2221,11 +2221,22 @@ def CheckNoNewGitFilesAddedInDependencies(input_api, output_api):
     return errors
 
 
-def CheckNewDEPSHooksHasRequiredReviewers(input_api, output_api,
-                                          required_reviewers: list[str]):
-    """Ensure CL to add new DEPS hook(s) has at least one required reviewer."""
-    if not required_reviewers:
-        raise ValueError('required_reviewers must be non-empty')
+def CheckNewDEPSHooksHasRequiredReviewers(input_api, output_api):
+    """Ensures proper review of CLs adding new DEPS hooks.
+
+    This check verifies that any CL adding a new DEPS hook is reviewed and
+    approved by the required reviewer(s). If the required reviewers haven't
+    been added, an error will be raised.
+
+    Required Reviewers are computed from the OWNERS file. It looks for DEPS
+    owners annotated `For new DEPS hook`. Example:
+    `per-file DEPS=foo@chromium.org # For new DEPS hook`
+
+    This check is skipped if:
+    * The Gerrit CL hasn't been uploaded yet.
+    * The CL doesn't involve adding new hooks to the DEPS file.
+    * No required reviewers are found in the OWNERS file.
+    """
     if not input_api.change.issue:
         return []  # Gerrit CL not yet uploaded.
     deps_affected_files = [
@@ -2233,18 +2244,32 @@ def CheckNewDEPSHooksHasRequiredReviewers(input_api, output_api,
     ]
     if not deps_affected_files:
         return []  # Not a DEPS change.
-    deps_affected_file = deps_affected_files[0]
+    dep_file = deps_affected_files[0]
 
     def _get_hooks_names(dep_contents):
         deps = _ParseDeps('\n'.join(dep_contents))
         hooks = deps.get('hooks', [])
         return set(hook.get('name') for hook in hooks)
 
-    old_hooks = _get_hooks_names(deps_affected_file.OldContents())
-    new_hooks = _get_hooks_names(deps_affected_file.NewContents())
+    old_hooks = _get_hooks_names(dep_file.OldContents())
+    new_hooks = _get_hooks_names(dep_file.NewContents())
     if new_hooks.issubset(old_hooks):
         return []  # No new hooks added.
 
+    required_reviewer_re = input_api.re.compile(
+        r"^per-file\s+DEPS\s*=\s*({email_re}(\s*,\s*{email_re})*)\s*# For new DEPS hook$"
+        .format(email_re=r'[^ @]+@[^ #]+'))
+    required_reviewers = []
+    for line in input_api.ReadFile(
+            input_api.os_path.join(input_api.change.RepositoryRoot(),
+                                   'OWNERS')).splitlines():
+        if (m := required_reviewer_re.match(line)):
+            required_reviewers.extend(r.strip() for r in m.group(1).split(','))
+
+    if not required_reviewers:
+        return []
+    # TODO - crbug/396736534: return error if CL is not approved by the
+    # required reviewers during submission.
     reviewers = input_api.gerrit.GetChangeReviewers(input_api.change.issue,
                                                     approving_only=False)
 

@@ -539,16 +539,12 @@ class CheckNewDEPSHooksHasRequiredReviewersTest(unittest.TestCase):
     def setUp(self):
         self.input_api = MockInputApi()
         self.input_api.change = MockChange([], issue=123)
-        self.input_api.files = [
-            MockAffectedFile('DEPS', 'content'),
-        ]
+        self.input_api.change.RepositoryRoot = lambda: ''
 
     def test_no_gerrit_cl(self):
         self.input_api.change = MockChange([], issue=None)
         results = presubmit_canned_checks.CheckNewDEPSHooksHasRequiredReviewers(
-            self.input_api,
-            MockOutputApi(),
-            required_reviewers=['foo@chromium.org'])
+            self.input_api, MockOutputApi())
         self.assertEqual(0, len(results))
 
     def test_no_deps_file_change(self):
@@ -556,9 +552,7 @@ class CheckNewDEPSHooksHasRequiredReviewersTest(unittest.TestCase):
             MockAffectedFile('foo.py', 'content'),
         ]
         results = presubmit_canned_checks.CheckNewDEPSHooksHasRequiredReviewers(
-            self.input_api,
-            MockOutputApi(),
-            required_reviewers=['foo@chromium.org'])
+            self.input_api, MockOutputApi())
         self.assertEqual(0, len(results))
 
     def test_new_deps_hook(self):
@@ -582,7 +576,7 @@ class CheckNewDEPSHooksHasRequiredReviewersTest(unittest.TestCase):
                 'expected_error_msg':
                 'New DEPS hooks (new_hook, new_hook_2) are found. Please add '
                 'one of the following reviewers:\n * foo@chromium.org\n '
-                '* bar@chromium.org'
+                '* bar@chromium.org\n * baz@chromium.org'
             },
             {
                 'name':
@@ -591,7 +585,7 @@ class CheckNewDEPSHooksHasRequiredReviewersTest(unittest.TestCase):
                 'new_contents': [
                     'hooks = [{"name": "old_hook"}, {"name": "new_hook"},  {"name": "new_hook_2"}]'
                 ],
-                'reviewers': ['foo@chromium.org'],
+                'reviewers': ['baz@chromium.org'],
             },
             {
                 'name':
@@ -616,6 +610,10 @@ class CheckNewDEPSHooksHasRequiredReviewersTest(unittest.TestCase):
         for case in test_cases:
             with self.subTest(case_name=case['name']):
                 self.input_api.files = [
+                    MockFile('OWNERS', [
+                        'per-file DEPS=foo@chromium.org # For new DEPS hook',
+                        'per-file DEPS=bar@chromium.org, baz@chromium.org # For new DEPS hook'
+                    ]),
                     MockAffectedFile('DEPS',
                                      old_contents=case['old_contents'],
                                      new_contents=case['new_contents']),
@@ -624,7 +622,7 @@ class CheckNewDEPSHooksHasRequiredReviewersTest(unittest.TestCase):
                 results = presubmit_canned_checks.CheckNewDEPSHooksHasRequiredReviewers(
                     self.input_api,
                     MockOutputApi(),
-                    required_reviewers=['foo@chromium.org', 'bar@chromium.org'])
+                )
                 if 'expected_error_msg' in case:
                     self.assertEqual(1, len(results))
                     self.assertEqual(case['expected_error_msg'],
