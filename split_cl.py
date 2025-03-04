@@ -564,6 +564,10 @@ def SelectReviewersForFiles(cl, author, files, max_depth):
     return info_split_by_reviewers
 
 
+################################################################################
+# Code for saving, editing, and loading splittings.
+################################################################################
+
 def SaveSplittingToFile(cl_infos: List[CLInfo], filename: str, silent=False):
     """
     Writes the listed CLs to the designated file, in a human-readable and
@@ -773,3 +777,90 @@ def EditSplittingInteractively(
     SaveSplittingToFile(cl_infos, tmp_file)
     ValidateSplitting(cl_infos, "the provided splitting", files_on_disk)
     return cl_infos, tmp_file
+
+
+################################################################################
+# Code for the clustering-based splitting algorithm.
+################################################################################
+
+### Trie Code
+
+
+def FolderHasParent(path: str) -> bool:
+    """
+    Check if a folder inherits owners from a higher-level directory:
+    i.e. it's not at top level, and doesn't have an OWNERS file that contains
+    `set noparent`
+    """
+    # Treat each top-leve directory as having no parent, as well as the root
+    # directory.
+    if len(path.split(os.path.sep)) <= 1:
+        # Top level
+        return False
+
+    owners_file = os.path.join(path, 'OWNERS')
+    if (os.path.isfile(owners_file)):
+        with (open(owners_file)) as f:
+            for line in f.readlines():
+
+                # Strip whitespace and comments
+                line = line.split('#')[0].strip()
+
+                if (line == 'set noparent'):
+                    return False
+
+    return True
+
+
+class DirectoryTrie():
+    """
+    Trie structure: Nested dictionaries representing file paths.
+    Each level represents one folder, and contains:
+    - The path to that folder (its prefix)
+    - A list of files that reside in that folder
+    - A boolean for whether that folder inherits owners from a parent folder
+    - One Trie representing each of that folder's subdirectories
+
+    Files are stored with their entire path, so we don't need to reconstruct
+    it every time we read them.
+    """
+
+    def __init__(self, expect_owners_override, prefix: str = ""):
+        """ Create an empty DirectoryTrie with the specified prefix """
+        has_parent = expect_owners_override or FolderHasParent(prefix)
+        # yapf: disable
+        self.subdirectories : Dict[str, DirectoryTrie] = {}
+        self.files          : List[str]                = []
+        self.prefix         : str                      = prefix
+        self.has_parent     : bool                     = has_parent
+        self.expect_owners_override : bool             = expect_owners_override
+        # yapf: enable
+
+    def AddFile(self, path: List[str]):
+        """
+        Add a file to the Trie, adding new subdirectories if necessary.
+        The file should be represented as a list of directories, with the final
+        entry being the filename.
+        """
+        if len(path) == 1:
+            self.files.append(os.path.join(self.prefix, path[0]))
+        else:
+            directory = path[0]
+            if directory not in self.subdirectories:
+                prefix = os.path.join(self.prefix, directory)
+                self.subdirectories[directory] = DirectoryTrie(
+                    self.expect_owners_override, prefix)
+            self.subdirectories[directory].AddFile(path[1:])
+
+    def AddFiles(self, paths: List[List[str]]):
+        """ Convenience function to add many files at once. """
+        for path in paths:
+            self.AddFile(path)
+
+    def ToList(self) -> List[str]:
+        """ Return a list of all files in the trie. """
+        files = []
+        files += self.files
+        for subdir in self.subdirectories.values():
+            files += subdir.ToList()
+        return files

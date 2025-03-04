@@ -556,5 +556,40 @@ class SplitClTest(unittest.TestCase):
             mock_file_write.reset_mock()
 
 
+    @mock.patch("os.path.isfile", return_value=False)
+    def testDirectoryTrie(self, _):
+        """
+        Simple unit tests for creating and reading from a DirectoryTrie.
+        """
+        # The trie code uses OS paths so we need to do the same here
+        path_abc = os.path.join("a", "b", "c.cc")
+        path_abd = os.path.join("a", "b", "d.h")
+        path_aefgh = os.path.join("a", "e", "f", "g", "h.hpp")
+        path_ijk = os.path.join("i", "j", "k.cc")
+        path_al = os.path.join("a", "l.cpp")
+        path_top = os.path.join("top.gn")
+
+        files = [path_abc, path_abd, path_aefgh, path_ijk, path_al, path_top]
+        split_files = [file.split(os.path.sep) for file in files]
+
+        trie = split_cl.DirectoryTrie(False)
+        trie.AddFiles(split_files)
+
+        self.assertEqual(trie.files, [path_top])
+        self.assertEqual(trie.subdirectories["a"].files, [path_al])
+        self.assertEqual(trie.subdirectories["a"].subdirectories["b"].files,
+                         [path_abc, path_abd])
+        self.assertEqual(sorted(trie.ToList()), sorted(files))
+
+        self.assertFalse(trie.has_parent)
+        self.assertFalse(trie.subdirectories["a"].has_parent)
+        self.assertTrue(trie.subdirectories["a"].subdirectories["b"].has_parent)
+
+        self.assertEqual(trie.prefix, "")
+        self.assertEqual(trie.subdirectories["a"].prefix, "a")
+        self.assertEqual(trie.subdirectories["a"].subdirectories["b"].prefix,
+                         os.path.join("a", "b"))
+
+
 if __name__ == '__main__':
     unittest.main()
