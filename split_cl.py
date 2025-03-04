@@ -30,12 +30,13 @@ CL_SPLIT_FORCE_LIMIT = 10
 CL_SPLIT_TOP_REVIEWERS = 5
 
 
-def Emit(msg: str):
+def Emit(*msg: str):
     """Wrapper for easier mocking during tests"""
-    print(msg)
+    print(*msg)
 
-def EmitWarning(msg: str):
-    print("Warning: ", msg)
+
+def EmitWarning(*msg: str):
+    print("Warning: ", *msg)
 
 
 def HashList(lst: List[Any]) -> str:
@@ -736,7 +737,9 @@ def ValidateSplitting(cl_infos: List[CLInfo], filename: str,
     if (unmentioned_files):
         EmitWarning(
             "the following files are not included in any CL in {filename}. "
-            "They will not be uploaded:\n", unmentioned_files)
+            "They will not be uploaded:")
+        for file in unmentioned_files:
+            Emit(file)
 
 
 def LoadSplittingFromFile(filename: str,

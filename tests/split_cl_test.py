@@ -488,7 +488,8 @@ class SplitClTest(unittest.TestCase):
                               split_cl.ParseSplittings, lines)
 
     @mock.patch("split_cl.EmitWarning")
-    def testValidateBadFiles(self, mock_emit_warning):
+    @mock.patch("split_cl.Emit")
+    def testValidateBadFiles(self, _, mock_emit_warning):
         """ Make sure we reject invalid CL lists """
         # Warn on an empty file
         split_cl.LoadSplittingFromFile(
