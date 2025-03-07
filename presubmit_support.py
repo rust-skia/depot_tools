@@ -2011,16 +2011,43 @@ def DoPresubmitChecks(change,
             else:
                 messages.setdefault('Messages', []).append(result)
 
-        # Print the different message types in a consistent order. ERRORS go
-        # last so that they will be most visible in the local-presubmit output.
-        for name in ['Messages', 'Warnings', 'ERRORS']:
-            if name in messages:
-                items = messages[name]
-                sys.stdout.write('** Presubmit %s: %d **\n' %
-                                 (name, len(items)))
-                for item in items:
-                    item.handle()
-                    sys.stdout.write('\n')
+        presubmit_results_json = json.dumps(
+            {
+                'errors':
+                [error.json_format() for error in messages.get('ERRORS', [])],
+                'notifications': [
+                    notification.json_format()
+                    for notification in messages.get('Messages', [])
+                ],
+                'warnings': [
+                    warning.json_format()
+                    for warning in messages.get('Warnings', [])
+                ],
+                'more_cc':
+                executer.more_cc,
+            },
+            sort_keys=True)
+
+        # Write json result to stdout if json_output is '-'. Otherwise, write
+        # output string to stdout and json result to the file specified by
+        # json_output
+        if json_output == '-':
+            sys.stdout.write('**** Presubmit Results ****\n')
+            sys.stdout.write(presubmit_results_json)
+            sys.stdout.write('\n**** End of Presubmit Results ****\n')
+        else:
+            # Print the different message types in a consistent order. ERRORS go
+            # last so that they will be most visible in the local-presubmit output.
+            for name in ['Messages', 'Warnings', 'ERRORS']:
+                if name in messages:
+                    items = messages[name]
+                    sys.stdout.write('** Presubmit %s: %d **\n' %
+                                     (name, len(items)))
+                    for item in items:
+                        item.handle()
+                        sys.stdout.write('\n')
+            if json_output:
+                gclient_utils.FileWrite(json_output, presubmit_results_json)
 
         total_time = time_time() - start_time
         if total_time > 1.0:
@@ -2038,26 +2065,6 @@ def DoPresubmitChecks(change,
                 sys.stdout.write('\n')
         else:
             sys.stdout.write('There were presubmit errors.\n')
-
-        if json_output:
-            # Write the presubmit results to json output
-            presubmit_results = {
-                'errors':
-                [error.json_format() for error in messages.get('ERRORS', [])],
-                'notifications': [
-                    notification.json_format()
-                    for notification in messages.get('Messages', [])
-                ],
-                'warnings': [
-                    warning.json_format()
-                    for warning in messages.get('Warnings', [])
-                ],
-                'more_cc':
-                executer.more_cc,
-            }
-
-            gclient_utils.FileWrite(
-                json_output, json.dumps(presubmit_results, sort_keys=True))
 
         global _ASKED_FOR_FEEDBACK
         # Ask for feedback one time out of 5.
@@ -2399,7 +2406,8 @@ def main(argv=None):
                         help='Run all tests specified by input_api.RunTests in '
                         'all PRESUBMIT files in parallel.')
     parser.add_argument('--json_output',
-                        help='Write presubmit errors to json output.')
+                        help='Write presubmit results to json output. If \'-\' '
+                        'is provided, the results will be writting to stdout.')
     parser.add_argument('--all_files',
                         action='store_true',
                         help='Mark all files under source control as modified.')
