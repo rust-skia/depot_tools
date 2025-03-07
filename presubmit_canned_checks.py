@@ -2304,16 +2304,19 @@ def CheckNewDEPSHooksHasRequiredReviewers(input_api, output_api):
 
     if not required_reviewers:
         return []
-    # TODO - crbug/396736534: return error if CL is not approved by the
-    # required reviewers during submission.
+    submitting = input_api.is_committing and not input_api.dry_run
     reviewers = input_api.gerrit.GetChangeReviewers(input_api.change.issue,
-                                                    approving_only=False)
-
+                                                    approving_only=submitting)
     if set(r for r in reviewers if r in required_reviewers):
-        return []  # At least one required reviewer is present.
-    msg = (f'New DEPS {"hook" if len(new_hooks-old_hooks) == 1 else "hooks"} '
-           f'({", ".join(sorted(new_hooks-old_hooks))}) are found. Please add '
-           'one of the following reviewers:')
+        return []  # passing the check
+    added_hooks = new_hooks - old_hooks
+    msg = (f'New DEPS {"hook" if len(added_hooks) == 1 else "hooks"} '
+           f'({", ".join(sorted(new_hooks-old_hooks))}) '
+           f'{"is" if len(added_hooks) == 1 else "are"} found. ')
+    if submitting:
+        msg += 'The CL must be approved by one of the following reviewers:'
+    else:
+        msg += 'Please request review from one of the following reviewers:'
     for r in required_reviewers:
         msg += f'\n * {r}'
     return [output_api.PresubmitError(msg)]
