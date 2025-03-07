@@ -1435,6 +1435,10 @@ class Change(object):
         """Returns local paths for affected submodules."""
         return [af.LocalPath() for af in self.AffectedSubmodules()]
 
+    def AllLocalSubmodules(self) -> set[str]:
+        """Returns local paths for all submodules."""
+        return set(self._repo_submodules())
+
     def AbsoluteLocalPaths(self):
         """Convenience function."""
         return [af.AbsoluteLocalPath() for af in self.AffectedFiles()]
