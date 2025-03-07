@@ -2081,12 +2081,13 @@ def CheckForCommitObjects(input_api, output_api):
 
         url = dep if isinstance(dep, str) else dep['url']
         commit_hash = url.split('@')[-1]
+        # Two exceptions were in made in two projects prior to this check
+        # enforcement. We need to address those exceptions, but in the meantime
+        # we can't fail this global presubmit check
+        # https://chromium.googlesource.com/infra/infra/+/refs/heads/main/DEPS#45
+        if dep_path == 'recipes-py' and commit_hash == 'refs/heads/main':
+            continue
 
-        # One exception is made prior to this check enforcement.
-        #
-        # We need to address this exception, but in the meantime we can't fail
-        # this global presubmit check.
-        #
         # https://chromium.googlesource.com/angle/angle/+/refs/heads/main/DEPS#412
         if dep_path == 'third_party/dummy_chromium':
             continue
@@ -2167,43 +2168,7 @@ def CheckForRecursedeps(input_api, output_api):
         # No recursedeps entry, carry on!
         return []
 
-    existing_deps: set[str] = set()
-    # If git_dependencies is SYNC or SUBMODULES, prefer the submodule data.
-    if deps.get('git_dependencies', 'DEPS') == 'DEPS':
-      existing_deps = set(deps.get('deps', {}))
-    else:
-      existing_deps = input_api.change.AllLocalSubmodules()
-      # existing_deps is 'local paths' i.e. repo-relative. However, if deps is
-      # NOT use_relative_paths, then we need to adjust these to be
-      # client-root-relative.
-      #
-      # Sadly, as of 25Q1, the default is still False.
-      if not deps.get('use_relative_paths', False):
-        # Find the relative path between the gclient root and the repo root.
-        gclient_relpath: str = input_api.os_path.relpath(
-            input_api.change.RepositoryRoot(),
-            start = input_api.gclient_paths.FindGclientRoot(
-              input_api.change.RepositoryRoot()))
-
-        # relpath will use native os.path.sep, so split and clean it.
-        #
-        # NOTE: relpath can make ./path/to/something, so trim off the '.'
-        gclient_relpath_toks = tuple(gclient_relpath.split(input_api.os_path.sep))
-        if gclient_relpath_toks[0] == '.':
-          gclient_relpath_toks = gclient_relpath_toks[1:]
-
-        # All submodules are relative to the repo root, so join
-        #
-        #   gclient-to-repo ++ repo-to-submodule
-        #
-        # To get path strings which should appear in recursedeps.
-        #
-        # We must join with '/', not os_path.sep, because the paths in
-        # DEPS.recursedeps always use forward slashes.
-        existing_deps = set(
-            '/'.join(gclient_relpath_toks+(p,))
-            for p in existing_deps
-        )
+    existing_deps = deps.get('deps', {})
 
     errors = []
     for check_dep in deps['recursedeps']:
@@ -2213,7 +2178,6 @@ def CheckForRecursedeps(input_api, output_api):
                     f'Found recuredep entry {check_dep} but it is not found '
                     'in\n deps itself. Remove it from recurcedeps or add '
                     'deps entry.'))
-
     return errors
 
 
