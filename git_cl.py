@@ -862,7 +862,8 @@ class Settings(object):
 
     def GetRoot(self):
         if self.root is None:
-            self.root = os.path.abspath(self.GetRelativeRoot())
+            self.root = os.path.realpath(os.path.abspath(
+                self.GetRelativeRoot()))
         return self.root
 
     def GetTreeStatusUrl(self, error_ok=False):
