@@ -5706,39 +5706,40 @@ class CMDSplitTestCase(CMDTestCaseBase):
 
     def setUp(self):
         super(CMDTestCaseBase, self).setUp()
-        mock.patch('git_cl.Settings.GetRoot', return_value='root').start()
+        self.mock_get_root = mock.patch('git_cl.Settings.GetRoot',
+                                        return_value='root').start()
+        self.mock_split_cl = mock.patch("split_cl.SplitCl",
+                                        return_value=0).start()
+        self.mock_parser_error = mock.patch(
+            "git_cl.OptionParser.error", side_effect=ParserErrorMock).start()
 
-    @mock.patch("split_cl.SplitCl", return_value=0)
-    @mock.patch("git_cl.OptionParser.error", side_effect=ParserErrorMock)
-    def testDescriptionFlagRequired(self, _, mock_split_cl):
+    def testDescriptionFlagRequired(self):
         # --description-file is mandatory...
         self.assertRaises(ParserErrorMock, git_cl.main, ['split'])
-        self.assertEqual(mock_split_cl.call_count, 0)
+        self.assertEqual(self.mock_split_cl.call_count, 0)
 
         self.assertEqual(git_cl.main(['split', '--description=SomeFile.txt']),
                          0)
-        self.assertEqual(mock_split_cl.call_count, 1)
+        self.assertEqual(self.mock_split_cl.call_count, 1)
 
         # ...unless we're doing a dry run
-        mock_split_cl.reset_mock()
+        self.mock_split_cl.reset_mock()
         self.assertEqual(git_cl.main(['split', '-n']), 0)
-        self.assertEqual(mock_split_cl.call_count, 1)
+        self.assertEqual(self.mock_split_cl.call_count, 1)
 
-    @mock.patch("split_cl.SplitCl", return_value=0)
-    @mock.patch("git_cl.OptionParser.error", side_effect=ParserErrorMock)
-    def testReviewerParsing(self, _, mock_split_cl):
+    def testReviewerParsing(self):
         """Make sure we correctly parse various combinations of --reviewers"""
 
         # Helper function to pull out the reviewers arg and compare it
         def testOneSetOfFlags(flags, expected):
             self.assertEqual(git_cl.main(['split', '-n'] + flags), 0)
-            mock_split_cl.assert_called_once()
+            self.mock_split_cl.assert_called_once()
             # It's unfortunate that there's no better way to get the argument
             # than to hardcode its number, unless we switch to using keyword
             # arguments everywhere or pass the options in directly.
-            reviewers_arg = mock_split_cl.call_args.args[6]
+            reviewers_arg = self.mock_split_cl.call_args.args[6]
             self.assertEqual(reviewers_arg, expected)
-            mock_split_cl.reset_mock()
+            self.mock_split_cl.reset_mock()
 
         # If no --reviewers flag is passed, we should get None
         testOneSetOfFlags([], None)
@@ -5749,6 +5750,34 @@ class CMDSplitTestCase(CMDTestCaseBase):
         # If --no-reviewers flag is passed, we should always get an empty list
         testOneSetOfFlags(['--no-reviewers'], [])
         testOneSetOfFlags(['--reviewers', 'a@b.com', '--no-reviewers'], [])
+
+    def testTargetRangeParsing(self):
+        # Helper function to pull out the target_range arg and compare it
+        def testOneSetOfFlags(flags, expected):
+            self.assertEqual(git_cl.main(['split', '-n'] + flags), 0)
+            self.mock_split_cl.assert_called_once()
+            # It's unfortunate that there's no better way to get the argument
+            # than to hardcode its number, unless we switch to using keyword
+            # arguments everywhere or pass the options in directly.
+            target_range = self.mock_split_cl.call_args.args[11]
+            self.assertEqual(target_range, expected)
+            self.mock_split_cl.reset_mock()
+
+        def ensureFailure(flags):
+            self.assertRaises(ParserErrorMock, git_cl.main,
+                              (['split', '-n'] + flags))
+
+        testOneSetOfFlags([], None)
+        testOneSetOfFlags(["--target-range", "3", "5"], (3, 5))
+        testOneSetOfFlags(["--target-range", "3", "3"], (3, 3))
+        # Can't have second arg larger than first
+        ensureFailure(["--target-range", "5", "3"])
+        # Need exactly two args
+        ensureFailure(["--target-range"])
+        ensureFailure(["--target-range", "5"])
+        # Only accepts int args
+        ensureFailure(["--target-range", "5", "six"])
+
 
 if __name__ == '__main__':
     logging.basicConfig(

@@ -7,6 +7,7 @@
 import collections
 import dataclasses
 import hashlib
+import math
 import os
 import re
 import tempfile
@@ -197,17 +198,24 @@ def FormatDescriptionOrComment(txt, desc):
     return replaced_txt
 
 
-def AddUploadedByGitClSplitToDescription(description):
+def AddUploadedByGitClSplitToDescription(description, is_experimental=False):
     """Adds a 'This CL was uploaded by git cl split.' line to |description|.
 
     The line is added before footers, or at the end of |description| if it has
     no footers.
     """
+    if is_experimental:
+        new_lines = [
+            'This CL was uploaded by an experimental version of git cl split',
+            '(https://crbug.com/389069356).'
+        ]
+    else:
+        new_lines = ['This CL was uploaded by git cl split.']
     split_footers = git_footers.split_footers(description)
     lines = split_footers[0]
     if lines[-1] and not lines[-1].isspace():
         lines = lines + ['']
-    lines = lines + ['This CL was uploaded by git cl split.']
+    lines = lines + new_lines
     if split_footers[1]:
         lines += [''] + split_footers[1]
     return '\n'.join(lines)
@@ -387,14 +395,16 @@ def PrintSummary(cl_infos, refactor_branch):
             'The infra team reserves the right to cancel '
             'your jobs if they are overloading the CQ.\n\n'
             '(Alternatively, you can reduce the number of CLs created by '
-            'using the --max-depth option. Pass --dry-run to examine the '
+            'using the --max-depth option, or altering the arguments to '
+            '--target-range, as appropriate. Pass --dry-run to examine the '
             'CLs which will be created until you are happy with the '
             'results.)')
 
 
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
             summarize, reviewers_override, cq_dry_run, enable_auto_submit,
-            max_depth, topic, from_file, repository_root):
+            max_depth, topic, target_range, expect_owners_override, from_file,
+            repository_root):
     """"Splits a branch into smaller branches and uploads CLs.
 
     Args:
@@ -414,10 +424,10 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     Returns:
         0 in case of success. 1 in case of error.
     """
-
     description = LoadDescription(description_file, dry_run)
-    description = AddUploadedByGitClSplitToDescription(description)
 
+    description = AddUploadedByGitClSplitToDescription(
+        description, is_experimental=target_range)
     comment = gclient_utils.FileRead(comment_file) if comment_file else None
 
     EnsureInGitRepository()
@@ -443,6 +453,10 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
 
     if from_file:
         cl_infos = LoadSplittingFromFile(from_file, files_on_disk=files)
+    elif target_range:
+        min_files, max_files = target_range
+        cl_infos = GroupFilesByDirectory(cl, author, expect_owners_override,
+                                         files, min_files, max_files)
     else:
         files_split_by_reviewers = SelectReviewersForFiles(
             cl, author, files, max_depth)
@@ -783,6 +797,71 @@ def EditSplittingInteractively(
 # Code for the clustering-based splitting algorithm.
 ################################################################################
 
+
+def GroupFilesByDirectory(cl, author: str, expect_owners_override: bool,
+                          all_files: Tuple[str, str], min_files: int,
+                          max_files: int) -> List[CLInfo]:
+    """
+    Group the contents of |all_files| into clusters of size between |min_files|
+    and |max_files|, inclusive, based on their directory structure. Assign one
+    reviewer to each group to create a CL. If |expect_owners_override| is true,
+    consider only the directory structure of the files, ignoring ownership.
+
+    May rarely create groups with fewer than |min_files| files, or assign
+    multiple reviewers to a single CL.
+
+    Args:
+        cl: Changelist class instance, for calling owners methods
+        author: Email of person running the script; never assigned as a reviewer
+    """
+
+    # Record the actions associated with each file because the clustering
+    # algorithm just takes filenames
+    actions_by_file = {}
+    file_paths = []
+    for (action, file) in all_files:
+        actions_by_file[file] = action
+        file_paths.append(file)
+
+    reviewers_so_far = []
+    cls = []
+    # Go through the clusters by path length so that we're likely to choose
+    # top-level owners earlier
+    for (directories, files) in sorted(
+            ClusterFiles(expect_owners_override, file_paths, min_files,
+                         max_files)):
+        # Use '/' as a path separator in the branch name and the CL description
+        # and comment.
+        directories = [
+            directory.replace(os.path.sep, '/') for directory in directories
+        ]
+        files_with_actions = [(actions_by_file[file], file) for file in files]
+
+        # Try to find a reviewer. If some of the files have noparent set,
+        # we'll likely get multiple reviewers. Don't consider reviewers we've
+        # already assigned something to.
+        # FIXME: Rather than excluding existing reviewers, it would be better
+        # to just penalize them, but still choose them over reviewers who have
+        # a worse score. At the moment, owners_client doesn't support anything
+        # to do with the score.
+        reviewers = cl.owners_client.SuggestMinimalOwners(
+            files,
+            exclude=[author, cl.owners_client.EVERYONE] + reviewers_so_far)
+
+        # Retry without excluding existing reviewers if we couldn't find any.
+        # This is very unlikely since there are many fallback owners.
+        if not reviewers:
+            reviewers = cl.owners_client.SuggestMinimalOwners(
+                directories, exclude=[author, cl.owners_client.EVERYONE])
+
+        reviewers_so_far.extend(reviewers)
+        cls.append(
+            CLInfo(set(reviewers), files_with_actions,
+                   FormatDirectoriesForPrinting(directories)))
+
+    return cls
+
+
 ### Trie Code
 
 
@@ -864,3 +943,137 @@ class DirectoryTrie():
         for subdir in self.subdirectories.values():
             files += subdir.ToList()
         return files
+
+
+### Clustering code
+
+# Convenience type: a "bin" represents a collection of files:
+# it tracks their prefix(es) and the list of files themselves.
+# Both elements are string lists.
+Bin = collections.namedtuple("Bin", "prefixes files")
+
+
+def PackFiles(max_size: int, files_to_pack: List[Bin]) -> List[Bin]:
+    """
+    Simple bin packing algorithm: given a list of small bins, consolidate them
+    into as few larger bins as possible, where each bin can hold at most
+    |max_size| files.
+    """
+    bins = []
+    # Guess how many bins we'll need ahead of time so we can spread things
+    # between them. We'll add more bins later if necessary
+    expected_bins_needed = math.ceil(
+        sum(len(bin.files) for bin in files_to_pack) / max_size)
+    expected_avg_bin_size = math.ceil(
+        sum(len(bin.files) for bin in files_to_pack) / expected_bins_needed)
+    for _ in range(expected_bins_needed):
+        bins.append(Bin([], []))
+
+    # Sort by number of files, decreasing
+    sorted_by_num_files = sorted(files_to_pack, key=lambda bin: -len(bin.files))
+
+    # Invariant: the least-filled bin is always the first element of |bins|
+    # This ensures we spread things between bins as much as possible.
+    for (prefixes, files) in sorted_by_num_files:
+        b = bins[0]
+        if len(b.files) + len(files) <= max_size:
+            b[0].extend(prefixes)
+            b[1].extend(files)
+        else:
+            # Since the first bin is the emptiest, if we failed to fit in
+            # that we don't need to try any others.
+
+            # If these files alone are too large, split them up into
+            # groups of size |expected_avg_bin_size|
+            if len(files) > max_size:
+                bins.extend([
+                    Bin(prefixes, files[i:i + expected_avg_bin_size])
+                    for i in range(0, len(files), expected_avg_bin_size)
+                ])
+            else:
+                bins.append(Bin(prefixes, files))
+
+        # Maintain invariant
+        bins.sort(key=lambda bin: len(bin.files))
+    return [bin for bin in bins if len(bin.files) > 0]
+
+
+def ClusterFiles(expect_owners_override: bool, files: List[str], min_files: int,
+                 max_files: int) -> List[Bin]:
+    """
+    Group the entries of |files| into clusters of size between |min_files| and
+    |max_files|, inclusive. Guarantees that the size does not exceed
+    |max_files|, but the size may rarely be less than |min_files|. If
+    |expect_owners_override| is true, don't consider ownership when clustering,
+    only directory structure.
+
+    Clustering strategy for a given directory:
+    1. Try to group each subdirectory independently
+    2. Group any remaining files as follows:
+        2a. If there are less than |min_files| files and the folder has a parent,
+            give up and let the parent folder handle it.
+        2c. Otherwise, if there are at most |max_files| files, create one
+            cluster.
+        2c. Finally, if there are more than |max_files| files, create several
+            clusters of size less than |max_files|.
+    """
+    trie = DirectoryTrie(expect_owners_override)
+    trie.AddFiles([file.split(os.path.sep) for file in files])
+    clusters: List[Bin] = []
+
+    def ClusterDirectory(current_dir: DirectoryTrie) -> List[str]:
+        """
+        Attempt to cluster the files for a directory, by grouping them into
+        Bins and appending the bins to |clusters|.
+        Returns a list of files that weren't able to be clustered (because
+        there weren't at least |min_files| files).
+        """
+        # Track all the files we need to handle in this directory
+        unclustered_files: List[Bin] = []
+
+        # Record any files that live in this directory directly
+        if len(current_dir.files) > 0:
+            unclustered_files.append(
+                Bin([current_dir.prefix], current_dir.files))
+
+        # Step 1: Try to cluster each subdirectory independently
+        for subdir in current_dir.subdirectories.values():
+            unclustered_files_in_subdir = ClusterDirectory(subdir)
+            # If not all files were submitted, record them
+            if len(unclustered_files_in_subdir) > 0:
+                unclustered_files.append(
+                    Bin([subdir.prefix], unclustered_files_in_subdir))
+
+        # A flattened list containing just the names of all unclustered files
+        unclustered_files_names_only = [
+            file for bin in unclustered_files for file in bin.files
+        ]
+
+        if len(unclustered_files_names_only) == 0:
+            return []
+
+        # Step 2a: If we don't have enough files for a cluster and it's possible
+        # to recurse upward, do so
+        if (len(unclustered_files_names_only) < min_files
+                and current_dir.has_parent):
+            return unclustered_files_names_only
+
+        # Step 2b, 2c: Create one or more clusters from the unclustered files
+        # by appending to the |clusters| variable in the outer scope
+        nonlocal clusters
+        if len(unclustered_files_names_only) <= max_files:
+            clusters.append(
+                Bin([current_dir.prefix], unclustered_files_names_only))
+        else:
+            clusters += PackFiles(max_files, unclustered_files)
+
+        return []
+
+    unclustered_paths = ClusterDirectory(trie)
+    if (len(unclustered_paths) > 0):
+        EmitWarning(
+            'Not all files were assigned to a CL!\n'
+            'This should be impossible, file a bug.\n'
+            f'{len(unclustered_paths)} Unassigned files: {unclustered_paths}')
+
+    return clusters

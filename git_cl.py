@@ -5815,7 +5815,8 @@ def CMDsplit(parser, args):
         action='store_true',
         default=False,
         help='List the files and reviewers for each CL that would '
-        'be created, but don\'t create branches or CLs.')
+        'be created, but don\'t create branches or CLs.\n'
+        'You can pass -s in addition to get a more concise summary.')
     parser.add_option('--cq-dry-run',
                       action='store_true',
                       default=False,
@@ -5834,7 +5835,7 @@ def CMDsplit(parser, args):
         default=True,
         help='Sends your change to the CQ after an approval. Only '
         'works on repos that have the Auto-Submit label '
-        'enabled')
+        'enabled. This is the default option.')
     parser.add_option(
         '--disable-auto-submit',
         action='store_false',
@@ -5859,11 +5860,20 @@ def CMDsplit(parser, args):
     parser.add_option('--topic',
                       default=None,
                       help='Topic to specify when uploading')
+    parser.add_option(
+        '--target-range',
+        type='int',
+        default=None,
+        nargs=2,
+        help='Usage: --target-range <min> <max>\n                  '
+        'Use the alternate splitting algorithm which tries '
+        'to ensure each CL has between <min> and <max> files, inclusive. '
+        'Rarely, some CLs may have fewer files than specified.')
     parser.add_option('--from-file',
                       type='str',
                       default=None,
                       help='If present, load the split CLs from the given file '
-                      'instead of computing a splitting. These file are '
+                      'instead of computing a splitting. These files are '
                       'generated each time the script is run.')
     parser.add_option(
         '-s',
@@ -5881,17 +5891,29 @@ def CMDsplit(parser, args):
         default=None,
         help='If present, all generated CLs will be sent to the specified '
         'reviewer(s) specified, rather than automatically assigned reviewers.\n'
-        'Multiple reviewers can be specified as '
+        'Multiple reviewers can be specified as:                               '
         '--reviewers a@b.com --reviewers c@d.com\n')
     parser.add_option(
         '--no-reviewers',
         action='store_true',
         help='If present, generated CLs will not be assigned reviewers. '
         'Overrides --reviewers.')
+    parser.add_option(
+        '--expect-owners-override',
+        action='store_true',
+        help='If present, the clustering algorithm will group files by '
+        'directory only, without considering ownership.\n'
+        'No effect if --target-range is not passed.\n'
+        'Recommended to be used alongside --reviewers or --no-reviewers.')
     options, _ = parser.parse_args(args)
 
     if not options.description_file and not options.dry_run:
         parser.error('No --description flag specified.')
+
+    if (options.target_range
+            and options.target_range[0] > options.target_range[1]):
+        parser.error('First argument to --target-range cannot '
+                     'be greater than the second argument.')
 
     if options.no_reviewers:
         options.reviewers = []
@@ -5903,7 +5925,9 @@ def CMDsplit(parser, args):
                             Changelist, WrappedCMDupload, options.dry_run,
                             options.summarize, options.reviewers,
                             options.cq_dry_run, options.enable_auto_submit,
-                            options.max_depth, options.topic, options.from_file,
+                            options.max_depth, options.topic,
+                            options.target_range,
+                            options.expect_owners_override, options.from_file,
                             settings.GetRoot())
 
 
