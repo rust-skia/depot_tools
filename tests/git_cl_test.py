@@ -1437,6 +1437,7 @@ class TestGitCl(unittest.TestCase):
         options.message = 'honk stonk'
         options.topic = 'circus'
         options.enable_auto_submit = False
+        options.enable_owners_override = False
         options.set_bot_commit = False
         options.cq_dry_run = False
         options.use_commit_queue = False
@@ -1520,6 +1521,7 @@ class TestGitCl(unittest.TestCase):
         options.message = 'honk stonk'
         options.topic = 'circus'
         options.enable_auto_submit = False
+        options.enable_owners_override = False
         options.set_bot_commit = False
         options.cq_dry_run = False
         options.use_commit_queue = False
@@ -1586,6 +1588,7 @@ class TestGitCl(unittest.TestCase):
         options.topic = 'circus'
         options.message = 'honk stonk'
         options.enable_auto_submit = False
+        options.enable_owners_override = False
         options.set_bot_commit = False
         options.cq_dry_run = False
         options.use_commit_queue = False

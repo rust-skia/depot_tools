@@ -1965,6 +1965,8 @@ class Changelist(object):
 
         if options.enable_auto_submit:
             refspec_opts.append('l=Auto-Submit+1')
+        if options.enable_owners_override:
+            refspec_opts.append('l=Owners-Override+1')
         if options.set_bot_commit:
             refspec_opts.append('l=Bot-Commit+1')
         if options.use_commit_queue:
@@ -5346,6 +5348,9 @@ def CMDupload(parser, args):
         help='Sends your change to the CQ after an approval. Only '
         'works on repos that have the Auto-Submit label '
         'enabled')
+    parser.add_option('--enable-owners-override',
+                      action='store_true',
+                      help='Adds the Owners-Override label to your change.')
     parser.add_option(
         '--parallel',
         action='store_true',
