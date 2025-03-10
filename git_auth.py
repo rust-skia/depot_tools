@@ -119,6 +119,7 @@ class ConfigChanger(object):
             mode=ConfigMode.NEW_AUTH,
             remote_url=remote_url,
         )
+        assert c._shortname, "Short name is empty"
         c.mode = cls._infer_mode(cwd, c._shortname + '-review.googlesource.com')
         return c
 
@@ -303,6 +304,8 @@ def Configure(cwd: str, cl: git_cl.Changelist) -> None:
 def ConfigureGlobal(cwd: str, remote_url: str) -> None:
     """Configure global/user Git authentication."""
     logging.debug('Configuring global Git authentication for %s', remote_url)
+    if remote_url.startswith('file://'):
+        return
     ConfigChanger.new_for_remote(cwd, remote_url).apply_global(cwd)
 
 
