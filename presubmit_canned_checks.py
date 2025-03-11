@@ -2154,7 +2154,8 @@ def CheckForRecursedeps(input_api, output_api):
     if all(f.LocalPath() != 'DEPS' for f in input_api.AffectedFiles()):
         return []
     # Get DEPS file.
-    deps_file = input_api.os_path.join(input_api.PresubmitLocalPath(), 'DEPS')
+    deps_file = input_api.os_path.join(input_api.change.RepositoryRoot(),
+                                       'DEPS')
     if not input_api.os_path.isfile(deps_file):
         # No DEPS file, carry on!
         return []
