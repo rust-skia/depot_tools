@@ -64,10 +64,7 @@ class ConfigChanger(object):
         # Example: chromium
         parts: urllib.parse.SplitResult = urllib.parse.urlsplit(
             self._remote_url)
-        name: str = parts.netloc.split('.')[0]
-        if name.endswith('-review'):
-            name = name[:-len('-review')]
-        return name
+        return _url_shortname(parts)
 
     @functools.cached_property
     def _base_url(self) -> str:
@@ -315,3 +312,14 @@ def ClearRepoConfig(cwd: str, cl: git_cl.Changelist) -> None:
     c = ConfigChanger.new_from_env(cwd, cl)
     c.mode = ConfigMode.NO_AUTH
     c.apply(cwd)
+
+
+def _url_shortname(parts: urllib.parse.SplitResult) -> str:
+    """Format URL as Gerrit host shortname.
+
+    Example: chromium
+    """
+    name: str = parts.netloc.split('.')[0]
+    if name.endswith('-review'):
+        name = name[:-len('-review')]
+    return name
