@@ -1,0 +1,44 @@
+depot_tools_gerrit_auth(7)
+==========================
+
+NAME
+----
+depot_tools_gerrit_auth - Gerrit authentication for depot_tools
+
+DESCRIPTION
+-----------
+
+The Chromium linkgit:depot_tools[7] suite contains many tools which
+may need to authenticate to Gerrit.
+
+Gerrit uses OAuth for authentication.  Usually, the OAuth is handled
+by git-credential-luci.  You need to login once with
+git-credential-luci, and then it will provide access tokens for Gerrit
+authentication.
+
+depot_tools uses git-credential-luci to authenticate Gerrit API calls.
+
+GIT CONFIGURATION
+-----------------
+
+You need to configure Git to authenticate to Gerrit.  While
+depot_tools can help set up the necessary configuration, you can do it
+manually.
+
+You need to add the following lines to your Git config:
+
+[subs="quotes"]
+----
+[credential "https://chromium.googlesource.com"]
+helper =
+helper = luci
+----
+
+The empty value is needed to reset the helper list to prevent
+conflicts.  You should copy this for each Gerrit host you need.
+
+For Googlers, see go/chrome-gerrit-auth.
+
+include::_footer.txt[]
+
+// vim: ft=asciidoc:
