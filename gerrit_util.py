@@ -1433,7 +1433,7 @@ def AbandonChange(host, change, msg=''):
     path = 'changes/%s/abandon' % change
     body = {'message': msg} if msg else {}
     conn = CreateHttpConn(host, path, reqtype='POST', body=body)
-    return ReadHttpJsonResponse(conn)
+    return ReadHttpJsonResponse(conn, accept_statuses=(204, 409))
 
 
 def MoveChange(host, change, destination_branch):
