@@ -184,6 +184,9 @@ def _siso_supported(output_dir):
     return False
 
 
+# `use_siso` value is used to determine whether siso or ninja is used,
+# and used to determine default value of `use_reclient`, so
+# this logic should match with //build/toolchain/siso.gni
 def _get_use_siso_default(output_dir):
     """Returns use_siso default value."""
     if not _siso_supported(output_dir):
