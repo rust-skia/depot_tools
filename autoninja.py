@@ -293,9 +293,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             use_siso = _get_use_siso_default(output_dir)
 
         if use_reclient is None:
-            if os.path.exists(os.path.join(output_dir, ".reproxy_tmp")):
-                use_reclient = True
-            elif use_remoteexec:
+            if use_remoteexec:
                 values = _get_remoteexec_defaults()
                 if use_siso:
                     use_reclient = values["use_reclient_on_siso"]
