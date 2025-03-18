@@ -38,7 +38,7 @@ def _set_signal_handler(local_dev_server_path, build_id):
         global _is_canceled
         _is_canceled = True
         # Cancel the pending build tasks if user CTRL+c early.
-        print('Canceling pending build_server tasks', file=sys.stderr)
+        print('🛑 Canceling pending build_server tasks', file=sys.stderr)
         subprocess.run([local_dev_server_path, '--cancel-build', build_id])
         original_sigint_handler(signum, frame)
 
