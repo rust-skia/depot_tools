@@ -44,7 +44,7 @@ class TestConfigChanger(unittest.TestCase):
         ).apply('/some/fake/dir')
         want = {
             '/some/fake/dir': {
-                'credential.https://chromium.googlesource.com/.helper':
+                'credential.https://chromium.googlesource.com.helper':
                 ['', 'luci'],
                 'http.cookiefile': [''],
                 'url.https://chromium.googlesource.com/chromium/tools/depot_tools.git.insteadof':
@@ -95,7 +95,7 @@ class TestConfigChanger(unittest.TestCase):
         ).apply('/some/fake/dir')
         want = {
             '/some/fake/dir': {
-                'credential.https://chromium.googlesource.com/.helper':
+                'credential.https://chromium.googlesource.com.helper':
                 ['', 'luci'],
                 'http.cookiefile': [''],
                 'url.https://chromium.googlesource.com/chromium/tools/depot_tools.git.insteadof':
@@ -166,8 +166,7 @@ class TestConfigChanger(unittest.TestCase):
             'https://chromium.googlesource.com/chromium/tools/depot_tools.git',
         ).apply_global('/some/fake/dir')
         want = {
-            'credential.https://chromium.googlesource.com/.helper':
-            ['', 'luci'],
+            'credential.https://chromium.googlesource.com.helper': ['', 'luci'],
         }
         self.assertEqual(self.global_state, want)
 
@@ -197,8 +196,7 @@ class TestConfigChanger(unittest.TestCase):
         ).apply_global('/some/fake/dir')
         want = {
             'protocol.sso.allow': ['always'],
-            'credential.https://chromium.googlesource.com/.helper':
-            ['', 'luci'],
+            'credential.https://chromium.googlesource.com.helper': ['', 'luci'],
         }
         self.assertEqual(self.global_state, want)
 

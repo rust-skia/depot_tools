@@ -38,7 +38,7 @@ class ConfigChanger(object):
     #
     # Increment this when making changes to the config, so that reliant
     # code can determine whether the config needs to be re-applied.
-    VERSION: int = 4
+    VERSION: int = 6
 
     def __init__(
         self,
@@ -69,12 +69,20 @@ class ConfigChanger(object):
         return _url_shortname(parts)
 
     @functools.cached_property
-    def _base_url(self) -> str:
+    def _host_url(self) -> str:
+        # Example: https://chromium.googlesource.com
+        # Example: https://chromium-review.googlesource.com
+        parts: urllib.parse.SplitResult = urllib.parse.urlsplit(
+            self._remote_url)
+        return _url_host_url(parts)
+
+    @functools.cached_property
+    def _root_url(self) -> str:
         # Example: https://chromium.googlesource.com/
         # Example: https://chromium-review.googlesource.com/
         parts: urllib.parse.SplitResult = urllib.parse.urlsplit(
             self._remote_url)
-        return parts._replace(path='/', query='', fragment='').geturl()
+        return _url_root_url(parts)
 
     @classmethod
     def new_from_env(cls, cwd: str, cl: git_cl.Changelist) -> ConfigChanger:
@@ -152,7 +160,7 @@ class ConfigChanger(object):
 
     def _apply_cred_helper(self, cwd: str) -> None:
         """Apply config changes relating to credential helper."""
-        cred_key: str = f'credential.{self._base_url}.helper'
+        cred_key: str = f'credential.{self._host_url}.helper'
         if self.mode == ConfigMode.NEW_AUTH:
             self._set_config(cwd, cred_key, '', modify_all=True)
             self._set_config(cwd, cred_key, 'luci', append=True)
@@ -162,6 +170,10 @@ class ConfigChanger(object):
             self._set_config(cwd, cred_key, None, modify_all=True)
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
+
+        # Cleanup old from version 4
+        old_key: str = f'credential.{self._root_url}.helper'
+        self._set_config(cwd, old_key, None, modify_all=True)
 
     def _apply_sso(self, cwd: str) -> None:
         """Apply config changes relating to SSO."""
@@ -174,7 +186,7 @@ class ConfigChanger(object):
             self._set_config(cwd, http_key, self._remote_url, modify_all=True)
         elif self.mode == ConfigMode.NEW_AUTH_SSO:
             self._set_config(cwd, 'protocol.sso.allow', 'always')
-            self._set_config(cwd, sso_key, self._base_url, modify_all=True)
+            self._set_config(cwd, sso_key, self._root_url, modify_all=True)
             self._set_config(cwd, http_key, None, modify_all=True)
         elif self.mode == ConfigMode.NO_AUTH:
             self._set_config(cwd, 'protocol.sso.allow', None)
@@ -198,7 +210,7 @@ class ConfigChanger(object):
 
     def _apply_global_cred_helper(self, cwd: str) -> None:
         """Apply config changes relating to credential helper."""
-        cred_key: str = f'credential.{self._base_url}.helper'
+        cred_key: str = f'credential.{self._host_url}.helper'
         if self.mode == ConfigMode.NEW_AUTH:
             self._set_config(cwd, cred_key, '', scope='global', modify_all=True)
             self._set_config(cwd, cred_key, 'luci', scope='global', append=True)
@@ -212,6 +224,10 @@ class ConfigChanger(object):
             pass
         else:
             raise TypeError(f'Invalid mode {self.mode!r}')
+
+        # Cleanup old from version 4
+        old_key: str = f'credential.{self._root_url}.helper'
+        self._set_config(cwd, old_key, None, modify_all=True, scope='global')
 
     def _apply_global_sso(self, cwd: str) -> None:
         """Apply config changes relating to SSO."""
@@ -231,7 +247,7 @@ class ConfigChanger(object):
                              scope='global')
             self._set_config(cwd,
                              sso_key,
-                             self._base_url,
+                             self._root_url,
                              scope='global',
                              modify_all=True)
         elif self.mode == ConfigMode.NO_AUTH:
