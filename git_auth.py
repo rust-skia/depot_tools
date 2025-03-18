@@ -340,6 +340,25 @@ class _ConfigError(Exception):
     """
 
 
+class _ConfigMethod(enum.Enum):
+    """Enum used in _ConfigInfo."""
+    OAUTH = 1
+    SSO = 2
+
+
+class _ConfigInfo(NamedTuple):
+    """Result for ConfigWizard._configure."""
+    method: _ConfigMethod
+
+
+class _GitcookiesSituation(NamedTuple):
+    """Result for ConfigWizard._check_gitcookies."""
+    gitcookies_exists: bool
+    cookiefile: str
+    cookiefile_exists: bool
+    divergent_cookiefiles: bool
+
+
 class ConfigWizard(object):
     """Wizard for setting up user's Git config Gerrit authentication."""
 
@@ -431,11 +450,16 @@ class ConfigWizard(object):
         for host in hosts:
             self._println(f'- {host}')
 
+        used_oauth = False
         for host in hosts:
             self._println()
             self._println(f'Checking authentication config for {host}')
             parts = urllib.parse.urlsplit(f'https://{host}/')
-            self._configure(parts, global_email, scope='global')
+            info = self._configure(parts, global_email, scope='global')
+            if info.method == _ConfigMethod.OAUTH:
+                used_oauth = True
+        if used_oauth:
+            self._print_oauth_instructions()
 
     def _run_inside_repo(self, parts: urllib.parse.SplitResult) -> None:
         global_email = self._check_global_email()
@@ -453,15 +477,18 @@ class ConfigWizard(object):
             email = local_email
             scope = 'local'
         self._println()
-        self._configure(parts, email, scope=scope)
+        info = self._configure(parts, email, scope=scope)
+        if info.method == _ConfigMethod.OAUTH:
+            self._print_oauth_instructions()
 
     def _configure(self, parts: urllib.parse.SplitResult, email: str, *,
-                   scope: scm.GitConfigScope) -> None:
+                   scope: scm.GitConfigScope) -> _ConfigInfo:
         use_sso = self._check_use_sso(parts, email)
         if use_sso:
             self._configure_sso(parts, scope=scope)
-        else:
-            self._configure_oauth(parts, scope=scope)
+            return _ConfigInfo(method=_ConfigMethod.SSO)
+        self._configure_oauth(parts, scope=scope)
+        return _ConfigInfo(method=_ConfigMethod.OAUTH)
 
     def _configure_sso(self, parts: urllib.parse.SplitResult, *,
                        scope: scm.GitConfigScope) -> None:
@@ -562,7 +589,7 @@ class ConfigWizard(object):
         self._move_file(sit.cookiefile)
         self._set_config('http.cookiefile', None, scope='global')
 
-    def _check_gitcookies(self) -> '_GitcookiesSituation':
+    def _check_gitcookies(self) -> _GitcookiesSituation:
         """Checks various things about the user's gitcookies situation."""
         gitcookies = self._gitcookies()
         gitcookies_exists = os.path.exists(gitcookies)
@@ -635,6 +662,20 @@ class ConfigWizard(object):
         self._println(
             'https://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_gerrit_auth.html'
         )
+
+    def _print_oauth_instructions(self) -> None:
+        """Prints instructions for setting up OAuth helper."""
+        self._println()
+        self._println('We have configured Git to use an OAuth helper.')
+        self._println('The OAuth helper requires its own login.')
+        self._println_action(
+            'Please run `git credential-luci login` to set up the OAuth helper.'
+        )
+        self._println(
+            "(If you have already done this, you don't need to do it again.)")
+        self._println(
+            '(However, if you changed your email, you should do this again')
+        self._println("to ensure you're using the right account.)")
 
     def _set_oauth_helper(self, parts: urllib.parse.SplitResult, *,
                           scope: scm.GitConfigScope) -> None:
@@ -837,14 +878,6 @@ class UserInterface(object):
         The string should usually end in a newline.
         """
         self._stdout.write(s)
-
-
-class _GitcookiesSituation(NamedTuple):
-    """Result for _check_gitcookies."""
-    gitcookies_exists: bool
-    cookiefile: str
-    cookiefile_exists: bool
-    divergent_cookiefiles: bool
 
 
 class _CookiefileInfo(NamedTuple):
