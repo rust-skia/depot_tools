@@ -3904,27 +3904,13 @@ def CMDcreds_check(parser, args):
 
     if newauth.Enabled():
         cl = Changelist()
-        host = cl.GetGerritHost()
-        print(f'Using Gerrit host: {host!r}')
-        git_auth.Configure(os.getcwd(), cl)
-        # Perform some advisory checks
-        email = scm.GIT.GetConfig(os.getcwd(), 'user.email') or ''
-        print(f'Using email (configured in Git): {email!r}')
-        if gerrit_util.ShouldUseSSO(host, email):
-            print('Detected that we should be using SSO.')
-        else:
-            print('Detected that we should be using git-credential-luci.')
-            a = gerrit_util.GitCredsAuthenticator()
-            try:
-                a.luci_auth.get_access_token()
-            except auth.GitLoginRequiredError as e:
-                print('NOTE: You are not logged in with git-credential-luci.')
-                print(
-                    'You will not be able to perform many actions without logging in.'
-                )
-                print('If you wish to log in, run:')
-                print('   ' + e.login_command)
-                print('and re-run this command.')
+        try:
+            remote_url = cl.GetRemoteUrl()
+        except subprocess2.CalledProcessError:
+            remote_url = ''
+        wizard = git_auth.ConfigWizard(
+            git_auth.UserInterface(sys.stdin, sys.stdout))
+        wizard.run(remote_url)
         return 0
     if newauth.ExplicitlyDisabled():
         git_auth.ClearRepoConfig(os.getcwd(), Changelist())
@@ -3953,22 +3939,6 @@ def CMDcreds_check(parser, args):
         print('\nNo problems detected in your .gitcookies file.')
         return 0
     return 1
-
-
-def CMDcreds_check2(parser, args):
-    """Checks credentials and suggests changes.
-
-    New wizard version, currently for testing use.
-    """
-    _, _ = parser.parse_args(args)
-    cl = Changelist()
-    try:
-        remote_url = cl.GetRemoteUrl()
-    except subprocess2.CalledProcessError:
-        remote_url = ''
-    wizard = git_auth.ConfigWizard(git_auth.UserInterface(
-        sys.stdin, sys.stdout))
-    wizard.run(remote_url)
 
 
 @metrics.collector.collect_metrics('git cl baseurl')

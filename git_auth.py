@@ -375,17 +375,6 @@ class ConfigWizard(object):
         self._println(
             '(Report any issues to https://issues.chromium.org/issues/new?component=1456702&template=2076315)'
         )
-        if not newauth.Enabled():
-            self._println()
-            self._println('You have not enabled new auth.')
-            self._println('This tool will configure Git to use new auth,')
-            self._println('while depot_tools will continue to use old auth.')
-            self._println(
-                "We recommend not continuing, though you may if you're adventurous."
-            )
-            self._println('(It will probably work.  Maybe.)')
-            if not self._ui.read_yn('Continue?', default=False):
-                return
         self._println()
         self._fix_gitcookies()
         self._println()
