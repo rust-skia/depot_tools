@@ -63,10 +63,3 @@ def ExplicitlyDisabled() -> bool:
     return scm.GIT.GetConfig(os.getcwd(),
                              'depot-tools.usenewauthstack') in ('no', 'off',
                                                                 'false', '0')
-
-
-def SkipSSO() -> bool:
-    """Returns True if skip SSO is set."""
-    return scm.GIT.GetConfig(os.getcwd(),
-                             'depot-tools.newauthskipsso') in ('yes', 'on',
-                                                               'true', '1')

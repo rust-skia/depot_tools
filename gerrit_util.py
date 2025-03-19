@@ -195,8 +195,6 @@ def CheckShouldUseSSO(host: str, email: str) -> SSOCheckResult:
         return SSOCheckResult(False, 'not opted in')
     if not host.endswith('.googlesource.com'):
         return SSOCheckResult(False, f'non-googlesource host {host}')
-    if newauth.SkipSSO():
-        return SSOCheckResult(False, 'skip SSO is set in config')
     if not ssoHelper.find_cmd():
         return SSOCheckResult(False, 'no SSO command')
     if gclient_utils.IsEnvCog():
@@ -277,9 +275,6 @@ class _Authenticator(object):
 
             use_new_auth = newauth.Enabled()
 
-            # Allow skipping SSOAuthenticator for local testing purposes.
-            skip_sso = newauth.SkipSSO()
-
             if use_new_auth:
                 LOGGER.debug('_Authenticator.get: using new auth stack')
                 if LuciContextAuthenticator.is_applicable():
@@ -296,10 +291,6 @@ class _Authenticator(object):
                         GitCredsAuthenticator(),
                         NoAuthenticator(),
                     ]
-                    if skip_sso:
-                        LOGGER.debug(
-                            'Authenticator.get: skipping SSOAuthenticator.')
-                        a = a[1:]
                     ret = ChainedAuthenticator(a)
                 cls._resolved = ret
                 return ret
