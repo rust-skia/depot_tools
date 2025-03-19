@@ -1368,7 +1368,9 @@ class GitWrapper(SCMWrapper):
         gclient_utils.safe_makedirs(parent_dir)
 
         # Set up Git authentication configuration that is needed to clone/fetch the repo.
-        if newauth.Enabled():
+        #
+        # Disabled on Windows
+        if newauth.Enabled() and os.name != 'nt':
             # We need the host from the URL to determine auth settings.
             # The url parameter might have been re-written to a local
             # cache directory, so we need self.url, which contains the
