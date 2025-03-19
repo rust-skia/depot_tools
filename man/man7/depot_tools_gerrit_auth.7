@@ -2,12 +2,12 @@
 .\"     Title: depot_tools_gerrit_auth
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 03/11/2025
+.\"      Date: 03/19/2025
 .\"    Manual: Chromium depot_tools Manual
-.\"    Source: depot_tools 39b331947
+.\"    Source: depot_tools 7a97e75f4
 .\"  Language: English
 .\"
-.TH "DEPOT_TOOLS_GERRIT_A" "7" "03/11/2025" "depot_tools 39b331947" "Chromium depot_tools Manual"
+.TH "DEPOT_TOOLS_GERRIT_A" "7" "03/19/2025" "depot_tools 7a97e75f4" "Chromium depot_tools Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -33,12 +33,14 @@ depot_tools_gerrit_auth \- Gerrit authentication for depot_tools
 .sp
 The Chromium \fBdepot_tools\fR(7) suite contains many tools which may need to authenticate to Gerrit\&.
 .sp
-Gerrit uses OAuth for authentication\&. Usually, the OAuth is handled by git\-credential\-luci\&. You need to login once with git\-credential\-luci, and then it will provide access tokens for Gerrit authentication\&.
+Gerrit uses OAuth for authentication\&. For depot_tools, OAuth is handled by \fBgit\-credential\-luci\fR\&.
 .sp
-depot_tools uses git\-credential\-luci to authenticate Gerrit API calls\&.
+Authentication is needed both for Gerrit API calls made by depot_tools and for operations done directly by Git (e\&.g\&., \fBgit push\fR, \fBgit fetch\fR)\&.
+.sp
+For Gerrit API calls, depot_tools uses \fBgit\-credential\-luci\fR out of the box, but for Git, you need to modify your Git configuration to use \fBgit\-credential\-luci\fR\&.
 .SH "GIT CONFIGURATION"
 .sp
-You need to configure Git to authenticate to Gerrit\&. While depot_tools can help set up the necessary configuration, you can do it manually\&.
+You need to configure Git to authenticate to Gerrit\&. While depot_tools can help set up the necessary configuration (\fBgit cl creds\-check\fR), you can also do it manually\&.
 .sp
 You need to add the following lines to your Git config:
 .sp
@@ -55,7 +57,9 @@ helper = luci
 .\}
 .sp
 .sp
-The empty value is needed to reset the helper list to prevent conflicts\&. You should copy this for each Gerrit host you need\&.
+This tells Git to use \fBgit\-credential\-luci\fR\&. The first empty value line is needed to reset the helper list to prevent conflicts\&.
+.sp
+You should copy this for each Gerrit host you use\&.
 .sp
 For Googlers, see go/chrome\-gerrit\-auth\&.
 .SH "CHROMIUM DEPOT_TOOLS"

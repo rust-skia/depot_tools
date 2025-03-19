@@ -757,19 +757,22 @@ depot_tools_gerrit_auth(7) Manual Page
 <div class="sectionbody">
 <div class="paragraph"><p>The Chromium <a href="depot_tools.html">depot_tools(7)</a> suite contains many tools which
 may need to authenticate to Gerrit.</p></div>
-<div class="paragraph"><p>Gerrit uses OAuth for authentication.  Usually, the OAuth is handled
-by git-credential-luci.  You need to login once with
-git-credential-luci, and then it will provide access tokens for Gerrit
-authentication.</p></div>
-<div class="paragraph"><p>depot_tools uses git-credential-luci to authenticate Gerrit API calls.</p></div>
+<div class="paragraph"><p>Gerrit uses OAuth for authentication.  For depot_tools, OAuth is
+handled by <code>git-credential-luci</code>.</p></div>
+<div class="paragraph"><p>Authentication is needed both for Gerrit API calls made by depot_tools
+and for operations done directly by Git (e.g., <code>git push</code>, <code>git
+fetch</code>).</p></div>
+<div class="paragraph"><p>For Gerrit API calls, depot_tools uses <code>git-credential-luci</code> out of the
+box, but for Git, you need to modify your Git configuration to use
+<code>git-credential-luci</code>.</p></div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_git_configuration">GIT CONFIGURATION</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>You need to configure Git to authenticate to Gerrit.  While
-depot_tools can help set up the necessary configuration, you can do it
-manually.</p></div>
+depot_tools can help set up the necessary configuration (<code>git cl
+creds-check</code>), you can also do it manually.</p></div>
 <div class="paragraph"><p>You need to add the following lines to your Git config:</p></div>
 <div class="listingblock">
 <div class="content">
@@ -777,8 +780,9 @@ manually.</p></div>
 helper =
 helper = luci</code></pre>
 </div></div>
-<div class="paragraph"><p>The empty value is needed to reset the helper list to prevent
-conflicts.  You should copy this for each Gerrit host you need.</p></div>
+<div class="paragraph"><p>This tells Git to use <code>git-credential-luci</code>.  The first empty value
+line is needed to reset the helper list to prevent conflicts.</p></div>
+<div class="paragraph"><p>You should copy this for each Gerrit host you use.</p></div>
 <div class="paragraph"><p>For Googlers, see go/chrome-gerrit-auth.</p></div>
 </div>
 </div>
@@ -795,7 +799,7 @@ by checking out the <a href="https://chromium.googlesource.com/chromium/tools/de
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-03-11 23:26:44 UTC
+ 2025-03-19 21:22:42 UTC
 </div>
 </div>
 </body>
