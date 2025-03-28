@@ -775,22 +775,25 @@ def CheckLicense(input_api,
         # The (c) is deprecated, but tolerate it until it's removed from all
         # files. "All rights reserved" is also deprecated, but tolerate it until
         # it's removed from all files.
-        license_re = (r'.*? Copyright (\(c\) )?%(year)s The %(project)s Authors'
-                      r'(\. All rights reserved\.)?\n'
-                      r'.*? %(key_line)s\n'
-                      r'.*? found in the LICENSE file\.(?: \*/)?\n') % {
-                          'year': years_re,
-                          'project': project_name,
-                          'key_line': key_line,
-                      }
+        license_re = (
+            r'(?:.+ )?Copyright (\(c\) )?%(year)s The %(project)s Authors'
+            r'(\. All rights reserved\.)?\n'
+            r'(?:.+ )?%(key_line)s\n'
+            r'(?:.+ )?found in the LICENSE file\.(?: \*/)?\n') % {
+                'year': years_re,
+                'project': project_name,
+                'key_line': key_line,
+            }
+
         # On new files don't tolerate any digression from the ideal.
-        new_license_re = (r'.*? Copyright %(year)s The %(project)s Authors\n'
-                          r'.*? %(key_line)s\n'
-                          r'.*? found in the LICENSE file\.(?: \*/)?\n') % {
-                              'year': years_re,
-                              'project': project_name,
-                              'key_line': key_line,
-                          }
+        new_license_re = (
+            r'(?:.+ )?Copyright %(year)s The %(project)s Authors\n'
+            r'(?:.+ )?%(key_line)s\n'
+            r'(?:.+ )?found in the LICENSE file\.(?: \*/)?\n') % {
+                'year': years_re,
+                'project': project_name,
+                'key_line': key_line,
+            }
 
     license_re = input_api.re.compile(license_re, input_api.re.MULTILINE)
     new_license_re = input_api.re.compile(new_license_re,

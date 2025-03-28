@@ -574,6 +574,7 @@ class InputApi(object):
         r'.+\.mojom$',
         r'.+\.fidl$',
         r'.+\.rs$',
+        r'.+\/res\/.+\.xml$',
     )
 
     # Path regexp that should be excluded from being considered containing

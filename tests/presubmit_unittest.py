@@ -1450,7 +1450,7 @@ class InputApiUnittest(PresubmitTestsBase):
     def testDefaultOverrides(self):
         input_api = presubmit.InputApi(self.fake_change, './PRESUBMIT.py',
                                        False, None, False)
-        self.assertEqual(len(input_api.DEFAULT_FILES_TO_CHECK), 26)
+        self.assertEqual(len(input_api.DEFAULT_FILES_TO_CHECK), 27)
         self.assertEqual(len(input_api.DEFAULT_FILES_TO_SKIP), 12)
 
         input_api.DEFAULT_FILES_TO_CHECK = (r'.+\.c$', )
@@ -2793,6 +2793,21 @@ the current line as well!
             "* found in the LICENSE file. */\n"
             "\n"
             "h1 {}\n" % current_year)
+        license_text = None
+        self._LicenseCheck(text, license_text, False, None, new_file=True)
+
+    def testCheckLicenseNewXMLFilePass(self):
+        # Check that XML-style comments in license text are supported.
+        current_year = int(time.strftime('%Y'))
+        text = (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            '<!--\n'
+            'Copyright %d The Chromium Authors\n'
+            'Use of this source code is governed by a BSD-style license that '
+            'can be\n'
+            'found in the LICENSE file.\n'
+            '-->\n'
+            '<root/>\n' % current_year)
         license_text = None
         self._LicenseCheck(text, license_text, False, None, new_file=True)
 
