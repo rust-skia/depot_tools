@@ -1,10 +1,9 @@
 set noparent
 
-ajp@google.com
+ajp@google.com #{LAST_RESORT_SUGGESTION}
 bryner@google.com
 ddoman@chromium.org
 gavinmak@google.com
-jojwang@google.com
 sokcevic@google.com
 yiwzhang@google.com
 
