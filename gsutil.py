@@ -33,6 +33,8 @@ LUCI_AUTH_SCOPES = [
     'https://www.googleapis.com/auth/userinfo.email',
 ]
 
+# Prefer LUCI auth mechanism over .boto config.
+PREFER_LUCI_AUTH = True
 
 # Platforms unsupported by luci-auth.
 LUCI_AUTH_UNSUPPORTED_PLATFORMS = ['aix', 'zos']
@@ -157,15 +159,18 @@ def _is_luci_auth_supported_platform():
                        LUCI_AUTH_UNSUPPORTED_PLATFORMS))
 
 
-def luci_context(cmd):
+def luci_context(cmd, fallback=True):
     """Helper to call`luci-auth context`."""
     p = _luci_auth_cmd('context', wrapped_cmds=cmd)
 
     # If luci-auth is not logged in, fallback to normal execution.
-    if b'Not logged in.' in p.stderr:
+    luci_not_logged_in = b'Not logged in.' in p.stderr
+    if luci_not_logged_in and fallback:
         return _run_subprocess(cmd, interactive=True)
 
-    _print_subprocess_result(p)
+    if not luci_not_logged_in:
+        _print_subprocess_result(p)
+
     return p
 
 
@@ -207,11 +212,17 @@ def _print_subprocess_result(p):
         sys.stderr.buffer.write(p.stderr)
 
 
-def is_boto_present():
-    """Returns true if the .boto file is present in the default path."""
-    return os.getenv('BOTO_CONFIG') or os.getenv(
-        'AWS_CREDENTIAL_FILE') or os.path.isfile(
-            os.path.join(os.path.expanduser('~'), '.boto'))
+def get_boto_path():
+    """Returns the path to a .boto file if it's present in the default path."""
+    env_var = os.getenv('BOTO_CONFIG') or os.getenv('AWS_CREDENTIAL_FILE')
+    if env_var:
+        return env_var
+
+    home_boto = os.path.join(os.path.expanduser('~'), '.boto')
+    if os.path.isfile(home_boto):
+        return home_boto
+
+    return ""
 
 
 def run_gsutil(target, args, clean=False):
@@ -246,9 +257,38 @@ def run_gsutil(target, args, clean=False):
         os.path.join(THIS_DIR, 'gsutil.vpython3'), '--', gsutil_bin
     ] + args_opt + args
 
+    boto_path = get_boto_path()
+
+    # Try luci-auth early even if a boto file exists.
+    if PREFER_LUCI_AUTH and boto_path:
+        # Skip wrapping commands if luci-auth is already being used or if the
+        # platform is unsupported by luci-auth.
+        if _is_luci_context() or not _is_luci_auth_supported_platform():
+            return _run_subprocess(cmd, interactive=True).returncode
+
+        # Wrap gsutil with luci-auth context. If not logged in and boto is
+        # present don't fallback to normal execution, fallback to normal
+        # flow below.
+        p = luci_context(cmd, fallback=False).returncode
+        if not p:
+            return p
+
+
     # When .boto is present, try without additional wrappers and handle specific
     # errors.
-    if is_boto_present():
+    if boto_path:
+        # Display a warning about using .boto files.
+        if PREFER_LUCI_AUTH:
+            separator = '*' * 80
+            print(
+                '\n' + separator + '\n' +
+                'Warning: You are using a .boto file for authentication, '
+                'this method is deprecated.\n' + f'({boto_path})\n\n' +
+                'Next time please run `gsutil.py config` to use luci-auth.\n\n'
+                + 'Falling back to .boto authentication method.\n' + separator +
+                '\n',
+                file=sys.stderr)
+
         p = _run_subprocess(cmd)
 
         # Notify user that their .boto file might be outdated.
