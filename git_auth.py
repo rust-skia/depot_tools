@@ -359,6 +359,97 @@ class _GitcookiesSituation(NamedTuple):
     divergent_cookiefiles: bool
 
 
+_InputChecker = Callable[['UserInterface', str], bool]
+
+
+def _check_any(ui: UserInterface, line: str) -> bool:
+    """Allow any input."""
+    return True
+
+
+def _check_nonempty(ui: UserInterface, line: str) -> bool:
+    """Reject nonempty input."""
+    if line:
+        return True
+    ui.write('Input cannot be empty.\n')
+    return False
+
+
+def _check_choice(choices: Collection[str]) -> _InputChecker:
+    """Allow specified choices."""
+
+    def func(ui: UserInterface, line: str) -> bool:
+        if line in choices:
+            return True
+        ui.write('Invalid choice.\n')
+        return False
+
+    return func
+
+
+class UserInterface(object):
+    """Abstracts user interaction for ConfigWizard.
+
+    This implementation supports regular terminals.
+    """
+
+    _prompts = {
+        None: 'y/n',
+        True: 'Y/n',
+        False: 'y/N',
+    }
+
+    def __init__(self, stdin: TextIO, stdout: TextIO):
+        self._stdin = stdin
+        self._stdout = stdout
+
+    def read_yn(self, prompt: str, *, default: bool | None = None) -> bool:
+        """Reads a yes/no response.
+
+        The prompt should end in '?'.
+        """
+        prompt = f'{prompt} [{self._prompts[default]}]: '
+        while True:
+            self._stdout.write(prompt)
+            self._stdout.flush()
+            response = self._stdin.readline().strip().lower()
+            if response in ('y', 'yes'):
+                return True
+            if response in ('n', 'no'):
+                return False
+            if not response and default is not None:
+                return default
+            self._stdout.write('Type y or n.\n')
+
+    def read_line(self,
+                  prompt: str,
+                  *,
+                  check: _InputChecker = _check_any) -> str:
+        """Reads a line of input.
+
+        Trailing whitespace is stripped from the read string.
+        The prompt should not end in any special indicator like a colon.
+
+        Optionally, an input check function may be provided.  This
+        method will continue to prompt for input until it passes the
+        check.  The check should print some explanation for rejected
+        inputs.
+        """
+        while True:
+            self._stdout.write(f'{prompt}: ')
+            self._stdout.flush()
+            s = self._stdin.readline().rstrip()
+            if check(self, s):
+                return s
+
+    def write(self, s: str) -> None:
+        """Write string as-is.
+
+        The string should usually end in a newline.
+        """
+        self._stdout.write(s)
+
+
 class ConfigWizard(object):
     """Wizard for setting up user's Git config Gerrit authentication."""
 
@@ -407,8 +498,8 @@ class ConfigWizard(object):
         self._println(
             'You can re-run this command inside a Gerrit repository,'
             ' or we can try to set up some commonly used Gerrit hosts.')
-        if not self._ui.read_yn('Set up commonly used Gerrit hosts?',
-                                default=True):
+        if not self._read_yn('Set up commonly used Gerrit hosts?',
+                             default=True):
             self._println('Okay, skipping Gerrit host setup.')
             self._println(
                 'You can re-run this command later or follow the instructions for manual configuration.'
@@ -508,7 +599,7 @@ class ConfigWizard(object):
                     'This won"t affect Git authentication, but may cause issues for'
                 )
                 self._println('other Gerrit operations in depot_tools.')
-                if self._ui.read_yn(
+                if self._read_yn(
                         'Shall we move your .gitcookies file (to a backup location)?',
                         default=True):
                     self._move_file(self._gitcookies())
@@ -527,7 +618,7 @@ class ConfigWizard(object):
             self._println(
                 'This will not affect anything, but we suggest removing the http.cookiefile from your Git config.'
             )
-            if self._ui.read_yn('Shall we remove it for you?', default=True):
+            if self._read_yn('Shall we remove it for you?', default=True):
                 self._set_config('http.cookiefile', None, scope='global')
             return
 
@@ -567,7 +658,7 @@ class ConfigWizard(object):
         self._println(
             'Cookie auth is deprecated, and these cookies may interfere with Gerrit authentication.'
         )
-        if not self._ui.read_yn(
+        if not self._read_yn(
                 'Shall we move your cookie file (to a backup location)?',
                 default=True):
             self._println(
@@ -606,15 +697,15 @@ class ConfigWizard(object):
             return email
         self._println(
             'You do not have an email configured in your global Git config.')
-        if not self._ui.read_yn('Do you want to set one now?', default=True):
+        if not self._read_yn('Do you want to set one now?', default=True):
             self._println('Will attempt to continue without a global email.')
             return ''
         name = scm.GIT.GetConfig(os.getcwd(), 'user.name', scope='global') or ''
         if not name:
-            name = self._ui.read_line('Enter your name (e.g., John Doe)',
-                                      check=_check_nonempty)
+            name = self._read_line('Enter your name (e.g., John Doe)',
+                                   check=_check_nonempty)
             self._set_config('user.name', name, scope='global')
-        email = self._ui.read_line('Enter your email', check=_check_nonempty)
+        email = self._read_line('Enter your email', check=_check_nonempty)
         self._set_config('user.email', email, scope='global')
         return email
 
@@ -769,6 +860,19 @@ class ConfigWizard(object):
         self._ui.write(s)
         self._ui.write('\n')
 
+    def _read_yn(self, prompt: str, *, default: bool | None = None) -> bool:
+        ret = self._ui.read_yn(prompt, default=default)
+        self._ui.write('\n')
+        return ret
+
+    def _read_line(self,
+                   prompt: str,
+                   *,
+                   check: _InputChecker = _check_any) -> str:
+        ret = self._ui.read_line(prompt, check=check)
+        self._ui.write('\n')
+        return ret
+
     @staticmethod
     def _gitcookies() -> str:
         """Path to user's gitcookies.
@@ -776,97 +880,6 @@ class ConfigWizard(object):
         Can be mocked for testing.
         """
         return os.path.expanduser('~/.gitcookies')
-
-
-_InputChecker = Callable[['UserInterface', str], bool]
-
-
-def _check_any(ui: UserInterface, line: str) -> bool:
-    """Allow any input."""
-    return True
-
-
-def _check_nonempty(ui: UserInterface, line: str) -> bool:
-    """Reject nonempty input."""
-    if line:
-        return True
-    ui.write('Input cannot be empty.\n')
-    return False
-
-
-def _check_choice(choices: Collection[str]) -> _InputChecker:
-    """Allow specified choices."""
-
-    def func(ui: UserInterface, line: str) -> bool:
-        if line in choices:
-            return True
-        ui.write('Invalid choice.\n')
-        return False
-
-    return func
-
-
-class UserInterface(object):
-    """Abstracts user interaction for ConfigWizard.
-
-    This implementation supports regular terminals.
-    """
-
-    _prompts = {
-        None: 'y/n',
-        True: 'Y/n',
-        False: 'y/N',
-    }
-
-    def __init__(self, stdin: TextIO, stdout: TextIO):
-        self._stdin = stdin
-        self._stdout = stdout
-
-    def read_yn(self, prompt: str, *, default: bool | None = None) -> bool:
-        """Reads a yes/no response.
-
-        The prompt should end in '?'.
-        """
-        prompt = f'{prompt} [{self._prompts[default]}]: '
-        while True:
-            self._stdout.write(prompt)
-            self._stdout.flush()
-            response = self._stdin.readline().strip().lower()
-            if response in ('y', 'yes'):
-                return True
-            if response in ('n', 'no'):
-                return False
-            if not response and default is not None:
-                return default
-            self._stdout.write('Type y or n.\n')
-
-    def read_line(self,
-                  prompt: str,
-                  *,
-                  check: _InputChecker = _check_any) -> str:
-        """Reads a line of input.
-
-        Trailing whitespace is stripped from the read string.
-        The prompt should not end in any special indicator like a colon.
-
-        Optionally, an input check function may be provided.  This
-        method will continue to prompt for input until it passes the
-        check.  The check should print some explanation for rejected
-        inputs.
-        """
-        while True:
-            self._stdout.write(f'{prompt}: ')
-            self._stdout.flush()
-            s = self._stdin.readline().rstrip()
-            if check(self, s):
-                return s
-
-    def write(self, s: str) -> None:
-        """Write string as-is.
-
-        The string should usually end in a newline.
-        """
-        self._stdout.write(s)
 
 
 class _CookiefileInfo(NamedTuple):
