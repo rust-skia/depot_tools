@@ -319,7 +319,13 @@ def Configure(cwd: str, cl: git_cl.Changelist) -> None:
 def ConfigureGlobal(cwd: str, remote_url: str) -> None:
     """Configure global/user Git authentication."""
     logging.debug('Configuring global Git authentication for %s', remote_url)
+    # Checks to ensure this doesn't error when called with "bad" URLs.
+    #
+    # Don't try to configure auth for local files.
     if remote_url.startswith('file://'):
+        return
+    # Skip for local files that aren't even URIs.
+    if '://' not in remote_url:
         return
     ConfigChanger.new_for_remote(cwd, remote_url).apply_global(cwd)
 
