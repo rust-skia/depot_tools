@@ -214,7 +214,7 @@ def CheckShouldUseSSO(host: str, email: str) -> SSOCheckResult:
     except GerritError as e:
         if e.http_status == 400:
             # This is likely because the user doesn't have an account on the Gerrit host.
-            return SSOCheckResult(False, 'account missing onn Gerrit host')
+            return SSOCheckResult(False, 'account missing on Gerrit host')
         raise
     if any(email == r['email'] for r in records):
         return SSOCheckResult(True, 'email is linked to @google.com email')
