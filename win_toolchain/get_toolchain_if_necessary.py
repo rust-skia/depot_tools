@@ -474,6 +474,30 @@ def EnableCrashDumpCollection():
             pass
 
 
+def SetupJunction(target_dir):
+    """Sets up junction for toolchain dir."""
+    junction_dir = os.path.join(BASEDIR, 'vs_files')
+    if junction_dir == target_dir:
+        return target_dir
+    if not sys.platform.startswith('win32'):
+        # build/vs_toolchain.py sets up ciopfs on vs_files,
+        # so using different target_dir won't work on Linux?
+        return target_dir
+    if os.path.exists(junction_dir):
+        try:
+            if os.path.samefile(os.readlink(junction_dir), target_dir):
+                return junction_dir
+        except:
+            # os.readlink may fail if junction_dir is not junction or symlink
+            pass
+        RmDir(junction_dir)
+    print('Setup a directory junction %s to %s' % (junction_dir, target_dir))
+    subprocess.run(['mklink', '/J', junction_dir, target_dir],
+                   shell=True,
+                   check=True)
+    return junction_dir
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -494,6 +518,10 @@ def main():
     parser.add_argument('desired_hash',
                         metavar='desired-hash',
                         help='toolchain hash to download')
+    parser.add_argument(
+        '--no-junction',
+        action='store_true',
+        help='don\'t setup junction for toolchain dir on Windows')
     args = parser.parse_args()
 
     if not (sys.platform.startswith(('cygwin', 'win32')) or args.force):
@@ -517,16 +545,20 @@ def main():
     toolchain_dir = os.path.abspath(args.toolchain_dir)
     if not os.path.isdir(toolchain_dir):
         os.makedirs(toolchain_dir)
-    os.chdir(toolchain_dir)
 
+    abs_target_dir = os.path.join(toolchain_dir, 'vs_files')
+    if not os.path.isdir(abs_target_dir):
+        os.mkdir(abs_target_dir)
+    if not args.no_junction:
+        # Set up a directory junction in BASEDIR to toolchain_dir
+        # so toolchain files can be accessible under exec root.
+        abs_target_dir = SetupJunction(abs_target_dir)
     # Move to depot_tools\win_toolchain where we'll store our files, and where
     # the downloader script is.
+    os.chdir(os.path.dirname(abs_target_dir))
     target_dir = 'vs_files'
-    if not os.path.isdir(target_dir):
-        os.mkdir(target_dir)
-    toolchain_target_dir = os.path.join(target_dir, args.desired_hash)
-
-    abs_toolchain_target_dir = os.path.abspath(toolchain_target_dir)
+    toolchain_target_dir = os.path.join('vs_files', args.desired_hash)
+    abs_toolchain_target_dir = os.path.join(abs_target_dir, args.desired_hash)
 
     got_new_toolchain = False
 
