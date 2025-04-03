@@ -38,6 +38,11 @@ def checkOutdir(args):
         sys.exit(1)
 
 
+def _is_google_corp_machine():
+    """This assumes that corp machine has gcert binary in known location."""
+    return shutil.which("gcert") is not None
+
+
 def main(args):
     # Do not raise KeyboardInterrupt on SIGINT so as to give siso time to run
     # cleanup tasks. Siso will be terminated immediately after the second
@@ -115,6 +120,25 @@ def main(args):
             for line in f.readlines():
                 k, v = line.rstrip().split('=', 1)
                 env[k] = v
+        if not os.path.exists(
+                os.path.join(base_path, 'build', 'config', 'siso',
+                             'backend_config', 'backend.star')):
+            if _is_google_corp_machine():
+                print(
+                    'build/config/siso/backend_config/backend.star does not '
+                    'exist.\n'
+                    'backend.star is configured by gclient hook '
+                    'build/config/siso/configure_siso.py.\n'
+                    'Make sure `rbe_instance` gclient custom vars is correct.\n'
+                    'Did you run `glient runhooks` ?',
+                    file=sys.stderr)
+            else:
+                print(
+                    'build/config/siso/backend_config/backend.star does not '
+                    'exist.\n'
+                    'See build/config/siso/backend_config/README.md',
+                    file=sys.stderr)
+            return 1
         siso_paths = [
             siso_override_path,
             os.path.join(base_path, 'third_party', 'siso', 'cipd',
