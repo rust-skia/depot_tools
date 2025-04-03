@@ -61,7 +61,7 @@ infra/tools/rdb/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf10
 infra/tools/dirmd/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
 
 # Pinpoint CLI
-infra/chromeperf/pinpoint/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
+infra/chromeperf/pinpoint/${platform} git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
 
 @Subdir reclient
 # reclient, currently this is only for ChromeOS build.

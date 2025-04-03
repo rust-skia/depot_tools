@@ -2,64 +2,64 @@
 # Do not modify manually. All changes will be overwritten.
 
 infra/chromeperf/pinpoint/linux-386
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	J2Wz4zxrgTvKibg5T22EEV5BI-Ty3Dzv7VZvYx4NFskC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	v6CYB8RzpFnZa-JtmlovA4G_S_AH2IKLD91FIvVTGm8C
 
 infra/chromeperf/pinpoint/linux-amd64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	bBYvS54yYFJYH_ip2d9w5vaiBLO218RxH9wtPQPxcycC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	SrO0NN7T0OemJzbqYpUPssGADBxeoZRB2RjZ3kIPHhcC
 
 infra/chromeperf/pinpoint/linux-arm64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	vd-HeFh4N3KObeW1tLih2Qzj4KpPPswjBibFpU658PcC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	UYQuQipl03aprDgHCoAx1eItoZjSTsalq9JU2AZ8_R0C
 
 infra/chromeperf/pinpoint/linux-armv6l
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	JFLTg05C-pIb0OQfV-9z8fnbxvfyFRFIqAencCxXDZUC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	SQ_EQ8imrnnxJF-LNJKFnmSY8RoJanpM8YDMUmjKzS0C
 
 infra/chromeperf/pinpoint/linux-mips64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	kNOD0LxNq4hAtQVjvgytU6_nf94vCZdkg5bqQRzyab8C
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	buLbinLw6vPsHKtlvIn9QGFwiQOLScRR-wlJ25pgT3AC
 
 infra/chromeperf/pinpoint/linux-mips64le
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	aAj8LCm6I431WJMJYNhCMIFQzY8eKC1JEHqfYLNQO9oC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	psyuGhztgLaSqqq5Ai2_kgCH_0UBgxJio14WcpvcKG8C
 
 infra/chromeperf/pinpoint/linux-mipsle
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	GQbrP2dUKT3ehhEdfhYxeTyk3-TEG2IzM5CycCH86zgC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	zHueOc4h7m8GK-OjSfTw7EW9X0AuJ7C62PD-_mkfsuQC
 
 infra/chromeperf/pinpoint/linux-ppc64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	QcKh0kVAWwQhnuESr0rfLjJNQwv3pFHYwQtztGxfq3EC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	rOdRmyY-FgNzHvqLXhAKY6QBrsCw_fmTdSu3-I_2ES4C
 
 infra/chromeperf/pinpoint/linux-ppc64le
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	H4kSNIKOXsHkqV50enlbz0dStKrWtZMHie3pkQlNu18C
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	cWJleDYXtjMmt3ZuiRaxbZMaZxYbu6CZO7qwfjaIv3EC
 
 infra/chromeperf/pinpoint/linux-riscv64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	jISBQmxWiXGYOaFk2f65ITE_9TV43jLUVIQkbJ53lh8C
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	RH3voLNllEJbEmupuWK562yGGqEz-sDeHSxYiKwoEDsC
 
 infra/chromeperf/pinpoint/linux-s390x
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	PAGXcE0oOonAYD0FVgXpAnpNDfUxg2lWRuVpFVN67KsC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	465hA6m0IZep_ClEym2w9qYirDFI1EkfK1rcafS_PpsC
 
 infra/chromeperf/pinpoint/mac-amd64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	weXg3xfEpzEJuOp4-6yDFPFDOjVkGdaFiK4v-b250LUC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	Zz0wed1n2BwNnt0QFLYDWWMDvxchZ1yTyhmtINShQKgC
 
 infra/chromeperf/pinpoint/mac-arm64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	zenuUT-jtHjr3KCvWPpENIyU0o0m-t-lvnRCk9ztBN4C
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	QRLDycqZYngnYpWNrQ1MtQ7WkfRyIX-NPnrTLyXLMv8C
 
 infra/chromeperf/pinpoint/windows-amd64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	DvcErf9Sl5Kp7I8OaPHomS_3HEPbOWsGnnXdu1l8_wsC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	WoH3vY8VVj00y1B1iVVcJpBpap38S7qaF5qLutYm5uUC
 
 infra/chromeperf/pinpoint/windows-arm64
-	git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
-	nYXPgU_Xg2DrOLq3P-tVxiwLo_chlBrhmRWUojupb7oC
+	git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+	SW0NruSy3THmdFZqwgF8hkDp4Wkmwhx-UIDpIpCADfEC
 
 infra/rbe/client/linux-amd64
 	re_client_version:0.124.1.13f78cc-gomaip
