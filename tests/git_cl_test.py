@@ -51,7 +51,7 @@ def callError(code=1, cmd='', cwd='', stdout=b'', stderr=b''):
 CERR1 = callError(1)
 
 
-def getAccountDetailsMock(host, account_id='self'):
+def getAccountDetailsMock(host, account_id='self', *, authenticator=None):
     if account_id == 'self':
         return {
             '_account_id': 123456,
