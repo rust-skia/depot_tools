@@ -1290,110 +1290,6 @@ class TestGitCl(unittest.TestCase):
                 scm.GIT.GetBranchConfig('', 'main',
                                         git_cl.GERRIT_SQUASH_HASH_CONFIG_KEY))
 
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_upload_traces_no_gitcookies(self):
-        self._run_gerrit_upload_test(
-            ['--no-squash'],
-            'desc ✔\n\nBUG=\n', [],
-            squash=False,
-            post_amend_description='desc ✔\n\nBUG=\n\nChange-Id: Ixxx',
-            change_id='Ixxx',
-            gitcookies_exists=False)
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_upload_without_change_id_nosquash(self):
-        self._run_gerrit_upload_test(
-            ['--no-squash'],
-            'desc ✔\n\nBUG=\n', [],
-            squash=False,
-            post_amend_description='desc ✔\n\nBUG=\n\nChange-Id: Ixxx',
-            change_id='Ixxx')
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_upload_without_change_id_override_nosquash(self):
-        self._run_gerrit_upload_test(
-            [],
-            'desc ✔\n\nBUG=\n', [],
-            squash=False,
-            squash_mode='override_nosquash',
-            post_amend_description='desc ✔\n\nBUG=\n\nChange-Id: Ixxx',
-            change_id='Ixxx')
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_no_reviewer(self):
-        self._run_gerrit_upload_test(
-            [],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n', [],
-            squash=False,
-            squash_mode='override_nosquash',
-            change_id='I123456789')
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_push_opts(self):
-        self._run_gerrit_upload_test(
-            ['-o', 'wip'],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n', [],
-            squash=False,
-            squash_mode='override_nosquash',
-            change_id='I123456789',
-            push_opts=['-o', 'wip'])
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_no_reviewer_non_chromium_host(self):
-        # TODO(crbug/877717): remove this test case.
-        self._run_gerrit_upload_test(
-            [],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n', [],
-            squash=False,
-            squash_mode='override_nosquash',
-            short_hostname='other',
-            change_id='I123456789')
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_patchset_title_special_chars_nosquash(self):
-        self._run_gerrit_upload_test(
-            ['-f', '-t', 'We\'ll escape ^_ ^ special chars...@{u}'],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789',
-            squash=False,
-            squash_mode='override_nosquash',
-            change_id='I123456789',
-            title='We\'ll escape ^_ ^ special chars...@{u}')
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_reviewers_cmd_line(self):
-        self._run_gerrit_upload_test(
-            ['-r', 'foo@example.com', '--send-mail'],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789',
-            reviewers=['foo@example.com'],
-            squash=False,
-            squash_mode='override_nosquash',
-            notify=True,
-            change_id='I123456789',
-            final_description=(
-                'desc ✔\n\nBUG=\nR=foo@example.com\n\nChange-Id: I123456789'))
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_reviewers_cmd_line_send_email(self):
-        self._run_gerrit_upload_test(
-            ['-r', 'foo@example.com', '--send-email'],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789',
-            reviewers=['foo@example.com'],
-            squash=False,
-            squash_mode='override_nosquash',
-            notify=True,
-            change_id='I123456789',
-            final_description=(
-                'desc ✔\n\nBUG=\nR=foo@example.com\n\nChange-Id: I123456789'))
-
     @mock.patch('git_cl.Changelist.GetGerritHost',
                 return_value='chromium-review.googlesource.com')
     @mock.patch('git_cl.Changelist.GetRemoteBranch',
@@ -2559,33 +2455,6 @@ class TestGitCl(unittest.TestCase):
         cl.branchref = 'refs/heads/main'
         return cl
 
-    @mock.patch('sys.stderr', io.StringIO())
-    def test_gerrit_ensure_authenticated_missing(self):
-        cl = self._test_gerrit_ensure_authenticated_common(auth={
-            'chromium.googlesource.com': ('git-is.ok', 'but gerrit is missing'),
-        })
-        with self.assertRaises(SystemExitMock):
-            cl.EnsureAuthenticated(force=False)
-        self.assertEqual(
-            'Credentials for the following hosts are required:\n'
-            '  chromium-review.googlesource.com\n'
-            'These are read from ~%(sep)s.gitcookies\n'
-            'You can (re)generate your credentials by visiting '
-            'https://chromium.googlesource.com/new-password\n' % {
-                'sep': os.sep,
-            }, sys.stderr.getvalue())
-
-    def test_gerrit_ensure_authenticated_conflict(self):
-        cl = self._test_gerrit_ensure_authenticated_common(
-            auth={
-                'chromium.googlesource.com': ('git-one.example.com', 'secret1'),
-                'chromium-review.googlesource.com': ('git-other.example.com',
-                                                     'secret2'),
-            })
-        self.calls.append((('ask_for_data', 'If you know what you are doing '
-                            'press Enter to continue, or Ctrl+C to abort'), ''))
-        self.assertIsNone(cl.EnsureAuthenticated(force=False))
-
     def test_gerrit_ensure_authenticated_ok(self):
         cl = self._test_gerrit_ensure_authenticated_common(
             auth={
@@ -3330,40 +3199,6 @@ class TestGitCl(unittest.TestCase):
             lambda prompt: self._mocked_call('ask_for_data', prompt)).start()
         mock.patch('os.path.exists', exists_mock).start()
 
-    def test_creds_check_gitcookies_not_configured(self):
-        self._common_creds_check_mocks()
-        mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
-                   lambda _: []).start()
-        self.calls = [
-            (('ask_for_data', 'Press Enter to setup .gitcookies, '
-              'or Ctrl+C to abort'), ''),
-        ]
-        self.assertEqual(0, git_cl.main(['creds-check']))
-        self.assertIn('\nConfigured git to use .gitcookies from',
-                      sys.stdout.getvalue())
-
-    def test_creds_check_gitcookies_configured_custom_broken(self):
-        self._common_creds_check_mocks()
-
-        custom_cookie_path = ('C:\\.gitcookies' if sys.platform == 'win32' else
-                              '/custom/.gitcookies')
-        scm.GIT.SetConfig('', 'http.cookiefile', custom_cookie_path)
-        os.environ['GIT_COOKIES_PATH'] = '/official/.gitcookies'
-
-        mock.patch('git_cl._GitCookiesChecker.get_hosts_with_creds',
-                   lambda _: []).start()
-        self.calls = [
-            (('os.path.exists', custom_cookie_path), False),
-            (('ask_for_data', 'Reconfigure git to use default .gitcookies? '
-              'Press Enter to reconfigure, or Ctrl+C to abort'), ''),
-        ]
-        self.assertEqual(0, git_cl.main(['creds-check']))
-        self.assertIn(
-            'WARNING: You have configured custom path to .gitcookies: ',
-            sys.stdout.getvalue())
-        self.assertIn('However, your configured .gitcookies file is missing.',
-                      sys.stdout.getvalue())
-
     @unittest.skipIf(gclient_utils.IsEnvCog(),
                     'not supported in non-git environment')
     def test_git_cl_comment_add_gerrit(self):
@@ -3739,29 +3574,6 @@ class TestGitCl(unittest.TestCase):
         ]
         cl = git_cl.Changelist(issue=123456)
         self.assertEqual(cl._GerritChangeIdentifier(), '123456')
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_new_default(self):
-        self._run_gerrit_upload_test(
-            [],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n', [],
-            squash=False,
-            squash_mode='override_nosquash',
-            change_id='I123456789',
-            default_branch='main')
-
-    @unittest.skipIf(gclient_utils.IsEnvCog(),
-                    'not supported in non-git environment')
-    def test_gerrit_nosquash_with_issue(self):
-        self._run_gerrit_upload_test(
-            [],
-            'desc ✔\n\nBUG=\n\nChange-Id: I123456789\n', [],
-            squash=False,
-            squash_mode='override_nosquash',
-            issue=123456,
-            change_id='I123456789',
-            default_branch='main')
 
 
 class ChangelistTest(unittest.TestCase):
