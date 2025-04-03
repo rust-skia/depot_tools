@@ -583,8 +583,12 @@ class GitWrapper(SCMWrapper):
                 # diff --cached` expecting to see the patch diff.
                 base_rev = self._Capture(['rev-parse', pr + '~'])
             else:
-                self.Print('Will cherrypick %r .. %r on top of %r.' %
-                           (target_rev, pr, base_rev))
+                target_rev_hash = self._Capture(['rev-parse', target_rev])
+                commit_list = self._Capture(
+                    ['log', '--oneline', target_rev + '..' + pr])
+                self.Print('Will cherrypick %r (%r) .. %r on top of %r:' %
+                           (target_rev_hash, target_rev, pr, base_rev))
+                self.Print(commit_list)
                 try:
                     if scm.GIT.IsAncestor(pr,
                                           target_rev,
