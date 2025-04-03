@@ -2448,6 +2448,7 @@ class TestGitCl(unittest.TestCase):
         mock.patch(
             'git_cl.gerrit_util.CookiesAuthenticator',
             CookiesAuthenticatorMockFactory(hosts_with_creds=auth)).start()
+        mock.patch('git_auth.AutoConfigure', return_value=None).start()
         scm.GIT.SetConfig('', 'remote.origin.url',
                           'https://chromium.googlesource.com/my/repo')
         cl = git_cl.Changelist()
