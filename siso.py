@@ -120,9 +120,10 @@ def main(args):
             for line in f.readlines():
                 k, v = line.rstrip().split('=', 1)
                 env[k] = v
-        if not os.path.exists(
-                os.path.join(base_path, 'build', 'config', 'siso',
-                             'backend_config', 'backend.star')):
+        backend_config_dir = os.path.join(base_path, 'build', 'config', 'siso',
+                                          'backend_config')
+        if os.path.exists(backend_config_dir) and not os.path.exists(
+                os.path.join(backend_config_dir, 'backend.star')):
             if _is_google_corp_machine():
                 print(
                     'build/config/siso/backend_config/backend.star does not '
@@ -130,7 +131,7 @@ def main(args):
                     'backend.star is configured by gclient hook '
                     'build/config/siso/configure_siso.py.\n'
                     'Make sure `rbe_instance` gclient custom vars is correct.\n'
-                    'Did you run `glient runhooks` ?',
+                    'Did you run `gclient runhooks` ?',
                     file=sys.stderr)
             else:
                 print(
