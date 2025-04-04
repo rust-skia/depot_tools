@@ -1371,16 +1371,6 @@ class GitWrapper(SCMWrapper):
         parent_dir = os.path.dirname(self.checkout_path)
         gclient_utils.safe_makedirs(parent_dir)
 
-        # Set up Git authentication configuration that is needed to clone/fetch the repo.
-        #
-        # Disabled on Windows
-        if newauth.Enabled() and os.name != 'nt':
-            # We need the host from the URL to determine auth settings.
-            # The url parameter might have been re-written to a local
-            # cache directory, so we need self.url, which contains the
-            # original remote URL.
-            git_auth.ConfigureGlobal('/', self.url)
-
         if hasattr(options, 'no_history') and options.no_history:
             self._Run(['init', self.checkout_path], options, cwd=self._root_dir)
             self._Run(['remote', 'add', 'origin', url], options)
