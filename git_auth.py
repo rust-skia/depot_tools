@@ -476,8 +476,8 @@ class ConfigWizard(object):
         self._fix_gitcookies()
         self._println()
         self._println('Checking for SSO helper...')
-        has_sso = self._check_sso_helper()
-        if has_sso:
+        if self._check_sso_helper():
+            self._println('SSO helper is available.')
             self._set_config('protocol.sso.allow', 'always', scope='global')
         self._println()
         if _is_gerrit_url(remote_url):
@@ -491,10 +491,10 @@ class ConfigWizard(object):
             self._println(
                 'Looks like we are running outside of a Gerrit repository,')
             self._println('so we will check your global Git configuration.')
-            self._run_outside_repo(has_sso=has_sso)
+            self._run_outside_repo()
         self._print_actions_for_user()
 
-    def _run_outside_repo(self, *, has_sso: bool) -> None:
+    def _run_outside_repo(self) -> None:
         global_email = self._check_global_email()
 
         self._println()
@@ -526,7 +526,7 @@ class ConfigWizard(object):
             'swiftshader.googlesource.com',
             'webrtc.googlesource.com',
         ]
-        if has_sso:
+        if self._check_sso_helper():
             hosts.extend([
                 'chrome-internal.googlesource.com',
             ])
@@ -726,7 +726,14 @@ class ConfigWizard(object):
 
     def _check_use_sso(self, parts: urllib.parse.SplitResult,
                        email: str) -> bool:
+        """Checks whether SSO is needed for the given user and host."""
+        if not self._check_sso_helper():
+            return False
         host = _url_review_host(parts)
+        self._println(f'Checking SSO requirement for {email!r} on {host}')
+        self._println(
+            '(Note that this check may require SSO; if you get an error,')
+        self._println('you will need to login to SSO and re-run this command.)')
         result = gerrit_util.CheckShouldUseSSO(host, email)
         text = 'use' if result.status else 'not use'
         self._println(f'Decided we should {text} SSO for {email!r} on {host}')
@@ -735,10 +742,8 @@ class ConfigWizard(object):
         return result.status
 
     def _check_sso_helper(self) -> bool:
-        has_sso_helper = bool(gerrit_util.ssoHelper.find_cmd())
-        if has_sso_helper:
-            self._println('SSO helper is available.')
-        return has_sso_helper
+        """Checks and returns whether SSO helper is available."""
+        return bool(gerrit_util.ssoHelper.find_cmd())
 
     def _print_manual_instructions(self) -> None:
         """Prints manual instructions for setting up auth."""
