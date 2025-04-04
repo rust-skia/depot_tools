@@ -80,6 +80,14 @@ def _is_google_corp_machine():
     return shutil.which("gcert") is not None
 
 
+def _has_internal_checkout():
+    """Check if internal is checked out."""
+    root_dir = gclient_paths.GetPrimarySolutionPath()
+    if not root_dir:
+        return False
+    return os.path.exists(os.path.join(root_dir, "internal", ".git"))
+
+
 def _reclient_rbe_project():
     """Returns RBE project used by reclient."""
     instance = os.environ.get('RBE_instance')
@@ -311,20 +319,20 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             # even if use_remoteexec=true is set.
             project = _siso_rbe_project()
 
-        if _is_google_corp_machine():
+        if _has_internal_checkout():
             # user may login on non-@google.com account on corp,
             # but need to use @google.com and rbe-chrome-untrusted
-            # on corp machine.
+            # with src-internal.
             if project == 'rbe-chromium-untrusted':
                 print(
-                    "You can't use rbe-chromium-untrusted on corp "
-                    "machine.\n"
+                    "You can't use rbe-chromium-untrusted for "
+                    "src-internal.\n"
                     "Please use rbe-chrome-untrusted and @google.com "
-                    "account instead to build chromium.\n",
+                    "account instead to build chrome.\n",
                     file=sys.stderr,
                 )
                 return 1
-        else:
+        elif not _is_google_corp_machine():
             # only @google.com is allowed to use rbe-chrome-untrusted
             # and use @google.com on non-corp machine is not allowed
             # by corp security policy.
