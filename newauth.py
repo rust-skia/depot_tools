@@ -13,7 +13,7 @@ import scm
 
 def Enabled() -> bool:
     """Returns True if new auth stack is enabled."""
-    if ExplicitlyDisabled():
+    if not EnabledInConfig():
         return False
     if _HasGitcookies():
         _PrintGitcookiesWarning()
