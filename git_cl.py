@@ -4720,17 +4720,33 @@ def CMDcherry_pick(parser, args):
     # Gerrit only supports cherry picking one commit per change, so we have
     # to cherry pick each commit individually and create a chain of CLs.
     parent_change_num = options.parent_change_num
+    parent_commit_hash = None
+
     for change_id, orig_message in change_ids_to_message.items():
         message = _create_commit_message(orig_message, options.bug)
         orig_subj_line = orig_message.splitlines()[0]
+        original_commit_hash = change_ids_to_commit[change_id]
 
-        # Create a cherry pick first, then rebase. If we create a chained CL
-        # then cherry pick, the change will lose its relation to the parent.
+        # Determine the base commit hash for the current cherry-pick by fetching
+        # the details of the previous CL (identified by parent_change_num).
+        # Skip if this is the first CL and no initial parent was given.
+        if parent_change_num:
+            parent_details = gerrit_util.GetChangeDetail(
+                host, str(parent_change_num), o_params=['CURRENT_REVISION'])
+            parent_commit_hash = parent_details['current_revision']
+            print(f'Using base commit {parent_commit_hash} '
+                  f'from parent CL {parent_change_num}.')
+
+        # Call CherryPick with the determined base commit hash
+        print('Attempting cherry-pick of original commit '
+              f'{original_commit_hash} ("{orig_subj_line}") onto base '
+              f'{parent_commit_hash or options.branch + " tip"}...')
         try:
             new_change_info = gerrit_util.CherryPick(host,
                                                      change_id,
                                                      options.branch,
-                                                     message=message)
+                                                     message=message,
+                                                     base=parent_commit_hash)
         except gerrit_util.GerritError as e:
             print(f'Failed to create cherry pick "{orig_subj_line}": {e}. '
                   'Please resolve any merge conflicts.')
@@ -4738,26 +4754,9 @@ def CMDcherry_pick(parser, args):
             return 1
 
         change_ids_to_commit.pop(change_id)
-        new_change_id = new_change_info['id']
         new_change_num = new_change_info['_number']
         new_change_url = gerrit_util.GetChangePageUrl(host, new_change_num)
         print(f'Created cherry pick of "{orig_subj_line}": {new_change_url}')
-
-        if parent_change_num:
-            try:
-                gerrit_util.RebaseChange(host, new_change_id, parent_change_num)
-            except gerrit_util.GerritError as e:
-                parent_change_url = gerrit_util.GetChangePageUrl(
-                    host, parent_change_num)
-                print(f'Failed to rebase {new_change_url} on '
-                      f'{parent_change_url}: {e}. Please resolve any merge '
-                      'conflicts.')
-                print('Once resolved, you can continue the CL chain with '
-                      f'`--parent-change-num={new_change_num}` to specify '
-                      'which change the chain should start with.\n')
-                print_any_remaining_commits()
-                return 1
-
         parent_change_num = new_change_num
 
     return 0

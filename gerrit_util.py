@@ -1518,7 +1518,12 @@ def DeletePendingChangeEdit(host, change):
     ReadHttpResponse(conn, accept_statuses=[204, 404])
 
 
-def CherryPick(host, change, destination, revision='current', message=None):
+def CherryPick(host,
+               change,
+               destination,
+               revision='current',
+               message=None,
+               base=None):
     """Create a cherry-pick commit from the given change, onto the given
     destination.
     """
@@ -1526,6 +1531,8 @@ def CherryPick(host, change, destination, revision='current', message=None):
     body = {'destination': destination}
     if message:
         body['message'] = message
+    if base:
+        body['base'] = base
     conn = CreateHttpConn(host, path, reqtype='POST', body=body)
 
     # If a cherry pick fails due to a merge conflict, Gerrit returns 409.
