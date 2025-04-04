@@ -55,7 +55,7 @@ infra/tools/luci/git-credential-luci/${platform} git_revision:0b7ac122b771e89661
 infra/tools/bb/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
 
 # LUCI ResultDB CLI
-infra/tools/rdb/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
+infra/tools/rdb/${platform} git_revision:962d2d09531737b7b6323bae032ba948e3601e4f
 
 # dirmd, a tool to work with DIR_METADATA files
 infra/tools/dirmd/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
