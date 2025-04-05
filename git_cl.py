@@ -3902,7 +3902,7 @@ def CMDcreds_check(parser, args):
     """Checks credentials and suggests changes."""
     _, _ = parser.parse_args(args)
 
-    if not newauth.ExplicitlyDisabled():
+    if newauth.Enabled():
         cl = Changelist()
         try:
             remote_url = cl.GetRemoteUrl()
