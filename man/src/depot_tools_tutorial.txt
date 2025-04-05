@@ -151,6 +151,10 @@ TL;DR
 -----
 [postsubs="quotes"]
 ----
+[white]**$** # Set up auth in Git config
+[white]**$** # In your home directory:
+[white]**$ git cl creds-check**
+
 [white]**$** # get the code
 [white]**$** # In an empty directory:
 [white]**$ fetch {chromium,...}**
@@ -172,6 +176,15 @@ TL;DR
 
 GETTING THE CODE
 ----------------
+
+Unless you plan on only fetching code anonymously, you'll need to set
+up your auth config in Git.  Run this in your home directory:
+
+[subs="quotes"]
+----
+[white]**$ git cl creds-check**
+----
+
 Pick an empty directory and run one of the following:
 
 [subs="quotes"]
