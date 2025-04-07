@@ -13,12 +13,29 @@ import scm
 
 def Enabled() -> bool:
     """Returns True if new auth stack is enabled."""
-    if not EnabledInConfig():
+    if not SwitchedOn():
         return False
     if _HasGitcookies():
         _PrintGitcookiesWarning()
         return False
     return True
+
+
+def SwitchedOn() -> bool:
+    """Returns True if new auth stack is "switched on".
+
+    Note that this does not necessarily mean that new auth is enabled.
+    In particular, we still disable new auth if a .gitcookies file is
+    present, to protect bots that haven't been migrated yet.
+    """
+    if Default():
+        return not ExplicitlyDisabled()
+    return ExplicitlyEnabled()
+
+
+def Default() -> bool:
+    "Returns default enablement status for new auth stack."
+    return False
 
 
 def _HasGitcookies() -> bool:
@@ -48,8 +65,8 @@ https://issues.chromium.org/issues/new?component=1456702&template=2076315
 ''')
 
 
-def EnabledInConfig() -> bool:
-    """Returns True if new auth stack is enabled.
+def ExplicitlyEnabled() -> bool:
+    """Returns True if new auth stack is explicitly enabled.
 
     Directly checks config and doesn't do gitcookie check.
     """
