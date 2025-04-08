@@ -448,6 +448,15 @@ class UserInterface(object):
             if check(self, s):
                 return s
 
+    def read_enter(self, text: str = 'Press Enter to proceed.') -> None:
+        """Reads an Enter.
+
+        Used to interactively proceed.
+        """
+        self._stdout.write(text)
+        self._stdout.flush()
+        self._stdin.readline()
+
     def write(self, s: str) -> None:
         """Write string as-is.
 
@@ -546,6 +555,8 @@ class ConfigWizard(object):
         self._println('We will set up auth for the following hosts:')
         for host in hosts:
             self._println(f'- {host}')
+        self._println()
+        self._read_enter()
 
         used_oauth = False
         for host in hosts:
@@ -897,6 +908,10 @@ class ConfigWizard(object):
         ret = self._ui.read_line(prompt, check=check)
         self._ui.write('\n')
         return ret
+
+    def _read_enter(self) -> None:
+        self._ui.read_enter()
+        self._ui.write('\n')
 
     @staticmethod
     def _gitcookies() -> str:
