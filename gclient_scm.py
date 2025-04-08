@@ -547,6 +547,11 @@ class GitWrapper(SCMWrapper):
             if scm.GIT.IsValidRevision(self.checkout_path, remote_ref):
                 # refs/remotes may need to be updated to cleanly cherry-pick
                 # changes. See https://crbug.com/1255178.
+                url, _ = gclient_utils.SplitUrlRevision(self.url)
+                mirror = self._GetMirror(url, options, target_rev, remote_ref)
+                if mirror:
+                    self._UpdateMirrorIfNotContains(mirror, options, 'branch',
+                                                    target_rev)
                 self._Capture(['fetch', '--no-tags', self.remote, target_rev])
                 target_rev = remote_ref
         elif not scm.GIT.IsValidRevision(self.checkout_path, target_rev):
