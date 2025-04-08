@@ -35,8 +35,6 @@ def SwitchedOn() -> bool:
 
 def Default() -> bool:
     "Returns default enablement status for new auth stack."
-    if os.getenv('SWARMING_BOT_ID'):
-        return False
     return True
 
 
