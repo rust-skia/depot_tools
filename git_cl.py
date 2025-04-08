@@ -1842,7 +1842,7 @@ class Changelist(object):
                 description = '\n'.join(l.rstrip() for l in sys.stdin)
             elif description == '+':
                 description = _create_description_from_log(git_diff_args)
-        elif self.GetIssue():
+        elif self.GetIssue() and options.squash:
             description = self.FetchDescription()
         elif options.message:
             description = options.message
