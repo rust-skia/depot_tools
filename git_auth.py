@@ -492,6 +492,8 @@ class ConfigWizard(object):
                 'Looks like we are running outside of a Gerrit repository,')
             self._println('so we will check your global Git configuration.')
             self._run_outside_repo()
+        self._println()
+        self._println('Successfully finished auth configuration check.')
         self._print_actions_for_user()
 
     def _run_outside_repo(self) -> None:
@@ -851,7 +853,9 @@ class ConfigWizard(object):
         if not self._user_actions:
             return
         self._println()
-        self._println('Things you need to do:')
+        self._println(
+            "However, there are some manual actions that are suggested")
+        self._println("(you don't have to re-run this command afterward):")
         for s in self._user_actions:
             self._println(f'- {s}')
 
