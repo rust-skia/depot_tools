@@ -178,11 +178,11 @@ GETTING THE CODE
 ----------------
 
 Unless you plan on only fetching code anonymously, you'll need to set
-up your auth config in Git.  Run this in your home directory:
+up your auth config in Git.  Run this:
 
 [subs="quotes"]
 ----
-[white]**$ git cl creds-check**
+[white]**$ git cl creds-check --global**
 ----
 
 Pick an empty directory and run one of the following:

@@ -463,11 +463,11 @@ class ConfigWizard(object):
         self._ui = ui
         self._user_actions = []
 
-    def run(self, remote_url: str):
+    def run(self, *, remote_url: str, force_global: bool):
         with self._handle_config_errors():
-            self._run(remote_url)
+            self._run(remote_url=remote_url, force_global=force_global)
 
-    def _run(self, remote_url: str):
+    def _run(self, *, remote_url: str, force_global: bool):
         self._println('This tool will help check your Gerrit authentication.')
         self._println(
             '(Report any issues to https://issues.chromium.org/issues/new?component=1456702&template=2076315)'
@@ -481,12 +481,21 @@ class ConfigWizard(object):
             self._set_config('protocol.sso.allow', 'always', scope='global')
         self._println()
         if _is_gerrit_url(remote_url):
-            self._println(
-                'Looks like we are running inside a Gerrit repository,')
-            self._println(
-                f'so we will check your Git configuration for {remote_url}')
-            parts = urllib.parse.urlsplit(remote_url)
-            self._run_inside_repo(parts)
+            if force_global:
+                self._println(
+                    'We will pretend to be running outside of a Gerrit repository'
+                )
+                self._println(
+                    'and check your global Git configuration since you passed --global.'
+                )
+                self._run_outside_repo()
+            else:
+                self._println(
+                    'Looks like we are running inside a Gerrit repository,')
+                self._println(
+                    f'so we will check your Git configuration for {remote_url}')
+                parts = urllib.parse.urlsplit(remote_url)
+                self._run_inside_repo(parts)
         else:
             self._println(
                 'Looks like we are running outside of a Gerrit repository,')
@@ -703,6 +712,7 @@ class ConfigWizard(object):
         if email:
             self._println(f'Your global Git email is: {email}')
             return email
+        self._println()
         self._println(
             'You do not have an email configured in your global Git config.')
         if not self._read_yn('Do you want to set one now?', default=True):

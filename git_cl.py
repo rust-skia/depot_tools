@@ -3900,7 +3900,12 @@ class _GitCookiesChecker(object):
 @metrics.collector.collect_metrics('git cl creds-check')
 def CMDcreds_check(parser, args):
     """Checks credentials and suggests changes."""
-    _, _ = parser.parse_args(args)
+    parser.add_option(
+        '--global',
+        action='store_true',
+        dest='force_global',
+        help='Check global credentials instead of for the current repo.')
+    options, args = parser.parse_args(args)
 
     if newauth.SwitchedOn():
         cl = Changelist()
@@ -3910,7 +3915,7 @@ def CMDcreds_check(parser, args):
             remote_url = ''
         wizard = git_auth.ConfigWizard(
             git_auth.UserInterface(sys.stdin, sys.stdout))
-        wizard.run(remote_url)
+        wizard.run(remote_url=remote_url, force_global=options.force_global)
         return 0
     if newauth.ExplicitlyDisabled():
         git_auth.ClearRepoConfig(os.getcwd(), Changelist())
