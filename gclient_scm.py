@@ -433,7 +433,7 @@ class GitWrapper(SCMWrapper):
         patch_rev_tokens = patch_rev.split('/')
         change = patch_rev_tokens[-2]
         # Parse the googlesource_url.
-        tokens = re.search('//(.+).googlesource.com/(.+?)(?:\.git)?$',
+        tokens = re.search(r'//(.+).googlesource.com/(.+?)(?:\.git)?$',
                            googlesource_url)
         if not tokens or len(tokens.groups()) != 2:
             # googlesource_url is not in the expected format.
