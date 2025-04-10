@@ -151,9 +151,8 @@ TL;DR
 -----
 [postsubs="quotes"]
 ----
-[white]**$** # Set up auth in Git config
-[white]**$** # In your home directory:
-[white]**$ git cl creds-check**
+[white]**$** # Set up auth in Git config:
+[white]**$ git cl creds-check --global**
 
 [white]**$** # get the code
 [white]**$** # In an empty directory:

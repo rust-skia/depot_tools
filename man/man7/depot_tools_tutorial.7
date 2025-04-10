@@ -2,12 +2,12 @@
 .\"     Title: depot_tools_tutorial
 .\"    Author: [FIXME: author] [see http://www.docbook.org/tdg5/en/html/author]
 .\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
-.\"      Date: 04/08/2025
+.\"      Date: 04/09/2025
 .\"    Manual: Chromium depot_tools Manual
-.\"    Source: depot_tools 82ff119a1
+.\"    Source: depot_tools 41d6af4d2
 .\"  Language: English
 .\"
-.TH "DEPOT_TOOLS_TUTORIAL" "7" "04/08/2025" "depot_tools 82ff119a1" "Chromium depot_tools Manual"
+.TH "DEPOT_TOOLS_TUTORIAL" "7" "04/09/2025" "depot_tools 41d6af4d2" "Chromium depot_tools Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -259,9 +259,8 @@ If you have never used git before, you\(cqll need to set some global git configu
 .RS 4
 .\}
 .nf
-\fB$\fR # Set up auth in Git config
-\fB$\fR # In your home directory:
-\fB$ git cl creds\-check\fR
+\fB$\fR # Set up auth in Git config:
+\fB$ git cl creds\-check \-\-global\fR
 
 \fB$\fR # get the code
 \fB$\fR # In an empty directory:
