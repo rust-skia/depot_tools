@@ -24,7 +24,6 @@ import gerrit_util
 import git_auth
 import git_cache
 import git_common
-import newauth
 import scm
 import subprocess2
 
