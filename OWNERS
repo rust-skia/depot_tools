@@ -52,6 +52,7 @@ per-file cros_sdk=file://CROS_OWNERS
 per-file gerrit=file://CROS_OWNERS
 per-file repo=file://CROS_OWNERS
 per-file repo_launcher=file://CROS_OWNERS
+per-file repo_launcher=copybara-worker-blackhole@google.com #{LAST_RESORT_SUGGESTION}
 
 # LUCI related tooling
 per-file bb*=file://LUCI_OWNERS
