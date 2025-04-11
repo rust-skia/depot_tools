@@ -9,6 +9,7 @@ binary when run inside a gclient source tree, so users can just type
 
 import os
 import signal
+import shutil
 import subprocess
 import sys
 
