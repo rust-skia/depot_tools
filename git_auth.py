@@ -529,12 +529,22 @@ class ConfigWizard(object):
         global_email = self._check_global_email()
 
         self._println()
+        self._println('Since we are not running in a Gerrit repository,')
+        self._println('we do not know which Gerrit host to check.')
         self._println(
-            'Since we are not running in a Gerrit repository,'
-            ' we do not know which Gerrit host(s) to check specifically.')
+            'You can re-run this command inside a Gerrit repository to check a specific host,'
+        )
+        self._println('or we can set up some commonly used Gerrit hosts.')
+
+        self._println()
         self._println(
-            'You can re-run this command inside a Gerrit repository,'
-            ' or we can try to set up some commonly used Gerrit hosts.')
+            "(If you haven't already set up auth for these Gerrit hosts,")
+        self._println(
+            "and you skip this, then you won't be able to auth to those hosts.")
+        self._println(
+            "This means lots of things will fail, like gclient sync.)")
+
+        self._println()
         if not self._read_yn('Set up commonly used Gerrit hosts?',
                              default=True):
             self._println('Okay, skipping Gerrit host setup.')
@@ -582,14 +592,22 @@ class ConfigWizard(object):
 
     def _run_inside_repo(self) -> None:
         global_email = self._check_global_email()
-        used_oauth = False
         info = self._configure_repo(global_email=global_email)
         # This repo should be confirmed to be Gerrit by this point.
         assert info is not None
         if info.method == _ConfigMethod.OAUTH:
-            used_oauth = True
-        if used_oauth:
             self._print_oauth_instructions()
+
+        dirs = list(scm.GIT.ListSubmodules(os.getcwd()))
+        if dirs:
+            self._println()
+            self._println('This repository appears to have submodules.')
+            self._println(
+                'These may use different Gerrit hosts and need to be configured separately.'
+            )
+            self._println_action(
+                "If you haven't already, run `git cl creds-check --global` to configure common Gerrit hosts."
+            )
 
     # Configuring Git for Gerrit auth
 
