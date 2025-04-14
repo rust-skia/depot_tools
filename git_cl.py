@@ -3908,14 +3908,18 @@ def CMDcreds_check(parser, args):
     options, args = parser.parse_args(args)
 
     if newauth.SwitchedOn():
-        cl = Changelist()
-        try:
-            remote_url = cl.GetRemoteUrl()
-        except subprocess2.CalledProcessError:
-            remote_url = ''
-        wizard = git_auth.ConfigWizard(
-            git_auth.UserInterface(sys.stdin, sys.stdout))
-        wizard.run(remote_url=remote_url, force_global=options.force_global)
+
+        def f() -> str:
+            cl = Changelist()
+            try:
+                return cl.GetRemoteUrl()
+            except subprocess2.CalledProcessError:
+                return ''
+
+        wizard = git_auth.ConfigWizard(ui=git_auth.UserInterface(
+            sys.stdin, sys.stdout),
+                                       remote_url_func=f)
+        wizard.run(force_global=options.force_global)
         return 0
     if newauth.ExplicitlyDisabled():
         git_auth.ClearRepoConfig(os.getcwd(), Changelist())

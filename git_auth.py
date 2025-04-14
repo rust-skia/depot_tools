@@ -465,18 +465,27 @@ class UserInterface(object):
         self._stdout.write(s)
 
 
-class ConfigWizard(object):
-    """Wizard for setting up user's Git config Gerrit authentication."""
+RemoteURLFunc = Callable[[], str]
 
-    def __init__(self, ui):
+
+class ConfigWizard(object):
+    """Wizard for setting up user's Git config Gerrit authentication.
+
+    Instances carry internal state, so cannot be reused.
+    """
+
+    def __init__(self, *, ui: UserInterface, remote_url_func: RemoteURLFunc):
         self._ui = ui
+        self._remote_url_func = remote_url_func
+
+        # Internal state
         self._user_actions = []
 
-    def run(self, *, remote_url: str, force_global: bool):
+    def run(self, *, force_global: bool):
         with self._handle_config_errors():
-            self._run(remote_url=remote_url, force_global=force_global)
+            self._run(force_global=force_global)
 
-    def _run(self, *, remote_url: str, force_global: bool):
+    def _run(self, *, force_global: bool):
         self._println('This tool will help check your Gerrit authentication.')
         self._println(
             '(Report any issues to https://issues.chromium.org/issues/new?component=1456702&template=2076315)'
@@ -489,6 +498,7 @@ class ConfigWizard(object):
             self._println('SSO helper is available.')
             self._set_config('protocol.sso.allow', 'always', scope='global')
         self._println()
+        remote_url = self._remote_url_func()
         if _is_gerrit_url(remote_url):
             if force_global:
                 self._println(

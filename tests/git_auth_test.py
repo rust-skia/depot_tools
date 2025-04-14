@@ -258,7 +258,9 @@ class TestConfigWizard(unittest.TestCase):
         self._global_state_view: Iterable[tuple[str,
                                                 list[str]]] = scm_mock.GIT(self)
         self.ui = _FakeUI()
-        self.wizard = git_auth.ConfigWizard(self.ui)
+
+        self.wizard = git_auth.ConfigWizard(
+            ui=self.ui, remote_url_func=lambda: 'remote.example.com')
 
     @property
     def global_state(self):
