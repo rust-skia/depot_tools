@@ -517,10 +517,8 @@ class ConfigWizard(object):
             else:
                 self._println(
                     'Looks like we are running inside a Gerrit repository,')
-                self._println(
-                    f'so we will check your Git configuration for {remote_url}')
-                parts = urllib.parse.urlsplit(remote_url)
-                self._run_inside_repo(parts)
+                self._println('so we will check your Git configuration for it.')
+                self._run_inside_repo()
         else:
             self._println(
                 'Looks like we are running outside of a Gerrit repository,')
@@ -576,16 +574,42 @@ class ConfigWizard(object):
             self._println()
             self._println(f'Checking authentication config for {host}')
             parts = urllib.parse.urlsplit(f'https://{host}/')
-            info = self._configure(parts, global_email, scope='global')
+            info = self._configure_host(parts, global_email, scope='global')
             if info.method == _ConfigMethod.OAUTH:
                 used_oauth = True
         if used_oauth:
             self._print_oauth_instructions()
 
-    def _run_inside_repo(self, parts: urllib.parse.SplitResult) -> None:
+    def _run_inside_repo(self) -> None:
         global_email = self._check_global_email()
-        local_email = self._check_local_email()
+        used_oauth = False
+        info = self._configure_repo(global_email=global_email)
+        # This repo should be confirmed to be Gerrit by this point.
+        assert info is not None
+        if info.method == _ConfigMethod.OAUTH:
+            used_oauth = True
+        if used_oauth:
+            self._print_oauth_instructions()
 
+    # Configuring Git for Gerrit auth
+
+    def _configure_repo(self, *, global_email: str) -> _ConfigInfo | None:
+        """Configure current Git repo for Gerrit auth.
+
+        Returns None if current Git repo doesn't have Gerrit remote.
+        """
+        self._println()
+        self._println(f'Configuring Gerrit auth for {os.getcwd()}')
+
+        remote_url = self._remote_url_func()
+        if not _is_gerrit_url(remote_url):
+            self._println(
+                f"Current repo remote {remote_url} doesn't look like Gerrit, so skipping"
+            )
+            return None
+        self._println(f"Repo remote is {remote_url}")
+
+        local_email = self._check_local_email()
         email = global_email
         scope = 'global'
         if local_email and local_email != global_email:
@@ -598,12 +622,12 @@ class ConfigWizard(object):
             email = local_email
             scope = 'local'
         self._println()
-        info = self._configure(parts, email, scope=scope)
-        if info.method == _ConfigMethod.OAUTH:
-            self._print_oauth_instructions()
+        parts = urllib.parse.urlsplit(remote_url)
+        return self._configure_host(parts, email, scope=scope)
 
-    def _configure(self, parts: urllib.parse.SplitResult, email: str, *,
-                   scope: scm.GitConfigScope) -> _ConfigInfo:
+    def _configure_host(self, parts: urllib.parse.SplitResult, email: str, *,
+                        scope: scm.GitConfigScope) -> _ConfigInfo:
+        """Configure auth for one Gerrit host."""
         use_sso = self._check_use_sso(parts, email)
         if use_sso:
             self._configure_sso(parts, scope=scope)
@@ -626,6 +650,8 @@ class ConfigWizard(object):
             # Override a potential SSO rewrite set in the global config
             self._set_url_rewrite_override(parts, scope=scope)
         self._clear_sso_rewrite(parts, scope=scope)
+
+    # Fixing gitcookies
 
     def _fix_gitcookies(self):
         sit = self._check_gitcookies()
@@ -710,6 +736,8 @@ class ConfigWizard(object):
         self._move_file(sit.cookiefile)
         self._set_config('http.cookiefile', None, scope='global')
 
+    # Self-contained checks for specific things
+
     def _check_gitcookies(self) -> _GitcookiesSituation:
         """Checks various things about the user's gitcookies situation."""
         gitcookies = self._gitcookies()
@@ -781,6 +809,8 @@ class ConfigWizard(object):
         """Checks and returns whether SSO helper is available."""
         return bool(gerrit_util.ssoHelper.find_cmd())
 
+    # Reused instruction printing
+
     def _print_manual_instructions(self) -> None:
         """Prints manual instructions for setting up auth."""
         self._println()
@@ -803,6 +833,8 @@ class ConfigWizard(object):
         self._println(
             '(However, if you changed your email, you should do this again')
         self._println("to ensure you're using the right account.)")
+
+    # Low level Git config manipulation
 
     def _set_oauth_helper(self, parts: urllib.parse.SplitResult, *,
                           scope: scm.GitConfigScope) -> None:
@@ -860,6 +892,8 @@ class ConfigWizard(object):
                           scope=scope,
                           modify_all=modify_all,
                           append=append)
+
+    # Low level misc helpers
 
     def _move_file(self, path: str) -> None:
         """Move file to a backup path."""
