@@ -481,11 +481,11 @@ class ConfigWizard(object):
         # Internal state
         self._user_actions = []
 
-    def run(self, *, force_global: bool):
+    def run(self, *, force_global: bool) -> None:
         with self._handle_config_errors():
             self._run(force_global=force_global)
 
-    def _run(self, *, force_global: bool):
+    def _run(self, *, force_global: bool) -> None:
         self._println('This tool will help check your Gerrit authentication.')
         self._println(
             '(Report any issues to https://issues.chromium.org/issues/new?component=1456702&template=2076315)'
@@ -498,6 +498,12 @@ class ConfigWizard(object):
             self._println('SSO helper is available.')
             self._set_config('protocol.sso.allow', 'always', scope='global')
         self._println()
+        self._run_gerrit_host_configuration(force_global=force_global)
+        self._println()
+        self._println('Successfully finished auth configuration check.')
+        self._print_actions_for_user()
+
+    def _run_gerrit_host_configuration(self, *, force_global: bool) -> None:
         remote_url = self._remote_url_func()
         if _is_gerrit_url(remote_url):
             if force_global:
@@ -520,9 +526,6 @@ class ConfigWizard(object):
                 'Looks like we are running outside of a Gerrit repository,')
             self._println('so we will check your global Git configuration.')
             self._run_outside_repo()
-        self._println()
-        self._println('Successfully finished auth configuration check.')
-        self._print_actions_for_user()
 
     def _run_outside_repo(self) -> None:
         global_email = self._check_global_email()
