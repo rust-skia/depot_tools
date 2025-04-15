@@ -261,10 +261,11 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             )
             print(file=sys.stderr)
 
+    is_android = False
     use_remoteexec = False
     use_reclient = None
-    use_android_build_server = False
     use_siso = None
+    use_android_build_server = None
 
     # Attempt to auto-detect remote build acceleration. We support gn-based
     # builds, where we look for args.gn in the build tree, and cmake-based
@@ -296,8 +297,11 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             if k == "use_reclient" and v == "false":
                 use_reclient = False
                 continue
-            if k == "android_static_analysis" and v == '"build_server"':
-                use_android_build_server = True
+            if k == "target_os" and v == '"android"':
+                is_android = True
+                continue
+            if k == "android_static_analysis" and v != '"build_server"':
+                use_android_build_server = False
                 continue
 
         if use_siso is None:
@@ -310,6 +314,11 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                     use_reclient = values["use_reclient_on_siso"]
                 else:
                     use_reclient = values["use_reclient_on_ninja"]
+
+    # Use the server for target_os="android" (where it is relevant), unless it
+    # is disabled via GN arg.
+    if use_android_build_server is None and is_android:
+        use_android_build_server = True
 
     if use_remoteexec:
         if use_reclient:
