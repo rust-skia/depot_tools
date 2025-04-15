@@ -841,7 +841,7 @@ class ConfigWizard(object):
         self._println('We have configured Git to use an OAuth helper.')
         self._println('The OAuth helper requires its own login.')
         self._println_action(
-            "If you haven't yet, run `git credential-luci login` to set up the OAuth helper."
+            "If you haven't yet, run `git credential-luci login` using the same email as Git."
         )
         self._println(
             "(If you have already done this, you don't need to do it again.)")
