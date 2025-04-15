@@ -913,10 +913,10 @@ class ConfigWizard(object):
     def _move_file(self, path: str) -> None:
         """Move file to a backup path."""
         backup = f'{path}.bak'
-        if os.path.exists(backup):
-            raise _ConfigError(
-                f'wanted to move {path} to {backup}, but {backup} already exists'
-            )
+        n = 1
+        while os.path.exists(backup):
+            n += 1
+            backup = f'{path}.bak{n}'
         os.rename(path, backup)
         self._println_notify(f'Moved {path!r} to {backup!r}')
 

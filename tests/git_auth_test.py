@@ -362,6 +362,21 @@ class TestConfigWizard(unittest.TestCase):
             )
             self.assertEqual(got, want)
 
+    def test_move_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'foo')
+            open(path, 'w').close()
+            self.wizard._move_file(path)
+            self.assertEqual(os.listdir(d), ['foo.bak'])
+
+    def test_move_file_backup_exists(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'foo')
+            open(path, 'w').close()
+            open(os.path.join(d, 'foo.bak'), 'w').close()
+            self.wizard._move_file(path)
+            self.assertEqual(sorted(os.listdir(d)), ['foo.bak', 'foo.bak2'])
+
 
 class _FakeUI(object):
     """Implements UserInterface for testing."""
