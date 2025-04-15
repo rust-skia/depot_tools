@@ -560,6 +560,7 @@ class ConfigWizard(object):
             'beto-core.googlesource.com',
             'boringssl.googlesource.com',
             'chromium.googlesource.com',
+            'chrome-internal.googlesource.com',
             'dawn.googlesource.com',
             'pdfium.googlesource.com',
             'quiche.googlesource.com',
@@ -567,10 +568,6 @@ class ConfigWizard(object):
             'swiftshader.googlesource.com',
             'webrtc.googlesource.com',
         ]
-        if self._check_sso_helper():
-            hosts.extend([
-                'chrome-internal.googlesource.com',
-            ])
 
         self._println()
         self._println('We will set up auth for the following hosts:')
