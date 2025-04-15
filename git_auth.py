@@ -603,7 +603,7 @@ class ConfigWizard(object):
                 'These may use different Gerrit hosts and need to be configured separately.'
             )
             self._println_action(
-                "If you haven't already, run `git cl creds-check --global` to configure common Gerrit hosts."
+                "If you haven't yet, run `git cl creds-check --global` to configure common Gerrit hosts."
             )
 
     # Configuring Git for Gerrit auth
