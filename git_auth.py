@@ -587,6 +587,13 @@ class ConfigWizard(object):
         if used_oauth:
             self._print_oauth_instructions()
 
+        self._println()
+        self._println(
+            "If you need to set up any uncommonly used hosts that we didn't set up above,"
+        )
+        self._println('you can set them up manually.')
+        self._print_manual_instructions()
+
     def _run_inside_repo(self) -> None:
         global_email = self._check_global_email()
         info = self._configure_repo(global_email=global_email)
