@@ -401,6 +401,45 @@ def PrintSummary(cl_infos, refactor_branch):
             'results.)')
 
 
+def ComputeSplitting(from_file: str, files: List[Tuple[str, str]],
+                     target_range: Tuple[int, int], max_depth: int,
+                     reviewers_override: List[str],
+                     expect_owners_override: bool, cl) -> List[CLInfo]:
+    """
+    Split the current CL into sub-CLs by partitioning the files and assigning
+    reviewers. The method used depends on the command-line arguments.
+
+    Arguments are the same as SplitCl, excecpt for the last:
+    cl: Changelist class instance, for calling owners methods
+    """
+    author = git.run('config', 'user.email').strip() or None
+
+    if from_file:
+        # Load a precomputed splitting
+        cl_infos = LoadSplittingFromFile(from_file, files_on_disk=files)
+    elif target_range:
+        # Use the directory-based clustering algorithm
+        min_files, max_files = target_range
+        cl_infos = GroupFilesByDirectory(cl, author, expect_owners_override,
+                                         files, min_files, max_files)
+    else:
+        # Use the default algorithm
+        files_split_by_reviewers = SelectReviewersForFiles(
+            cl, author, files, max_depth)
+
+        cl_infos = CLInfoFromFilesAndOwnersDirectoriesDict(
+            files_split_by_reviewers)
+
+    # Note that we do this override even if the list is empty (indicating that
+    # the user requested CLs not be assigned to any reviewers).
+    if reviewers_override != None:
+        for info in cl_infos:
+            info.reviewers = set(reviewers_override)
+
+    return cl_infos
+
+
+
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
             summarize, reviewers_override, cq_dry_run, enable_auto_submit,
             max_depth, topic, target_range, expect_owners_override, from_file,
@@ -441,7 +480,6 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         Emit('Cannot split an empty CL.')
         return 1
 
-    author = git.run('config', 'user.email').strip() or None
     refactor_branch = git.current_branch()
     assert refactor_branch, "Can't run from detached branch."
     refactor_branch_upstream = git.upstream(refactor_branch)
@@ -451,24 +489,8 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     if not dry_run and not CheckDescriptionBugLink(description):
         return 0
 
-    if from_file:
-        cl_infos = LoadSplittingFromFile(from_file, files_on_disk=files)
-    elif target_range:
-        min_files, max_files = target_range
-        cl_infos = GroupFilesByDirectory(cl, author, expect_owners_override,
-                                         files, min_files, max_files)
-    else:
-        files_split_by_reviewers = SelectReviewersForFiles(
-            cl, author, files, max_depth)
-
-        cl_infos = CLInfoFromFilesAndOwnersDirectoriesDict(
-            files_split_by_reviewers)
-
-    # Note that we do this override even if the list is empty (indicating that
-    # the user requested CLs not be assigned to any reviewers).
-    if reviewers_override != None:
-        for info in cl_infos:
-            info.reviewers = set(reviewers_override)
+    cl_infos = ComputeSplitting(from_file, files, target_range, max_depth,
+                                reviewers_override, expect_owners_override, cl)
 
     if not dry_run:
         PrintSummary(cl_infos, refactor_branch)
