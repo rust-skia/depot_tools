@@ -787,6 +787,19 @@ line is needed to reset the helper list to prevent conflicts.</p></div>
 </div>
 </div>
 <div class="sect1">
+<h2 id="_credential_helper">CREDENTIAL HELPER</h2>
+<div class="sectionbody">
+<div class="paragraph"><p><code>git-credential-luci</code> is a Git credential helper that can provide
+OAuth credentials for Gerrit.</p></div>
+<div class="paragraph"><p>You will need to set up your OAuth credentials first by running
+<code>git-credential-luci login</code>.  After that, it will be able to provide
+credentials to authenticate Git commands, if you have configured it
+according to the previous section.</p></div>
+<div class="paragraph"><p><code>git-credential-luci</code> only keeps one active login session at a time
+per OS user.</p></div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_chromium_depot_tools">CHROMIUM DEPOT_TOOLS</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>Part of the chromium <a href="depot_tools.html">depot_tools(7)</a> suite. These tools are meant to
@@ -799,7 +812,7 @@ by checking out the <a href="https://chromium.googlesource.com/chromium/tools/de
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2025-03-19 21:22:42 UTC
+ 2025-04-17 21:57:51 UTC
 </div>
 </div>
 </body>

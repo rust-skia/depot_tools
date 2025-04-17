@@ -45,6 +45,20 @@ You should copy this for each Gerrit host you use.
 
 For Googlers, see go/chrome-gerrit-auth.
 
+CREDENTIAL HELPER
+-----------------
+
+`git-credential-luci` is a Git credential helper that can provide
+OAuth credentials for Gerrit.
+
+You will need to set up your OAuth credentials first by running
+`git-credential-luci login`.  After that, it will be able to provide
+credentials to authenticate Git commands, if you have configured it
+according to the previous section.
+
+`git-credential-luci` only keeps one active login session at a time
+per OS user.
+
 include::_footer.txt[]
 
 // vim: ft=asciidoc:
