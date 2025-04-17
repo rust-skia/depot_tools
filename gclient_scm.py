@@ -1332,10 +1332,13 @@ class GitWrapper(SCMWrapper):
     def _UpdateMirrorIfNotContains(self, mirror, options, rev_type, revision):
         """Update a git mirror unless it already contains a hash revision.
 
-        This raises an error if a hash revision isn't present even after
+        This raises an error if a SHA-1 revision isn't present even after
         fetching from the remote.
         """
-        if rev_type == 'hash' and mirror.contains_revision(revision):
+        # 'hash' is overloaded and can refer to a SHA-1 hash or refs/changes/*.
+        is_sha = gclient_utils.IsFullGitSha(revision)
+
+        if rev_type == 'hash' and is_sha and mirror.contains_revision(revision):
             if options.verbose:
                 self.Print('skipping mirror update, it has rev=%s already' %
                            revision,
@@ -1351,8 +1354,10 @@ class GitWrapper(SCMWrapper):
                         depth=depth,
                         lock_timeout=getattr(options, 'lock_timeout', 0))
 
-        # Make sure we've actually fetched the revision we want.
-        if rev_type == 'hash' and not mirror.contains_revision(revision):
+        # Make sure we've actually fetched the revision we want, but only if it
+        # was specified as an explicit commit hash.
+        if rev_type == 'hash' and is_sha and not mirror.contains_revision(
+                revision):
             raise gclient_utils.Error(f'Failed to fetch {revision}.')
 
     def _Clone(self, revision, url, options):
