@@ -422,6 +422,52 @@ def PrintSummary(cl_infos, refactor_branch):
             'results.)')
 
 
+def SummarizeAndValidate(dry_run: bool, summarize: bool,
+                         files: List[Tuple[str, str]], refactor_branch: str,
+                         cl_infos: List[CLInfo]) -> Tuple[List[CLInfo], str]:
+    """
+    Print a summary of the generated splitting for the user. If we're doing a
+    real run, prompt the user to confirm the splitting is acceptable, and
+    allow them to edit it if they wish.
+
+    If we're doing a real run, also save the splitting to a file so the user
+    can safely resume an aborted upload with the same splitting.
+
+    Arguments:
+    dry_run: Whether or not we're doing a dry run
+    summarize: If we're doing a dry run, should we print a concise summary first
+    files: The list of (action, file) pairs that make up the CL we're splitting
+    refactor_branch: Name of the branch we're splitting
+
+    Returns:
+    A pair of the edited cl_infos and the name of the file to which we saved
+    the splitting. If the user aborts, the edited cl_infos will be falsy.
+    """
+    if not dry_run or summarize:
+        PrintSummary(cl_infos, refactor_branch)
+
+    if dry_run:
+        return cl_infos, ""
+
+    answer = gclient_utils.AskForData(
+        'Proceed? (y/N, or i to edit interactively): ')
+
+    if answer.lower() == 'i':
+        cl_infos, saved_splitting_file = EditSplittingInteractively(
+            cl_infos, files_on_disk=files)
+    else:
+        # Save so the user can use the splitting later if they want to
+        saved_splitting_file = SaveSplittingToTempFile(cl_infos)
+        if answer.lower() != 'y':
+            return None, saved_splitting_file
+
+    # Make sure there isn't any clutter left over from a previous run
+    if not ValidateExistingBranches(refactor_branch, cl_infos):
+        return None, saved_splitting_file
+
+    return cl_infos, saved_splitting_file
+
+
 def ComputeSplitting(from_file: str, files: List[Tuple[str, str]],
                      target_range: Tuple[int, int], max_depth: int,
                      reviewers_override: List[str],
@@ -458,7 +504,6 @@ def ComputeSplitting(from_file: str, files: List[Tuple[str, str]],
             info.reviewers = set(reviewers_override)
 
     return cl_infos
-
 
 
 def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
@@ -507,24 +552,11 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     cl_infos = ComputeSplitting(from_file, files, target_range, max_depth,
                                 reviewers_override, expect_owners_override, cl)
 
-    if not dry_run:
-        PrintSummary(cl_infos, refactor_branch)
-        answer = gclient_utils.AskForData(
-            'Proceed? (y/N, or i to edit interactively): ')
-        if answer.lower() == 'i':
-            cl_infos, saved_splitting_file = EditSplittingInteractively(
-                cl_infos, files_on_disk=files)
-        else:
-            # Save even if we're continuing, so the user can safely resume an
-            # aborted upload with the same splitting
-            saved_splitting_file = SaveSplittingToTempFile(cl_infos)
-            if answer.lower() != 'y':
-                return 0
-            # Make sure there isn't any clutter left over from a previous run
-            if not ValidateExistingBranches(refactor_branch, cl_infos):
-                return 0
-    elif summarize:
-        PrintSummary(cl_infos, refactor_branch)
+    cl_infos, saved_splitting_file = SummarizeAndValidate(
+        dry_run, summarize, files, refactor_branch, cl_infos)
+    # If the user aborted, we're done
+    if not cl_infos:
+        return 0
 
     cls_per_reviewer = collections.defaultdict(int)
     for cl_index, cl_info in enumerate(cl_infos, 1):
@@ -813,7 +845,7 @@ def LoadSplittingFromFile(filename: str,
 
 def EditSplittingInteractively(
         cl_infos: List[CLInfo],
-        files_on_disk: List[Tuple[str, str]]) -> List[CLInfo]:
+        files_on_disk: List[Tuple[str, str]]) -> Tuple[List[CLInfo], str]:
     """
     Allow the user to edit the generated splitting using their default editor.
     Make sure the edited splitting is saved so they can retrieve it if needed.
