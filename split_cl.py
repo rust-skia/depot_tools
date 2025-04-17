@@ -109,6 +109,27 @@ def EnsureInGitRepository():
     git.run('rev-parse')
 
 
+def GetGitInfo(repository_root, cl) -> Tuple[List[Tuple[str, str]], str, str]:
+    """
+    Get various information by running git commands.
+
+    Specifically, determine which branch we're on, which upstream we're
+    targeting, and the list of changed files (and the associated git actions)
+    that make up the CL we're splitting.
+    """
+    upstream = cl.GetCommonAncestorWithUpstream()
+    files = [(action.strip(), f)
+             for action, f in scm.GIT.CaptureStatus(repository_root, upstream)]
+
+    refactor_branch = git.current_branch()
+    assert refactor_branch, "Can't run from detached branch."
+    refactor_branch_upstream = git.upstream(refactor_branch)
+    assert refactor_branch_upstream, \
+        "Branch %s must have an upstream." % refactor_branch
+
+    return files, refactor_branch, refactor_branch_upstream
+
+
 def CreateBranchName(prefix: str, files: List[Tuple[str, str]]) -> str:
     """
     Given a sub-CL as a list of (action, file) pairs, create a unique and
@@ -470,21 +491,15 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     comment = gclient_utils.FileRead(comment_file) if comment_file else None
 
     EnsureInGitRepository()
-
     cl = changelist()
-    upstream = cl.GetCommonAncestorWithUpstream()
-    files = [(action.strip(), f)
-             for action, f in scm.GIT.CaptureStatus(repository_root, upstream)]
+    # Get the list of changed files, as well as the branch we're on and its
+    # upstream.
+    files, refactor_branch, refactor_branch_upstream = GetGitInfo(
+        repository_root, cl)
 
     if not files:
         Emit('Cannot split an empty CL.')
         return 1
-
-    refactor_branch = git.current_branch()
-    assert refactor_branch, "Can't run from detached branch."
-    refactor_branch_upstream = git.upstream(refactor_branch)
-    assert refactor_branch_upstream, \
-        "Branch %s must have an upstream." % refactor_branch
 
     if not dry_run and not CheckDescriptionBugLink(description):
         return 0
