@@ -390,6 +390,25 @@ def LoadDescription(description_file, dry_run):
     return gclient_utils.FileRead(description_file)
 
 
+def ProcessDescription(description_file: str, dry_run: bool,
+                       target_range: bool) -> str:
+    """
+    Load the provided description, append the note about git cl split, and
+    (on a real run), validate that it contains a bug link.
+
+    Returns the loaded description, or None if the user aborted due to a
+    missing bug link.
+    """
+    description = LoadDescription(description_file, dry_run)
+
+    description = AddUploadedByGitClSplitToDescription(
+        description, is_experimental=target_range)
+
+    if not dry_run and not CheckDescriptionBugLink(description):
+        return None
+
+    return description
+
 def PrintSummary(cl_infos, refactor_branch):
     """Print a brief summary of the splitting so the user
        can review it before uploading.
@@ -529,11 +548,6 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
     Returns:
         0 in case of success. 1 in case of error.
     """
-    description = LoadDescription(description_file, dry_run)
-
-    description = AddUploadedByGitClSplitToDescription(
-        description, is_experimental=target_range)
-    comment = gclient_utils.FileRead(comment_file) if comment_file else None
 
     EnsureInGitRepository()
     cl = changelist()
@@ -546,7 +560,11 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         Emit('Cannot split an empty CL.')
         return 1
 
-    if not dry_run and not CheckDescriptionBugLink(description):
+    # Load and validate the description and comment files now, so we can error
+    # early if there's a problem with them.
+    comment = gclient_utils.FileRead(comment_file) if comment_file else None
+    description = ProcessDescription(description_file, dry_run, target_range)
+    if not description:
         return 0
 
     cl_infos = ComputeSplitting(from_file, files, target_range, max_depth,
