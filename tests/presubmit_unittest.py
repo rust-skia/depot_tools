@@ -694,30 +694,33 @@ class PresubmitUnittest(PresubmitTestsBase):
         fake_error = 'Missing LGTM'
         fake_error_items = '["!", "!!", "!!!"]'
         fake_error_long_text = "Error long text..."
+        fake_error_locations = '[output_api.PresubmitResultLocation(file_path="path/to/file")]'
         fake_error2 = 'This failed was found in file fake.py'
         fake_error2_items = '["!!!", "!!", "!"]'
         fake_error2_long_text = " Error long text" * 3
         fake_warning = 'Line 88 is more than 80 characters.'
         fake_warning_items = '["W", "w"]'
         fake_warning_long_text = 'Warning long text...'
+        fake_warning_locations = (
+            '['
+            'output_api.PresubmitResultLocation(file_path="path/to/foo", start_line=1, end_line=1), '
+            'output_api.PresubmitResultLocation(file_path="path/to/bar", start_line=4, start_col=5, end_line=6, end_col=7)'
+            ']')
         fake_notify = 'This is a dry run'
         fake_notify_items = '["N"]'
         fake_notify_long_text = 'Notification long text...'
-        always_fail_presubmit_script = ("""\n
+        always_fail_presubmit_script = (f"""\n
 def CheckChangeOnUpload(input_api, output_api):
   output_api.more_cc = ['me@example.com']
   return [
-    output_api.PresubmitError("%s",%s, "%s"),
-    output_api.PresubmitError("%s",%s, "%s"),
-    output_api.PresubmitPromptWarning("%s",%s, "%s"),
-    output_api.PresubmitNotifyResult("%s",%s, "%s")
+    output_api.PresubmitError("{fake_error}", {fake_error_items}, "{fake_error_long_text}", {fake_error_locations}),
+    output_api.PresubmitError("{fake_error2}", {fake_error2_items}, "{fake_error2_long_text}"),
+    output_api.PresubmitPromptWarning("{fake_warning}", {fake_warning_items}, "{fake_warning_long_text}", {fake_warning_locations}),
+    output_api.PresubmitNotifyResult("{fake_notify}", {fake_notify_items}, "{fake_notify_long_text}")
   ]
 def CheckChangeOnCommit(input_api, output_api):
   raise Exception("Test error")
-""" % (fake_error, fake_error_items, fake_error_long_text, fake_error2,
-        fake_error2_items, fake_error2_long_text, fake_warning,
-        fake_warning_items, fake_warning_long_text, fake_notify,
-        fake_notify_items, fake_notify_long_text))
+""")
 
         os.path.isfile.return_value = False
         os.listdir.side_effect = [[], ['PRESUBMIT.py']]
@@ -732,24 +735,54 @@ def CheckChangeOnCommit(input_api, output_api):
                 'message': fake_notify,
                 'items': json.loads(fake_notify_items),
                 'fatal': False,
-                'long_text': fake_notify_long_text
+                'long_text': fake_notify_long_text,
+                'locations': [],
             }],
             'errors': [{
-                'message': fake_error,
-                'items': json.loads(fake_error_items),
-                'fatal': True,
-                'long_text': fake_error_long_text
+                'message':
+                fake_error,
+                'items':
+                json.loads(fake_error_items),
+                'fatal':
+                True,
+                'long_text':
+                fake_error_long_text,
+                'locations': [{
+                    'file_path': 'path/to/file',
+                    'start_line': 0,
+                    'start_col': 0,
+                    'end_line': 0,
+                    'end_col': 0,
+                }],
             }, {
                 'message': fake_error2,
                 'items': json.loads(fake_error2_items),
                 'fatal': True,
-                'long_text': fake_error2_long_text
+                'long_text': fake_error2_long_text,
+                'locations': [],
             }],
             'warnings': [{
-                'message': fake_warning,
-                'items': json.loads(fake_warning_items),
-                'fatal': False,
-                'long_text': fake_warning_long_text
+                'message':
+                fake_warning,
+                'items':
+                json.loads(fake_warning_items),
+                'fatal':
+                False,
+                'long_text':
+                fake_warning_long_text,
+                'locations': [{
+                    'file_path': 'path/to/foo',
+                    'start_line': 1,
+                    'start_col': 0,
+                    'end_line': 1,
+                    'end_col': 0,
+                }, {
+                    'file_path': 'path/to/bar',
+                    'start_line': 4,
+                    'start_col': 5,
+                    'end_line': 6,
+                    'end_col': 7,
+                }],
             }],
             'more_cc': ['me@example.com'],
         }
