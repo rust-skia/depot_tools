@@ -830,18 +830,21 @@ Raises:
 &mdash; **def [initialize](/recipes/recipe_modules/osx_sdk/api.py#56)(self):**
 ### *recipe_modules* / [presubmit](/recipes/recipe_modules/presubmit)
 
-[DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cv][recipe_engine/recipe_modules/cv], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
+[DEPS](/recipes/recipe_modules/presubmit/__init__.py#13): [bot\_update](#recipe_modules-bot_update), [depot\_tools](#recipe_modules-depot_tools), [gclient](#recipe_modules-gclient), [git](#recipe_modules-git), [tryserver](#recipe_modules-tryserver), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cv][recipe_engine/recipe_modules/cv], [recipe\_engine/findings][recipe_engine/recipe_modules/findings], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/resultdb][recipe_engine/recipe_modules/resultdb], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 
-#### **class [PresubmitApi](/recipes/recipe_modules/presubmit/api.py#16)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
+#### **class [PresubmitApi](/recipes/recipe_modules/presubmit/api.py#17)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/presubmit/api.py#28)(self, \*args, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/presubmit/api.py#29)(self, \*args, \*\*kwargs):**
 
 Returns a presubmit step.
 
-&mdash; **def [execute](/recipes/recipe_modules/presubmit/api.py#116)(self, bot_update_step, skip_owners=False, run_all=False):**
+&mdash; **def [execute](/recipes/recipe_modules/presubmit/api.py#117)(self, bot_update_step, skip_owners=False, run_all=False):**
 
 Runs presubmit and sets summary markdown if applicable.
+
+Also uploads the presubmit results as findings if the results contain
+location data.
 
 Args:
   * bot_update_step: the StepResult from a previously executed bot_update step.
@@ -850,7 +853,7 @@ Args:
 Returns:
   a RawResult object, suitable for being returned from RunSteps.
 
-&mdash; **def [prepare](/recipes/recipe_modules/presubmit/api.py#49)(self, root_solution_revision=None):**
+&mdash; **def [prepare](/recipes/recipe_modules/presubmit/api.py#50)(self, root_solution_revision=None):**
 
 Sets up a presubmit run.
 
@@ -867,7 +870,7 @@ Args:
 Returns:
   the StepResult from the bot_update step.
 
-&emsp; **@property**<br>&mdash; **def [presubmit\_support\_path](/recipes/recipe_modules/presubmit/api.py#24)(self):**
+&emsp; **@property**<br>&mdash; **def [presubmit\_support\_path](/recipes/recipe_modules/presubmit/api.py#25)(self):**
 ### *recipe_modules* / [tryserver](/recipes/recipe_modules/tryserver)
 
 [DEPS](/recipes/recipe_modules/tryserver/__init__.py#7): [gerrit](#recipe_modules-gerrit), [git](#recipe_modules-git), [git\_cl](#recipe_modules-git_cl), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/led][recipe_engine/recipe_modules/led], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1205,10 +1208,10 @@ Move things around in a loop!
 &mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/examples/full.py#13)(api):**
 ### *recipes* / [presubmit:tests/execute](/recipes/recipe_modules/presubmit/tests/execute.py)
 
-[DEPS](/recipes/recipe_modules/presubmit/tests/execute.py#12): [gclient](#recipe_modules-gclient), [presubmit](#recipe_modules-presubmit), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
+[DEPS](/recipes/recipe_modules/presubmit/tests/execute.py#13): [gclient](#recipe_modules-gclient), [presubmit](#recipe_modules-presubmit), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/cq][recipe_engine/recipe_modules/cq], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
 
 
-&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/tests/execute.py#25)(api):**
+&mdash; **def [RunSteps](/recipes/recipe_modules/presubmit/tests/execute.py#27)(api):**
 ### *recipes* / [presubmit:tests/prepare](/recipes/recipe_modules/presubmit/tests/prepare.py)
 
 [DEPS](/recipes/recipe_modules/presubmit/tests/prepare.py#11): [gclient](#recipe_modules-gclient), [presubmit](#recipe_modules-presubmit), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime]
@@ -1279,12 +1282,14 @@ Move things around in a loop!
 [recipe_engine/recipe_modules/cq]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-cq
 [recipe_engine/recipe_modules/cv]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-cv
 [recipe_engine/recipe_modules/file]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-file
+[recipe_engine/recipe_modules/findings]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-findings
 [recipe_engine/recipe_modules/json]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-json
 [recipe_engine/recipe_modules/led]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-led
 [recipe_engine/recipe_modules/milo]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-milo
 [recipe_engine/recipe_modules/path]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-path
 [recipe_engine/recipe_modules/platform]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-platform
 [recipe_engine/recipe_modules/properties]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-properties
+[recipe_engine/recipe_modules/proto]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-proto
 [recipe_engine/recipe_modules/raw_io]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-raw_io
 [recipe_engine/recipe_modules/resultdb]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-resultdb
 [recipe_engine/recipe_modules/runtime]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/c531c52ec17dfef3e6bc77f0eb7493d48e3679ae/README.recipes.md#recipe_modules-runtime
