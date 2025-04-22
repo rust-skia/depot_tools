@@ -2654,12 +2654,16 @@ def CheckJsonParses(input_api, output_api, file_filter=None):
         with _io.open(f.AbsoluteLocalPath(), encoding='utf-8') as j:
             try:
                 json.load(j)
-            except ValueError:
+            except json.JSONDecodeError:
                 # Just a warning for now, in case people are using JSON5
                 # somewhere.
                 warnings.append(
                     output_api.PresubmitPromptWarning(
-                        '%s does not appear to be valid JSON.' % f.LocalPath()))
+                        f"{f.LocalPath()} doesn't appear to be valid JSON.",
+                        locations=[
+                            output_api.PresubmitResultLocation(
+                                file_path=f.LocalPath()),
+                        ]))
     return warnings
 
 
