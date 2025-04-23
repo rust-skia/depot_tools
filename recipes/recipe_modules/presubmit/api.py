@@ -214,7 +214,7 @@ class PresubmitApi(recipe_api.RecipeApi):
           ' while running presubmit checks.'
           ' Please [file a bug](https://issues.chromium.org'
           '/issues/new?component=1456211)')
-    if step_json:
+    if step_json and self.m.resultdb.enabled:
       self._upload_findings_from_result(step_json)
     return raw_result
 
