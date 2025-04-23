@@ -3977,6 +3977,12 @@ def CMDsync(parser, args):
                       dest='experiments',
                       default=[],
                       help='Which experiments should be enabled.')
+    parser.add_option('--ignore-dep-type',
+                      choices=['git', 'cipd', 'gcs'],
+                      action='append',
+                      default=[],
+                      help='Specify to skip processing of a certain type of '
+                      'dep.')
     (options, args) = parser.parse_args(args)
     client = GClient.LoadCurrentConfig(options)
 
