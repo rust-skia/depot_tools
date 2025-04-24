@@ -190,7 +190,8 @@ class PresubmitApi(recipe_api.RecipeApi):
     # Set recipe result values and upload findings
     if (step_json := presubmit_step.json.output):
       raw_result.summary_markdown = _createSummaryMarkdown(step_json)
-      self._upload_findings_from_result(step_json)
+      if self.m.tryserver.is_tryserver:
+        self._upload_findings_from_result(step_json)
 
     if presubmit_step.exc_result.retcode == 0:
       raw_result.status = common_pb2.SUCCESS
