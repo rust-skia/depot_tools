@@ -36,9 +36,7 @@ class PresubmitApi(recipe_api.RecipeApi):
       cmd.extend(['--json_output', self.m.json.output()])
       if self.m.resultdb.enabled:
         kwargs['wrapper'] = ('rdb', 'stream', '--')
-      step_data = self.m.step(name, cmd, **kwargs)
-      output = step_data.json.output or {}
-      return output
+      return self.m.step(name, cmd, **kwargs)
 
   @property
   def _relative_root(self):
@@ -181,26 +179,27 @@ class PresubmitApi(recipe_api.RecipeApi):
       ])
 
     raw_result = result_pb2.RawResult()
-    step_json = self(
+    presubmit_step = self(
         *presubmit_args,
         timeout=self._timeout_s,
         # ok_ret='any' causes all exceptions to be ignored in this step
         ok_ret='any')
-    # Set recipe result values
-    if step_json:
-      raw_result.summary_markdown = _createSummaryMarkdown(step_json)
+    if presubmit_step.exc_result.retcode != 0:
+      presubmit_step.presentation.status = 'FAILURE'
 
-    retcode = self.m.step.active_result.retcode
-    if retcode == 0:
+    # Set recipe result values and upload findings
+    if (step_json := presubmit_step.json.output):
+      raw_result.summary_markdown = _createSummaryMarkdown(step_json)
+      self._upload_findings_from_result(step_json)
+
+    if presubmit_step.exc_result.retcode == 0:
       raw_result.status = common_pb2.SUCCESS
       return raw_result
-
-    self.m.step.active_result.presentation.status = 'FAILURE'
-    if self.m.step.active_result.exc_result.had_timeout:
+    elif presubmit_step.exc_result.had_timeout:
       raw_result.status = common_pb2.FAILURE
       raw_result.summary_markdown += (
           '\n\nTimeout occurred during presubmit step.')
-    elif retcode == 1:
+    elif presubmit_step.exc_result.retcode == 1:
       raw_result.status = common_pb2.FAILURE
       self.m.tryserver.set_test_failure_tryjob_result()
     else:
@@ -214,11 +213,11 @@ class PresubmitApi(recipe_api.RecipeApi):
           ' while running presubmit checks.'
           ' Please [file a bug](https://issues.chromium.org'
           '/issues/new?component=1456211)')
-    if step_json and self.m.resultdb.enabled:
-      self._upload_findings_from_result(step_json)
     return raw_result
 
   def _upload_findings_from_result(self, result_json):
+    if not self.m.resultdb.enabled:  # pragma: no cover
+      return
     findings = []
     base_finding = findings_pb.Finding(
         category='chromium_presubmit',

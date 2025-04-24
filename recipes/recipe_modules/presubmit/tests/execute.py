@@ -364,5 +364,39 @@ def GenTests(api):
                   severity_level=findings_pb.Finding.SEVERITY_LEVEL_INFO),
           ],
       ),
+      api.post_process(post_process.StatusFailure),
       api.post_process(post_process.DropExpectation),
       status="FAILURE")
+
+  yield api.test(
+      'upload_findings_when_presubmit_succeeds',
+      api.runtime(is_experimental=False),
+      api.buildbucket.try_build(project='infra'),
+      api.step_data(
+          'presubmit',
+          api.json.output({
+              'errors': [],
+              'notifications': [],
+              'warnings': [{
+                  'message': 'this is a message',
+                  'long_text': '',
+                  'items': [],
+                  'locations': [{
+                      'file_path': 'path/to/file',
+                  }],
+                  'fatal': False
+              }]
+          })),
+      api.post_process(
+          _has_uploaded_findings,
+          [
+              findings_pb.Finding(
+                  category='chromium_presubmit',
+                  location=findings_pb.Location(
+                      gerrit_change_ref=gerrit_change_ref,
+                      file_path='path/to/file'),
+                  message='this is a message',
+                  severity_level=findings_pb.Finding.SEVERITY_LEVEL_WARNING),
+          ],
+      ), api.post_process(post_process.StatusSuccess),
+      api.post_process(post_process.DropExpectation))
