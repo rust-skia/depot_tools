@@ -330,7 +330,7 @@ def GetFilesSplitByOwners(files, max_depth, repository_root):
         files: List of the file paths to be grouped by the OWNERS.
             Note that each path is relative to the repostiory root.
         max_depth: Max depth to traverse from the repository path.
-        repository_path: Absolute path to the repository root.
+        repository_root: Absolute path to the repository root.
 
     Returns:
         A map where keys are paths to directories containing an OWNERS file and
