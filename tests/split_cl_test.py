@@ -104,7 +104,6 @@ class SplitClTest(unittest.TestCase):
     @mock.patch("os.path.isfile")
     def testSelectReviewersForFiles(self, mock_is_file):
         mock_is_file.side_effect = self.MockIsFile
-
         owners_client = mock.Mock(SuggestOwners=self.MockSuggestOwners,
                                   EVERYONE="*")
         cl = mock.Mock(owners_client=owners_client)
@@ -116,7 +115,7 @@ class SplitClTest(unittest.TestCase):
                  ("M", os.path.join("baz", "owner3", "e.txt"))]
 
         files_split_by_reviewers = split_cl.SelectReviewersForFiles(
-            cl, "author", files, 0)
+            cl, "author", files, 0, "")
 
         self.assertEqual(3, len(files_split_by_reviewers.keys()))
         info1 = files_split_by_reviewers[tuple(["owner1", "owner2"])]

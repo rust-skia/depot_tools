@@ -323,8 +323,14 @@ def UploadCl(refactor_branch, refactor_branch_upstream, cl_description, files,
                                 publish=True)
 
 
-def GetFilesSplitByOwners(files, max_depth):
+def GetFilesSplitByOwners(files, max_depth, repository_root):
     """Returns a map of files split by OWNERS file.
+
+    Args:
+        files: List of the file paths to be grouped by the OWNERS.
+            Note that each path is relative to the repostiory root.
+        max_depth: Max depth to traverse from the repository path.
+        repository_path: Absolute path to the repository root.
 
     Returns:
         A map where keys are paths to directories containing an OWNERS file and
@@ -339,10 +345,21 @@ def GetFilesSplitByOwners(files, max_depth):
         if max_depth >= 1:
             dir_with_owners = os.path.join(
                 *dir_with_owners.split(os.path.sep)[:max_depth])
+
         # Find the closest parent directory with an OWNERS file.
-        while (dir_with_owners not in files_split_by_owners
-               and not os.path.isfile(os.path.join(dir_with_owners, 'OWNERS'))):
+        dir_with_owners = os.path.join(repository_root, dir_with_owners)
+        while dir_with_owners != repository_root:
+            if dir_with_owners in files_split_by_owners:
+                break
+            owners_path = os.path.join(dir_with_owners, 'OWNERS')
+            if os.path.isfile(owners_path):
+                break
+            if os.path.lexists(owners_path):
+                raise ClSplitParseError(
+                    f'{owners_path} exists, but is not a file')
+
             dir_with_owners = os.path.dirname(dir_with_owners)
+
         files_split_by_owners.setdefault(dir_with_owners, []).append(
             (action, path))
     return files_split_by_owners
@@ -487,15 +504,21 @@ def SummarizeAndValidate(dry_run: bool, summarize: bool,
     return cl_infos, saved_splitting_file
 
 
-def ComputeSplitting(from_file: str, files: List[Tuple[str, str]],
-                     target_range: Tuple[int, int], max_depth: int,
-                     reviewers_override: List[str],
-                     expect_owners_override: bool, cl) -> List[CLInfo]:
+def ComputeSplitting(
+    from_file: str,
+    files: List[Tuple[str, str]],
+    target_range: Tuple[int, int],
+    max_depth: int,
+    reviewers_override: List[str],
+    expect_owners_override: bool,
+    cl,
+    repository_root: str,
+) -> List[CLInfo]:
     """
     Split the current CL into sub-CLs by partitioning the files and assigning
     reviewers. The method used depends on the command-line arguments.
 
-    Arguments are the same as SplitCl, excecpt for the last:
+    Arguments are the same as SplitCl, excecpt for the following:
     cl: Changelist class instance, for calling owners methods
     """
     author = git.run('config', 'user.email').strip() or None
@@ -511,7 +534,7 @@ def ComputeSplitting(from_file: str, files: List[Tuple[str, str]],
     else:
         # Use the default algorithm
         files_split_by_reviewers = SelectReviewersForFiles(
-            cl, author, files, max_depth)
+            cl, author, files, max_depth, repository_root)
 
         cl_infos = CLInfoFromFilesAndOwnersDirectoriesDict(
             files_split_by_reviewers)
@@ -544,6 +567,7 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         max_depth: The maximum directory depth to search for OWNERS files. A
             value less than 1 means no limit.
         topic: Topic to associate with split CLs.
+        repository_root: Absolute path of the repository root.
 
     Returns:
         0 in case of success. 1 in case of error.
@@ -568,7 +592,8 @@ def SplitCl(description_file, comment_file, changelist, cmd_upload, dry_run,
         return 0
 
     cl_infos = ComputeSplitting(from_file, files, target_range, max_depth,
-                                reviewers_override, expect_owners_override, cl)
+                                reviewers_override, expect_owners_override, cl,
+                                repository_root)
 
     cl_infos, saved_splitting_file = SummarizeAndValidate(
         dry_run, summarize, files, refactor_branch, cl_infos)
@@ -632,7 +657,7 @@ def CheckDescriptionBugLink(description):
     return answer.lower() == 'y'
 
 
-def SelectReviewersForFiles(cl, author, files, max_depth):
+def SelectReviewersForFiles(cl, author, files, max_depth, repository_root):
     """Selects reviewers for passed-in files
 
     Args:
@@ -641,8 +666,10 @@ def SelectReviewersForFiles(cl, author, files, max_depth):
         files: List of files
         max_depth: The maximum directory depth to search for OWNERS files.
             A value less than 1 means no limit.
+        repository_root: Absolute path of the repository root
     """
-    info_split_by_owners = GetFilesSplitByOwners(files, max_depth)
+    info_split_by_owners = GetFilesSplitByOwners(files, max_depth,
+                                                 repository_root)
 
     info_split_by_reviewers = {}
 
