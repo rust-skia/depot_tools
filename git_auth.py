@@ -497,6 +497,7 @@ class ConfigWizard(object):
         if self._check_sso_helper():
             self._println('SSO helper is available.')
             self._set_config('protocol.sso.allow', 'always', scope='global')
+        self._check_gce()
         self._println()
         self._run_gerrit_host_configuration(force_global=force_global)
         self._println()
@@ -776,6 +777,40 @@ class ConfigWizard(object):
             divergent_cookiefiles=divergent_cookiefiles,
         )
 
+    def _check_gce(self):
+        if not gerrit_util.GceAuthenticator.is_applicable():
+            return
+        self._println()
+        self._println('This appears to be a GCE VM.')
+        self._println('You will need to add `export SKIP_GCE_AUTH_FOR_GIT=1`')
+        self._println('to your .bashrc or similar.')
+        fallback_msg = 'Add `export SKIP_GCE_AUTH_FOR_GIT=1` to your .bashrc or similar.'
+        if os.name == 'nt':
+            # Can't automatically handle Windows yet.
+            self._println_action(fallback_msg)
+            return
+        rcfile: str | None = None
+        options = [
+            os.path.expanduser('~/.bashrc'),
+        ]
+
+        for p in options:
+            if os.path.exists(p):
+                self._println(f'We found {p!r}')
+                rcfile = p
+                break
+        if not rcfile:
+            self._println("We couldn't automatically detect your rcfile")
+            self._println("so you'll need to do it manually.")
+            self._println_action(fallback_msg)
+            return
+        if self._read_yn(f'Shall we add this line to {rcfile}?', default=True):
+            self._append_to_file(rcfile, 'export SKIP_GCE_AUTH_FOR_GIT=1')
+            self._println_action(
+                'Restart your shell/terminal to use the updated environment.')
+            return
+        self._println_action(fallback_msg)
+
     def _check_global_email(self) -> str:
         """Checks and returns user's global Git email.
 
@@ -916,6 +951,17 @@ class ConfigWizard(object):
                           append=append)
 
     # Low level misc helpers
+
+    def _append_to_file(self, path: str, line: str) -> None:
+        """Append line to file.
+
+        One newline is written before and after the given line string.
+        """
+        with open(path, 'a') as f:
+            f.write('\n')
+            f.write(line)
+            f.write('\n')
+        self._println_notify(f'Added {line!r} to {path!r}')
 
     def _move_file(self, path: str) -> None:
         """Move file to a backup path."""
