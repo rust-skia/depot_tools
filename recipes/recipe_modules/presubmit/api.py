@@ -190,8 +190,8 @@ class PresubmitApi(recipe_api.RecipeApi):
     # Set recipe result values and upload findings
     if (step_json := presubmit_step.json.output):
       raw_result.summary_markdown = _createSummaryMarkdown(step_json)
-      if self.m.tryserver.is_tryserver:
-        self._upload_findings_from_result(step_json)
+      if self.m.tryserver.is_tryserver and self.m.resultdb.enabled:
+        self.upload_findings_from_result(step_json)
 
     if presubmit_step.exc_result.retcode == 0:
       raw_result.status = common_pb2.SUCCESS
@@ -216,9 +216,12 @@ class PresubmitApi(recipe_api.RecipeApi):
           '/issues/new?component=1456211)')
     return raw_result
 
-  def _upload_findings_from_result(self, result_json):
-    if not self.m.resultdb.enabled:  # pragma: no cover
-      return
+  def upload_findings_from_result(self, result_json):
+    """Parse code findings from presubmit results and then upload them.
+
+    Args:
+      result_json: the json result output from presubmit step.
+    """
     findings = []
     base_finding = findings_pb.Finding(
         category='chromium_presubmit',

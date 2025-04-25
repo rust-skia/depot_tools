@@ -871,6 +871,13 @@ Returns:
   the StepResult from the bot_update step.
 
 &emsp; **@property**<br>&mdash; **def [presubmit\_support\_path](/recipes/recipe_modules/presubmit/api.py#25)(self):**
+
+&mdash; **def [upload\_findings\_from\_result](/recipes/recipe_modules/presubmit/api.py#219)(self, result_json):**
+
+Parse code findings from presubmit results and then upload them.
+
+Args:
+  result_json: the json result output from presubmit step.
 ### *recipe_modules* / [tryserver](/recipes/recipe_modules/tryserver)
 
 [DEPS](/recipes/recipe_modules/tryserver/__init__.py#7): [gerrit](#recipe_modules-gerrit), [git](#recipe_modules-git), [git\_cl](#recipe_modules-git_cl), [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/led][recipe_engine/recipe_modules/led], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
