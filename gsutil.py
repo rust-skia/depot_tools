@@ -14,8 +14,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 import urllib.request
+
+import gclient_utils
 
 GSUTIL_URL = 'https://storage.googleapis.com/pub/'
 API_URL = 'https://www.googleapis.com/storage/v1/b/pub/o/'
@@ -49,34 +50,34 @@ def download_gsutil(version, target_dir):
     filename = 'gsutil_%s.zip' % version
     target_filename = os.path.join(target_dir, filename)
 
-    # Check if the target exists already.
-    if os.path.exists(target_filename):
-        md5_calc = hashlib.md5()
+    # Get md5 hash of the remote file from the metadata.
+    metadata_url = '%s%s' % (API_URL, filename)
+    metadata = json.load(urllib.request.urlopen(metadata_url))
+    remote_md5 = base64.b64decode(metadata['md5Hash'])
+
+    # Calculate the md5 hash of the local file.
+    def calc_local_md5():
+        assert os.path.exists(target_filename)
+        md5 = hashlib.md5()
         with open(target_filename, 'rb') as f:
-            while True:
-                buf = f.read(4096)
-                if not buf:
-                    break
-                md5_calc.update(buf)
-        local_md5 = md5_calc.hexdigest()
+            while chunk := f.read(1024 * 1024):
+                md5.update(chunk)
+        return md5.digest()
 
-        metadata_url = '%s%s' % (API_URL, filename)
-        metadata = json.load(urllib.request.urlopen(metadata_url))
-        remote_md5 = base64.b64decode(metadata['md5Hash']).decode('utf-8')
-
-        if local_md5 == remote_md5:
+    # Use the existing file if it has the correct md5 hash.
+    if os.path.exists(target_filename):
+        if calc_local_md5() == remote_md5:
             return target_filename
         os.remove(target_filename)
 
-    # Do the download.
+    # Download the file.
     url = '%s%s' % (GSUTIL_URL, filename)
-    u = urllib.request.urlopen(url)
-    with open(target_filename, 'wb') as f:
-        while True:
-            buf = u.read(4096)
-            if not buf:
-                break
-            f.write(buf)
+    urllib.request.urlretrieve(url, target_filename)
+
+    # Check if the file was downloaded correctly.
+    if calc_local_md5() != remote_md5:
+        raise InvalidGsutilError(f'Downloaded gsutil from {url} has wrong md5')
+
     return target_filename
 
 
@@ -112,7 +113,9 @@ def ensure_gsutil(version, target, clean):
 
         with temporary_directory(target) as instance_dir:
             download_dir = os.path.join(instance_dir, 'd')
-            target_zip_filename = download_gsutil(version, instance_dir)
+            target_zip_filename = gclient_utils.exponential_backoff_retry(
+                lambda: download_gsutil(version, instance_dir),
+                name='download_gsutil')
             with zipfile.ZipFile(target_zip_filename, 'r') as target_zip:
                 target_zip.extractall(download_dir)
 
