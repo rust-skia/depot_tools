@@ -242,13 +242,10 @@ class PresubmitApi(recipe_api.RecipeApi):
                          []), findings_pb.Finding.SEVERITY_LEVEL_INFO)
     ]:
       for result in results:
-        message = result.get('message', '')
-        if result.get('long_text', None):
-          message += '\n\n' + result['long_text']
         for loc in result.get('locations', []):
           f = findings_pb.Finding()
           f.CopyFrom(base_finding)
-          f.message = message
+          f.message = result.get('message', '')
           f.severity_level = level
           f.location.file_path = loc['file_path'].replace(self.m.path.sep, '/')
           if loc.get('start_line', None):

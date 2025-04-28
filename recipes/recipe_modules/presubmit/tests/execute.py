@@ -353,7 +353,7 @@ def GenTests(api):
                           end_line=1,
                           end_column=5,
                       )),
-                  message='typo!!\n\nreplace foo with bar',
+                  message='typo!!',
                   severity_level=findings_pb.Finding.SEVERITY_LEVEL_WARNING),
               findings_pb.Finding(
                   category='chromium_presubmit',
