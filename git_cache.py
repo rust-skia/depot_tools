@@ -317,14 +317,6 @@ class Mirror(object):
         if not self.exists():
             return False
 
-        # If the cache population is in progress, this will raise LockError().
-        with lockfile.lock(self.mirror_path, timeout=0):
-            # If the sentinent file exists at this point, it indicates that
-            # the bootstrapping process was interrupted, leaving the cache
-            # entries in a bad state.
-            if os.path.isfile(self._init_sentient_file):
-                return False
-
         if sys.platform.startswith('win'):
             # Windows .bat scripts use ^ as escape sequence, which means we have
             # to escape it with itself for every .bat invocation.
