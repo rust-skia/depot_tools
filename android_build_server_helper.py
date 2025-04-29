@@ -51,6 +51,10 @@ def _start_server(local_dev_server_path):
 
 
 def _set_tty_env():
+    # If the caller explicitly set this environment variable, just use it
+    # instead of failing.
+    if "AUTONINJA_STDOUT_NAME" in os.environ:
+        return True
     stdout_name = os.readlink('/proc/self/fd/1')
     # Anonymous pipes can't be opened. These look like "pipe:[394765110]".
     ret = os.path.exists(stdout_name)
