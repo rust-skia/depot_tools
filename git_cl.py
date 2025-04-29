@@ -807,6 +807,29 @@ def _GetCommitCountSummary(begin_commit: str,
     return f'{count} commit{"s"[:count!=1]}'
 
 
+def _prepare_superproject_push_option() -> str | None:
+    """Returns the push option specifying the root repo of a gclient checkout.
+
+    The push option will be formatted:
+        'custom-keyed-value=rootRepo:{host}/{project}'
+
+    For chromium/src the entire push option would be:
+        'custom-keyed-value=rootRepo:chromium/chromium/src'.
+    """
+    gclient_root = gclient_paths.FindGclientRoot(os.getcwd())
+    if not gclient_root:
+        return None
+
+    superproject_url = gclient_paths.GetGClientPrimarySolutionURL(gclient_root)
+    if not superproject_url:
+        return None
+
+    parsed_url = urllib.parse.urlparse(superproject_url)
+    host = parsed_url.netloc.removesuffix('.googlesource.com')
+    project = parsed_url.path.strip('/').removesuffix('.git')
+    return f'custom-keyed-value=rootRepo:{host}/{project}'
+
+
 def print_stats(args):
     """Prints statistics about the change to the user."""
     # --no-ext-diff is broken in some versions of Git, so try to work around
@@ -2983,10 +3006,18 @@ class Changelist(object):
         push_returncode = 0
         before_push = time_time()
         try:
+            # Combine user-provided push options with the potential
+            # superproject push option.
+            all_push_options = []
+            if git_push_options:
+                all_push_options.extend(git_push_options)
+            if superproject_option := _prepare_superproject_push_option():
+                all_push_options.append(superproject_option)
+
             remote_url = self.GetRemoteUrl()
             push_cmd = ['git', 'push', remote_url, refspec]
-            if git_push_options:
-                for opt in git_push_options:
+            if all_push_options:
+                for opt in all_push_options:
                     push_cmd.extend(['-o', opt])
 
             push_stdout = gclient_utils.CheckCallAndFilter(
