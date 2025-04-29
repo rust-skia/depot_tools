@@ -22,6 +22,7 @@ per-file ninja*=file://BUILD_OWNERS
 per-file post_build_ninja_summary.py=file://BUILD_OWNERS
 per-file android_build_server_helper.py=mheikal@chromium.org
 per-file android_build_server_helper.py=agrieve@chromium.org
+per-file android_build_server_helper.py=wnwen@chromium.org
 
 # GN
 per-file gn*=dpranke@google.com
