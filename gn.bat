@@ -8,7 +8,5 @@ setlocal
 :: standalone, but allow other PATH manipulations to take priority.
 set PATH=%PATH%;%~dp0
 
-set scriptdir=%~dp0
-
 :: Defer control.
-@call %scriptdir%python-bin\python3 "%~dp0\gn.py" %*
+python3 "%~dp0\gn.py" %*
