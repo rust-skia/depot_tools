@@ -573,7 +573,9 @@ def main():
                 'Toolchain is out of date. Run "gclient runhooks" to '
                 'update the toolchain, or set '
                 'DEPOT_TOOLS_WIN_TOOLCHAIN=0 to use the locally '
-                'installed toolchain.')
+                'installed toolchain.\n'
+                'Note: DEPOT_TOOLS_WIN_TOOLCHAIN=0 does not work with '
+                'remote execution.')
         should_use_file = False
         should_use_http = False
         should_use_gs = False
@@ -598,6 +600,8 @@ def main():
                     '\n\n\nNo downloadable toolchain found. In order to use your '
                     'locally installed version of Visual Studio to build Chrome '
                     'please set DEPOT_TOOLS_WIN_TOOLCHAIN=0.\n'
+                    'Note: DEPOT_TOOLS_WIN_TOOLCHAIN=0 does not work with '
+                    'remote execution.\n'
                     'For details search for DEPOT_TOOLS_WIN_TOOLCHAIN in the '
                     'instructions at %s\n\n' % doc)
             return 1
