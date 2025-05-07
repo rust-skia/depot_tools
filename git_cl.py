@@ -7173,19 +7173,19 @@ def CMDformat(parser, args):
         (['.xml'], _RunMetricsXMLFormat),
     ]
     if not opts.no_java:
-        formatters += [(['.java'], _RunGoogleJavaFormat)]
+        formatters.append((['.java'], _RunGoogleJavaFormat))
     if opts.clang_format:
-        formatters += [(clang_exts, _RunClangFormatDiff)]
+        formatters.append((clang_exts, _RunClangFormatDiff))
     if opts.use_rust_fmt:
-        formatters += [(['.rs'], _RunRustFmt)]
+        formatters.append((['.rs'], _RunRustFmt))
     if opts.use_swift_format:
-        formatters += [(['.swift'], _RunSwiftFormat)]
+        formatters.append((['.swift'], _RunSwiftFormat))
     if opts.python is not False:
-        formatters += [(['.py'], _RunYapf)]
+        formatters.append((['.py'], _RunYapf))
     if opts.mojom:
-        formatters += [(['.mojom', '.test-mojom'], _RunMojomFormat)]
+        formatters.append((['.mojom', '.test-mojom'], _RunMojomFormat))
     if opts.lucicfg:
-        formatters += [(['.star'], _RunLUCICfgFormat)]
+        formatters.append((['.star'], _RunLUCICfgFormat))
 
     top_dir = settings.GetRoot()
     return_value = 0
