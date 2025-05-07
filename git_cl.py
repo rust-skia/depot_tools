@@ -222,7 +222,7 @@ def RunCommand(args, error_ok=False, error_message=None, shell=False, **kwargs):
         return out
 
 
-def RunGit(args, **kwargs):
+def RunGit(args, **kwargs) -> str:
     """Returns stdout."""
     return RunCommand(['git'] + args, **kwargs)
 
@@ -7040,14 +7040,17 @@ def _RunLUCICfgFormat(opts, paths, top_dir, upstream_commit):
     return ret
 
 
-def MatchingFileType(file_name, extensions):
+def MatchingFileType(file_name: str, extensions: list[str]) -> bool:
     """Returns True if the file name ends with one of the given extensions."""
     return bool([ext for ext in extensions if file_name.lower().endswith(ext)])
 
 
+FormatterFunction = Callable[[Any, list[str], str, str], int]
+
+
 @subcommand.usage('[files or directories to diff]')
 @metrics.collector.collect_metrics('git cl format')
-def CMDformat(parser, args):
+def CMDformat(parser: optparse.OptionParser, args: list[str]):
     """Runs auto-formatting tools (clang-format etc.) on the diff."""
     if gclient_utils.IsEnvCog():
         print(
@@ -7147,14 +7150,14 @@ def CMDformat(parser, args):
     # branch when it was created or the last time it was rebased. This is
     # to cover the case where the user may have called "git fetch origin",
     # moving the origin branch to a newer commit, but hasn't rebased yet.
-    upstream_commit = None
-    upstream_branch = opts.upstream
+    upstream_commit: str | None = None
+    upstream_branch: str | None = opts.upstream
     if not upstream_branch:
         cl = Changelist()
         upstream_branch = cl.GetUpstreamBranch()
     if upstream_branch:
-        upstream_commit = RunGit(['merge-base', 'HEAD', upstream_branch])
-        upstream_commit = upstream_commit.strip()
+        upstream_commit = RunGit(['merge-base', 'HEAD',
+                                  upstream_branch]).strip()
 
     if not upstream_commit:
         DieWithError('Could not find base commit for this branch. '
@@ -7168,7 +7171,7 @@ def CMDformat(parser, args):
     if opts.js:
         clang_exts.extend(['.js', '.ts'])
 
-    formatters = [
+    formatters: list[tuple[list[str], FormatterFunction]] = [
         (GN_EXTS, _RunGnFormat),
         (['.xml'], _RunMetricsXMLFormat),
     ]
