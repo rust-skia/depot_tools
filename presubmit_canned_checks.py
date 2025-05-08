@@ -1876,7 +1876,11 @@ def CheckGNFormatted(input_api, output_api):
         ).endswith('.gni') or x.LocalPath().endswith('.typemap'))
     warnings = []
     for f in affected_files:
-        cmd = ['gn', 'format', '--dry-run', f.AbsoluteLocalPath()]
+        cmd = [
+            input_api.python3_executable,
+            input_api.os_path.join(_HERE, 'gn.py'), 'format', '--dry-run',
+            f.AbsoluteLocalPath()
+        ]
         rc = gn.main(cmd)
         if rc == 2:
             warnings.append(
