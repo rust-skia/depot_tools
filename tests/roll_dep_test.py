@@ -217,7 +217,7 @@ class RollDepTest(fake_repos.FakeReposTestBase):
         if not self.enabled:
             return
         stdout, stderr, returncode = self.call(
-                [ROLL_DEP, '--update-readme']+self.all_repos
+                [ROLL_DEP]+self.all_repos
         )
         latest_revision = self.githash('repo_2', 3)
 

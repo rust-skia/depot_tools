@@ -232,7 +232,7 @@ def finalize(args, commit_msg, current_dir, rolls):
         check_call(['git', 'checkout', '--quiet', roll_to], cwd=full_dir)
 
         # Attempt to update README.chromium.
-        if args.update_readme:
+        if not args.no_update_readme:
             update_readme_chromium(dependency, roll_to, current_dir)
 
         # This adds the submodule revision update to the commit.
@@ -349,9 +349,9 @@ def main():
                         default=[],
                         help='Regex(es) for dependency in DEPS file')
     parser.add_argument('dep_path', nargs='+', help='Path(s) to dependency')
-    parser.add_argument('--update-readme',
+    parser.add_argument('--no-update-readme',
                        action='store_true',
-                       help='Update Revision in README.chromium if it exists')
+                       help='Do not try to update Revision in README.chromium')
     args = parser.parse_args()
 
     if len(args.dep_path) > 1:
@@ -380,7 +380,7 @@ def main():
         d.replace('\\', '/').rstrip('/') for d in args.dep_path)
     cmdline = 'roll-dep ' + ' '.join(dependencies) + ''.join(' --key ' + k
                                                              for k in args.key)
-    if args.update_readme:
+    if not args.no_update_readme:
         cmdline += ' --update-readme'
     try:
         if not args.ignore_dirty_tree and not is_pristine(current_dir):
