@@ -124,8 +124,8 @@ code, including msysgit and python.
 * If you see strange errors with the file system on the first run of gclient,
   you may want to link:http://tortoisesvn.tigris.org/faq.html#cantmove2[disable
   Windows Indexing].
-* After running gclient open a command prompt and type `where python` and confirm that
-  the depot_tools python.bat comes ahead of any copies of python.exe. Failing to ensure
+* After running gclient open a command prompt and type `where python3` and confirm that
+  the depot_tools python3.bat comes ahead of any copies of python3.exe. Failing to ensure
   this can lead to overbuilding when using gn - see
   link:https://issues.chromium.org/issues/41253477[crbug.com/41253477].
 =====
