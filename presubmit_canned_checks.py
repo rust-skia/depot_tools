@@ -1472,7 +1472,8 @@ def CheckDirMetadataFormat(input_api, output_api, dirmd_bin=None):
     name = 'Validate metadata in OWNERS and DIR_METADATA files'
 
     if dirmd_bin is None:
-        dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
+        dirmd_bin = input_api.os_path.join(
+            _HERE, 'dirmd.bat' if input_api.is_windows else 'dirmd')
 
     # When running git cl presubmit --all this presubmit may be asked to check
     # ~7,500 files, leading to a command line that is about 500,000 characters.

@@ -3041,15 +3041,17 @@ the current line as well!
         })
 
         dirmd_bin = 'dirmd.bat' if input_api.is_windows else 'dirmd'
-        expected_cmd = [
-            dirmd_bin, 'validate', 'DIR_METADATA', 'a/DIR_METADATA',
-            'a/b/OWNERS'
+        expected_args = [
+            'validate', 'DIR_METADATA', 'a/DIR_METADATA', 'a/b/OWNERS'
         ]
 
         commands = presubmit_canned_checks.CheckDirMetadataFormat(
             input_api, presubmit.OutputApi)
         self.assertEqual(1, len(commands))
-        self.assertEqual(expected_cmd, commands[0].cmd)
+
+        command = commands[0].cmd
+        self.assertTrue(command[0].endswith(dirmd_bin))
+        self.assertEqual(expected_args, command[1:])
 
     def testCheckNoNewMetadataInOwners(self):
         input_api = self.GetInputApiWithFiles({
