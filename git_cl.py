@@ -6938,7 +6938,7 @@ def _RunYapf(opts, paths, top_dir, upstream_commit):
 
 
 def _RunGnFormat(opts, paths, top_dir, upstream_commit):
-    cmd = ['gn', 'format']
+    cmd = [sys.executable, os.path.join(DEPOT_TOOLS, 'gn.py'), 'format']
     if opts.dry_run or opts.diff:
         cmd.append('--dry-run')
     return_value = 0
