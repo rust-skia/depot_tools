@@ -6816,7 +6816,7 @@ def _RunGoogleJavaFormat(opts, paths, top_dir, upstream_commit):
             if stdout:
                 if opts.diff:
                     sys.stdout.write('Requires formatting: ' + stdout)
-                else:
+                if opts.dry_run:
                     return_value = 2
 
         return return_value
@@ -6842,7 +6842,7 @@ def _RunRustFmt(opts, rust_diff_files, top_dir, upstream_commit):
     cmd += rust_diff_files
     rustfmt_exitcode = subprocess2.call(cmd)
 
-    if opts.presubmit and rustfmt_exitcode != 0:
+    if opts.dry_run and rustfmt_exitcode != 0:
         return 2
 
     return 0
@@ -6867,7 +6867,7 @@ def _RunSwiftFormat(opts, swift_diff_files, top_dir, upstream_commit):
     cmd += swift_diff_files
     swift_format_exitcode = subprocess2.call(cmd)
 
-    if opts.presubmit and swift_format_exitcode != 0:
+    if opts.dry_run and swift_format_exitcode != 0:
         return 2
 
     return 0
@@ -6929,7 +6929,7 @@ def _RunYapf(opts, paths, top_dir, upstream_commit):
                                 shell=sys.platform.startswith('win32'))
             if opts.diff:
                 sys.stdout.write(stdout)
-            elif len(stdout) > 0:
+            if opts.dry_run and len(stdout) > 0:
                 return_value = 2
         else:
             cmd += ['-i']
@@ -6946,11 +6946,11 @@ def _RunGnFormat(opts, paths, top_dir, upstream_commit):
         gn_ret = subprocess2.call(cmd + [path],
                                   shell=sys.platform.startswith('win'),
                                   cwd=top_dir)
-        if opts.dry_run and gn_ret == 2:
-            return_value = 2  # Not formatted.
-        elif opts.diff and gn_ret == 2:
+        if opts.diff and gn_ret == 2:
             # TODO this should compute and print the actual diff.
             print('This change has GN build file diff for ' + path)
+        if opts.dry_run and gn_ret == 2:
+            return_value = 2  # Not formatted.
         elif gn_ret != 0:
             # For non-dry run cases (and non-2 return values for dry-run), a
             # nonzero error code indicates a failure, probably because the
