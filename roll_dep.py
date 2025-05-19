@@ -380,8 +380,8 @@ def main():
         d.replace('\\', '/').rstrip('/') for d in args.dep_path)
     cmdline = 'roll-dep ' + ' '.join(dependencies) + ''.join(' --key ' + k
                                                              for k in args.key)
-    if not args.no_update_readme:
-        cmdline += ' --update-readme'
+    if args.no_update_readme:
+        cmdline += ' --no-update-readme'
     try:
         if not args.ignore_dirty_tree and not is_pristine(current_dir):
             raise Error('Ensure %s is clean first (no non-merged commits).' %
