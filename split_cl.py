@@ -360,8 +360,9 @@ def GetFilesSplitByOwners(files, max_depth, repository_root):
 
             dir_with_owners = os.path.dirname(dir_with_owners)
 
-        files_split_by_owners.setdefault(dir_with_owners, []).append(
-            (action, path))
+        files_split_by_owners.setdefault(
+            os.path.relpath(dir_with_owners, start=repository_root), []).append(
+                (action, path))
     return files_split_by_owners
 
 
