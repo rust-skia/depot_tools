@@ -169,46 +169,50 @@ def _get_remoteexec_defaults():
     return values
 
 
-def _siso_supported(output_dir):
-    root_dir = gclient_paths.GetPrimarySolutionPath()
-    if not root_dir:
-        return False
-    sisoenv_path = os.path.join(root_dir, "build/config/siso/.sisoenv")
-    if not os.path.exists(sisoenv_path):
-        return False
-    # If it's not chromium project, use Ninja.
-    gclient_args_gni = os.path.join(root_dir, "build/config/gclient_args.gni")
-    if not os.path.exists(gclient_args_gni):
-        return False
-    with open(gclient_args_gni) as f:
-        if "build_with_chromium = true" not in f.read():
-            return False
-    # Use Siso by default for Googlers working on corp machine.
-    if _is_google_corp_machine():
-        return True
-    # Otherwise, use Ninja, until we are ready to roll it out
-    # on non-corp machines, too.
-    # TODO(378078715): enable True by default.
-    return False
-
-
 # `use_siso` value is used to determine whether siso or ninja is used,
 # and used to determine default value of `use_reclient`, so
 # this logic should match with //build/toolchain/siso.gni
 def _get_use_siso_default(output_dir):
     """Returns use_siso default value."""
-    if not _siso_supported(output_dir):
+    root_dir = gclient_paths.GetPrimarySolutionPath()
+    if not root_dir:
         return False
+
+    # autoninja requires .sisoenv to set Siso env vars such as SISO_PROJECT
+    # and SISO_REAPI_INSTANCE.
+    sisoenv_path = os.path.join(root_dir, "build/config/siso/.sisoenv")
+    if not os.path.exists(sisoenv_path):
+        return False
+
+    # Use Siso by default on Googlers on corp machine for now.
+    # TODO: crbug.com/409223168 - Enable Siso by default for external devs.
+    if not _is_google_corp_machine():
+        return False
+
+    # Check the project wide default in `.gn`.
+    dot_gn = os.path.join(root_dir, ".gn")
+    if os.path.exists(dot_gn):
+        with open(dot_gn) as f:
+            dot_gn_lines = f.readlines()
+        p = re.compile(r"(^|\s*)(use_siso)\s*=\s*(true)\s*$")
+        if any(p.match(l) for l in dot_gn_lines):
+            return True
+
+    # Checking `build_with_chromium` var in //build/config/gclient_args.gni
+    # to enable Siso on Chromium.
+    # TODO: crbug.com/409223168 - Remove this condition after setting use_siso
+    # in Chromium's .gn + some buffer.
+    gclient_args_gni = os.path.join(root_dir, "build/config/gclient_args.gni")
+    if os.path.exists(gclient_args_gni):
+        with open(gclient_args_gni) as f:
+            if "build_with_chromium = true" in f.read():
+                return True
 
     # This output directory is already using Siso.
     if os.path.exists(os.path.join(output_dir, ".siso_deps")):
         return True
 
-    # This output directory is still using Ninja.
-    if os.path.exists(os.path.join(output_dir, ".ninja_deps")):
-        print(_SISO_SUGGESTION.format(output_dir=output_dir), file=sys.stderr)
-        return False
-    return True
+    return False
 
 
 def _main_inner(input_args, build_id, should_collect_logs=False):
@@ -306,6 +310,15 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
 
         if use_siso is None:
             use_siso = _get_use_siso_default(output_dir)
+
+            # If use_siso is True by default, but the output directory is still using
+            # Ninja, print the suggestion message.
+            is_ninja_used = os.path.exists(
+                os.path.join(output_dir, ".ninja_deps"))
+            if use_siso and is_ninja_used:
+                print(_SISO_SUGGESTION.format(output_dir=output_dir),
+                      file=sys.stderr)
+                use_siso = False
 
         if use_reclient is None:
             if use_remoteexec:
