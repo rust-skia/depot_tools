@@ -7040,11 +7040,6 @@ def _RunLUCICfgFormat(opts, paths, top_dir, upstream_commit):
     return ret
 
 
-def MatchingFileType(file_name: str, extensions: list[str]) -> bool:
-    """Returns True if the file name ends with one of the given extensions."""
-    return bool([ext for ext in extensions if file_name.lower().endswith(ext)])
-
-
 FormatterFunction = Callable[[Any, list[str], str, str], int]
 
 
@@ -7193,7 +7188,7 @@ def CMDformat(parser: optparse.OptionParser, args: list[str]):
     top_dir = settings.GetRoot()
     return_value = 0
     for file_types, format_func in formatters:
-        paths = [p for p in diff_files if MatchingFileType(p, file_types)]
+        paths = [p for p in diff_files if p.lower().endswith(tuple(file_types))]
         if not paths:
             continue
         ret = format_func(opts, paths, top_dir, upstream_commit)
