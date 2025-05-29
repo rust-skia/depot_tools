@@ -1658,6 +1658,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
             'checkout_mips': 'mips' in self.target_cpu,
             'checkout_mips64': 'mips64' in self.target_cpu,
             'checkout_ppc': 'ppc' in self.target_cpu,
+            'checkout_riscv64': 'riscv64' in self.target_cpu,
             'checkout_s390': 's390' in self.target_cpu,
             'checkout_x64': 'x64' in self.target_cpu,
             'host_cpu': detect_host_arch.HostArch(),
