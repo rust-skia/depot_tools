@@ -29,7 +29,6 @@ per-file gn*=dpranke@google.com
 per-file gn*=file://BUILD_OWNERS
 
 # Siso
-per-file autosiso*=file://BUILD_OWNERS
 per-file siso*=file://BUILD_OWNERS
 
 # reclient
@@ -38,6 +37,9 @@ per-file reclient*=file://RECLIENT_OWNERS
 
 # Build telemetry
 per-file build_telemetry*=file://BUILD_OWNERS
+
+# Build util
+per-file caffeinate.py=file://BUILD_OWNERS
 
 # Bazel
 per-file bazel*=file://CROS_OWNERS
