@@ -5,7 +5,6 @@
 """Utility for opting in or out of metrics collection"""
 import argparse
 import sys
-import pathlib
 
 import config
 

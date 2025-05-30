@@ -2,19 +2,16 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 from typing import Optional
-import os
+import logging
 import socket
 import sys
-import pathlib
 
-from opentelemetry import context as otel_context_api
 from opentelemetry import trace as otel_trace_api
 from opentelemetry.sdk import (
     resources as otel_resources,
     trace as otel_trace_sdk,
 )
 from opentelemetry.sdk.trace import export as otel_export
-from opentelemetry.util import types as otel_types
 
 from . import config
 from . import clearcut_span_exporter
@@ -71,11 +68,11 @@ def is_google_host() -> bool:
 def initialize(service_name,
                notice=DEFAULT_BANNER,
                cfg_file=config.DEFAULT_CONFIG_FILE):
-    if not is_google_host():
+    # TODO(326277821): Add support for other platforms
+    if not sys.platform.startswith('linux'):
         return
 
-    # TODO(326277821): Add support for other platforms
-    if not sys.platform == 'linux':
+    if not is_google_host():
         return
 
     cfg = config.Config(cfg_file)
