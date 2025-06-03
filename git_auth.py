@@ -561,11 +561,7 @@ class ConfigWizard(object):
             'beto-core.googlesource.com',
             'boringssl.googlesource.com',
             'chromium.googlesource.com',
-            # repo upload (for ChromeOS) adds -review,
-            # even if Git is configured without the -review
-            'chromium-review.googlesource.com',
             'chrome-internal.googlesource.com',
-            'chrome-internal-review.googlesource.com',
             'dawn.googlesource.com',
             'pdfium.googlesource.com',
             'quiche.googlesource.com',
