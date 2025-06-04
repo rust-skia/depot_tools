@@ -68,8 +68,8 @@ def is_google_host() -> bool:
 def initialize(service_name,
                notice=DEFAULT_BANNER,
                cfg_file=config.DEFAULT_CONFIG_FILE):
-    # TODO(326277821): Add support for other platforms
-    if not sys.platform.startswith('linux'):
+    # TODO(326277821): Add support for mac
+    if sys.platform == 'darwin':
         return
 
     if not is_google_host():

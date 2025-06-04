@@ -156,17 +156,19 @@ class Config:
         self._trace_config = TraceConfig(self._config)
         self._root_config = RootConfig(self._config)
 
+
     def flush(self) -> None:
         """Flushes the current config to config file."""
 
-        tmpfile = tempfile.NamedTemporaryFile()
-        with open(tmpfile.name, "w", encoding="utf-8") as configfile:
+        tmpDir = tempfile.mkdtemp()
+        tmpfile = Path.joinpath(Path(tmpDir), 'telemetry.cfg')
+        with open(tmpfile, "w", encoding="utf-8") as configfile:
             self._config.write(configfile)
 
         if not self._path.parent.exists():
             self._path.parent.mkdir(parents=True, exist_ok=True)
 
-        shutil.copy(tmpfile.name, self._path)
+        shutil.copy(tmpfile, self._path)
 
     @property
     def root_config(self) -> RootConfig:
