@@ -23,7 +23,7 @@ ENABLED_REASON_KEY = "enabled_reason"
 TRACE_SECTION_KEY = "trace"
 DEFAULT_CONFIG = {
     ROOT_SECTION_KEY: {
-        NOTICE_COUNTDOWN_KEY: 9
+        NOTICE_COUNTDOWN_KEY: 10
     },
     TRACE_SECTION_KEY: {},
 }
@@ -42,13 +42,12 @@ class TraceConfig:
     def __init__(self, config: configparser.ConfigParser) -> None:
         self._config = config
 
-        if not self.has_enabled() or self.enabled:
-            self.gen_id()
-
     def update(self, enabled: bool, reason: Literal["AUTO", "USER"]) -> None:
         """Update the config."""
         self._config[TRACE_SECTION_KEY][ENABLED_KEY] = str(enabled)
         self._config[TRACE_SECTION_KEY][ENABLED_REASON_KEY] = reason
+        if enabled:
+            self.gen_id()
 
     def gen_id(self, regen=False) -> None:
         """[Re]generate UUIDs."""
@@ -89,10 +88,6 @@ class TraceConfig:
     def has_enabled(self) -> bool:
         """Checks if the enabled property exists in config."""
         return ENABLED_KEY in self._config[TRACE_SECTION_KEY]
-
-    def disabled(self) -> bool:
-        """Checks if the enabled probperty exists and is false"""
-        return self.trace_config.has_enabled() and not self.trace_config.enabled
 
     @property
     def enabled(self) -> bool:
@@ -136,7 +131,8 @@ class RootConfig:
     @property
     def notice_countdown(self) -> int:
         """Value for root.notice_countdown property in telemetry.cfg."""
-        return self._config[ROOT_SECTION_KEY].getint(NOTICE_COUNTDOWN_KEY, 9)
+
+        return self._config[ROOT_SECTION_KEY].getint(NOTICE_COUNTDOWN_KEY, 10)
 
 
 class Config:

@@ -76,8 +76,6 @@ def initialize(service_name,
         return
 
     cfg = config.Config(cfg_file)
-    if cfg.disabled():
-        return
 
     if not cfg.trace_config.has_enabled():
         if cfg.root_config.notice_countdown > -1:
@@ -90,6 +88,9 @@ def initialize(service_name,
             cfg.trace_config.update(enabled=True, reason='AUTO')
 
         cfg.flush()
+
+    if not cfg.trace_config.enabled:
+        return
 
     default_resource = otel_resources.Resource.create({
         otel_resources.SERVICE_NAME:
