@@ -58,6 +58,11 @@ _NINJALOG_UPLOADER = os.path.join(_SCRIPT_DIR, "ninjalog_uploader.py")
 _UNSAFE_FOR_CMD = set("^<>&|()%")
 _ALL_META_CHARS = _UNSAFE_FOR_CMD.union(set('"'))
 
+_HELP_MESSAGE = """\
+autoninja:
+  -o/--offline  temporary disable remote execution
+"""
+
 
 def _import_from_path(module_name, file_path):
     try:
@@ -259,11 +264,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
         elif arg.startswith("-project="):
             project = arg[len("-project="):]
         elif arg in ("-h", "--help"):
-            print(
-                "autoninja: Use -o/--offline to temporary disable remote execution.",
-                file=sys.stderr,
-            )
-            print(file=sys.stderr)
+            print(_HELP_MESSAGE, file=sys.stderr)
 
     is_android = False
     use_remoteexec = False
