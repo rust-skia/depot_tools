@@ -19,6 +19,7 @@ import metadata.fields.known as known_fields
 import metadata.fields.field_types as field_types
 import metadata.validation_result as vr
 import metadata.fields.custom.mitigated
+import metadata.fields.custom.update_mechanism
 
 
 class FieldValidationTest(unittest.TestCase):
@@ -261,6 +262,30 @@ class FieldValidationTest(unittest.TestCase):
 
         self.assertListEqual(sorted(valid_result), sorted(valid_ids))
         self.assertListEqual(sorted(invalid_result), sorted(invalid_ids))
+
+    def test_update_mechanism_validation(self):
+        """Tests the validation logic for the Update Mechanism field."""
+        self._run_field_validation(
+            field=known_fields.UPDATE_MECHANISM,
+            valid_values=[
+                "Autoroll",
+                "  Autoroll  ",
+                "Manual (crbug.com/12345)",
+                "Static (crbug.com/54321)",
+                "Static.HardFork (crbug.com/98765)",
+            ],
+            error_values=[
+                "",
+                " ",
+                "Invalid Value",
+                "Custom (crbug.com/123)",
+            ],
+            warning_values=[
+                "Static",
+                "Static.HardFork",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

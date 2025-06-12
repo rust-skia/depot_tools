@@ -440,3 +440,14 @@ class DependencyMetadata:
            Otherwise the text content extracted from the metadata.
         """
         return self._return_as_property(known_fields.LOCAL_MODIFICATIONS)
+
+    @property
+    def update_mechanism(
+            self) -> Optional[Tuple[str, Optional[str], Optional[str]]]:
+        """
+        Returns the parsed Update Mechanism value.
+
+        The format is `Primary[.Secondary] [(bug_link)]. This function returns
+        (Primary, Secondary, bug_link) if the field is valid, otherwise (None, None, None).
+        """
+        return self._return_as_property(known_fields.UPDATE_MECHANISM)
