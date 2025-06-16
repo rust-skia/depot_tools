@@ -45,7 +45,8 @@ class TraceConfig:
         if not self.has_enabled() or self.enabled:
             self.gen_id()
 
-    def update(self, enabled: bool, reason: Literal["AUTO", "USER"]) -> None:
+    def update(self, enabled: bool, reason: Literal["AUTO", "USER",
+                                                    "BOT_USER"]) -> None:
         """Update the config."""
         self._config[TRACE_SECTION_KEY][ENABLED_KEY] = str(enabled)
         self._config[TRACE_SECTION_KEY][ENABLED_REASON_KEY] = reason
@@ -100,7 +101,7 @@ class TraceConfig:
         return self._config[TRACE_SECTION_KEY].getboolean(ENABLED_KEY, False)
 
     @property
-    def enabled_reason(self) -> Literal["AUTO", "USER"]:
+    def enabled_reason(self) -> Literal["AUTO", "USER", "BOT_USER"]:
         """Value of trace.enabled_reason property in telemetry.cfg."""
         return self._config[TRACE_SECTION_KEY].get(ENABLED_REASON_KEY, "AUTO")
 

@@ -72,11 +72,13 @@ def initialize(service_name,
     if not sys.platform.startswith('linux'):
         return
 
-    if not is_google_host():
-        return
-
     cfg = config.Config(cfg_file)
     if cfg.trace_config.disabled():
+        return
+
+    bot_enabled = (cfg.trace_config.has_enabled()
+                   and cfg.trace_config.enabled_reason == 'BOT_USER')
+    if not is_google_host() and not bot_enabled:
         return
 
     if not cfg.trace_config.has_enabled():
