@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 from typing import Optional
-import logging
 import socket
 import sys
 
@@ -46,12 +45,11 @@ def get_host_name(fully_qualified: bool = False) -> str:
     try:
         hostname = socket.gethostbyaddr(hostname)[0]
     except (socket.gaierror, socket.herror) as e:
-        logging.warning(
-            'please check your /etc/hosts file; resolving your hostname'
-            ' (%s) failed: %s',
-            hostname,
-            e,
-        )
+        if sys.platform.startswith('linux'):
+            print(
+                'please check your /etc/hosts file; resolving your hostname'
+                f' ({hostname}) failed: {e}',
+                file=sys.stderr)
 
     if fully_qualified:
         return hostname
