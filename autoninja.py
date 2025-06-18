@@ -189,11 +189,6 @@ def _get_use_siso_default(output_dir):
     if not os.path.exists(sisoenv_path):
         return False
 
-    # Use Siso by default on Googlers on corp machine for now.
-    # TODO: crbug.com/409223168 - Enable Siso by default for external devs.
-    if not _is_google_corp_machine():
-        return False
-
     # Check the project wide default in `.gn`.
     dot_gn = os.path.join(root_dir, ".gn")
     if os.path.exists(dot_gn):
