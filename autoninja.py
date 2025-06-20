@@ -387,6 +387,10 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                 file=sys.stderr,
             )
 
+    # use_siso may not be set when running `autoninja -help` without `-C`.
+    if use_siso is None:
+        use_siso = _get_use_siso_default(output_dir)
+
     siso_marker = os.path.join(output_dir, ".siso_deps")
     if use_siso:
         # siso generates a .ninja_log file so the mere existence of a
