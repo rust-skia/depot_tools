@@ -424,13 +424,6 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                         ] + input_args[1:],
                         should_collect_logs)
                 return siso.main(["siso", "ninja"] + input_args[1:])
-            if not project:
-                project = _siso_rbe_project()
-            if not t_specified and project and not offline:
-                print(
-                    'Missing "use_remoteexec=true". No remote execution',
-                    file=sys.stderr,
-                )
             return siso.main(["siso", "ninja", "--offline"] + input_args[1:])
 
     if os.path.exists(siso_marker):
