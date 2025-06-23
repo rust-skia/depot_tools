@@ -215,6 +215,42 @@ def _get_use_siso_default(output_dir):
     return False
 
 
+# Convert Ninja's -j flag to Siso's -local_jobs, -remote_jobs.
+def _convert_ninja_j_to_siso_flags(j_value, use_remoteexec, args):
+    local_jobs = None
+    remote_jobs = None
+    if use_remoteexec:
+        remote_jobs = j_value
+    else:
+        num_cpus = multiprocessing.cpu_count()
+        if int(j_value) <= num_cpus:
+            local_jobs = j_value
+        else:
+            print(
+                "WARNING: Ignoring -j %s because it is larger than "
+                "num_cpus=%d. Use -local_jobs=%s instead if it's intentional." %
+                (j_value, num_cpus, j_value),
+                file=sys.stderr,
+            )
+    # replace -j with -local_jobs,-remote_jobs.
+    return_args = []
+    j_value_index = None
+    for i in range(len(args)):
+        arg = args[i]
+        if arg.startswith('-j'):
+            if arg == '-j':
+                j_value_index = i + 1
+            if local_jobs:
+                return_args.extend(['-local_jobs=' + local_jobs])
+            if remote_jobs:
+                return_args.extend(['-remote_jobs=' + remote_jobs])
+            continue
+        if i == j_value_index:
+            continue
+        return_args.append(arg)
+    return return_args
+
+
 def _main_inner(input_args, build_id, should_collect_logs=False):
     # if user doesn't set PYTHONPYCACHEPREFIX and PYTHONDONTWRITEBYTECODE
     # set PYTHONDONTWRITEBYTECODE=1 not to create many *.pyc in workspace
@@ -230,7 +266,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
         os.environ.setdefault("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false")
     # The -t tools are incompatible with -j
     t_specified = False
-    j_specified = False
+    j_value = None
     offline = False
     output_dir = "."
     summarize_build = os.environ.get("NINJA_SUMMARIZE_BUILD") == "1"
@@ -240,7 +276,10 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
     # To leave non supported parameters untouched, we do not use getopt.
     for index, arg in enumerate(input_args[1:]):
         if arg.startswith("-j"):
-            j_specified = True
+            if arg == "-j":
+                j_value = input_args[index + 2]
+            else:
+                j_value = arg[2:]
         if arg.startswith("-t"):
             t_specified = True
         if arg == "-C":
@@ -406,14 +445,27 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             )
             return 1
 
+        if j_value:
+            input_args = _convert_ninja_j_to_siso_flags(j_value, use_remoteexec,
+                                                        input_args)
+
         # Build ID consistently used in other tools. e.g. Reclient, ninjalog.
         os.environ.setdefault("SISO_BUILD_ID", build_id)
         with android_build_server_helper.build_server_context(
                 build_id,
                 output_dir,
                 use_android_build_server=use_android_build_server):
+
+            def run_siso(args):
+                if summarize_build:
+                    # Print the command-line to reassure the user that the right
+                    # settings are being used.
+                    _print_cmd(args)
+                return siso.main(args)
             if use_remoteexec:
                 if use_reclient and not t_specified:
+                    # TODO: crbug.com/379584977 - Remove siso/reclient
+                    # integration.
                     return reclient_helper.run_siso(
                         [
                             'siso',
@@ -423,8 +475,8 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                             '-reapi_instance=',
                         ] + input_args[1:],
                         should_collect_logs)
-                return siso.main(["siso", "ninja"] + input_args[1:])
-            return siso.main(["siso", "ninja", "--offline"] + input_args[1:])
+                return run_siso(["siso", "ninja"] + input_args[1:])
+            return run_siso(["siso", "ninja", "--offline"] + input_args[1:])
 
     if os.path.exists(siso_marker):
         print(
@@ -468,7 +520,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
 
     ninja_args = ['ninja']
     num_cores = multiprocessing.cpu_count()
-    if not j_specified and not t_specified:
+    if not j_value and not t_specified:
         if not offline and use_remoteexec:
             ninja_args.append("-j")
             default_core_multiplier = 80
