@@ -66,9 +66,6 @@ def is_google_host() -> bool:
 def initialize(service_name,
                notice=DEFAULT_BANNER,
                cfg_file=config.DEFAULT_CONFIG_FILE):
-    # TODO(326277821): Renable after more thorough testing
-    if not sys.platform.startswith('linux'):
-        return
 
     cfg = config.Config(cfg_file)
     if cfg.trace_config.disabled():
