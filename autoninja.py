@@ -473,6 +473,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                             # Do not authenticate when using Reproxy.
                             '-project=',
                             '-reapi_instance=',
+                            '-reapi_address=',
                         ] + input_args[1:],
                         should_collect_logs)
                 return run_siso(["siso", "ninja"] + input_args[1:])
