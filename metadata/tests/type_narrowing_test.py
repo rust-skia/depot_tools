@@ -222,24 +222,22 @@ class FieldValidationTest(unittest.TestCase):
         expect = self._test_on_field(
             metadata.fields.custom.update_mechanism.UpdateMechanismField())
 
-        # Test cases that should successfully parse
+        # Test cases that should successfully parse.
         expect("Autoroll", ("Autoroll", None, None),
                "parse a valid value with no bug")
         expect("  Autoroll  ", ("Autoroll", None, None),
                "parse a valid value and strip whitespace")
-        expect("Manual (crbug.com/12345)", ("Manual", None, "crbug.com/12345"),
-               "parse a valid value with a bug")
-        expect("Manual(crbug.com/12345)", ("Manual", None, "crbug.com/12345"),
-               "parse a valid value with no space")
+        expect("Manual (https://crbug.com/12345)", ("Manual", None, "https://crbug.com/12345"),
+               "parse a valid value with https://crbug.com/ format")
         expect("Manual", ("Manual", None, None),
                "allow Manual with no bug (should still warn)")
-        expect("Static.HardFork (crbug.com/12345)",
-               ("Static", "HardFork", "crbug.com/12345"),
+        expect("Static.HardFork (https://crbug.com/12345)",
+               ("Static", "HardFork", "https://crbug.com/12345"),
                "parse a namespaced value with a bug")
         expect("Static", ("Static", None, None),
                "Allow Static with no bug (should still warn)")
 
-        # Test cases that are invalid and should not be parsed
+        # Test cases that are invalid and should not be parsed.
         expect("", (None, None, None), "treat empty string as None")
         expect("  ", (None, None, None), "treat whitespace-only string as None")
         expect("Invalid", (None, None, None),
@@ -249,9 +247,17 @@ class FieldValidationTest(unittest.TestCase):
         expect("Static.HardFork (A bug link)", (None, None, None),
                "parse a namespaced value with an invalid comment")
         expect("Manual (b/12345)", (None, None, None),
-               "do not parse a bug with b/")
+               "not parse a bug with b/")
         expect("Autoroll (crbug.com/12345)", (None, None, None),
-               "do not allow autoroll with a bug")
+               "not allow autoroll with a bug")
+        expect("Manual (crbug.com/12345 )", (None, None, None),
+               "not parse a bug with a trailing space")
+        expect("Manual (crbug.com/12345)", (None, None, None),
+               "not parse a value without https://")
+        expect("Manual (https://crbug/12345)", (None, None, None),
+               "not parse a value without .com")
+        expect("Manual (http://crbug.com/12345)", (None, None, None),
+               "not parse a value without https://")
 
 
 if __name__ == "__main__":
