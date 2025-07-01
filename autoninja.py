@@ -355,9 +355,8 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                       file=sys.stderr)
                 use_siso = False
 
-        if use_reclient is None:
-            if use_remoteexec:
-                values = _get_remoteexec_defaults()
+        if use_reclient is None and use_remoteexec:
+            if values := _get_remoteexec_defaults():
                 if use_siso:
                     use_reclient = values["use_reclient_on_siso"]
                 else:
