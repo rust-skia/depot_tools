@@ -37,8 +37,6 @@ import ninjalog_uploader
 import reclient_helper
 import siso
 
-if sys.platform in ["darwin", "linux"]:
-    import resource
 
 _SISO_SUGGESTION = """Please run 'gn clean {output_dir}' when convenient to
 upgrade this output directory to Siso (Chromium’s Ninja replacement). If you
@@ -507,6 +505,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
     # use `ulimit -n .... &&` as a prefix to increase the limit when running
     # ninja.
     if sys.platform in ["darwin", "linux"]:
+        import resource
         # Increase the number of allowed open file descriptors to the maximum.
         fileno_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
         if fileno_limit < hard_limit:
