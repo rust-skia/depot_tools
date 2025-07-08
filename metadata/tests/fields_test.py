@@ -196,6 +196,10 @@ class FieldValidationTest(unittest.TestCase):
                 "ftp://www.example.com/c,git://www.example.com/d",
                 "https://www.example.com/a\n  https://example.com/b",
                 "This is the canonical public repository",
+                "internal",
+                "Internal.",
+                "Google internal",
+                "Google Internal.",
             ],
             warning_values=[
                 # Scheme is case-insensitive, but should be lower case.
