@@ -451,3 +451,27 @@ class DependencyMetadata:
         (Primary, Secondary, bug_link) if the field is valid, otherwise (None, None, None).
         """
         return self._return_as_property(known_fields.UPDATE_MECHANISM)
+
+    @property
+    def vuln_scan_sufficiency(self) -> str:
+        """Determines if the dependency metadata is sufficient for vulnerability scanning.
+
+        Returns:
+            A string indicating the sufficiency status:
+            - 'sufficient:CPE' if a CPE prefix is provided.
+            - 'sufficient:URL and Revision' if URL and Revision are provided.
+            - 'sufficient:URL and Version' if URL and version are provided.
+            - 'ignore:Static' if the dependency's update mechanism is static.
+            - 'insufficient' otherwise.
+        """
+        if self.cpe_prefix:
+            return "sufficient:CPE"
+        if self.url:
+            if self.revision:
+                return "sufficient:URL and Revision"
+            if self.version:
+                return "sufficient:URL and Version"
+        if self.update_mechanism and self.update_mechanism[0].lower() == "static":
+            return "ignore:Static"
+
+        return "insufficient"

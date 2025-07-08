@@ -455,6 +455,70 @@ class DependencyValidationTest(unittest.TestCase):
         self.assertIn("CVE-2024-9999",results[1].get_additional()[0])
 
 
+    def test_vuln_scan_sufficiency(self):
+        """Tests the vuln_scan_sufficiency property."""
+        # Test case: sufficient:CPE.
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.CPE_PREFIX.get_name(),
+                             "cpe:/a:vendor:product")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "sufficient:CPE")
+
+        # Test case: sufficient:URL and Revision.
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(), "https://example.com")
+        dependency.add_entry(known_fields.REVISION.get_name(), "abcdef123456")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "sufficient:URL and Revision")
+
+        # Test case: sufficient:URL and Version.
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(), "https://example.com")
+        dependency.add_entry(known_fields.VERSION.get_name(), "1.2.3")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "sufficient:URL and Version")
+
+        # Test case: ignore:Static (because of update mechanism).
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.UPDATE_MECHANISM.get_name(), "Static")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "ignore:Static")
+
+        # Test case: ignore:Static (because not shipped).
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "insufficient")
+
+        # Test case: insufficient (no relevant fields, shipped defaults to None).
+        dependency = dm.DependencyMetadata()
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                          "insufficient")
+
+        # Test case: insufficient (only URL).
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(), "https://example.com")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "insufficient")
+
+        # Test case: CPE takes precedence over URL/Revision.
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.CPE_PREFIX.get_name(),
+                             "cpe:/a:vendor:product")
+        dependency.add_entry(known_fields.URL.get_name(), "https://example.com")
+        dependency.add_entry(known_fields.REVISION.get_name(), "abcdef123456")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "sufficient:CPE")
+
+        # Test case: URL/Revision takes precedence over static update mechanism.
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.UPDATE_MECHANISM.get_name(), "Static")
+        dependency.add_entry(known_fields.URL.get_name(), "https://example.com")
+        dependency.add_entry(known_fields.REVISION.get_name(), "abcdef123456")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "sufficient:URL and Revision")
+
+
 def test_update_mechanism_validation(self):
     """Tests the validation logic for the Update Mechanism field."""
     # A list of test cases with the value to test and the expected error, if any.
