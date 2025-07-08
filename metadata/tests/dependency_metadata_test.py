@@ -503,6 +503,12 @@ class DependencyValidationTest(unittest.TestCase):
         self.assertEqual(dependency.vuln_scan_sufficiency,
                          "ignore:Internal")
 
+        # Test case: insufficient (bad bug link).
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.UPDATE_MECHANISM.get_name(), "Manual (bad_bug_link)")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "insufficient")
+
         # Test case: ignore:Static (because not shipped).
         dependency = dm.DependencyMetadata()
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
