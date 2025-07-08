@@ -461,6 +461,8 @@ class DependencyMetadata:
             - 'sufficient:CPE' if a CPE prefix is provided.
             - 'sufficient:URL and Revision' if URL and Revision are provided.
             - 'sufficient:URL and Version' if URL and version are provided.
+            - 'ignore:Canonical' if the dependency is the canonical repository.
+            - 'ignore:Internal' if the dependency is internal.
             - 'ignore:Static' if the dependency's update mechanism is static.
             - 'insufficient' otherwise.
         """
@@ -471,6 +473,12 @@ class DependencyMetadata:
                 return "sufficient:URL and Revision"
             if self.version:
                 return "sufficient:URL and Version"
+
+        raw_url = self._metadata.get(known_fields.URL, None)
+        if raw_url is not None and known_fields.URL.repo_is_canonical(raw_url):
+            return "ignore:Canonical"
+        if raw_url is not None and known_fields.URL.repo_is_internal(raw_url):
+            return "ignore:Internal"
         if self.update_mechanism and self.update_mechanism[0].lower() == "static":
             return "ignore:Static"
 

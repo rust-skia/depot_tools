@@ -484,6 +484,25 @@ class DependencyValidationTest(unittest.TestCase):
         self.assertEqual(dependency.vuln_scan_sufficiency,
                          "ignore:Static")
 
+        # Test case: ignore:Canonical (only URL).
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(), "This is the canonical public repository")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "ignore:Canonical")
+
+        # Test case: ignore:Internal (only URL).
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(), "Google internal")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "ignore:Internal")
+
+        # Test case: ignore:Internal takes precedence over ignore:Static.
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(), "Google Internal.")
+        dependency.add_entry(known_fields.UPDATE_MECHANISM.get_name(), "Static.HardFork")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "ignore:Internal")
+
         # Test case: ignore:Static (because not shipped).
         dependency = dm.DependencyMetadata()
         dependency.add_entry(known_fields.SHIPPED.get_name(), "no")
