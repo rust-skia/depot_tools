@@ -38,10 +38,12 @@ import reclient_helper
 import siso
 
 
-_SISO_SUGGESTION = """Please run 'gn clean {output_dir}' when convenient to
-upgrade this output directory to Siso (Chromium’s Ninja replacement). If you
-run into any issues, please file a bug via go/siso-bug and switch back
-temporarily by setting the GN arg 'use_siso = false'"""
+_SISO_SUGGESTION = """You're still using Ninja.
+Please run 'gn clean {output_dir}' when convenient to
+upgrade this output directory to Siso (Chromium’s Ninja replacement).
+If you run into any issues by switching to Siso, please file a bug via
+go/siso-bug and switch back temporarily by setting the GN arg
+'use_siso = false'"""
 
 _SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 _NINJALOG_UPLOADER = os.path.join(_SCRIPT_DIR, "ninjalog_uploader.py")
