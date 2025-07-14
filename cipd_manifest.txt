@@ -27,7 +27,7 @@ $VerifiedPlatform linux-amd64 linux-arm64 mac-amd64 mac-arm64 windows-amd64
 # them, but we do not test they work. They also may not have all necessary
 # vpython packages.
 $VerifiedPlatform linux-386 linux-ppc64 linux-ppc64le linux-riscv64 linux-s390x
-$VerifiedPlatform linux-armv6l linux-mips64 linux-mips64le linux-mipsle
+$VerifiedPlatform linux-armv6l linux-mips64 linux-mips64le linux-mipsle linux-loong64
 $VerifiedPlatform windows-arm64
 
 # vpython.
@@ -58,10 +58,10 @@ infra/tools/bb/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
 infra/tools/rdb/${platform} git_revision:3543fb152a50d3086105df574a32176f67d9a043
 
 # dirmd, a tool to work with DIR_METADATA files
-infra/tools/dirmd/${platform} git_revision:b794739ae38cdc495222ba23c3476ef46506c764
+infra/tools/dirmd/${platform} git_revision:6b4aa314771569029ce32f5bcb2924120bd06b86
 
 # Pinpoint CLI
-infra/chromeperf/pinpoint/${platform} git_revision:82a1d15d3ee4be12008c2df875e64b0abdffa6b9
+infra/chromeperf/pinpoint/${platform} git_revision:6b4aa314771569029ce32f5bcb2924120bd06b86
 
 @Subdir reclient
 # reclient, currently this is only for ChromeOS build.

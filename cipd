@@ -80,6 +80,9 @@ if [ -z $ARCH ]; then
     riscv64)
       ARCH=riscv64
       ;;
+    loongarch64)
+      ARCH=loong64
+      ;;
     *)
       >&2 echo "UNKNOWN Machine architecture: ${UNAME}"
       exit 1
