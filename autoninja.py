@@ -251,7 +251,7 @@ def _convert_ninja_j_to_siso_flags(j_value, use_remoteexec, args):
     return return_args
 
 
-def _main_inner(input_args, build_id, should_collect_logs=False):
+def _main_inner(input_args, build_id):
     # if user doesn't set PYTHONPYCACHEPREFIX and PYTHONDONTWRITEBYTECODE
     # set PYTHONDONTWRITEBYTECODE=1 not to create many *.pyc in workspace
     # and keep workspace clean.
@@ -465,16 +465,14 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
                 if use_reclient and not t_specified:
                     # TODO: crbug.com/379584977 - Remove siso/reclient
                     # integration.
-                    return reclient_helper.run_siso(
-                        [
-                            'siso',
-                            'ninja',
-                            # Do not authenticate when using Reproxy.
-                            '-project=',
-                            '-reapi_instance=',
-                            '-reapi_address=',
-                        ] + input_args[1:],
-                        should_collect_logs)
+                    return reclient_helper.run_siso([
+                        'siso',
+                        'ninja',
+                        # Do not authenticate when using Reproxy.
+                        '-project=',
+                        '-reapi_instance=',
+                        '-reapi_address=',
+                    ] + input_args[1:])
                 return run_siso(["siso", "ninja"] + input_args[1:])
             return run_siso(["siso", "ninja", "--offline"] + input_args[1:])
 
@@ -572,7 +570,7 @@ def _main_inner(input_args, build_id, should_collect_logs=False):
             build_id, output_dir,
             use_android_build_server=use_android_build_server):
         if use_reclient and not t_specified:
-            return reclient_helper.run_ninja(ninja_args, should_collect_logs)
+            return reclient_helper.run_ninja(ninja_args)
         return ninja.main(ninja_args)
 
 
@@ -609,8 +607,6 @@ def main(args):
         build_id = str(uuid.uuid4())
         os.environ.setdefault("AUTONINJA_BUILD_ID", build_id)
 
-    # Check the log collection opt-in/opt-out status, and display notice if necessary.
-    should_collect_logs = build_telemetry.enabled()
     # On Windows the autoninja.bat script passes along the arguments enclosed in
     # double quotes. This prevents multiple levels of parsing of the special '^'
     # characters needed when compiling a single file but means that this script
@@ -623,10 +619,12 @@ def main(args):
     if sys.platform.startswith("win") and len(args) == 2:
         input_args = args[:1] + args[1].split()
     try:
-        exit_code = _main_inner(input_args, build_id, should_collect_logs)
+        exit_code = _main_inner(input_args, build_id)
     except KeyboardInterrupt:
         exit_code = 1
     finally:
+        # Check the log collection opt-in/opt-out status, and display notice if necessary.
+        should_collect_logs = build_telemetry.enabled()
         if should_collect_logs:
             elapsed = time.time() - start
             _upload_ninjalog(input_args, exit_code, elapsed)
