@@ -49,7 +49,10 @@ infra/tools/prpc/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf1
 infra/tools/luci-auth/${platform} git_revision:14c1dfd95e07b23eeaff304bd29a2eb80b06fe0b
 
 # LUCI Git credential helper
-infra/tools/luci/git-credential-luci/${platform} git_revision:fad062d39eaf922fe3bc5116e8039763c4530344
+# TODO(b/410936314): This should be switched back to
+# infra/tools/luci/git-credential-luci/${platform} once U2F is
+# supported.
+infra/tools/luci/git-credential-luci-custom-u2f/${platform} git_revision:7e7a5330bd4d6426f0df810a8ccb020e49b2bfff
 
 # LUCI Buildbucket CLI
 infra/tools/bb/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
