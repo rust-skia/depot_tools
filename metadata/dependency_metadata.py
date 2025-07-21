@@ -460,6 +460,7 @@ class DependencyMetadata:
             A string indicating the sufficiency status:
             - 'sufficient:CPE' if a CPE prefix is provided.
             - 'sufficient:URL and Revision' if URL and Revision are provided.
+            - 'sufficient:URL and Revision[DEPS]' as above, but 'Revision:DEPS'.
             - 'sufficient:URL and Version' if URL and version are provided.
             - 'ignore:Canonical' if the dependency is the canonical repository.
             - 'ignore:Internal' if the dependency is internal.
@@ -471,6 +472,8 @@ class DependencyMetadata:
         if self.url:
             if self.revision:
                 return "sufficient:URL and Revision"
+            if self.revision_in_deps:
+                return "sufficient:URL and Revision[DEPS]"
             if self.version:
                 return "sufficient:URL and Version"
 

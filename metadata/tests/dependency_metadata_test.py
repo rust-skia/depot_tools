@@ -471,6 +471,13 @@ class DependencyValidationTest(unittest.TestCase):
         self.assertEqual(dependency.vuln_scan_sufficiency,
                          "sufficient:URL and Revision")
 
+        # Test case: sufficient:URL and Revision[DEPS], given 'Revision:DEPS'.
+        dependency = dm.DependencyMetadata()
+        dependency.add_entry(known_fields.URL.get_name(), "https://example.com")
+        dependency.add_entry(known_fields.REVISION.get_name(), "DEPS")
+        self.assertEqual(dependency.vuln_scan_sufficiency,
+                         "sufficient:URL and Revision[DEPS]")
+
         # Test case: sufficient:URL and Version.
         dependency = dm.DependencyMetadata()
         dependency.add_entry(known_fields.URL.get_name(), "https://example.com")
