@@ -113,3 +113,23 @@ def initialize(service_name,
 
 def get_tracer(name: str, version: Optional[str] = None):
     return otel_trace_api.get_tracer(name, version)
+
+
+def opted_in(cfg_file=config.DEFAULT_CONFIG_FILE):
+    """Get if the user is opted-in
+
+    Unlike initialize which continues when not explicitly opted out this will
+    return if the user is opted in, either by user or automatically after the
+    banner display period.
+    """
+    cfg = config.Config(cfg_file)
+    if cfg.trace_config.disabled():
+        return False
+
+    bot_enabled = (cfg.trace_config.has_enabled()
+                   and cfg.trace_config.enabled_reason == 'BOT_USER')
+    if not is_google_host() and not bot_enabled:
+        return False
+
+    cfg = config.Config(cfg_file)
+    return cfg.trace_config.enabled
