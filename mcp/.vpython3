@@ -101,7 +101,7 @@ wheel: <
 >
 
 wheel: <
-  name: "infra/python/wheels/pydantic_core-py3"
+  name: "infra/python/wheels/pydantic_core/${vpython_platform}"
   version: "version:2.33.2"
 >
 
