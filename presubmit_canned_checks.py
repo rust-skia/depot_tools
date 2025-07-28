@@ -1878,7 +1878,6 @@ def CheckGNFormatted(input_api, output_api):
     warnings = []
     for f in affected_files:
         cmd = [
-            input_api.python3_executable,
             input_api.os_path.join(_HERE, 'gn.py'), 'format', '--dry-run',
             f.AbsoluteLocalPath()
         ]
