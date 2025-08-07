@@ -270,20 +270,8 @@ def AutoConfigure(cwd: str, cl: git_cl.Changelist) -> None:
     This may modify the global Git config and the local repo config as
     needed.
     """
-    latestVer: int = ConfigChanger.VERSION
-    v: int = 0
-    try:
-        v = int(
-            scm.GIT.GetConfig(cwd, 'depot-tools.gitauthautoconfigured') or '0')
-    except ValueError:
-        v = 0
-    if v < latestVer:
-        logging.debug(
-            'Automatically configuring Git repo authentication'
-            ' (current version: %r, latest: %r)', v, latestVer)
-        Configure(cwd, cl)
-        scm.GIT.SetConfig(cwd, 'depot-tools.gitAuthAutoConfigured',
-                          str(latestVer))
+    # TODO(ayatane): Disable prior to removal
+    return
 
 
 def Configure(cwd: str, cl: git_cl.Changelist) -> None:
@@ -292,42 +280,14 @@ def Configure(cwd: str, cl: git_cl.Changelist) -> None:
     This may modify the global Git config and the local repo config as
     needed.
     """
-    logging.debug('Configuring Git authentication...')
-
-    logging.debug('Configuring global Git authentication...')
-
-    # We want the user's global config.
-    # We can probably assume the root directory doesn't have any local
-    # Git configuration.
-    c = ConfigChanger.new_from_env('/', cl)
-    c.apply_global(os.path.expanduser('~'))
-
-    c2 = ConfigChanger.new_from_env(cwd, cl)
-    if c2.mode == c.mode:
-        logging.debug(
-            'Local user wants same mode %s as global;'
-            ' clearing local repo auth config', c2.mode)
-        c2.mode = ConfigMode.NO_AUTH
-        c2.apply(cwd)
-        return
-    logging.debug('Local user wants mode %s while global user wants mode %s',
-                  c2.mode, c.mode)
-    logging.debug('Configuring current Git repo authentication...')
-    c2.apply(cwd)
+    # TODO(ayatane): Disable prior to removal
+    return
 
 
 def ConfigureGlobal(cwd: str, remote_url: str) -> None:
     """Configure global/user Git authentication."""
-    logging.debug('Configuring global Git authentication for %s', remote_url)
-    # Checks to ensure this doesn't error when called with "bad" URLs.
-    #
-    # Don't try to configure auth for local files.
-    if remote_url.startswith('file://'):
-        return
-    # Skip for local files that aren't even URIs.
-    if '://' not in remote_url:
-        return
-    ConfigChanger.new_for_remote(cwd, remote_url).apply_global(cwd)
+    # TODO(ayatane): Disable prior to removal
+    return
 
 
 def ClearRepoConfig(cwd: str, cl: git_cl.Changelist) -> None:
