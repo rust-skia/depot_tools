@@ -899,6 +899,10 @@ class ConfigWizard(object):
         cred_key = _creds_helper_key(parts)
         self._set_config(cred_key, '', modify_all=True, scope=scope)
         self._set_config(cred_key, 'luci', append=True, scope=scope)
+        self._set_config(_creds_use_http_path_key(parts),
+                         'yes',
+                         modify_all=True,
+                         scope=scope)
 
     def _set_sso_rewrite(self, parts: urllib.parse.SplitResult, *,
                          scope: scm.GitConfigScope) -> None:
@@ -1080,6 +1084,11 @@ def _is_gerrit_url(url: str) -> bool:
 def _creds_helper_key(parts: urllib.parse.SplitResult) -> str:
     """Return Git config key for credential helpers."""
     return f'credential.{_url_host_url(parts)}.helper'
+
+
+def _creds_use_http_path_key(parts: urllib.parse.SplitResult) -> str:
+    """Return Git config key for using path with helpers."""
+    return f'credential.{_url_host_url(parts)}.useHttpPath'
 
 
 def _sso_rewrite_key(parts: urllib.parse.SplitResult) -> str:
