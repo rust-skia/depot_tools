@@ -2248,10 +2248,10 @@ def _parse_change(parser, options):
             '<diff_file> cannot be specified when <generate_diff> is set.')
 
     change_scm = scm.determine_scm(options.root)
-    if change_scm == 'diff' and not (options.files or options.all_files
-                                     or options.diff_file):
+    if change_scm == 'diff' and not (options.files or options.all_files or
+                                     options.diff_file or options.description):
         parser.error('unversioned directories must specify '
-                     '<files>, <all_files>, or <diff_file>.')
+                     '<files>, <all_files>, <diff_file>, or <description>.')
 
     diff = None
     if options.files:
@@ -2286,9 +2286,13 @@ def _parse_change(parser, options):
     elif options.diff_file:
         diff, change_files = _process_diff_file(options.diff_file)
     else:
-        change_files = scm.GIT.CaptureStatus(options.root,
-                                             options.upstream or None,
-                                             ignore_submodules=False)
+        if change_scm == 'git':
+            change_files = scm.GIT.CaptureStatus(options.root,
+                                                 options.upstream or None,
+                                                 ignore_submodules=False)
+        else:
+            # description only in 'diff' mode
+            change_files = []
     logging.info('Found %d file(s).', len(change_files))
 
     change_args = [
