@@ -252,6 +252,14 @@ def _convert_ninja_j_to_siso_flags(j_value, use_remoteexec, args):
 
 
 def _main_inner(input_args, build_id):
+    # If running in the Gemini CLI, automatically add --quiet if it's not
+    # already present to avoid filling the context window.
+    if os.environ.get('GEMINI_CLI') == '1':
+        if not any(arg in ('--quiet', '-q') for arg in input_args):
+            print('Adding --quiet because we\'re running under gemini-cli ('
+                  'GEMINI_CLI=1)')
+            input_args.append('--quiet')
+
     # if user doesn't set PYTHONPYCACHEPREFIX and PYTHONDONTWRITEBYTECODE
     # set PYTHONDONTWRITEBYTECODE=1 not to create many *.pyc in workspace
     # and keep workspace clean.
