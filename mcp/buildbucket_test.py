@@ -16,6 +16,7 @@ sys.path.insert(
     os.path.abspath(
         pathlib.Path(__file__).resolve().parent.parent.joinpath(
             pathlib.Path('infra_lib'))))
+from mcp.server import fastmcp
 import buildbucket
 
 
@@ -198,6 +199,194 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertIn('Exception calling prpc', result)
         self.assertIn('PRPC call failed', result)
+
+    @patch('subprocess.run')
+    async def test_get_recent_builds_success(self, mock_subprocess_run):
+        expected_output = '{"builds": [{"id": "1"}]}'
+        mock_subprocess_run.return_value = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=expected_output,
+            stderr='',
+        )
+
+        output = await buildbucket.get_recent_builds(
+            self.mock_context,
+            'test_builder',
+            'try',
+            'chromium',
+            10,
+        )
+
+        self.assertEqual(output, expected_output)
+        expected_command = [
+            'prpc',
+            'call',
+            'cr-buildbucket.appspot.com',
+            'buildbucket.v2.Builds.SearchBuilds',
+        ]
+        expected_request = {
+            'predicate': {
+                'builder': {
+                    'project': 'chromium',
+                    'bucket': 'try',
+                    'builder': 'test_builder',
+                },
+                'status': 'ENDED_MASK',
+            },
+            'page_size': '10'
+        }
+        mock_subprocess_run.assert_called_once_with(
+            expected_command,
+            capture_output=True,
+            input=json.dumps(expected_request),
+            check=True,
+            text=True,
+        )
+
+    @patch('subprocess.run')
+    async def test_get_recent_builds_with_url_encoding_success(
+            self, mock_subprocess_run):
+        builder_name_encoded = 'test%20builder'
+        builder_name_decoded = 'test builder'
+        expected_output = '{"builds": [{"id": "1"}]}'
+        mock_subprocess_run.return_value = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=expected_output,
+            stderr='',
+        )
+
+        output = await buildbucket.get_recent_builds(
+            self.mock_context,
+            builder_name_encoded,
+            'try',
+            'chromium',
+            10,
+        )
+
+        self.assertEqual(output, expected_output)
+        expected_command = [
+            'prpc',
+            'call',
+            'cr-buildbucket.appspot.com',
+            'buildbucket.v2.Builds.SearchBuilds',
+        ]
+        expected_request = {
+            'predicate': {
+                'builder': {
+                    'project': 'chromium',
+                    'bucket': 'try',
+                    'builder': builder_name_decoded,
+                },
+                'status': 'ENDED_MASK',
+            },
+            'page_size': '10'
+        }
+        mock_subprocess_run.assert_called_once_with(
+            expected_command,
+            capture_output=True,
+            input=json.dumps(expected_request),
+            check=True,
+            text=True,
+        )
+
+    @patch('subprocess.run')
+    async def test_get_recent_builds_exception(self, mock_subprocess_run):
+        mock_subprocess_run.side_effect = Exception('PRPC call failed')
+
+        with self.assertRaises(fastmcp.exceptions.ToolError) as e:
+            await buildbucket.get_recent_builds(
+                self.mock_context,
+                'test_builder',
+                'try',
+                'chromium',
+                10,
+            )
+        self.assertIn('Exception calling prpc', str(e.exception))
+        self.assertIn('PRPC call failed', str(e.exception))
+
+    async def test_get_recent_builds_invalid_num_builds(self):
+        with self.assertRaisesRegex(ValueError,
+                                    'Provided num_builds 0 is not positive'):
+            await buildbucket.get_recent_builds(
+                self.mock_context,
+                'test_builder',
+                'try',
+                'chromium',
+                0,
+            )
+
+    @patch('subprocess.run')
+    async def test_get_recent_failed_builds_success(self, mock_subprocess_run):
+        expected_output = '{"builds": [{"id": "1", "status": "FAILURE"}]}'
+        mock_subprocess_run.return_value = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=expected_output,
+            stderr='',
+        )
+
+        output = await buildbucket.get_recent_failed_builds(
+            self.mock_context,
+            'test_builder',
+            'try',
+            'chromium',
+            10,
+        )
+
+        self.assertEqual(output, expected_output)
+        expected_command = [
+            'prpc',
+            'call',
+            'cr-buildbucket.appspot.com',
+            'buildbucket.v2.Builds.SearchBuilds',
+        ]
+        expected_request = {
+            'predicate': {
+                'builder': {
+                    'project': 'chromium',
+                    'bucket': 'try',
+                    'builder': 'test_builder',
+                },
+                'status': 'FAILURE',
+            },
+            'page_size': '10'
+        }
+        mock_subprocess_run.assert_called_once_with(
+            expected_command,
+            capture_output=True,
+            input=json.dumps(expected_request),
+            check=True,
+            text=True,
+        )
+
+    @patch('subprocess.run')
+    async def test_get_recent_failed_builds_exception(self,
+                                                      mock_subprocess_run):
+        mock_subprocess_run.side_effect = Exception('PRPC call failed')
+
+        with self.assertRaises(fastmcp.exceptions.ToolError) as e:
+            await buildbucket.get_recent_failed_builds(
+                self.mock_context,
+                'test_builder',
+                'try',
+                'chromium',
+                10,
+            )
+        self.assertIn('Exception calling prpc', str(e.exception))
+        self.assertIn('PRPC call failed', str(e.exception))
+
+    async def test_get_recent_failed_builds_invalid_num_builds(self):
+        with self.assertRaisesRegex(ValueError,
+                                    'Provided num_builds -1 is not positive'):
+            await buildbucket.get_recent_failed_builds(
+                self.mock_context,
+                'test_builder',
+                'try',
+                'chromium',
+                -1,
+            )
 
 
 if __name__ == '__main__':

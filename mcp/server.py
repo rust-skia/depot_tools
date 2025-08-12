@@ -38,6 +38,8 @@ def main(argv: Sequence[str]) -> None:
     mcp.add_tool(buildbucket.get_build_from_build_number)
     mcp.add_tool(buildbucket.get_build_from_id)
     mcp.add_tool(buildbucket.get_build_status)
+    mcp.add_tool(buildbucket.get_recent_builds)
+    mcp.add_tool(buildbucket.get_recent_failed_builds)
     mcp.run()
 
 

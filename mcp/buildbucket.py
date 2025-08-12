@@ -4,6 +4,7 @@
 """Tools for interacting with buildbucket"""
 import json
 import subprocess
+import urllib.parse
 
 from mcp.server import fastmcp
 import telemetry
@@ -256,3 +257,144 @@ async def get_build(
             await ctx.info('Exception calling prpc')
             return f'Exception calling prpc return {e}'
         return result.stdout
+
+
+async def get_recent_builds(
+    ctx: fastmcp.Context,
+    builder_name: str,
+    builder_bucket: str,
+    builder_project: str,
+    num_builds: int,
+) -> str:
+    """Gets |num_builds| recent completed builds for a builder.
+
+    This will consider any builds that have run to completion, regardless of
+    status.
+
+    The url of a builder can be deconstructed to get the relevant information,
+    e.g.
+    https://ci.chromium.org/ui/p/<project>/builders/<bucket>/<name>
+
+    Args:
+        builder_name: The name of the builder to get builds from. Any URL
+            encoding will automatically be decoded.
+        builder_bucket: The bucket the builder belongs to.
+        builder_project: The project the builder belongs to.
+        num_builds: How many builds to retrieve. Per the proto definition for
+            the underlying request, values >1000 will be treated as 1000.
+
+    Returns:
+        The stdout of the prpc command which should be a JSON string for a
+        buildbucket.v2.SearchBuildsResponse proto. See
+        https://source.chromium.org/chromium/infra/infra_superproject/+/main:infra/go/src/go.chromium.org/luci/buildbucket/proto/builds_service.proto
+        for more details.
+    """
+    with tracer.start_as_current_span('chromium.mcp.get_recent_builds'):
+        return await _get_recent_builds(
+            ctx,
+            builder_name,
+            builder_bucket,
+            builder_project,
+            num_builds,
+            failed_builds_only=False,
+        )
+
+
+async def get_recent_failed_builds(
+    ctx: fastmcp.Context,
+    builder_name: str,
+    builder_bucket: str,
+    builder_project: str,
+    num_builds: int,
+) -> str:
+    """Gets |num_builds| recent failed builds for a builder.
+
+    This will only consider builds that have run to completion and exited with
+    the FAILURE status, i.e. builds that show up as red in Milo.
+
+    The url of a builder can be deconstructed to get the relevant information,
+    e.g.
+    https://ci.chromium.org/ui/p/<project>/builders/<bucket>/<name>
+
+    Args:
+        builder_name: The name of the builder to get builds from. Any URL
+            encoding will automatically be decoded.
+        builder_bucket: The bucket the builder belongs to.
+        builder_project: The project the builder belongs to.
+        num_builds: How many builds to retrieve. Per the proto definition for
+            the underlying request, values >1000 will be treated as 1000.
+
+    Returns:
+        The stdout of the prpc command which should be a JSON string for a
+        buildbucket.v2.SearchBuildsResponse proto. See
+        https://source.chromium.org/chromium/infra/infra_superproject/+/main:infra/go/src/go.chromium.org/luci/buildbucket/proto/builds_service.proto
+        for more details.
+    """
+    with tracer.start_as_current_span('chromium.mcp.get_recent_failed_builds'):
+        return await _get_recent_builds(
+            ctx,
+            builder_name,
+            builder_bucket,
+            builder_project,
+            num_builds,
+            failed_builds_only=True,
+        )
+
+
+async def _get_recent_builds(
+    ctx: fastmcp.Context,
+    builder_name: str,
+    builder_bucket: str,
+    builder_project: str,
+    num_builds: int,
+    failed_builds_only: bool,
+) -> str:
+    """Helper function to get recent builds for a builder.
+
+    See docstrings for get_recent_builds/get_recent_failed_builds for more
+    information.
+
+    Args:
+        builder_name: Same as caller.
+        builder_bucket: Same as caller.
+        builder_project: Same as caller.
+        num_builds: Same as caller.
+        failed_builds_only: Whether to only search for failed builds instead of
+            all completed builds.
+
+    Returns:
+        Same as caller.
+    """
+    if num_builds < 1:
+        raise ValueError(f'Provided num_builds {num_builds} is not positive')
+    request = {
+        'predicate': {
+            'builder': {
+                'project': builder_project,
+                'bucket': builder_bucket,
+                'builder': urllib.parse.unquote(builder_name),
+            },
+            'status': 'FAILURE' if failed_builds_only else 'ENDED_MASK',
+        },
+        'page_size': f'{num_builds}'
+    }
+    command = [
+        'prpc',
+        'call',
+        'cr-buildbucket.appspot.com',
+        'buildbucket.v2.Builds.SearchBuilds',
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            input=json.dumps(request),
+            check=True,
+            text=True,
+        )
+        await ctx.info(result.stdout)
+        await ctx.info(result.stderr)
+    except Exception as e:
+        raise fastmcp.exceptions.ToolError(
+            f'Exception calling prpc: {e}') from e
+    return result.stdout
