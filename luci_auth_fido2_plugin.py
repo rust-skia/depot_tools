@@ -25,7 +25,6 @@
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
-import ctypes
 import dataclasses
 import json
 import logging
@@ -185,14 +184,10 @@ def get_clients(origin: str) -> list[tuple[WebAuthnClient, str]]:
     """
     client_data_collector = DefaultClientDataCollector(origin)
 
-    # Use Windows WebAuthn API if available, and if we aren't running as admin.
-    if WindowsClient is not None \
-       and WindowsClient.is_available():
-        if ctypes.windll.shell32.IsUserAnAdmin():
-            logging.info("User is admin")
-        else:
-            logging.info("Using WindowsClient")
-            return [(WindowsClient(client_data_collector), "WindowsWebAuthn")]
+    # Use Windows WebAuthn API if available.
+    if WindowsClient and WindowsClient.is_available():
+        logging.info("Using WindowsClient")
+        return [(WindowsClient(client_data_collector), "WindowsWebAuthn")]
 
     user_interaction = DiscardInteraction()
     clients = []
