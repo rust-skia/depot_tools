@@ -13,13 +13,12 @@ sys.path.insert(
     os.path.abspath(
         pathlib.Path(__file__).resolve().parent.parent.joinpath(
             pathlib.Path('infra_lib'))))
+from absl import app
+from mcp.server import fastmcp
 import telemetry
 
 import buildbucket
-
-from absl import app
-
-from mcp.server import fastmcp
+import resultdb
 
 mcp = fastmcp.FastMCP('chrome-infra-mcp')
 
@@ -40,6 +39,9 @@ def main(argv: Sequence[str]) -> None:
     mcp.add_tool(buildbucket.get_build_status)
     mcp.add_tool(buildbucket.get_recent_builds)
     mcp.add_tool(buildbucket.get_recent_failed_builds)
+    mcp.add_tool(resultdb.expand_summary_html)
+    mcp.add_tool(resultdb.get_non_exonerated_unexpected_results_from_build)
+    mcp.add_tool(resultdb.get_test_level_text_artifact)
     mcp.run()
 
 
