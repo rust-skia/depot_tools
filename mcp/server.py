@@ -19,6 +19,7 @@ import telemetry
 
 import buildbucket
 import resultdb
+import git_cl
 
 mcp = fastmcp.FastMCP('chrome-infra-mcp')
 
@@ -42,6 +43,10 @@ def main(argv: Sequence[str]) -> None:
     mcp.add_tool(resultdb.expand_summary_html)
     mcp.add_tool(resultdb.get_non_exonerated_unexpected_results_from_build)
     mcp.add_tool(resultdb.get_test_level_text_artifact)
+    mcp.add_tool(git_cl.try_builder_results)
+    mcp.add_tool(git_cl.get_current_changes)
+    mcp.add_tool(git_cl.format)
+    mcp.add_tool(git_cl.upload_change_list)
     mcp.run()
 
 
