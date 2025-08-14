@@ -849,7 +849,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                     # exist.
                     logging.warning(
                         'GCS dependency %s new version, removing old.', name)
-                    shutil.rmtree(gcs_deps[0].output_dir)
+                    gclient_utils.rmtree(gcs_deps[0].output_dir)
             else:
                 url = dep_value.get('url')
                 deps_to_add.append(
