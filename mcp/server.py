@@ -14,7 +14,7 @@ sys.path.insert(
         pathlib.Path(__file__).resolve().parent.parent.joinpath(
             pathlib.Path('infra_lib'))))
 from absl import app
-from mcp.server import fastmcp
+from mcp.server import fastmcp  # pylint: disable=import-self
 import telemetry
 
 import buildbucket

@@ -161,6 +161,11 @@ wheel: <
   version: "version:4.25.1"
 >
 
+wheel: <
+  name: "infra/python/wheels/colorama-py2_py3"
+  version: "version:0.4.1"
+>
+
 # beautifulsoup and its dependencies
 wheel: <
   name: "infra/python/wheels/beautifulsoup4-py3"
