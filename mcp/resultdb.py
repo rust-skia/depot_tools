@@ -6,13 +6,16 @@
 import json
 import posixpath
 import requests
-import subprocess
 
 import bs4
 from mcp.server import fastmcp
 import telemetry
 
+import common
+
 tracer = telemetry.get_tracer(__name__)
+
+RESULTDB_SERVER = 'results.api.luci.app'
 
 
 async def get_non_exonerated_unexpected_results_from_build(
@@ -50,26 +53,10 @@ async def get_non_exonerated_unexpected_results_from_build(
             'read_mask': ('name,resultId,variant,status,statusV2,duration,'
                           'failureReason,summary_html'),
         }
-        command = [
-            'prpc',
-            'call',
-            'results.api.luci.app',
-            'luci.resultdb.v1.ResultDB.QueryTestResults',
-        ]
-        try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                input=json.dumps(request),
-                check=True,
-                text=True,
-            )
-            await ctx.info(result.stdout)
-            await ctx.info(result.stderr)
-        except Exception as e:
-            raise fastmcp.exceptions.ToolError(
-                f'Exception calling prpc: {e}') from e
-        return result.stdout
+        response = await common.run_prpc_call(
+            ctx, RESULTDB_SERVER, 'luci.resultdb.v1.ResultDB.QueryTestResults',
+            request)
+        return response
 
 
 async def expand_summary_html(
@@ -137,26 +124,10 @@ async def get_test_level_text_artifact(
         request = {
             'name': artifact_name,
         }
-        command = [
-            'prpc',
-            'call',
-            'results.api.luci.app',
-            'luci.resultdb.v1.ResultDB.GetArtifact',
-        ]
-        try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                input=json.dumps(request),
-                check=True,
-                text=True,
-            )
-            await ctx.info(result.stdout)
-            await ctx.info(result.stderr)
-        except Exception as e:
-            raise fastmcp.exceptions.ToolError(
-                f'Exception calling prpc: {e}') from e
-        response = json.loads(result.stdout)
+        prpc_response = await common.run_prpc_call(
+            ctx, RESULTDB_SERVER, 'luci.resultdb.v1.ResultDB.GetArtifact',
+            request)
+        response = json.loads(prpc_response)
 
         content_type = response['contentType']
         if 'text/plain' not in content_type:

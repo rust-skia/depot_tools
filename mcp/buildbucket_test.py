@@ -16,7 +16,6 @@ sys.path.insert(
     os.path.abspath(
         pathlib.Path(__file__).resolve().parent.parent.joinpath(
             pathlib.Path('infra_lib'))))
-from mcp.server import fastmcp
 import buildbucket
 
 
@@ -50,7 +49,7 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
             expected_command,
             capture_output=True,
             input=json.dumps({'id': build_id}),
-            check=False,
+            check=True,
             text=True,
         )
 
@@ -59,10 +58,8 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
         build_id = '12345'
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        result = await buildbucket.get_build_status(self.mock_context, build_id)
-
-        self.assertIn('Exception calling prpc', result)
-        self.assertIn('PRPC call failed', result)
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
+            await buildbucket.get_build_status(self.mock_context, build_id)
 
     @mock.patch('subprocess.run')
     async def test_get_build_from_id_success(self, mock_subprocess_run):
@@ -88,7 +85,7 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
             expected_command,
             capture_output=True,
             input=json.dumps(expected_request),
-            check=False,
+            check=True,
             text=True)
 
     @mock.patch('subprocess.run')
@@ -97,14 +94,12 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
         fields = ['steps']
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        result = await buildbucket.get_build_from_id(
-            self.mock_context,
-            build_id,
-            fields,
-        )
-
-        self.assertIn('Exception calling prpc', result)
-        self.assertIn('PRPC call failed', result)
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
+            await buildbucket.get_build_from_id(
+                self.mock_context,
+                build_id,
+                fields,
+            )
 
     @mock.patch('subprocess.run')
     async def test_get_build_from_build_number_success(
@@ -144,7 +139,7 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
             expected_command,
             capture_output=True,
             input=json.dumps(expected_request),
-            check=False,
+            check=True,
             text=True)
 
     @mock.patch('subprocess.run')
@@ -157,12 +152,10 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
         fields = ['status']
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        result = await buildbucket.get_build_from_build_number(
-            self.mock_context, build_number, builder_name, builder_bucket,
-            builder_project, fields)
-
-        self.assertIn('Exception calling prpc', result)
-        self.assertIn('PRPC call failed', result)
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
+            await buildbucket.get_build_from_build_number(
+                self.mock_context, build_number, builder_name, builder_bucket,
+                builder_project, fields)
 
     @mock.patch('subprocess.run')
     async def test_get_build_success(self, mock_subprocess_run):
@@ -186,7 +179,7 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
             expected_command,
             capture_output=True,
             input=json.dumps(request),
-            check=False,
+            check=True,
             text=True,
         )
 
@@ -195,10 +188,8 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
         request = {"id": "12345"}
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        result = await buildbucket.get_build(self.mock_context, request)
-
-        self.assertIn('Exception calling prpc', result)
-        self.assertIn('PRPC call failed', result)
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
+            await buildbucket.get_build(self.mock_context, request)
 
     @mock.patch('subprocess.run')
     async def test_get_recent_builds_success(self, mock_subprocess_run):
@@ -295,7 +286,7 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
     async def test_get_recent_builds_exception(self, mock_subprocess_run):
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        with self.assertRaises(fastmcp.exceptions.ToolError) as e:
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
             await buildbucket.get_recent_builds(
                 self.mock_context,
                 'test_builder',
@@ -303,8 +294,6 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
                 'chromium',
                 10,
             )
-        self.assertIn('Exception calling prpc', str(e.exception))
-        self.assertIn('PRPC call failed', str(e.exception))
 
     async def test_get_recent_builds_invalid_num_builds(self):
         with self.assertRaisesRegex(ValueError,
@@ -366,7 +355,7 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
                                                       mock_subprocess_run):
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        with self.assertRaises(fastmcp.exceptions.ToolError) as e:
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
             await buildbucket.get_recent_failed_builds(
                 self.mock_context,
                 'test_builder',
@@ -374,8 +363,6 @@ class BuildbucketTest(unittest.IsolatedAsyncioTestCase):
                 'chromium',
                 10,
             )
-        self.assertIn('Exception calling prpc', str(e.exception))
-        self.assertIn('PRPC call failed', str(e.exception))
 
     async def test_get_recent_failed_builds_invalid_num_builds(self):
         with self.assertRaisesRegex(ValueError,

@@ -19,7 +19,8 @@ async def try_builder_results(
       checkout: Location of the current checkout.
 
     Returns:
-      A json list of builds that either ran or are still running on the current CL
+      A json list of builds that either ran or are still running on the current
+      CL
     """
     with tracer.start_as_current_span('chromium.mcp.try_builder_results'):
         command = [
@@ -70,7 +71,7 @@ async def get_current_changes(
         return result.stdout
 
 
-async def format(
+async def format_checkout(
     ctx: fastmcp.Context,
     checkout: str,
 ) -> None:

@@ -16,7 +16,6 @@ sys.path.insert(
     os.path.abspath(
         pathlib.Path(__file__).resolve().parent.parent.joinpath(
             pathlib.Path('infra_lib'))))
-from mcp.server import fastmcp
 import requests
 
 import resultdb
@@ -79,11 +78,9 @@ class GetNonExoneratedUnexpectedResultsFromBuildTest(
         build_id = '12345'
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        with self.assertRaises(fastmcp.exceptions.ToolError) as e:
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
             await resultdb.get_non_exonerated_unexpected_results_from_build(
                 self.mock_context, build_id)
-        self.assertIn('Exception calling prpc', str(e.exception))
-        self.assertIn('PRPC call failed', str(e.exception))
 
     async def test_get_non_exonerated_unexpected_results_from_build_invalid_id(
             self):
@@ -200,12 +197,10 @@ class GetTestLevelTextArtifactTest(unittest.IsolatedAsyncioTestCase):
         artifact_id = 'artifact1'
         mock_subprocess_run.side_effect = Exception('PRPC call failed')
 
-        with self.assertRaises(fastmcp.exceptions.ToolError) as e:
+        with self.assertRaisesRegex(Exception, 'PRPC call failed'):
             await resultdb.get_test_level_text_artifact(self.mock_context,
                                                         result_name,
                                                         artifact_id)
-        self.assertIn('Exception calling prpc', str(e.exception))
-        self.assertIn('PRPC call failed', str(e.exception))
 
     @mock.patch('subprocess.run')
     async def test_get_test_level_text_artifact_wrong_content_type(

@@ -3,11 +3,14 @@
 # found in the LICENSE file.
 """Tools for interacting with buildbucket"""
 import json
-import subprocess
 import urllib.parse
 
 from mcp.server import fastmcp
 import telemetry
+
+import common
+
+BUILDBUCKET_SERVER = 'cr-buildbucket.appspot.com'
 
 tracer = telemetry.get_tracer(__name__)
 
@@ -25,26 +28,11 @@ async def get_build_status(
     """
     with tracer.start_as_current_span('chromium.mcp.get_build_status'):
         await ctx.info(f'Received request {build_id}')
-        command = [
-            'prpc',
-            'call',
-            'cr-buildbucket.appspot.com',
-            'buildbucket.v2.Builds.GetBuildStatus',
-        ]
-        try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                input=json.dumps({'id': build_id}),
-                check=False,
-                text=True,
-            )
-            await ctx.info(result.stdout)
-            await ctx.info(result.stderr)
-            return json.loads(result.stdout)['status']
-        except Exception as e:
-            await ctx.info('Exception calling prpc')
-            return f'Exception calling prpc return {e}'
+        request = {'id': build_id}
+        response = await common.run_prpc_call(
+            ctx, BUILDBUCKET_SERVER, 'buildbucket.v2.Builds.GetBuildStatus',
+            request)
+        return json.loads(response)['status']
 
 
 async def get_build_from_id(
@@ -87,26 +75,10 @@ async def get_build_from_id(
     """
     with tracer.start_as_current_span('chromium.mcp.get_build_from_id'):
         request = {'id': build_id, 'mask': {'fields': ','.join(fields)}}
-        command = [
-            'prpc',
-            'call',
-            'cr-buildbucket.appspot.com',
-            'buildbucket.v2.Builds.GetBuild',
-        ]
-        try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                input=json.dumps(request),
-                check=False,
-                text=True,
-            )
-            await ctx.info(result.stdout)
-            await ctx.info(result.stderr)
-        except Exception as e:
-            await ctx.info('Exception calling prpc')
-            return f'Exception calling prpc return {e}'
-        return result.stdout
+        response = await common.run_prpc_call(ctx, BUILDBUCKET_SERVER,
+                                              'buildbucket.v2.Builds.GetBuild',
+                                              request)
+        return response
 
 
 async def get_build_from_build_number(
@@ -162,26 +134,10 @@ async def get_build_from_build_number(
                 'fields': ','.join(fields)
             }
         }
-        command = [
-            'prpc',
-            'call',
-            'cr-buildbucket.appspot.com',
-            'buildbucket.v2.Builds.GetBuild',
-        ]
-        try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                input=json.dumps(request),
-                check=False,
-                text=True,
-            )
-            await ctx.info(result.stdout)
-            await ctx.info(result.stderr)
-        except Exception as e:
-            await ctx.info('Exception calling prpc')
-            return f'Exception calling prpc return {e}'
-        return result.stdout
+        response = await common.run_prpc_call(ctx, BUILDBUCKET_SERVER,
+                                              'buildbucket.v2.Builds.GetBuild',
+                                              request)
+        return response
 
 
 async def get_build(
@@ -237,26 +193,10 @@ async def get_build(
     """
     with tracer.start_as_current_span('chromium.mcp.get_build'):
         await ctx.info(f'Received request {request}')
-        command = [
-            'prpc',
-            'call',
-            'cr-buildbucket.appspot.com',
-            'buildbucket.v2.Builds.GetBuild',
-        ]
-        try:
-            result = subprocess.run(
-                command,
-                capture_output=True,
-                input=json.dumps(request),
-                check=False,
-                text=True,
-            )
-            await ctx.info(result.stdout)
-            await ctx.info(result.stderr)
-        except Exception as e:
-            await ctx.info('Exception calling prpc')
-            return f'Exception calling prpc return {e}'
-        return result.stdout
+        response = await common.run_prpc_call(ctx, BUILDBUCKET_SERVER,
+                                              'buildbucket.v2.Builds.GetBuild',
+                                              request)
+        return response
 
 
 async def get_recent_builds(
@@ -378,23 +318,7 @@ async def _get_recent_builds(
         },
         'page_size': f'{num_builds}'
     }
-    command = [
-        'prpc',
-        'call',
-        'cr-buildbucket.appspot.com',
-        'buildbucket.v2.Builds.SearchBuilds',
-    ]
-    try:
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            input=json.dumps(request),
-            check=True,
-            text=True,
-        )
-        await ctx.info(result.stdout)
-        await ctx.info(result.stderr)
-    except Exception as e:
-        raise fastmcp.exceptions.ToolError(
-            f'Exception calling prpc: {e}') from e
-    return result.stdout
+    response = await common.run_prpc_call(ctx, BUILDBUCKET_SERVER,
+                                          'buildbucket.v2.Builds.SearchBuilds',
+                                          request)
+    return response

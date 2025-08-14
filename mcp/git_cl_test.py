@@ -60,12 +60,12 @@ class GitClTest(unittest.IsolatedAsyncioTestCase):
                                                     cwd=self.checkout)
 
     @mock.patch('subprocess.run')
-    async def test_format_success(self, mock_subprocess_run):
+    async def test_format_checkout_success(self, mock_subprocess_run):
         expected_output = 'Formatted 1 file'
         mock_subprocess_run.return_value = subprocess.CompletedProcess(
             args=[], returncode=0, stdout=expected_output, stderr='')
 
-        output = await git_cl.format(self.mock_context, self.checkout)
+        output = await git_cl.format_checkout(self.mock_context, self.checkout)
 
         self.assertEqual(output, expected_output)
         expected_command = ["git", "cl", "format"]
