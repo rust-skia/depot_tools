@@ -2689,13 +2689,24 @@ the current line as well!
                       committing,
                       expected_result,
                       new_file=False,
+                      description='this is description',
+                      no_diffs=False,
                       **kwargs):
-        change = mock.MagicMock(presubmit.GitChange)
-        change.scm = 'svn'
+        change = presubmit.Change(
+            'author',
+            description,
+            '/path/root',
+            None,
+            0,
+            0,
+            None,
+        )
         input_api = self.MockInputApi(change, committing)
         affected_file = mock.MagicMock(presubmit.GitAffectedFile)
+        input_api.no_diffs = no_diffs
         if new_file:
             affected_file.Action.return_value = 'A'
+
         input_api.AffectedSourceFiles.return_value = [affected_file]
         input_api.ReadFile.return_value = text
         if expected_result:
@@ -2739,7 +2750,54 @@ the current line as well!
         license_text = (r".*? Copyright \(c\) 0007 Nobody.\n"
                         r".*? All Rights Reserved\.\n")
         self._LicenseCheck(text, license_text, True,
-                           presubmit.OutputApi.PresubmitPromptWarning)
+                           presubmit.OutputApi.PresubmitError)
+
+    def testCheckLicenseWarnCommitIfNoDiffs(self):
+        text = ("#!/bin/python\n"
+                "# Copyright (c) 2037 Nobody.\n"
+                "# All Rights Reserved.\n"
+                "print('foo')\n")
+        license_text = (r".*? Copyright \(c\) 0007 Nobody.\n"
+                        r".*? All Rights Reserved\.\n")
+        self._LicenseCheck(text,
+                           license_text,
+                           True,
+                           presubmit.OutputApi.PresubmitPromptWarning,
+                           no_diffs=True)
+
+    def testBypassCheckLicense(self):
+        text = '\n'.join([
+            '#!/bin/python',
+            '# this is not a CopyRight.',
+            '# No Rights Reserved.',
+        ])
+        description = '\n'.join([
+            'this is a change',
+            '',
+            '',
+            'Bypass-Check-License: a third-party',
+        ])
+        self._LicenseCheck(text, None, True, None, description=description)
+
+    def testBypassCheckLicenseWithoutReason(self):
+        text = '\n'.join([
+            '#!/bin/python',
+            '# this is not a CopyRight.',
+            '# No Rights Reserved.',
+        ])
+        description = '\n'.join([
+            'this is a change',
+            '',
+            '',
+            'Bypass-Check-License:   ',
+        ])
+        self._LicenseCheck(
+            text,
+            None,
+            True,
+            # must error out that <reason> should be given.
+            presubmit.OutputApi.PresubmitError,
+            description=description)
 
     def testCheckLicenseFailUpload(self):
         text = ("#!/bin/python\n"
@@ -2749,7 +2807,7 @@ the current line as well!
         license_text = (r".*? Copyright \(c\) 0007 Nobody.\n"
                         r".*? All Rights Reserved\.\n")
         self._LicenseCheck(text, license_text, False,
-                           presubmit.OutputApi.PresubmitPromptWarning)
+                           presubmit.OutputApi.PresubmitError)
 
     def testCheckLicenseEmptySuccess(self):
         text = ''
@@ -2780,7 +2838,7 @@ the current line as well!
         self._LicenseCheck(text,
                            license_text,
                            False,
-                           presubmit.OutputApi.PresubmitPromptWarning,
+                           presubmit.OutputApi.PresubmitError,
                            new_file=True)
 
     def _GetLicenseText(self, current_year):
@@ -2792,15 +2850,15 @@ the current line as well!
             "# found in the LICENSE file.\n"
             "print('foo')\n" % current_year)
 
-    def testCheckLicenseNewFileWarn(self):
-        # Check that we warn on new files with wrong year. Test with first
+    def testCheckLicenseNewFileError(self):
+        # Check that we error on new files with wrong year. Test with first
         # allowed year.
         text = self._GetLicenseText(2006)
         license_text = None
         self._LicenseCheck(text,
                            license_text,
                            False,
-                           presubmit.OutputApi.PresubmitPromptWarning,
+                           presubmit.OutputApi.PresubmitError,
                            new_file=True)
 
     def testCheckLicenseNewCSSFilePass(self):

@@ -740,6 +740,8 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
     return []
 
 
+_BYPASS_CHECK_LICENSE_FOOTER = 'Bypass-Check-License'
+
 def CheckLicense(input_api,
                  output_api,
                  license_re_param=None,
@@ -747,6 +749,20 @@ def CheckLicense(input_api,
                  source_file_filter=None,
                  accept_empty_files=True):
     """Verifies the license header."""
+    # The CL is ignoring the license check
+    reasons = input_api.change.GitFootersFromDescription().get(
+        _BYPASS_CHECK_LICENSE_FOOTER, [])
+
+    if len(reasons):
+        if ''.join(reasons).strip() == '':
+            return [
+                output_api.PresubmitError(
+                    '{key} is specified without the reason. Please provide the reason '
+                    'in "{key}: <reason>"'.format(
+                        key=_BYPASS_CHECK_LICENSE_FOOTER))
+            ]
+        input_api.logging.info('License check is being ignored')
+        return []
 
     # Early-out if the license_re is guaranteed to match everything.
     if license_re_param and license_re_param == '.*':
@@ -826,12 +842,18 @@ def CheckLicense(input_api,
         elif not license_re.search(contents):
             bad_files.append(f.LocalPath())
     results = []
+
+    # Don't report errors when on the presubmit --all bot or when testing with
+    # presubmit --files.
+    if input_api.no_diffs:
+        report_type = output_api.PresubmitPromptWarning
+    else:
+        report_type = output_api.PresubmitError
+
     if bad_new_files:
-        # We can't distinguish between Google and thirty-party files, so this has to be a
-        # warning rather than an error.
         if license_re_param:
-            warning_message = ('License on new files must match:\n\n%s\n' %
-                               license_re_param)
+            error_message = ('License on new files must match:\n\n%s\n' %
+                             license_re_param)
         else:
             # Verbatim text that can be copy-pasted into new files (possibly
             # adjusting the leading comment delimiter).
@@ -843,31 +865,29 @@ def CheckLicense(input_api,
                     'project': project_name,
                     'key_line': key_line,
                 }
-            warning_message = (
+            error_message = (
                 'License on new files must be:\n\n%s\n' % new_license_text +
                 '(adjusting the comment delimiter accordingly).\n\n' +
                 'If this is a moved file, then update the license but do not ' +
                 'update the year.\n\n' +
-                'If this is a third-party file then ignore this warning.\n\n')
-        warning_message += 'Found a bad license header in these new or moved files:'
-        results.append(
-            output_api.PresubmitPromptWarning(warning_message,
-                                              items=bad_new_files))
+                'If this is a third-party file, then add a footer ' +
+                'with "{key}: <reason>" to skip this check.'.format(
+                    key=_BYPASS_CHECK_LICENSE_FOOTER))
+        error_message += 'Found a bad license header in these new or moved files:'
+        results.append(report_type(error_message, items=bad_new_files))
     if wrong_year_new_files:
-        # We can't distinguish between new and moved files, so this has to be a
-        # warning rather than an error.
         results.append(
-            output_api.PresubmitPromptWarning(
+            report_type(
                 'License doesn\'t list the current year. If this is a new file, '
-                'use the current year. If this is a moved file then ignore this '
-                'warning.',
+                'use the current year. If this is a moved file, then add '
+                'a footer with "{key}: <reason>" to skip this check.'.format(
+                    key=_BYPASS_CHECK_LICENSE_FOOTER),
                 items=wrong_year_new_files))
     if bad_files:
         results.append(
-            output_api.PresubmitPromptWarning(
-                'License must match:\n%s\n' % license_re.pattern +
-                'Found a bad license header in these files:',
-                items=bad_files))
+            report_type('License must match:\n%s\n' % license_re.pattern +
+                        'Found a bad license header in these files:',
+                        items=bad_files))
     return results
 
 
