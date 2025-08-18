@@ -23,6 +23,7 @@
 # >
 # [VPYTHON:END]
 
+import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 import dataclasses
@@ -186,7 +187,7 @@ def get_clients(origin: str) -> list[tuple[WebAuthnClient, str]]:
 
     # Use Windows WebAuthn API if available.
     if WindowsClient and WindowsClient.is_available():
-        logging.info("Using WindowsClient")
+        logging.debug("Using WindowsClient")
         return [(WindowsClient(client_data_collector), "WindowsWebAuthn")]
 
     user_interaction = DiscardInteraction()
@@ -196,7 +197,7 @@ def get_clients(origin: str) -> list[tuple[WebAuthnClient, str]]:
         desc_str = (f'CtapHidDevice {desc.product_name}'
                     f' (VID 0x{desc.vid:04x},'
                     f' PID 0x{desc.pid:04x}) at {desc.path}')
-        logging.info("Found %s", desc_str)
+        logging.debug("Found %s", desc_str)
         clients.append((
             Fido2Client(
                 dev,
@@ -235,13 +236,45 @@ def set_event_on_signal(signum: int, event: Event):
         signal.signal(signum, original_handler)
 
 
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=
+        "A LUCI Auth plugin to perform FIDO2 security key assertions", )
+    parser.add_argument(
+        "-l",
+        "--list-devices",
+        action="store_true",
+        default=False,
+        help=
+        "If set, detects FIDO devices, then print their information to stderr, "
+        "then exit this program. Useful for troubleshoot udev rules and "
+        "permission issues on Linux.")
+    return parser
+
+
 def main():
+    args = get_parser().parse_args()
+
     logging.basicConfig(level=logging.INFO)
+
+    # If requested, probe FIDO devices, print their information, then exit.
+    if args.list_devices:
+        # A "stub" origin to satisfy Fido2Client constructor.
+        stub_origin = "chromium.org"
+        clients = get_clients(stub_origin)
+        if clients:
+            logging.info("Found the following FIDO devices:")
+            for _, client_desc in clients:
+                logging.info("    * %s", client_desc)
+        else:
+            logging.info("No available FIDO device.")
+        sys.exit(0)
+
     plugin_req = parse_plugin_request(plugin_read(sys.stdin.buffer))
 
     clients = get_clients(plugin_req.origin)
     if not clients:
-        logging.error("No available FIDO devices.")
+        logging.error("No available FIDO device.")
         sys.exit(_EXIT_NO_FIDO2_DEVICES)
 
     # Race and retrieve the first successful assertion.
