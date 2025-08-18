@@ -852,8 +852,12 @@ def CheckLicense(input_api,
 
     if bad_new_files:
         if license_re_param:
-            error_message = ('License on new files must match:\n\n%s\n' %
-                             license_re_param)
+            error_message = (
+                'License on new files must match:\n\n{lp}\n\n'
+                'To bypass this check, add {k}: <reason> in the description.\n'
+                'If this check fails for non-exceptional cases, consider '
+                'tuning the PRESUBMIT.py instead.').format(
+                    lp=license_re_param, k=_BYPASS_CHECK_LICENSE_FOOTER)
         else:
             # Verbatim text that can be copy-pasted into new files (possibly
             # adjusting the leading comment delimiter).
