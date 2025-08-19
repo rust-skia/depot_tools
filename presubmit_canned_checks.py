@@ -624,6 +624,11 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
     PY_FILE_EXTS = ('py', )
     PY_EXCEPTIONS = ('import', 'from', '# ' + LINT_THEN_CHANGE_EXCEPTION)
 
+    # Uncap star files. For more info, see:
+    # https://bazel.build/build/style-guide#differences-python-style-guide
+    STAR_FILE_EXTS = ('star', )
+    STAR_EXCEPTIONS = ('', )
+
     LANGUAGE_EXCEPTIONS = [
         (CPP_FILE_EXTS, CPP_EXCEPTIONS),
         (HTML_FILE_EXTS, HTML_EXCEPTIONS),
@@ -632,6 +637,7 @@ def CheckLongLines(input_api, output_api, maxlen, source_file_filter=None):
         (TS_FILE_EXTS, TS_EXCEPTIONS),
         (OBJC_FILE_EXTS, OBJC_EXCEPTIONS),
         (PY_FILE_EXTS, PY_EXCEPTIONS),
+        (STAR_FILE_EXTS, STAR_EXCEPTIONS),
     ]
 
     def no_long_lines(file_extension, line):
