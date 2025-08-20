@@ -52,10 +52,10 @@ infra/tools/luci-auth/${platform} git_revision:14c1dfd95e07b23eeaff304bd29a2eb80
 infra/tools/luci/git-credential-luci/${platform} git_revision:1e3eda9011e826fe1c64e2b7b97f6364eec9750e
 
 # LUCI Git credential helper plugins
-infra/tools/luci/luci-auth-ssh-plugin/${platform} git_revision:1e3eda9011e826fe1c64e2b7b97f6364eec9750e
+infra/tools/luci/luci-auth-ssh-plugin/${platform} git_revision:b1791fdbc3b9e725724e5964c0e13901078491c3
 
 # LUCI Git credential SSH helper
-infra/tools/luci/luci-auth-ssh-helper/${platform} git_revision:1e3eda9011e826fe1c64e2b7b97f6364eec9750e
+infra/tools/luci/luci-auth-ssh-helper/${platform} git_revision:b1791fdbc3b9e725724e5964c0e13901078491c3
 
 # LUCI Buildbucket CLI
 infra/tools/bb/${platform} git_revision:b1f414539ac10cc67a0250890a38712cc06cf102
