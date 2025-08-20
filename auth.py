@@ -240,6 +240,7 @@ class GerritAuthenticator(object):
         try:
             out, err = subprocess2.check_call_out(
                 ['git-credential-luci', 'get'],
+                stdin=subprocess2.DEVNULL,
                 stdout=subprocess2.PIPE,
                 stderr=subprocess2.PIPE)
             logging.debug('git-credential-luci stderr:\n%s', err)
