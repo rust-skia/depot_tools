@@ -734,9 +734,9 @@ Args:
   * dry_run (bool): If True, don't actually run the step; just log what
       the step would have been.
 
-&mdash; **def [cat](/recipes/recipe_modules/gsutil/api.py#129)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [cat](/recipes/recipe_modules/gsutil/api.py#135)(self, url, args=None, \*\*kwargs):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [configure\_gsutil](/recipes/recipe_modules/gsutil/api.py#183)(self, \*\*kwargs):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [configure\_gsutil](/recipes/recipe_modules/gsutil/api.py#189)(self, \*\*kwargs):**
 
 Temporarily configures the behavior of gsutil.
 
@@ -748,21 +748,21 @@ possible configurations.
 Args:
   kwargs: Every keyword arg is treated as config line in the temp Boto file.
 
-&mdash; **def [copy](/recipes/recipe_modules/gsutil/api.py#143)(self, source_bucket, source, dest_bucket, dest, args=None, link_name='gsutil.copy', metadata=None, unauthenticated_url=False, \*\*kwargs):**
+&mdash; **def [copy](/recipes/recipe_modules/gsutil/api.py#149)(self, source_bucket, source, dest_bucket, dest, args=None, link_name='gsutil.copy', metadata=None, unauthenticated_url=False, \*\*kwargs):**
 
-&mdash; **def [download](/recipes/recipe_modules/gsutil/api.py#115)(self, bucket, source, dest, args=None, \*\*kwargs):**
+&mdash; **def [download](/recipes/recipe_modules/gsutil/api.py#121)(self, bucket, source, dest, args=None, \*\*kwargs):**
 
-&mdash; **def [download\_url](/recipes/recipe_modules/gsutil/api.py#122)(self, url, dest, args=None, \*\*kwargs):**
+&mdash; **def [download\_url](/recipes/recipe_modules/gsutil/api.py#128)(self, url, dest, args=None, \*\*kwargs):**
 
 &emsp; **@property**<br>&mdash; **def [gsutil\_py\_path](/recipes/recipe_modules/gsutil/api.py#17)(self):**
 
-&mdash; **def [list](/recipes/recipe_modules/gsutil/api.py#162)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [list](/recipes/recipe_modules/gsutil/api.py#168)(self, url, args=None, \*\*kwargs):**
 
-&mdash; **def [remove\_url](/recipes/recipe_modules/gsutil/api.py#176)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [remove\_url](/recipes/recipe_modules/gsutil/api.py#182)(self, url, args=None, \*\*kwargs):**
 
-&mdash; **def [signurl](/recipes/recipe_modules/gsutil/api.py#169)(self, private_key_file, bucket, dest, args=None, \*\*kwargs):**
+&mdash; **def [signurl](/recipes/recipe_modules/gsutil/api.py#175)(self, private_key_file, bucket, dest, args=None, \*\*kwargs):**
 
-&mdash; **def [stat](/recipes/recipe_modules/gsutil/api.py#136)(self, url, args=None, \*\*kwargs):**
+&mdash; **def [stat](/recipes/recipe_modules/gsutil/api.py#142)(self, url, args=None, \*\*kwargs):**
 
 &mdash; **def [upload](/recipes/recipe_modules/gsutil/api.py#98)(self, source, bucket, dest, args=None, link_name='gsutil.upload', metadata=None, unauthenticated_url=False, \*\*kwargs):**
 ### *recipe_modules* / [osx\_sdk](/recipes/recipe_modules/osx_sdk)
