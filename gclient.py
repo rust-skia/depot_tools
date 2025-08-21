@@ -841,8 +841,7 @@ class Dependency(gclient_utils.WorkItem, DependencySettings):
                 # Check if at least one object needs to be downloaded.
                 needs_download = any(gcs.IsDownloadNeeded() for gcs in gcs_deps)
                 # When IsEnvCog(), gcs sources are already present and are not managed by gclient.
-                if not gclient_utils.IsEnvCog(
-                ) and needs_download and os.path.exists(gcs_deps[0].output_dir):
+                if needs_download and os.path.exists(gcs_deps[0].output_dir):
                     # Since we don't know what old content to remove, we remove
                     # the entire output_dir. All gcs_deps are expected to have
                     # the same output_dir, so we get the first one, which must
@@ -2756,6 +2755,9 @@ class GcsDependency(Dependency):
 
     def IsDownloadNeeded(self):
         """Check if download and extract is needed."""
+        # Skip download for cog.
+        if gclient_utils.IsEnvCog():
+            return False
         if not self.should_process:
             return False
         if not os.path.exists(self.artifact_output_file):
