@@ -1,6 +1,5 @@
 from PB.recipe_modules.depot_tools.gsutil import properties
 
-PYTHON_VERSION_COMPATIBILITY = 'PY3'
 
 DEPS = [
   'recipe_engine/context',
