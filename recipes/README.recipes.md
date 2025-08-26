@@ -714,7 +714,7 @@ Generates a Gitiles repo URL. See also parse_repo_url.
 
 #### **class [GSUtilApi](/recipes/recipe_modules/gsutil/api.py#10)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
-&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/gsutil/api.py#21)(self, cmd, name=None, use_retry_wrapper=True, version=None, parallel_upload=False, multithreaded=False, infra_step=True, dry_run=False, \*\*kwargs):**
+&mdash; **def [\_\_call\_\_](/recipes/recipe_modules/gsutil/api.py#22)(self, cmd, name=None, use_retry_wrapper=True, version=None, parallel_upload=False, multithreaded=False, infra_step=True, dry_run=False, \*\*kwargs):**
 
 A step to run arbitrary gsutil commands.
 
@@ -754,7 +754,7 @@ Args:
 
 &mdash; **def [download\_url](/recipes/recipe_modules/gsutil/api.py#128)(self, url, dest, args=None, \*\*kwargs):**
 
-&emsp; **@property**<br>&mdash; **def [gsutil\_py\_path](/recipes/recipe_modules/gsutil/api.py#17)(self):**
+&emsp; **@property**<br>&mdash; **def [gsutil\_py\_path](/recipes/recipe_modules/gsutil/api.py#18)(self):**
 
 &mdash; **def [list](/recipes/recipe_modules/gsutil/api.py#168)(self, url, args=None, \*\*kwargs):**
 
@@ -764,7 +764,7 @@ Args:
 
 &mdash; **def [stat](/recipes/recipe_modules/gsutil/api.py#142)(self, url, args=None, \*\*kwargs):**
 
-&mdash; **def [upload](/recipes/recipe_modules/gsutil/api.py#98)(self, source, bucket, dest, args=None, link_name='gsutil.upload', metadata=None, unauthenticated_url=False, \*\*kwargs):**
+&mdash; **def [upload](/recipes/recipe_modules/gsutil/api.py#99)(self, source, bucket, dest, args=None, link_name='gsutil.upload', metadata=None, unauthenticated_url=False, \*\*kwargs):**
 ### *recipe_modules* / [osx\_sdk](/recipes/recipe_modules/osx_sdk)
 
 [DEPS](/recipes/recipe_modules/osx_sdk/__init__.py#6): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/version][recipe_engine/recipe_modules/version]
