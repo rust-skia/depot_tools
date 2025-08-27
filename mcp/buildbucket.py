@@ -47,25 +47,8 @@ async def get_build_from_id(
     https://ci.chromium.org/b/<build_id>
 
     Args:
-      build_id: The request body for the RPC. All fields should be represented
-        by strings. Integer fields will be parsed later.
-        https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/builds_service.proto
-        for more details.
-
-        The request's mask can be set to get more information. By default only
-        high level statuses will be returned. Some useful fields to include in
-        this mask are:
-        status, input, output, id, builder, builder_info, tags, steps, infra
-        Multiple fields in the mask can be included as a comma separated string
-        e.g.
-        The build_number is mutually exclusive with the build_id. To get the
-        build from a build_id, only the build_id is needed. e.g.
-        {
-          "id": "<build id>",
-          "mask": {
-            "fields": "steps,tags"
-          }
-        }
+      build_id: The BuildBucket build id. This is a unique identifier for the
+        build.
       fields: A list of fields to return. Options are:
         status, input, output, id, builder, builder_info, tags, steps, infra
 
@@ -93,27 +76,14 @@ async def get_build_from_build_number(
 
     The url of a build can be deconstructed and used to get more details about
     the build. e.g.
-    https://ci.chromium.org/b/<build_id>
+    https://ci.chromium.org/ui/p/<builder_project>/builders/<builder_bucket>/<builder_name>/<build_number>/overview
 
     Args:
-      build_id: The request body for the RPC. All fields should be represented
-        by strings. Integer fields will be parsed later.
-        https://chromium.googlesource.com/infra/luci/luci-go/+/main/buildbucket/proto/builds_service.proto
-        for more details.
-
-        The request's mask can be set to get more information. By default only
-        high level statuses will be returned. Some useful fields to include in
-        this mask are:
-        status, input, output, id, builder, builder_info, tags, steps, infra
-        Multiple fields in the mask can be included as a comma separated string
-        The build_number is mutually exclusive with the build_id. To get the
-        build from a build_id only the build_id is needed. e.g.
-        {
-          "id": "<build_id>",
-          "mask": {
-            "fields": "steps,tags"
-          }
-        }
+      build_number: The build number of the builder. This is a consecutive
+        value that uniquely identifies the build per builder.
+      builder_name: The name of the builder the build belongs to.
+      builder_bucket: The bucket the builder belongs to. e.g. 'try' or 'ci'
+      builder_project: The project the bucket belongs to. e.g. 'chromium'
       fields: A list of fields to return. Options are:
         status, input, output, id, builder, builder_info, tags, steps, infra
 

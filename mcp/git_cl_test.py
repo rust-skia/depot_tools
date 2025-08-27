@@ -32,10 +32,30 @@ class GitClTest(unittest.IsolatedAsyncioTestCase):
             args=[], returncode=0, stdout=expected_output, stderr='')
 
         output = await git_cl.try_builder_results(self.mock_context,
-                                                  self.checkout)
+                                                  self.checkout, None)
 
         self.assertEqual(output, expected_output)
         expected_command = ["git", "cl", "try-results", "--json=-"]
+        mock_subprocess_run.assert_called_once_with(expected_command,
+                                                    capture_output=True,
+                                                    check=True,
+                                                    text=True,
+                                                    cwd=self.checkout)
+
+    @mock.patch('subprocess.run')
+    async def test_try_builder_results_with_issue_success(
+            self, mock_subprocess_run):
+        expected_output = '{"builds": []}'
+        mock_subprocess_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout=expected_output, stderr='')
+
+        output = await git_cl.try_builder_results(self.mock_context,
+                                                  self.checkout, 1234)
+
+        self.assertEqual(output, expected_output)
+        expected_command = [
+            "git", "cl", "try-results", "--json=-", "-i", "1234"
+        ]
         mock_subprocess_run.assert_called_once_with(expected_command,
                                                     capture_output=True,
                                                     check=True,
